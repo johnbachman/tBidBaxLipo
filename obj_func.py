@@ -128,8 +128,8 @@ def fit_grid(model, omag=3):
     #lipo_concs = ['10']
     lipo_conc_str = '10' 
     lipo_concs_str = ['10']
-    #tbid_concs_str = ['2', '21.5', '40']
-    tbid_concs_str = ['15']
+    tbid_concs_str = ['2', '21.5', '40']
+    #tbid_concs_str = ['15']
 
     for tbid_conc_str in tbid_concs_str:
         g.plot_timecourses(lipo_conc_str, tbid_conc_str, g.data_bgsub,
@@ -137,6 +137,13 @@ def fit_grid(model, omag=3):
 
     bax_concs_str = g.bax_concs_str
     #}}}
+
+    # Note the initial parameter set
+    param_dict = {}
+    for j, param in enumerate(model.parameters):
+        param_dict[param.name] = xmin[j]
+    # Set the retval (best error) in the annealing for this parameter set
+    ps_initial = ParameterSet(param_dict, model=model)
 
     #{{{# Do the annealing =================================================
     # Initialize data structures for annealing
@@ -162,7 +169,10 @@ def fit_grid(model, omag=3):
     for j, param in enumerate(model.parameters):
         param_dict[param.name] = xmin[j]
     # Set the retval (best error) in the annealing for this parameter set
-    param_set = ParameterSet(param_dict, retval, model)
+    ps_final = ParameterSet(param_dict, best_err=retval, model=model)
+
+    # Compare the initial to the final parameter sets
+    ps_initial.diff(ps_final)
 
     # Plot the post-fit dose-response along with the data
     if (True):
