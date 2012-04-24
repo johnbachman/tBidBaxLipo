@@ -5,7 +5,7 @@ from pysb.integrate import odesolve
 from pylab import *
 import scipy.optimize.anneal
 from util.numsort import sorted_copy as sort_numeric 
-from paramset import ParameterSet
+from util.paramset import ParameterSet
 from m0 import Vesicles_0
 
 #from data.nbd_data import time as nbd_time, mean126c
