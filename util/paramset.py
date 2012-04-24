@@ -8,10 +8,29 @@ class ParameterSet(object):
     # not, presumably done by the obj_func; if the icparams
     # are not to be fit, then obj_func should not return them
     # along in the param dict
-    def __init__(self, param_dict, best_err, model=None):
+    def __init__(self, param_dict, name=None, best_err=None, model=None):
+        self.name = name
         self.param_dict = param_dict
         self.best_err = best_err
         self.model = model
+
+    def diff(self, other):
+        """ Compares the parameter values in this parameter set with those
+            in the other parameter set. """
+        # Iterate over the parameters in this set
+        for i, param in enumerate(self.param_dict):
+            if (param in other.param_dict):
+                my_val = self.param_dict[param]
+                other_val = other.param_dict[param]            
+                output = "%s: %f --> %f" % (param, my_val, other_val)
+                if (other_val < my_val):
+                    output += "\033[0;31m slower\033[0m"
+                elif (other_val > my_val):
+                    output += "\033[0;32m faster\033[0m"
+                print output
+            else:
+                print("WARNING: The parameter " + param + " is not contained in " +
+                      "the other parameter set.")
 
 """
 Jmin:  0.0863839628828
