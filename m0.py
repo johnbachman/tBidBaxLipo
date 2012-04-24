@@ -393,26 +393,28 @@ def build_model0():
     #dye_release_dimeric()
 
 def build_model1():
-    print "Building model 1"
+    print "Building model 1: Activation, dimerization"
     translocate_Bax()
     translocate_tBid()
-    tBid_activates_Bax()
-    dye_release_dimeric(reversible_pore=False)
+    tBid_activates_Bax(bax_site='a6')
+    Bax_dimerizes(dimer_diss_rate=2.5e-1)
+    dye_release_dimeric()
 
-def build_model1r():
-    print "Building model 1r"
-    translocate_Bax()
-    translocate_tBid()
-    tBid_activates_Bax()
-    dye_release_dimeric(reversible_pore=True)
+#def build_model1r():
+#    print "Building model 1r"
+#    translocate_Bax()
+#    translocate_tBid()
+#    tBid_activates_Bax(bax_site='a6')
+#    dye_release_dimeric(
 
 def build_model2():
-    print "Building model 2"
+    print "Building model 2: Bax-tBid inhibition"
     translocate_Bax()
     translocate_tBid()
     tBid_activates_Bax()
     Bax_inhibits_tBid()
-    dye_release_dimeric(reversible_pore=False)
+    Bax_dimerizes(dimer_diss_rate=2.5e-1)
+    dye_release_dimeric()
 
 def build_model2r():
     print "Building model 2r"
@@ -435,10 +437,11 @@ def build_model3r():
     print "Building model 3r"
     translocate_Bax()
     translocate_tBid()
-    tBid_activates_Bax()
+    tBid_activates_Bax(bax_site='a6')
     Bax_inhibits_tBid()
-    tBid_reverses_Bax()
-    dye_release_dimeric(reversible_pore=True)
+    #tBid_reverses_Bax()
+    Bax_dimerizes(dimer_diss_rate=0)
+    dye_release_dimeric()
 
 def build_model4():
     print "Building model 4"
@@ -454,7 +457,7 @@ def build_model4():
     dye_release_tetrameric()
 #}}} 
 
-build_model4()
+build_model2()
 
 def load_params(param_set):
     for i, param_name in enumerate(param_set.param_dict):
