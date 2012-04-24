@@ -120,7 +120,7 @@ def nbd_anneal_fxn(params, useparams, tmax, model, envlist, data, lb, ub, norm=F
 
 ## Fitting Functions ##########################################################
 #{{{# fit_grid()
-def fit_grid(model):
+def fit_grid(model, omag=3):
     data = g.data_bgsub
 
     #{{{# PLOT THE PRE-FIT DOSE-RESPONSE
@@ -145,7 +145,7 @@ def fit_grid(model):
     (envlist, paramarr) = anneal.annlinit(model)
 
     # Get the default bounds on parameters based on their nominal values
-    (lb, ub, lower, upper) = anneal.getgenparambounds(paramarr, omag=3, N=1000)
+    (lb, ub, lower, upper) = anneal.getgenparambounds(paramarr, omag=omag, N=1000)
 
     # Run the annealing! 
     outputfile = open('anneal_output.txt', 'w')
