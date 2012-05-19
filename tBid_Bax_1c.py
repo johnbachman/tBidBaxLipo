@@ -18,7 +18,10 @@ class tBid_Bax_1c(tBid_Bax):
     #}}}
 
     #{{{# initialize_model()
-    def initialize_model(self):
+    def __init__(self):
+        # Sets self.model = Model()
+        tBid_Bax.__init__(self)
+
         self.declare_monomers()
 
         #{{{# COMPARTMENTS

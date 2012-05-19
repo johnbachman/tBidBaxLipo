@@ -9,11 +9,6 @@ class tBid_Bax(object):
 
 ## VIRTUAL FUNCTIONS
 
-    #{{{# initialize_model()
-    def initialize_model():
-        raise NotImplementedError()
-    #}}}
-
     #{{{# within_compartment_rsf()
     def within_compartment_rsf():
         raise NotImplementedError()
@@ -97,7 +92,7 @@ class tBid_Bax(object):
         print("tBid_Bax: tBid_activates_Bax(bax_site=" + bax_site + ")")
 
         # Forward rate of tBid binding to Bax (E + S -> ES)
-        kf = self.parameter('tBid_mBax_kf', 1e-2 * self.within_compartment_rsf())
+        kf = self.parameter('tBid_mBax_kf', 1 * self.within_compartment_rsf())
         #tBid_mBax_kf = Parameter('tBid_mBax_kf', 0)
         #Parameter('tBid_mBax_kf', 0) # Forward rate of tBid binding to Bax (E + S -> ES)
         # Reverse rate of tBid binding to Bax (ES -> E + S)
@@ -133,11 +128,11 @@ class tBid_Bax(object):
     #{{{# build_model0
     def build_model0(self):
         print "tBid_Bax: Building model 0:"
-        self.initialize_model()
 
         self.translocate_tBid_Bax()
-        #dye_release(Bax(loc='i', bh3=None))
         self.tBid_activates_Bax(bax_site='a6')
+
+        #dye_release(Bax(loc='i', bh3=None))
         #pores_from_Bax_monomers()
         #Bax_dimerizes()
         #dye_release(Pore())
@@ -146,6 +141,7 @@ class tBid_Bax(object):
 
 
 ## OTHER FUNCS ###################################################
+#{{{
     #{{{# Bax_auto_activates()
     def Bax_auto_activates(target_bax_site='a6'):
         # Andrews suggests that tBid/Bax Kd should work out to 25nM
@@ -291,7 +287,9 @@ class tBid_Bax(object):
         two_state_equilibrium(Bax(bh3=None, dye='e'), 'm', 'i',
                 [basal_Bax_kf, basal_Bax_kr], sitename='loc')
     #}}}
+#}}}
 
+#{{{ self.set...
     def monomer(self, *args, **kwargs):
         m = Monomer(*args, _export=False, **kwargs)
         self.model.add_component(m)
@@ -323,5 +321,5 @@ class tBid_Bax(object):
 
     def __getitem__(self, index):
         return self.model.all_components()[index]
-
+#}}}
 
