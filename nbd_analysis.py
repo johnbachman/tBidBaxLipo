@@ -100,6 +100,8 @@ def do_fit(report=None, fittype='double_exp'):
             reslist.append(res)
 
         legend(loc='upper right')
+        xlabel('Time (seconds)')
+        ylabel('Fold-Change Increase')
         title('Bax ' + nbd_names[i] + ' Data vs. ' + fittype + ' Model')
 
         if (report):
