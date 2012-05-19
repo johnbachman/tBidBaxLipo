@@ -13,61 +13,44 @@ from pysb import kappa
 from tBid_Bax_core import tBid_Bax
 #}}}
 
-
 class tBid_Bax_sitec(tBid_Bax):
     
-    def __init__(self, scaling_factor=10):
+    #{{{# __init__()
+    def __init__(self, scaling_factor=10, init_concs=None):
+        # Sets self.model = Model()
         tBid_Bax.__init__(self)
-
-        #self.num_sims = 3 
 
         # This is the only variable that needs to be set to rescale
         # the simulation according to the nominal initial concentrations
         # given below (which match those of the deterministic simulations)
         self.scaling_factor = scaling_factor
 
-        # These only need to be changed if different initial conditions
-        # are desired. These values correspond to the deterministic values
-        # in nanomolar.
-        #_nominal_Vesicles_0 = 1 
-        #_nominal_tBid_0 = 1 
-        #_nominal_Bax_0 = 50
-
-
         # Forward rate scaling factor for translocations or solution rxns
+        # (See MOMP Modeling Notes .tex doc)
         self.outside_compartment_rsf = 1. / self.scaling_factor
 
-    #{{{# MONOMERS
-    # Needs to override the default from the base class because each
-    # monomer has to have a list of possible compartments associated
-    # with it
-    def declare_monomers(self, cpt_list):
-
-        self.monomer('tBid', ['bh3', 'loc', 'cpt'],
-                {'loc': ['c', 'm'], 'cpt':cpt_list}),
-        self.monomer('Bax', ['bh3', 'a6', 'loc', 'cpt'],
-                {'loc': ['c','m', 'i', 'p'],
-                 'cpt': cpt_list})
-        #self.monomer('Vesicles', [], {})
-        #self.monomer('Pores')
-    #}}}
-
-    #{{{# INITIALIZATION
-    def initialize_model(self):
         # The initial values must be set before enumerating compartments
-        self.parameter('Vesicles_0', 2 * self.scaling_factor)
-        tBid_0 = self.parameter('tBid_0', 1 * self.scaling_factor)
-        Bax_0 = self.parameter('Bax_0', 1 * self.scaling_factor)
-
+        if init_concs is None:  # Default initial concentrations
+            Vesicles_0 = 5
+            tBid_0 = 20
+            Bax_0 = 100
+        else: # Allow the initial concentrations to be set
+            Vesicles_0 = init_concs['Vesicles_0']
+            tBid_0 = init_concs['tBid_0']
+            Bax_0 = init_concs['Bax_0']
+        
+        self.parameter('Vesicles_0', Vesicles_0 * self.scaling_factor)
+        self.parameter('tBid_0', tBid_0 * self.scaling_factor)
+        self.parameter('Bax_0', Bax_0 * self.scaling_factor)
+            
         # The compartment list needs to be built before declaring monomers
-        self.cpt_list = ['c%d' % cpt_num for cpt_num in range(1, self['Vesicles_0'].value+1)]
+        self.cpt_list = ['c%d' % cpt_num for cpt_num in range(1, Vesicles_0+1)]
         self.cpt_list.append('solution')
 
-        # Now monomers can be declared
+        # Now, monomers can be declared
         self.declare_monomers(self.cpt_list)
 
         #{{{# INITIAL CONDITIONS
-        #self.num_compartments = self.scaling_factor * self['Vesicles_0'].value
         tBid = self['tBid']
         Bax = self['Bax']
 
@@ -94,6 +77,21 @@ class tBid_Bax_sitec(tBid_Bax):
                 self.observable('tBidBax_%s' % cpt_name,
                             tBid(loc='m', bh3=1, cpt=cpt_name) % Bax(loc='m', a6=1, cpt=cpt_name))
         #}}}
+    #}}}
+
+    #{{{# declare_monomers()
+    # Needs to override the default from the base class because each
+    # monomer has to have a list of possible compartments associated
+    # with it
+    def declare_monomers(self, cpt_list):
+
+        self.monomer('tBid', ['bh3', 'loc', 'cpt'],
+                {'loc': ['c', 'm'], 'cpt':cpt_list}),
+        self.monomer('Bax', ['bh3', 'a6', 'loc', 'cpt'],
+                {'loc': ['c','m', 'i', 'p'],
+                 'cpt': cpt_list})
+        #self.monomer('Vesicles', [], {})
+        #self.monomer('Pores')
     #}}}
 
     #{{{# MODEL MACROS
@@ -174,42 +172,98 @@ class tBid_Bax_sitec(tBid_Bax):
         #     tBid_iBax_kc)
 
     #}}}
-
-## OTHER
-    #{{{# pores_from_Bax_monomers()
-    def pores_from_Bax_monomers():
-        print("pores_from_Bax_monomers()")
-
-        Parameter('pore_formation_rate_k', 1e-3)
-        #Parameter('pore_recycling_rate_k', 0)
-
-        Rule('Pores_From_Bax_Monomers', 
-             Bax(loc='i') >> Bax(loc='p') + Pores(),
-             pore_formation_rate_k)
-
-        # Pore observables
-        Observable('pBax', Bax(loc='p'))
-        Observable('pores', Pores())    
-        for i, cpt in enumerate(model.compartments):
-            if (not cpt.name == 'solution'):
-                Observable('pores_%s' % cpt.name, Pores() ** cpt)
     #}}}
 
-    #{{{# pores_from_Bax_dimers()
-    def pores_from_Bax_dimers():
-        """Basically a way of counting the time-integrated amount of
-           forward pore formation."""
+    #{{{# RUNNING THE MODEL
+    def run_model(self, tmax=12000, num_sims=1, use_kappa=True):
+        xrecs = []
+        dr_all = []
+        for i in range(0, num_sims):
+            if use_kappa:
+                ssa_result = kappa.get_kasim_data(self.model, time=tmax, points=100,
+                                     filename=('simdata/%s_%d' % (self.model.name, i))
+                xrecs.append(ssa_result)
+            else:
+                ssa_result = bng.run_ssa(self.model, t_end=tmax, n_steps=100, cleanup=True)
+                xrecs.append(ssa_result)
+                #dr_all.append(get_dye_release(model, 'pores', ssa_result))
 
-        Parameter('pore_formation_rate_k', 100) # This is going to be 
-        #Parameter('scaled_pore_formation_rate_k', 0.03) # This is going to be 
-        Parameter('pore_recycling_rate_k', 100)
+        xall = array([x.tolist() for x in xrecs])
+        x_std = recarray(xrecs[0].shape, dtype=xrecs[0].dtype, buf=std(xall, 0))
+        x_avg = recarray(xrecs[0].shape, dtype=xrecs[0].dtype, buf=mean(xall, 0))
 
-        Rule('Pores_From_Bax_Dimers', 
-             MatchOnce(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None)) >>
-             MatchOnce(Bax(loc='p', bh3=1, a6=None) % Bax(loc='p', bh3=1, a6=None)) + Pores(),
-             pore_formation_rate_k)
+        ci = color_iter()
+        marker = ','
+        linestyle = ''
+        figure(1)
+
+        tBid_0 = self['tBid_0']
+        Bax_0 = self['Bax_0']
+
+        # Translocation
+        errorbar(x_avg['time'], x_avg['ctBid']/tBid_0.value,
+                 yerr=x_std['ctBid']/tBid_0.value,
+                 color=ci.next(), marker=marker, linestyle=linestyle)
+        errorbar(x_avg['time'], x_avg['mtBid']/tBid_0.value,
+                 yerr=x_std['mtBid']/tBid_0.value,
+                 color=ci.next(), marker=marker, linestyle=linestyle)
+        errorbar(x_avg['time'], x_avg['cBax']/Bax_0.value,
+                 yerr=x_std['cBax']/Bax_0.value,
+                 color=ci.next(), marker=marker, linestyle=linestyle)
+        errorbar(x_avg['time'], x_avg['mBax']/Bax_0.value,
+                 yerr=x_std['mBax']/Bax_0.value,
+                 color=ci.next(), marker=marker, linestyle=linestyle)
+
+        # Activation
+        #errorbar(x_avg['time'], x_avg['iBax']/Bax_0.value,
+        #         yerr=x_std['iBax']/Bax_0.value, label='iBax',
+        #         color=ci.next(), marker=marker, linestyle=linestyle)
+        errorbar(x_avg['time'], x_avg['tBidBax']/tBid_0.value,
+                 yerr=x_std['tBidBax']/tBid_0.value,
+                 color=ci.next(), marker=marker, linestyle=linestyle)
+
+        # Dye release calculated exactly ----------
+        #dr_avg = mean(dr_all, 0)
+        #dr_std = std(dr_all, 0)
+        #errorbar(x_avg['time'], dr_avg,
+        #         yerr=dr_std, label='dye_release',
+        #         color=ci.next(), marker=marker, linestyle=linestyle)
+
+
+        # Pore Formation
+        #plot(x['time'], x['pBax']/Bax_0.value, label='pBax')
+        #leg = legend()
+        #ltext = leg.get_texts()
+        #setp(ltext, fontsize='small')
+
+        #xlabel("Time (seconds)")
+        #ylabel("Normalized Concentration")
+
+        #ci = color_iter()
+        # Plot pores/vesicle in a new figure ------
+        #figure(2)
+        #errorbar(x_avg['time'], x_avg['pores'] / float(NUM_COMPARTMENTS),
+        #         yerr=x_std['pores']/float(NUM_COMPARTMENTS), label='pores',
+        #         color=ci.next(), marker=marker, linestyle=linestyle)
+
+        #F_t = 1 - dr_avg
+        #pores_poisson = -log(F_t)
+        #plot(x_avg['time'], pores_poisson, color=ci.next(), label='-ln F(t), stoch',
+        #        marker=marker, linestyle=linestyle)
+        #xlabel("Time (seconds)")
+        #ylabel("Pores/vesicle")
+        #title("Pores/vesicle")
+        #legend()
+
+        #xlabel("Time (seconds)")
+        #ylabel("Dye Release")
+        #title("Dye release calculated via compartmental model")
+
+        return xrecs[0]
     #}}}
-    #}}}
+
+
+#---------------------------------------------------------------------
 
     #{{{# SSA data analysis functions
     def plot_compartment_mean(model, observable_name, output):
@@ -311,94 +365,6 @@ class tBid_Bax_sitec(tBid_Bax):
         plot(bins, poisson_counts)
     #}}}
 
-    #{{{# RUNNING THE MODEL
-    def run_model(self, tmax=12000, num_sims=1, use_kappa=True):
-        xrecs = []
-        dr_all = []
-        for i in range(0, num_sims):
-            if use_kappa:
-                ssa_result = kappa.get_kasim_data(self.model, time=tmax, points=100)
-                xrecs.append(ssa_result)
-            else:
-                ssa_result = bng.run_ssa(self.model, t_end=tmax, n_steps=100, cleanup=True)
-                xrecs.append(ssa_result)
-                #dr_all.append(get_dye_release(model, 'pores', ssa_result))
-
-        xall = array([x.tolist() for x in xrecs])
-        x_std = recarray(xrecs[0].shape, dtype=xrecs[0].dtype, buf=std(xall, 0))
-        x_avg = recarray(xrecs[0].shape, dtype=xrecs[0].dtype, buf=mean(xall, 0))
-
-        ci = color_iter()
-        marker = ','
-        linestyle = ''
-        figure(1)
-
-        tBid_0 = self['tBid_0']
-        Bax_0 = self['Bax_0']
-
-        # Translocation
-        errorbar(x_avg['time'], x_avg['ctBid']/tBid_0.value,
-                 yerr=x_std['ctBid']/tBid_0.value,
-                 color=ci.next(), marker=marker, linestyle=linestyle)
-        errorbar(x_avg['time'], x_avg['mtBid']/tBid_0.value,
-                 yerr=x_std['mtBid']/tBid_0.value,
-                 color=ci.next(), marker=marker, linestyle=linestyle)
-        errorbar(x_avg['time'], x_avg['cBax']/Bax_0.value,
-                 yerr=x_std['cBax']/Bax_0.value,
-                 color=ci.next(), marker=marker, linestyle=linestyle)
-        errorbar(x_avg['time'], x_avg['mBax']/Bax_0.value,
-                 yerr=x_std['mBax']/Bax_0.value,
-                 color=ci.next(), marker=marker, linestyle=linestyle)
-
-        # Activation
-        #errorbar(x_avg['time'], x_avg['iBax']/Bax_0.value,
-        #         yerr=x_std['iBax']/Bax_0.value, label='iBax',
-        #         color=ci.next(), marker=marker, linestyle=linestyle)
-        errorbar(x_avg['time'], x_avg['tBidBax']/tBid_0.value,
-                 yerr=x_std['tBidBax']/tBid_0.value,
-                 color=ci.next(), marker=marker, linestyle=linestyle)
-
-        # Dye release calculated exactly ----------
-        #dr_avg = mean(dr_all, 0)
-        #dr_std = std(dr_all, 0)
-        #errorbar(x_avg['time'], dr_avg,
-        #         yerr=dr_std, label='dye_release',
-        #         color=ci.next(), marker=marker, linestyle=linestyle)
-
-
-        # Pore Formation
-        #plot(x['time'], x['pBax']/Bax_0.value, label='pBax')
-        #leg = legend()
-        #ltext = leg.get_texts()
-        #setp(ltext, fontsize='small')
-
-        #xlabel("Time (seconds)")
-        #ylabel("Normalized Concentration")
-
-        #ci = color_iter()
-        # Plot pores/vesicle in a new figure ------
-        #figure(2)
-        #errorbar(x_avg['time'], x_avg['pores'] / float(NUM_COMPARTMENTS),
-        #         yerr=x_std['pores']/float(NUM_COMPARTMENTS), label='pores',
-        #         color=ci.next(), marker=marker, linestyle=linestyle)
-
-        #F_t = 1 - dr_avg
-        #pores_poisson = -log(F_t)
-        #plot(x_avg['time'], pores_poisson, color=ci.next(), label='-ln F(t), stoch',
-        #        marker=marker, linestyle=linestyle)
-        #xlabel("Time (seconds)")
-        #ylabel("Pores/vesicle")
-        #title("Pores/vesicle")
-        #legend()
-
-        #xlabel("Time (seconds)")
-        #ylabel("Dye Release")
-        #title("Dye release calculated via compartmental model")
-
-        return xrecs[0]
-    #}}}
-
-
     #{{{# COMMENTS
     """
     Things I would want to know:
@@ -481,6 +447,40 @@ class tBid_Bax_sitec(tBid_Bax):
     #}}}
 
     #{{{# OTHER
+    #{{{# pores_from_Bax_monomers()
+    def pores_from_Bax_monomers():
+        print("pores_from_Bax_monomers()")
+
+        Parameter('pore_formation_rate_k', 1e-3)
+        #Parameter('pore_recycling_rate_k', 0)
+
+        Rule('Pores_From_Bax_Monomers', 
+             Bax(loc='i') >> Bax(loc='p') + Pores(),
+             pore_formation_rate_k)
+
+        # Pore observables
+        Observable('pBax', Bax(loc='p'))
+        Observable('pores', Pores())    
+        for i, cpt in enumerate(model.compartments):
+            if (not cpt.name == 'solution'):
+                Observable('pores_%s' % cpt.name, Pores() ** cpt)
+    #}}}
+
+    #{{{# pores_from_Bax_dimers()
+    def pores_from_Bax_dimers():
+        """Basically a way of counting the time-integrated amount of
+           forward pore formation."""
+
+        Parameter('pore_formation_rate_k', 100) # This is going to be 
+        #Parameter('scaled_pore_formation_rate_k', 0.03) # This is going to be 
+        Parameter('pore_recycling_rate_k', 100)
+
+        Rule('Pores_From_Bax_Dimers', 
+             MatchOnce(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None)) >>
+             MatchOnce(Bax(loc='p', bh3=1, a6=None) % Bax(loc='p', bh3=1, a6=None)) + Pores(),
+             pore_formation_rate_k)
+    #}}}
+
     def rate_calcs(nm_rate):
 
         vol = 60e-6
