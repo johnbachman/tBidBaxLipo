@@ -273,7 +273,8 @@ def plot_timecourses(lipo_conc_str, fixed_conc_str, data,
             # Run the model
             fit_time = linspace(0, max(time), 100)
             x = odesolve(model, fit_time)
-            fit_vals = (x['eVes']/model.parameters['Vesicles_0'].value)*100
+            #fit_vals = (x['eVes']/model.parameters['Vesicles_0'].value)*100
+            fit_vals = x['pores'] / 0.038
             mse_val = 0 # FIXME
 
         # Plot the data along with the fit/model trace
@@ -306,7 +307,7 @@ def plot_timecourses(lipo_conc_str, fixed_conc_str, data,
 
 #{{{# plot_dose_response()
 def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype='power',
-                            axis='Bax', report=None):
+                       model=None, axis='Bax', report=None):
     """ Given a lipid concentration, plot the initial or final rate vs. Bax
         concentration dose response, with a separate curve for each tBid
         concentration. """
@@ -342,57 +343,70 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
         else:
             raise Exception('The rate (\'k0\' or \'ki\') was not specified.')
 
+        model_y_vals = []
+        model_x_vals = linspace(0, 1.01*max(concs), 50) # TODO: Magic numbers 0 and 300
         fitfunc = None
-        # Fitting 
-        if (fittype == 'linear'):
-            # define fitting function
-            m = Parameter(1)
-            b = Parameter(0)
-            def linear(x): return ((m()*x) + b())
-            fit(linear, [m, b], array(data_arr), array(concs))
-            #print(bid_conc_str + "nm cBid: k=" + str(k()) + ", n=" + str(n())) TODO
-            fitfunc = linear
-            #(slope, intercept) = polyfit(log_concs, log_k0, 1)       
-            #k0_fit = polyval([slope, intercept], log_concs)
-            #print "slope: ", slope, ", intercept: ", intercept
-            #plot(log_concs, k0_fit, '-')
-        elif (fittype == 'power'):
-            # define fitting function
-            k = Parameter(1)
-            n = Parameter(0.4)
-            def powerlaw(x): return (k()*(x**n()))
-            fit(powerlaw, [k, n], array(data_arr), array(concs))
-            #print(bid_conc_str + "nm cBid: k=" + str(k()) + ", n=" + str(n())) TODO
-            fitfunc = powerlaw
-            #(slope, intercept) = polyfit(log_concs, log_k0, 1)       
-            #k0_fit = polyval([slope, intercept], log_concs)
-            #print "slope: ", slope, ", intercept: ", intercept
-            #plot(log_concs, k0_fit, '-')
-        elif (fittype == 'hill' or fittype == 'hillexp'):
-            # define fitting function
-            km = Parameter(85)
-            vmax = Parameter(0.0005)
-            nh = Parameter(1)
-            b = data_arr[0]
-            def michaelis_menten(x): return ((vmax()*(x**nh()))/((km()**nh()) + (x**nh())) + b)
-            #def line(x): return (m()*x)+b()
-
-            # Perform the fit
-            if (fittype == 'hillexp'):
-                fit(michaelis_menten, [km, vmax, nh], array(data_arr), array(concs))
-            else:
-                fit(michaelis_menten, [km, vmax], array(data_arr), array(concs))
-
+        
+        if (not model == None):
             if (axis == 'Bax'):
-                kcat = vmax() / float(tbid_conc_str)
-                print(outer_conc_str + "nm cBid: Km=" + str(km()) + ", Vmax=" +
-                        str(vmax()) + ", kcat=" + str(kcat), ", nh=" + str(nh()) )
-
-            fitfunc = michaelis_menten
-        elif (fittype == None):
-            pass
+                for conc in model_x_vals:
+                    model.parameters['tBid_0'].value = float(outer_conc_str)
+                    model.parameters['Bax_0'].value = conc
+                    model_y_vals.append(get_model_k0(model)) 
+        # Only do fitting if there is model object passed
         else:
-            raise Exception("Fitting function must be 'hill', 'hillexp', 'power', or None")
+            # Fitting 
+            if (fittype == 'linear'):
+                # define fitting function
+                m = Parameter(1)
+                b = Parameter(0)
+                def linear(x): return ((m()*x) + b())
+                fit(linear, [m, b], array(data_arr), array(concs))
+                #print(bid_conc_str + "nm cBid: k=" + str(k()) + ", n=" + str(n())) TODO
+                fitfunc = linear
+                #(slope, intercept) = polyfit(log_concs, log_k0, 1)       
+                #k0_fit = polyval([slope, intercept], log_concs)
+                #print "slope: ", slope, ", intercept: ", intercept
+                #plot(log_concs, k0_fit, '-')
+            elif (fittype == 'power'):
+                # define fitting function
+                k = Parameter(1)
+                n = Parameter(0.4)
+                def powerlaw(x): return (k()*(x**n()))
+                fit(powerlaw, [k, n], array(data_arr), array(concs))
+                #print(bid_conc_str + "nm cBid: k=" + str(k()) + ", n=" + str(n())) TODO
+                fitfunc = powerlaw
+                #(slope, intercept) = polyfit(log_concs, log_k0, 1)       
+                #k0_fit = polyval([slope, intercept], log_concs)
+                print("exponent: %d" % n())
+                #plot(log_concs, k0_fit, '-')
+                if (axis == 'Bax'):
+                    print(outer_conc_str + "nm cBid: exponent=" + str(n()))
+            elif (fittype == 'hill' or fittype == 'hillexp'):
+                # define fitting function
+                km = Parameter(85)
+                vmax = Parameter(0.0005)
+                nh = Parameter(1)
+                b = data_arr[0]
+                def michaelis_menten(x): return ((vmax()*(x**nh()))/((km()**nh()) + (x**nh())) + b)
+                #def line(x): return (m()*x)+b()
+
+                # Perform the fit
+                if (fittype == 'hillexp'):
+                    fit(michaelis_menten, [km, vmax, nh], array(data_arr), array(concs))
+                else:
+                    fit(michaelis_menten, [km, vmax], array(data_arr), array(concs))
+
+                if (axis == 'Bax'):
+                    kcat = vmax() / float(tbid_conc_str)
+                    print(outer_conc_str + "nm cBid: Km=" + str(km()) + ", Vmax=" +
+                            str(vmax()) + ", kcat=" + str(kcat), ", nh=" + str(nh()) )
+
+                fitfunc = michaelis_menten
+            elif (fittype == None):
+                pass
+            else:
+                raise Exception("Fitting function must be 'hill', 'hillexp', 'power', or None")
 
 
         # Plot data
@@ -413,8 +427,10 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
         else:
             plot(concs, data_arr, data_marker + col, label=data_legend)
 
-
         # Plot fit
+        if (not model == None):
+            plot(model_x_vals, model_y_vals, '-'+col, label=outer_conc_str + " " + outer_axis)
+
         if (fitfunc):
             # Show fit error
             mse_val = mse(fitfunc, array(data_arr), array(concs))
@@ -439,6 +455,7 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
           ('' if fittype==None else ('; Fit: ' + fittype + ', MSE: ' + str(total_mse))))
     #legend([conc + ' cBid' for conc in tbid_concs_str], loc='upper left')
     legend(loc='upper left')
+
     xlabel(axis + ' (nM)')
     ylabel('rate (d(pores/ves)/dt, in seconds)')
     print("Total MSE: " + str(total_mse))
@@ -446,6 +463,13 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
     if (report):
         report.addCurrentFigure()
 #}}}
+
+def get_model_k0(model, k0_time=900):
+    t = linspace(0, k0_time, 100)
+    x = odesolve(model, t)
+    return (x['pores'][-1] / model.parameters['NUM_VESICLES'].value)/k0_time
+
+
 
 ## COMMENTS ##################################################################
 #{{{# COMMENTS ON THE DATA
