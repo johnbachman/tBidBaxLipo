@@ -57,7 +57,44 @@ ps1 = ParameterSet({'Bax_transloc_kf': 3.45078952e-04,
              'lipo_eflx': 1.73086744e+02,
              'Bax_dimerization_kr': 6.30226287e-01},
               58.1016586865)
+
+# Parameter set resulting from fitting this model
+"""def build_model1():
+    print "Building model 1: Activation, dimerization"
+    translocate_Bax()
+    translocate_tBid()
+    tBid_activates_Bax(bax_site='a6')
+    Bax_dimerizes(dimer_diss_rate=2.5e-1)
+    dye_release_dimeric()
+"""
+# to the dose response at 2, 21.5, and 40nM tBid.
+ps_m1 = ParameterSet({
+ 'Bax_transloc_kf': 1.54490368e-03,
+ 'Bax_transloc_kr': 4.50607756e-02,
+ 'tBid_transloc_kf': 8.94212792e-03,
+ 'tBid_transloc_kr': 9.93132018e+00,
+ 'tBid_mBax_kf': 1.08401291e-04,
+ 'tBid_mBax_kr': 2.49910419e-02,
+ 'mBaxtBid_to_iBaxtBid_k': 8.50105160e-03,
+ 'tBid_iBax_kr': 3.85287413e-03,
+ 'tBid_iBax_kf': 1.65033482e-02,
+ 'Bax_dimerization_kf': 1.51859505e+00,
+ 'Bax_dimerization_kr': 3.05646033e-03,
+ 'k_eflx': 4.13273113e+03,
+ 'lipo_eflx': 6.15208340e+01},
+ best_err=265.011127508)
+
 # min obj func val = 
 #init_conds = {'tBid_0': 15, 'Vesicles_0': 10}
 
-
+"""What would you need to recreate an analysis?
+- The model (e.g., m.model, with initial values)
+- The fitting function (e.g., o.fit_grid())
+- The data (e.g., g.data_bgsub)
+- Any random number generator seeds
+- Then, to avoid having to recreate, also want
+   - The final parameter set
+   - The val of the objective function
+   - Any plots (before, after)
+- Comments
+"""

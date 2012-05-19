@@ -6,7 +6,7 @@ from pylab import *
 import scipy.optimize.anneal
 from util.numsort import sorted_copy as sort_numeric 
 from util.paramset import ParameterSet
-from m0 import Vesicles_0
+#from m0 import Vesicles_0
 
 #from data.nbd_data import time as nbd_time, mean126c
 #from grid_data import time, data_baxmaj as data
@@ -43,18 +43,19 @@ def grid_anneal_fxn(params, useparams, tmax, model, envlist, time, data, lb, ub,
                 for bax_conc_str in bax_concs_str:
                     model.parameters['Bax_0'].value = float(bax_conc_str)
                     model.parameters['tBid_0'].value = float(tbid_conc_str)
-                    model.parameters['Vesicles_0'].value = Vesicles_0.value # FIXME
+                    #model.parameters['Vesicles_0'].value = Vesicles_0.value # FIXME
      
                     # Run the model with the current initial conditions
                     outlist = anneal.annlodesolve(model, tmax, envlist, params, useparams, ic=True)
                     (xyobs, xout, yout, yobs) = outlist
 
                     # Calculate the objective function value
-                    norm_eVes = [(eVes/Vesicles_0.value)*100 for eVes in xyobs[1]] 
+                    #norm_eVes = [(eVes/Vesicles_0.value)*100 for eVes in xyobs[1]] 
+                    model_output = xyobs[1]
 
                     objout = anneal.compare_data(
                                array([time, data[lipo_conc_str][tbid_conc_str][bax_conc_str]]),
-                               array([xout, norm_eVes]), [(1, 1)], vardata)
+                               array([xout, model_output]), [(1, 1)], vardata)
                     total_error = total_error + objout
     else:
         print "======>VALUE OUT OF BOUNDS NOTED"
@@ -121,15 +122,16 @@ def nbd_anneal_fxn(params, useparams, tmax, model, envlist, data, lb, ub, norm=F
 ## Fitting Functions ##########################################################
 #{{{# fit_grid()
 def fit_grid(model, omag=3):
-    data = g.data_bgsub
+    #data = g.data_bgsub
+    data = g.p
 
     #{{{# PLOT THE PRE-FIT DOSE-RESPONSE
     ### CHOOSE THE RANGE OF THE GRID TO FIT
     #lipo_concs = ['10']
     lipo_conc_str = '10' 
     lipo_concs_str = ['10']
-    tbid_concs_str = ['2', '21.5', '40']
-    #tbid_concs_str = ['15']
+    #tbid_concs_str = ['2', '21.5', '40']
+    tbid_concs_str = ['15']
 
     for tbid_conc_str in tbid_concs_str:
         g.plot_timecourses(lipo_conc_str, tbid_conc_str, g.data_bgsub,
@@ -141,11 +143,11 @@ def fit_grid(model, omag=3):
     # Note the initial parameter set
     param_dict = {}
     for j, param in enumerate(model.parameters):
-        param_dict[param.name] = xmin[j]
+        param_dict[param.name] = param.value
     # Set the retval (best error) in the annealing for this parameter set
     ps_initial = ParameterSet(param_dict, model=model)
 
-    #{{{# Do the annealing =================================================
+    ## Do the annealing =================================================
     # Initialize data structures for annealing
     # paramarr is a list of parameter values in the order generated
     # by iterating over model.parameters
@@ -160,7 +162,7 @@ def fit_grid(model, omag=3):
                         envlist, g.time, data, lb, ub, lipo_concs_str, tbid_concs_str, bax_concs_str,
                         False, False, outputfile), lower=lower, upper=upper, full_output=1)
     outputfile.close()
-    #}}}
+    #
 
     (xmin, retval, Jmin, T, feval, iters, accept) = annlout
     # xmin is the array of best-fit parameter values. Convert these to a dict
@@ -194,5 +196,5 @@ def fit_grid(model, omag=3):
             g.plot_timecourses(lipo_conc_str, tbid_conc_str, g.data_bgsub,
                                fixed_axis='tBid', model=model)
         
-    return param_set
+    return ps_final
 #}}}
