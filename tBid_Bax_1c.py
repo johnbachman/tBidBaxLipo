@@ -28,9 +28,9 @@ class tBid_Bax_1c(tBid_Bax):
 
         #{{{# INITIAL CONDITIONS
         # Concentrations in nanomolar
-        self.parameter('Vesicles_0', 1)
+        self.parameter('Vesicles_0', 2)
         tBid_0 = self.parameter('tBid_0', 1)
-        Bax_0 = self.parameter('Bax_0', 50)
+        Bax_0 = self.parameter('Bax_0', 1)
 
         tBid = self['tBid']
         Bax = self['Bax']
