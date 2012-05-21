@@ -18,9 +18,9 @@ class tBid_Bax_1c(tBid_Bax):
     #}}}
 
     #{{{# initialize_model()
-    def __init__(self):
-        # Sets self.model = Model()
-        tBid_Bax.__init__(self)
+    def __init__(self, params_dict=None):
+        # Sets self.model = Model(), and self.param_dict
+        tBid_Bax.__init__(self, params_dict=params_dict)
 
         self.declare_monomers()
 
@@ -30,17 +30,15 @@ class tBid_Bax_1c(tBid_Bax):
         #}}}
 
         #{{{# INITIAL CONDITIONS
-        # Concentrations in nanomolar
-        self.parameter('Vesicles_0', 2)
-        tBid_0 = self.parameter('tBid_0', 1)
-        Bax_0 = self.parameter('Bax_0', 1)
+        self.parameter('Vesicles_0', 5)
+        self.parameter('tBid_0', 20)
+        self.parameter('Bax_0', 100)
 
         tBid = self['tBid']
         Bax = self['Bax']
 
-        self.initial(tBid(loc='c', bh3=None) ** solution, tBid_0)
-        self.initial(Bax(loc='c', bh3=None, a6=None) ** solution, Bax_0)
-        #Initial(Vesicles() ** full_ves, Vesicles_0)
+        self.initial(tBid(loc='c', bh3=None) ** solution, self['tBid_0'])
+        self.initial(Bax(loc='c', bh3=None, a6=None) ** solution, self['Bax_0'])
         #}}}
 
         #{{{# OBSERVABLES
@@ -76,10 +74,12 @@ class tBid_Bax_1c(tBid_Bax):
     def translocate_tBid_Bax(self):
         print("tBid_Bax_ode1c: translocate_tBid_Bax()")
 
-        tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1 * self['Vesicles_0'].value)
+        tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
+                                          factor=self['Vesicles_0'].value)
         tBid_transloc_kr = self.parameter('tBid_transloc_kr', 0)
 
-        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2 * self['Vesicles_0'].value)
+        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
+                                          factor=self['Vesicles_0'].value)
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-2)
 
         ves = self['ves']

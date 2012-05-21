@@ -16,35 +16,21 @@ from tBid_Bax_core import tBid_Bax
 class tBid_Bax_sitec(tBid_Bax):
     
     #{{{# __init__()
-    def __init__(self, scaling_factor=10, init_concs=None):
-        # Sets self.model = Model()
-        tBid_Bax.__init__(self)
+    def __init__(self, scaling_factor=10, params_dict=None):
+        # Sets self.model = Model(), and self.params_dict
+        tBid_Bax.__init__(self, params_dict=params_dict)
 
         # This is the only variable that needs to be set to rescale
         # the simulation according to the nominal initial concentrations
         # given below (which match those of the deterministic simulations)
         self.scaling_factor = scaling_factor
 
-        # Forward rate scaling factor for translocations or solution rxns
-        # (See MOMP Modeling Notes .tex doc)
-        self.outside_compartment_rsf = 1. / self.scaling_factor
+        self.parameter('Vesicles_0', 5, factor=self.scaling_factor)
+        self.parameter('tBid_0', 20, factor=self.scaling_factor)
+        self.parameter('Bax_0', 100, factor=self.scaling_factor)
 
-        # The initial values must be set before enumerating compartments
-        if init_concs is None:  # Default initial concentrations
-            Vesicles_0 = 5
-            tBid_0 = 20
-            Bax_0 = 100
-        else: # Allow the initial concentrations to be set
-            Vesicles_0 = init_concs['Vesicles_0']
-            tBid_0 = init_concs['tBid_0']
-            Bax_0 = init_concs['Bax_0']
-        
-        self.parameter('Vesicles_0', Vesicles_0 * self.scaling_factor)
-        self.parameter('tBid_0', tBid_0 * self.scaling_factor)
-        self.parameter('Bax_0', Bax_0 * self.scaling_factor)
-            
         # The compartment list needs to be built before declaring monomers
-        self.cpt_list = ['c%d' % cpt_num for cpt_num in range(1, Vesicles_0+1)]
+        self.cpt_list = ['c%d' % cpt_num for cpt_num in range(1, self['Vesicles_0'].value+1)]
         self.cpt_list.append('solution')
 
         # Now, monomers can be declared
@@ -54,8 +40,8 @@ class tBid_Bax_sitec(tBid_Bax):
         tBid = self['tBid']
         Bax = self['Bax']
 
-        self.initial(tBid(bh3=None, loc='c', cpt='solution'), tBid_0)
-        self.initial(Bax(bh3=None, a6=None, loc='c', cpt='solution'), Bax_0)
+        self.initial(tBid(bh3=None, loc='c', cpt='solution'), self['tBid_0'])
+        self.initial(Bax(bh3=None, a6=None, loc='c', cpt='solution'), self['Bax_0'])
         #}}}
 
         #{{{# OBSERVABLES
@@ -99,13 +85,11 @@ class tBid_Bax_sitec(tBid_Bax):
     def translocate_tBid_Bax(self):
         print("tBid_Bax_sitec: translocate_tBid_Bax()")
 
-        # Translocation of proteins to vesicles (i.e., from c to m state)
-        tBid_transloc_kf = self.parameter('tBid_transloc_kf',
-                                          1e-1 * self.outside_compartment_rsf)
+        tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
+                                          factor = (1 / float(self.scaling_factor)))
         tBid_transloc_kr = self.parameter('tBid_transloc_kr', 0)
-
-        Bax_transloc_kf = self.parameter('Bax_transloc_kf',
-                                         1e-2 * self.outside_compartment_rsf)
+        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
+                                          factor = (1 / float(self.scaling_factor)))
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-2)
 
         tBid = self['tBid']
@@ -181,7 +165,7 @@ class tBid_Bax_sitec(tBid_Bax):
         for i in range(0, num_sims):
             if use_kappa:
                 ssa_result = kappa.get_kasim_data(self.model, time=tmax, points=100,
-                                     filename=('simdata/%s_%d' % (self.model.name, i))
+                                     output_dir='simdata')
                 xrecs.append(ssa_result)
             else:
                 ssa_result = bng.run_ssa(self.model, t_end=tmax, n_steps=100, cleanup=True)

@@ -26,8 +26,14 @@ class tBid_Bax(object):
 
 ## DEFAULT IMPLEMENTATIONS
     #{{{# __init__    
-    def __init__(self):
-        self.model = Model(_export=False)
+    def __init__(self, params_dict=None):
+        self.model = Model('tBid_Bax', _export=False)
+
+        # The params_dict allows any parameter value to be overriden
+        # by name; any parameters not included in the dict will be set
+        # to default values
+        self.params_dict = params_dict
+
     #}}}
 
     #{{{# declare_monomers()
@@ -130,7 +136,7 @@ class tBid_Bax(object):
         print "tBid_Bax: Building model 0:"
 
         self.translocate_tBid_Bax()
-        self.tBid_activates_Bax(bax_site='a6')
+        #self.tBid_activates_Bax(bax_site='a6')
 
         #dye_release(Bax(loc='i', bh3=None))
         #pores_from_Bax_monomers()
@@ -295,8 +301,16 @@ class tBid_Bax(object):
         self.model.add_component(m)
         return m
 
-    def parameter(self, *args, **kwargs):
-        p = Parameter(*args, _export=False, **kwargs)
+    def parameter(self, name, value, factor=1):
+        if self.params_dict is None:
+            param_val = value * factor
+        else:
+            if name in self.params_dict:
+                param_val = self.params_dict[name] * factor
+            else:
+                param_val = value * factor
+
+        p = Parameter(name, param_val, _export=False)
         self.model.add_component(p)
         return p
 
@@ -321,5 +335,7 @@ class tBid_Bax(object):
 
     def __getitem__(self, index):
         return self.model.all_components()[index]
+
+
 #}}}
 
