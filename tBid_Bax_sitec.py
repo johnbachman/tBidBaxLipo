@@ -118,8 +118,6 @@ class tBid_Bax_sitec(tBid_Bax):
 
         # Forward rate of tBid binding to Bax (E + S -> ES)
         tBid_mBax_kf = self.parameter('tBid_mBax_kf', 1)
-        #tBid_mBax_kf = Parameter('tBid_mBax_kf', 0)
-        #Parameter('tBid_mBax_kf', 0) # Forward rate of tBid binding to Bax (E + S -> ES)
         # Reverse rate of tBid binding to Bax (ES -> E + S)
         tBid_mBax_kr = self.parameter('tBid_mBax_kr', 1)
         # Dissociation of tBid from iBax (EP -> E + P)
@@ -159,7 +157,7 @@ class tBid_Bax_sitec(tBid_Bax):
     #}}}
 
     #{{{# RUNNING THE MODEL
-    def run_model(self, tmax=12000, num_sims=1, use_kappa=True):
+    def run_model(self, tmax=12000, num_sims=1, use_kappa=True, figure_ids=[0, 1]):
         xrecs = []
         dr_all = []
         for i in range(0, num_sims):
@@ -177,14 +175,14 @@ class tBid_Bax_sitec(tBid_Bax):
         x_avg = recarray(xrecs[0].shape, dtype=xrecs[0].dtype, buf=mean(xall, 0))
 
         ci = color_iter()
-        marker = ','
+        marker = 'x'
         linestyle = ''
-        figure(1)
 
         tBid_0 = self['tBid_0']
         Bax_0 = self['Bax_0']
 
         # Translocation
+        figure(figure_ids[0])
         errorbar(x_avg['time'], x_avg['ctBid']/tBid_0.value,
                  yerr=x_std['ctBid']/tBid_0.value,
                  color=ci.next(), marker=marker, linestyle=linestyle)

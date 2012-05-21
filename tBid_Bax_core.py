@@ -10,7 +10,7 @@ class tBid_Bax(object):
 ## VIRTUAL FUNCTIONS
 
     #{{{# within_compartment_rsf()
-    def within_compartment_rsf():
+    def within_compartment_rsf(self):
         raise NotImplementedError()
     #}}}
 
@@ -33,7 +33,6 @@ class tBid_Bax(object):
         # by name; any parameters not included in the dict will be set
         # to default values
         self.params_dict = params_dict
-
     #}}}
 
     #{{{# declare_monomers()
@@ -98,7 +97,7 @@ class tBid_Bax(object):
         print("tBid_Bax: tBid_activates_Bax(bax_site=" + bax_site + ")")
 
         # Forward rate of tBid binding to Bax (E + S -> ES)
-        kf = self.parameter('tBid_mBax_kf', 1 * self.within_compartment_rsf())
+        kf = self.parameter('tBid_mBax_kf', 1, factor=self.within_compartment_rsf())
         #tBid_mBax_kf = Parameter('tBid_mBax_kf', 0)
         #Parameter('tBid_mBax_kf', 0) # Forward rate of tBid binding to Bax (E + S -> ES)
         # Reverse rate of tBid binding to Bax (ES -> E + S)
@@ -133,10 +132,11 @@ class tBid_Bax(object):
 
     #{{{# build_model0
     def build_model0(self):
+        print "---------------------------"
         print "tBid_Bax: Building model 0:"
 
         self.translocate_tBid_Bax()
-        #self.tBid_activates_Bax(bax_site='a6')
+        self.tBid_activates_Bax(bax_site='a6')
 
         #dye_release(Bax(loc='i', bh3=None))
         #pores_from_Bax_monomers()

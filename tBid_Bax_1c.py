@@ -253,7 +253,7 @@ class tBid_Bax_1c(tBid_Bax):
     #}}}
 
     #{{{# RUNNING THE MODEL
-    def run_model(self, tmax=12000):
+    def run_model(self, tmax=12000, figure_ids=[0,1]):
         from pysb.integrate import odesolve # Postpone integrator test msg
 
         t = linspace(0, tmax, 1000)
@@ -266,6 +266,7 @@ class tBid_Bax_1c(tBid_Bax):
         Bax_0 = self['Bax_0']
 
         # Translocation
+        figure(figure_ids[0])
         plot(t, (x['ctBid'])/tBid_0.value, label='ctBid', color=ci.next())
         plot(t, (x['mtBid'])/tBid_0.value, label='mtBid', color=ci.next())
         plot(t, (x['cBax'])/Bax_0.value, label='cBax', color=ci.next())
