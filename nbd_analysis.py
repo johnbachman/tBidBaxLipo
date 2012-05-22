@@ -4,7 +4,6 @@ from util.report import Report
 from util.fitting import Parameter, fit, residuals
 from pylab import *
 
-
 # How does signal increase with hydrophobicity? Need an additional parameter
 # to describe magnitude of hydrophobicity at each position. If linear, can
 # be a simple proportionality constant to the species concentration.
@@ -134,7 +133,7 @@ def do_fit(report=None, fittype='double_exp'):
         report.writeReport()
 #}}}#
 
-#{{{# plot_normalized()
+#{{{# plot_raw()
 def plot_raw(report=None):
     for i, nbd in enumerate(nbdall):
         if (nbd_names[i] == '62c'):
@@ -182,8 +181,7 @@ def plot_normalized(report=None):
         report.writeReport()
 #}}}
 
-
-#{{{ plot_avg()
+#{{{# plot_avg()
 def plot_avg(plot_std=False, report=None):
     norm_averages, norm_stds = calc_norm_avg_std()
 
@@ -207,7 +205,6 @@ def plot_avg(plot_std=False, report=None):
     if (report):
         report.writeReport()
 #}}}
-
 
 #{{{# calc_norm_avg_std()
 def calc_norm_avg_std():
