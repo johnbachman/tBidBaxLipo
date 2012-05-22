@@ -91,16 +91,20 @@ class tBid_Bax_nc(tBid_Bax):
         for cpt in self.model.compartments:
             if (not cpt.name == 'solution'):
                 self.rule('tBid_translocates_sol_to_%s' % cpt.name,
-                     tBid(loc='c') ** solution >> tBid(loc='m') ** cpt,
+                     tBid(loc='c', bh3=None) ** solution >>
+                     tBid(loc='m', bh3=None) ** cpt,
                      tBid_transloc_kf)
                 self.rule('tBid_translocates_%s_to_sol' % cpt.name,
-                     tBid(loc='m', bh3=None) ** cpt >> tBid(loc='c', bh3=None) ** solution,
+                     tBid(loc='m', bh3=None) ** cpt >>
+                     tBid(loc='c', bh3=None) ** solution,
                      tBid_transloc_kr)
                 self.rule('Bax_translocates_sol_to_%s' % cpt.name,
-                     Bax(loc='c') ** solution >> Bax(loc='m') ** cpt,
+                     Bax(loc='c', bh3=None, a6=None) ** solution >>
+                     Bax(loc='m', bh3=None, a6=None) ** cpt,
                      Bax_transloc_kf)
                 self.rule('Bax_translocates_%s_to_sol' % cpt.name,
-                     Bax(loc='m') ** cpt >> Bax(loc='c') ** solution,
+                     Bax(loc='m', bh3=None, a6=None) ** cpt >>
+                     Bax(loc='c', bh3=None, a6=None) ** solution,
                      Bax_transloc_kr)
     #}}}
 

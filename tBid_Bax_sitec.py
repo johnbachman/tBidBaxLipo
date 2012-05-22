@@ -105,10 +105,12 @@ class tBid_Bax_sitec(tBid_Bax):
                      tBid(loc='c', bh3=None, cpt='solution'),
                      tBid_transloc_kr)
                 self.rule('Bax_translocates_sol_to_%s' % cpt_name,
-                     Bax(loc='c', cpt='solution') >> Bax(loc='m', cpt=cpt_name),
+                     Bax(loc='c', cpt='solution', bh3=None, a6=None) >>
+                     Bax(loc='m', cpt=cpt_name, bh3=None, a6=None),
                      Bax_transloc_kf)
                 self.rule('Bax_translocates_%s_to_sol' % cpt_name,
-                     Bax(loc='m', cpt=cpt_name) >> Bax(loc='c', cpt='solution'),
+                     Bax(loc='m', cpt=cpt_name, bh3=None, a6=None) >>
+                     Bax(loc='c', cpt='solution', bh3=None, a6=None),
                      Bax_transloc_kr)
     #}}}
 
