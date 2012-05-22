@@ -135,6 +135,30 @@ def do_fit(report=None, fittype='double_exp'):
 #}}}#
 
 #{{{# plot_normalized()
+def plot_raw(report=None):
+    for i, nbd in enumerate(nbdall):
+        if (nbd_names[i] == '62c'):
+            time = time_c62
+        else:
+            time = time_other
+
+        rawfig = figure()
+        #norm_replicates = normalize_min_max(nbd)
+        #norm_replicates = normalize_fit(nbd)
+
+        for j, replicate in enumerate(nbd):
+            plot(time, replicate, label='No. ' + str(j), figure=rawfig)
+
+        legend(loc='lower right')
+        title('Bax ' + nbd_names[i] + ' Data, Normalized')
+
+        if (report):
+            report.addCurrentFigure()
+    if (report):
+        report.writeReport()
+#}}}
+
+#{{{# plot_normalized()
 def plot_normalized(report=None):
     for i, nbd in enumerate(nbdall):
         if (nbd_names[i] == '62c'):
@@ -143,7 +167,8 @@ def plot_normalized(report=None):
             time = time_other
 
         normfig = figure()
-        norm_replicates = normalize(nbd)
+        #norm_replicates = normalize_min_max(nbd)
+        norm_replicates = normalize_fit(nbd)
 
         for j, replicate in enumerate(norm_replicates):
             plot(time, replicate, label='No. ' + str(j), figure=normfig)
@@ -157,14 +182,96 @@ def plot_normalized(report=None):
         report.writeReport()
 #}}}
 
-#{{{# normalize()
-def normalize(replicates):
+
+#{{{ plot_avg()
+def plot_avg(plot_std=False, report=None):
+    norm_averages, norm_stds = calc_norm_avg_std()
+
+    for i, nbd in enumerate(nbdall):
+        if (nbd_names[i] == '62c'):
+            time = time_c62
+        else:
+            time = time_other
+
+        figure()
+        if plot_std:
+            errorbar(time, norm_averages[i], yerr=norm_stds[i], label='')
+        else:
+            plot(time, norm_averages[i], label='')
+
+        #legend(loc='lower right')
+        title('Bax ' + nbd_names[i] + ' Data, Normalized, Averaged')
+
+        if (report):
+            report.addCurrentFigure()
+    if (report):
+        report.writeReport()
+#}}}
+
+
+#{{{# calc_norm_avg_std()
+def calc_norm_avg_std():
+    norm_averages = []
+    norm_stds = []
+
+    for i, nbd in enumerate(nbdall):
+        norm_replicates = array(normalize_fit(nbd))
+
+        norm_averages.append(mean(norm_replicates, axis=0))
+        norm_stds.append(std(norm_replicates, axis=0))
+
+    return [norm_averages, norm_stds]
+#}}}
+
+#{{{# normalize_min_max()
+def normalize_min_max(replicates):
+    """
+    Simple normalization that scales each trajectory to have 0 as its min
+    and 1 as its max. The problem with this is that noisy spikes in the
+    data lead to inappropriate values for the max.
+    """
     normalized_replicates = []
     for i, replicate in enumerate(replicates):
         replicate = array(replicate)
         min_val = min(replicate)
         max_val = max(replicate)
         normalized_replicate = (replicate - min_val) / (max_val - min_val)
+        normalized_replicates.append(normalized_replicate)
+
+    return normalized_replicates
+#}}}
+
+#{{{# normalize_fit()
+def normalize_fit(replicates):
+    """
+    Normalization that choose one (the first) trajectory as a reference,
+    and then chooses appropriate scaling parameters (min and max vals) to
+    minimize the deviation of the other trajectories from the reference
+    trajectory.
+    """
+    normalized_replicates = []
+
+    # Choose the first replicate (arbitrarily) as the one to fit to,
+    # and normalize it
+    reference = array(replicates[0])
+    reference = (reference - min(reference)) / (max(reference) - min(reference)) 
+    normalized_replicates.append(reference)
+
+    # For the other replicates, let min val and max val be fit so
+    # as to minimize deviation from the normalized first replicate
+    for replicate in replicates[1:len(replicates)]:
+
+        # Define the minval and maxval fit parameters
+        fit_min_val = Parameter(min(replicate))
+        fit_max_val = Parameter(max(replicate))
+
+        # Define the "model" func (just the normalization equation)
+        def normalization_eqn(repl): return (repl - fit_min_val()) / (fit_max_val() - fit_min_val())
+
+        fit(normalization_eqn, [fit_min_val, fit_max_val], array(reference), array(replicate))
+
+        replicate = array(replicate)
+        normalized_replicate = normalization_eqn(array(replicate))
         normalized_replicates.append(normalized_replicate)
 
     return normalized_replicates
