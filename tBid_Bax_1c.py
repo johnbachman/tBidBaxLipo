@@ -48,7 +48,7 @@ class tBid_Bax_1c(tBid_Bax):
         self.observable('mBax', Bax(loc='m'))
 
         # Activation
-        #Observable('iBax', Bax(loc='i'))
+        self.observable('iBax', Bax(loc='i'))
         self.observable('tBidBax', tBid(loc='m', bh3=1) % Bax(loc='m', a6=1))
 
         #Observable('eVes', Vesicles(dye='e'))
@@ -273,7 +273,7 @@ class tBid_Bax_1c(tBid_Bax):
         plot(t, (x['mBax'])/Bax_0.value, label='mBax', color=ci.next())
 
         # Activation
-        #plot(t, x['iBax']/Bax_0.value, label='iBax', color=ci.next())
+        plot(t, x['iBax']/Bax_0.value, label='iBax', color=ci.next())
         plot(t, x['tBidBax']/tBid_0.value, label='tBidBax', color=ci.next())
         # Pore formation
         #plot(t, (x['pBax'])/Bax_0.value, label='pBax')

@@ -44,25 +44,6 @@ class tBid_Bax_sitec(tBid_Bax):
         self.initial(Bax(bh3=None, a6=None, loc='c', cpt='solution'), self['Bax_0'])
         #}}}
 
-        #{{{# OBSERVABLES
-        self.observable('ctBid', tBid(loc='c', cpt='solution'))
-        self.observable('mtBid', tBid(loc='m'))
-        self.observable('cBax', Bax(loc='c', cpt='solution'))
-        self.observable('mBax', Bax(loc='m'))
-
-        # Activation
-        #Observable('iBax', Bax(loc='i'))
-        self.observable('tBidBax', tBid(loc='m', bh3=1) % Bax(loc='m', a6=1))
-
-        # Pore formation
-        for cpt_name in self.cpt_list:
-            if (not cpt_name == 'solution'):
-                self.observable('tBid_%s' % cpt_name, tBid(cpt=cpt_name))
-                self.observable('Bax_%s' % cpt_name, Bax(cpt=cpt_name))
-                #self.observable('iBax_%s' % cpt.name, Bax(loc='i') ** cpt)
-                self.observable('tBidBax_%s' % cpt_name,
-                            tBid(loc='m', bh3=1, cpt=cpt_name) % Bax(loc='m', a6=1, cpt=cpt_name))
-        #}}}
     #}}}
 
     #{{{# declare_monomers()
@@ -112,6 +93,18 @@ class tBid_Bax_sitec(tBid_Bax):
                      Bax(loc='m', cpt=cpt_name, bh3=None, a6=None) >>
                      Bax(loc='c', cpt='solution', bh3=None, a6=None),
                      Bax_transloc_kr)
+
+        # OBSERVABLES
+        # Translocation
+        self.observable('ctBid', tBid(loc='c', cpt='solution'))
+        self.observable('mtBid', tBid(loc='m'))
+        self.observable('cBax', Bax(loc='c', cpt='solution'))
+        self.observable('mBax', Bax(loc='m'))
+
+        for cpt_name in self.cpt_list:
+            if (not cpt_name == 'solution'):
+                self.observable('tBid_%s' % cpt_name, tBid(cpt=cpt_name))
+                self.observable('Bax_%s' % cpt_name, Bax(cpt=cpt_name))
     #}}}
 
     #{{{# tBid_activates_Bax()
@@ -119,11 +112,11 @@ class tBid_Bax_sitec(tBid_Bax):
         print("tBid_Bax_sitec: tBid_activates_Bax(bax_site=" + bax_site + ")")
 
         # Forward rate of tBid binding to Bax (E + S -> ES)
-        tBid_mBax_kf = self.parameter('tBid_mBax_kf', 1)
+        tBid_mBax_kf = self.parameter('tBid_mBax_kf', 1e-2)
         # Reverse rate of tBid binding to Bax (ES -> E + S)
         tBid_mBax_kr = self.parameter('tBid_mBax_kr', 1)
         # Dissociation of tBid from iBax (EP -> E + P)
-        #tBid_iBax_kc = Parameter('tBid_iBax_kc', 10)
+        tBid_iBax_kc = self.parameter('tBid_iBax_kc', 1)
 
         # Create the dicts to parameterize the site that tBid binds to
         bax_site_bound = {bax_site:1}
@@ -138,23 +131,33 @@ class tBid_Bax_sitec(tBid_Bax):
             if (not cpt_name == 'solution'):
                 self.rule('tBid_Bax_bind_%s' % cpt_name,
                      tBid(loc='m', bh3=None, cpt=cpt_name) +
-                     Bax(loc='m', bh3=None, a6=None, cpt=cpt_name) >>
+                     Bax(loc='m', bh3=None, cpt=cpt_name, **bax_site_unbound) >>
                      tBid(loc='m', bh3=1, cpt=cpt_name) %
-                     Bax(loc='m', bh3=None, a6=1, cpt=cpt_name),
+                     Bax(loc='m', bh3=None, cpt=cpt_name, **bax_site_bound),
                      tBid_mBax_kf)
                 self.rule('tBid_Bax_unbind_%s' % cpt_name,
                      tBid(loc='m', bh3=1, cpt=cpt_name) %
-                     Bax(loc='m', bh3=None, a6=1, cpt=cpt_name) >>
+                     Bax(loc='m', bh3=None, cpt=cpt_name, **bax_site_bound) >>
                      tBid(loc='m', bh3=None, cpt=cpt_name) +
                      Bax(loc='m', bh3=None, a6=None, cpt=cpt_name),
                      tBid_mBax_kr)
 
         # tBid dissociates from iBax
-        #Rule('tBid_unbinds_iBax',
-        #     tBid(bh3=1) % Bax(loc='m', **bax_site_bound) >>
-        #     tBid(bh3=None) + Bax(loc='i', **bax_site_unbound),
-        #     tBid_iBax_kc)
+        self.rule('tBid_unbinds_iBax',
+             tBid(loc='m', bh3=1) % Bax(loc='m', **bax_site_bound) >>
+             tBid(loc='m', bh3=None) + Bax(loc='i', **bax_site_unbound),
+             tBid_iBax_kc)
 
+        # OBSERVABLES
+        # Activation
+        self.observable('iBax', Bax(loc='i'))
+        self.observable('tBidBax', tBid(loc='m', bh3=1) % Bax(loc='m', a6=1))
+
+        for cpt_name in self.cpt_list:
+            if (not cpt_name == 'solution'):
+                self.observable('iBax_%s' % cpt_name, Bax(loc='i', cpt=cpt_name))
+                self.observable('tBidBax_%s' % cpt_name,
+                            tBid(loc='m', bh3=1, cpt=cpt_name) % Bax(loc='m', a6=1, cpt=cpt_name))
     #}}}
     #}}}
 
@@ -199,9 +202,9 @@ class tBid_Bax_sitec(tBid_Bax):
                  color=ci.next(), marker=marker, linestyle=linestyle)
 
         # Activation
-        #errorbar(x_avg['time'], x_avg['iBax']/Bax_0.value,
-        #         yerr=x_std['iBax']/Bax_0.value, label='iBax',
-        #         color=ci.next(), marker=marker, linestyle=linestyle)
+        errorbar(x_avg['time'], x_avg['iBax']/Bax_0.value,
+                 yerr=x_std['iBax']/Bax_0.value, label='iBax',
+                 color=ci.next(), marker=marker, linestyle=linestyle)
         errorbar(x_avg['time'], x_avg['tBidBax']/tBid_0.value,
                  yerr=x_std['tBidBax']/tBid_0.value,
                  color=ci.next(), marker=marker, linestyle=linestyle)

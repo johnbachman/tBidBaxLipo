@@ -55,7 +55,7 @@ class tBid_Bax_nc(tBid_Bax):
         self.observable('mBax', Bax(loc='m'))
 
         # Activation
-        #Observable('iBax', Bax(loc='i'))
+        self.observable('iBax', Bax(loc='i'))
         self.observable('tBidBax', tBid(loc='m', bh3=1) % Bax(loc='m', a6=1))
 
         # pore formation
@@ -63,7 +63,7 @@ class tBid_Bax_nc(tBid_Bax):
             if (not cpt.name == 'solution'):
                 self.observable('tBid_%s' % cpt.name, tBid() ** cpt)
                 self.observable('Bax_%s' % cpt.name, Bax() ** cpt)
-                #self.observable('iBax_%s' % cpt.name, Bax(loc='i') ** cpt)
+                self.observable('iBax_%s' % cpt.name, Bax(loc='i') ** cpt)
                 self.observable('tBidBax_%s' % cpt.name,
                             tBid(loc='m', bh3=1) % Bax(loc='m', a6=1) ** cpt)
                 #self.observable('Bax2_%s' % cpt.name, MatchOnce(Bax(bh3=1) % Bax(bh3=1) ** cpt))
@@ -180,9 +180,9 @@ class tBid_Bax_nc(tBid_Bax):
                  color=ci.next(), marker=marker, linestyle=linestyle)
 
         # Activation
-        #errorbar(x_avg['time'], x_avg['iBax']/Bax_0.value,
-        #         yerr=x_std['iBax']/Bax_0.value, label='iBax',
-        #         color=ci.next(), marker=marker, linestyle=linestyle)
+        errorbar(x_avg['time'], x_avg['iBax']/Bax_0.value,
+                 yerr=x_std['iBax']/Bax_0.value, label='iBax',
+                 color=ci.next(), marker=marker, linestyle=linestyle)
         errorbar(x_avg['time'], x_avg['tBidBax']/tBid_0.value,
                  yerr=x_std['tBidBax']/tBid_0.value,
                  color=ci.next(), marker=marker, linestyle=linestyle)

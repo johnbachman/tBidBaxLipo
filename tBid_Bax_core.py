@@ -97,13 +97,11 @@ class tBid_Bax(object):
         print("tBid_Bax: tBid_activates_Bax(bax_site=" + bax_site + ")")
 
         # Forward rate of tBid binding to Bax (E + S -> ES)
-        kf = self.parameter('tBid_mBax_kf', 1, factor=self.within_compartment_rsf())
-        #tBid_mBax_kf = Parameter('tBid_mBax_kf', 0)
-        #Parameter('tBid_mBax_kf', 0) # Forward rate of tBid binding to Bax (E + S -> ES)
+        kf = self.parameter('tBid_mBax_kf', 1e-2, factor=self.within_compartment_rsf())
         # Reverse rate of tBid binding to Bax (ES -> E + S)
         kr = self.parameter('tBid_mBax_kr', 1)
         # Dissociation of tBid from iBax (EP -> E + P)
-        #tBid_iBax_kc = Parameter('tBid_iBax_kc', 10)
+        kc = self.parameter('tBid_iBax_kc', 1)
 
         # Create the dicts to parameterize the site that tBid binds to
         bax_site_bound = {bax_site:1}
@@ -123,10 +121,10 @@ class tBid_Bax(object):
              kr)
 
         # tBid dissociates from iBax
-        #Rule('tBid_unbinds_iBax',
-        #     tBid(bh3=1) % Bax(loc='m', **bax_site_bound) >>
-        #     tBid(bh3=None) + Bax(loc='i', **bax_site_unbound),
-        #     tBid_iBax_kc)
+        self.rule('tBid_unbinds_iBax',
+             tBid(bh3=1) % Bax(loc='m', **bax_site_bound) >>
+             tBid(bh3=None) + Bax(loc='i', **bax_site_unbound),
+             kc)
 
     #}}}
 
