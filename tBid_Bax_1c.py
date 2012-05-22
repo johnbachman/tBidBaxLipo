@@ -48,8 +48,8 @@ class tBid_Bax_1c(tBid_Bax):
         self.observable('mBax', Bax(loc='m'))
 
         # Activation
-        self.observable('iBax', Bax(loc='i'))
         self.observable('tBidBax', tBid(loc='m', bh3=1) % Bax(loc='m', a6=1))
+        self.observable('iBax', Bax(loc='i'))
 
         #Observable('eVes', Vesicles(dye='e'))
         #Observable('ePore', Pore() ** empty_ves)
