@@ -47,10 +47,6 @@ class tBid_Bax_1c(tBid_Bax):
         self.observable('cBax', Bax(loc='c'))
         self.observable('mBax', Bax(loc='m'))
 
-        # Activation
-        self.observable('tBidBax', tBid(loc='m', bh3=1) % Bax(loc='m', a6=1))
-        self.observable('iBax', Bax(loc='i'))
-
         #Observable('eVes', Vesicles(dye='e'))
         #Observable('ePore', Pore() ** empty_ves)
         #Observable('fPore', Pore() ** full_ves)
@@ -171,84 +167,6 @@ class tBid_Bax_1c(tBid_Bax):
         #     Bax(loc='c', bh3=1, a6=3) + Bax(loc='c', bh3=1, a6=4) +
         #     Bax(loc='c', bh3=2, a6=3) + Bax(loc='c', bh3=2, a6=4),
         #     pore_recycling_rate_k)
-    #}}}
-    #}}}
-
-    ######################################
-
-    #{{{# MODEL BUILDING FUNCTIONS
-    #def build_1c_model0(self):
-    #    print "Building 1c model 0:"
-    #    self.initialize_model()
-
-        #RSF = 1.0 / (Vesicles_0.value ** 2)
-        #RSF = 1.0 / (Vesicles_0.value)
-
-    #    self.translocate_tBid_Bax_1c()
-        #dye_release(Bax(loc='i', bh3=None))
-    #    self.tBid_activates_Bax(self.within_compartment_rsf(), bax_site='a6')
-        #pores_from_Bax_monomers()
-        #Bax_dimerizes()
-        #dye_release(Pore())
-        #dye_release(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None))
-
-    #{{{ OTHERS 
-    def build_model1():
-        print """Building model 1: Translocation, Bax activation, and monomeric pore formation,
-                 and aggregation."""
-        translocate_Bax()
-        translocate_tBid()
-        tBid_activates_Bax(bax_site='a6')
-        pores_from_Bax_monomers()
-        #Bax_aggregates_at_pores()
-
-    def build_model1r():
-        translocate_Bax()
-        translocate_tBid()
-        tBid_activates_Bax(bax_site='a6')
-        pores_from_Bax_monomers()
-        Bax_reverses()
-        #Bax_aggregates_at_pores()
-
-    def build_model2():
-        print "Building model 2: Translocation, Bax activation, and dimeric pore formation."
-        translocate_Bax()
-        translocate_tBid()
-        tBid_activates_Bax(bax_site='a6')
-        Bax_dimerizes()
-        pores_from_Bax_dimers()
-        Bax_aggregates_at_pores()
-
-    def build_model3():
-        print "Building model 3: Translocation, Bax activation, "
-        print "tetrameric pore formation and aggregation."
-        translocate_Bax()
-        translocate_tBid()
-        tBid_activates_Bax(bax_site='a6')
-        Bax_dimerizes()
-        Bax_tetramerizes()
-        pores_from_Bax_tetramers()
-        Bax_reverses()
-        #Bax_auto_activates(target_bax_site='a6')
-        #Bax_aggregates_at_pores()
-
-    def build_model4():
-        print "Building model 4: Translocation, Bax activation/auto-activation, "
-        print "tetrameric pore formation."
-
-        """ In this model, the autoactivation has no effect, perhaps because
-            dimerization is so favorable that there is not sufficient free iBax/pBax to
-            kick in the positive feedback effect."""
-
-        translocate_Bax()
-        translocate_tBid()
-        tBid_activates_Bax(bax_site='a6')
-        Bax_reverses()
-        Bax_dimerizes()
-        Bax_tetramerizes()
-        pores_from_Bax_tetramers()
-        #Bax_auto_activates(target_bax_site='a6')
-        #Bax_inhibits_tBid()
     #}}}
     #}}}
 
