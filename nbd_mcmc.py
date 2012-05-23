@@ -7,36 +7,58 @@ from tBid_Bax_1c import tBid_Bax_1c
 
 import nbd_analysis
 
+# Some parameters that looked reasonable after manual fitting
+params_dict = {
+'tBid_transloc_kf':1e-1,
+'tBid_transloc_kr':0,
+'Bax_transloc_kf':1e-1,
+'Bax_transloc_kr':100,
+'tBid_mBax_kf':1,
+'tBid_mBax_kr':0.01,
+'tBid_iBax_kc':10,
+'iBax_reverse_k':1e-1,
+'Bax_dimerization_kf':1e-3,
+'Bax_dimerization_kr':1e-2,
+'Bax_tetramerization_kf':1e-3,
+'Bax_tetramerization_kr':1e-4
+}
 
-m1c = tBid_Bax_1c()
-m1c.build_model0()
+# Some nice parameters from fitting starting from the above
+params_dict = {'Bax_dimerization_kf': 0.00039997477906346336,
+ 'Bax_dimerization_kr': 0.013749131382056693,
+ 'Bax_tetramerization_kf': 0.00093066359281583318,
+ 'Bax_tetramerization_kr': 0.0002291780988903229,
+ 'Bax_transloc_kf': 5.007883980982208,
+ 'Bax_transloc_kr': 171.1669217159442,
+ 'iBax_reverse_k': 0.2713605496448912,
+ 'tBid_iBax_kc': 11.621431266275815,
+ 'tBid_mBax_kf': 0.062823108082142434,
+ 'tBid_mBax_kr': 0.036115738840543629,
+ 'tBid_transloc_kf': 0.046433226280901206,
+ 'tBid_transloc_kr': 0.0
+}
+
+
+m1c = tBid_Bax_1c(params_dict=params_dict)
+m1c.build_model2()
 model = m1c.model
 
 seed = 2
 random = numpy.random.RandomState(seed)
 
-#ntimes = 20; # TODO Number of timepoints?
-#tspan = numpy.linspace(0, 40, ntimes); # TODO define tspan
-tspan = nbd_analysis.time_other
+tspan = nbd_analysis.time_c62
 nbd_avgs, nbd_stds = nbd_analysis.calc_norm_avg_std()
-ydata_norm = nbd_avgs[2] # 120C
-
-#ysim = odesolve(model, tspan)
-#ysim_array = ysim.view().reshape(len(tspan), len(ysim.dtype))
-#yspecies = ysim_array[:, :len(model.species)]
+ydata_norm = nbd_avgs[1] # NBD_62c 
 
 sigma = 0.05; # TODO Set sigma appropriately
-#ydata = yspecies * (random.randn(*yspecies.shape) * sigma + 1);
-#ysim_max = yspecies.max(0)
-#ydata_norm = ydata / ysim_max
 
 def likelihood(mcmc, position):
     yout = mcmc.simulate(position)
 
     # TODO need a way to get the desired observable(s) from the array
-    iBax = yout[:,5]
-    iBax_max = max(iBax)
-    yout_norm = iBax / iBax_max    
+    obs = 2*yout[:,6]+4*yout[:,7]
+    obs_max = max(obs)
+    yout_norm = obs / obs_max    
 
     return numpy.sum((ydata_norm - yout_norm) ** 2 / (2 * sigma ** 2))
 
@@ -59,9 +81,8 @@ print model.parameters
 # estimate rates only (not initial conditions) from wild guesses
 opts.estimate_params = [p for p in model.parameters if not p.name.endswith('_0') ]
 opts.initial_values = [p.value for p in opts.estimate_params]
-#opts.initial_values = [1e-4, 1e3, 1e6] # TODO set to nominal values?
 
-opts.nsteps = 1000
+opts.nsteps = 2000
 opts.likelihood_fn = likelihood
 opts.step_fn = step
 opts.use_hessian = True
@@ -74,13 +95,22 @@ mcmc = mcmc_hessian.MCMC(opts)
 plt.plot(tspan, ydata_norm)
 before = odesolve(m1c.model, tspan)
 before_array = before.view().reshape(len(tspan), len(before.dtype))
-iBax_before = before_array[:,5]
+iBax_before = (2*before_array[:,6]) + (4*before_array[:,7])
 iBax_before_norm = iBax_before / max(iBax_before)
 plt.plot(tspan, iBax_before_norm[:])
 
-#mcmc.run()
+mcmc.run()
 
 
+# Plot "After" curves
+if True:
+    plt.figure()
+    plt.plot(tspan, ydata_norm)
+    after = mcmc.simulate()
+    #after_array = before.view().reshape(len(tspan), len(before.dtype))
+    iBax_after = 2*after[:,6] + 4*after[:,7]
+    iBax_after_norm = iBax_after / max(iBax_after)
+    plt.plot(tspan, iBax_after_norm[:])
 
 """
 Basic version:
