@@ -99,9 +99,11 @@ class tBid_Bax(object):
         # Forward rate of tBid binding to Bax (E + S -> ES)
         kf = self.parameter('tBid_mBax_kf', 1e-2, factor=self.within_compartment_rsf())
         # Reverse rate of tBid binding to Bax (ES -> E + S)
-        kr = self.parameter('tBid_mBax_kr', 1)
+        kr = self.parameter('tBid_mBax_kr', 1.5)
         # Dissociation of tBid from iBax (EP -> E + P)
-        kc = self.parameter('tBid_iBax_kc', 1)
+        kc = self.parameter('tBid_iBax_kc', 1e-1)
+        # Reversion of active Bax (P -> S)
+        krev = self.parameter('iBax_reverse_k', 1e-2)
 
         # Create the dicts to parameterize the site that tBid binds to
         bax_site_bound = {bax_site:1}
@@ -126,8 +128,118 @@ class tBid_Bax(object):
              tBid(bh3=None) + Bax(loc='i', **bax_site_unbound),
              kc)
 
+        # iBax reverses back to mBax
+        self.rule('iBax_reverses',
+             Bax(loc='i', bh3=None, a6=None) >> Bax(loc='m', bh3=None, a6=None),
+             krev)
+
+        # Activation
+        self.observable('tBidBax', tBid(loc='m', bh3=1) % Bax(loc='m', a6=1))
+        self.observable('iBax', Bax(loc='i', bh3=None, a6=None))
+
     #}}}
 
+    #{{{# Bax_dimerizes()
+    def Bax_dimerizes(self):
+        """CONSTRAINTS:
+         - If the late phase of the 62c signal is an indication of dimerization, it
+           starts to manifest around 500s.
+         - In SATSOURA, Fig 4. appears to indicate that the Bax-Bax FRET reaches
+           steady-state at around 12 minutes.
+        """
+        print("tBid_Bax: Bax_dimerizes()")
+     
+        # Rate of dimerization formation/oligomerization of activated Bax (s^-1). 
+        Bax_dimerization_kf = self.parameter('Bax_dimerization_kf', 1e-2) # was 1
+        Bax_dimerization_kr = self.parameter('Bax_dimerization_kr', 1e0)
+
+        Bax = self['Bax']
+
+        self.rule('Bax_Forms_Dimers',
+             Bax(loc='i', bh3=None, a6=None) + Bax(loc='i', bh3=None, a6=None) <>
+             Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None),
+             Bax_dimerization_kf, Bax_dimerization_kr)
+
+        self.observable('Bax2', 
+             MatchOnce(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None)))
+
+    #    Rule('Bax_Forms_Dimers',
+    #         Bax(loc='i', bh3=None, a6=None) + Bax(loc='i', bh3=None, a6=None) <>
+    #         Pore(),
+    #         Bax_dimerization_kf, Bax_dimerization_kr)
+    #}}}
+
+    #{{{# Bax_tetramerizes
+    def Bax_tetramerizes(self):
+        """ CONSTRAINTS:
+        In Lovell Fig S1, about 80% of the Bax is at membranes (inserted,
+        non-extractable, resistant to gel filtration etc.) after       
+        """
+        print("tBid_Bax: Bax_tetramerizes()")
+
+        """ This function depends on Bax_dimerization to be called as well."""
+        # Rate of dimerization formation/oligomerization of activated Bax (s^-1). 
+        Bax_tetramerization_kf = self.parameter('Bax_tetramerization_kf', 1e-2) # was 1
+        Bax_tetramerization_kr = self.parameter('Bax_tetramerization_kr', 1e-2) 
+
+        Bax = self['Bax']
+
+        self.rule('Bax_Forms_Tetramers',
+             MatchOnce(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None)) +
+             MatchOnce(Bax(loc='i', bh3=2, a6=None) % Bax(loc='i', bh3=2, a6=None)) <>
+             Bax(loc='i', bh3=1, a6=3) % Bax(loc='i', bh3=1, a6=4) % 
+             Bax(loc='i', bh3=2, a6=3) % Bax(loc='i', bh3=2, a6=4), 
+             Bax_tetramerization_kf, Bax_tetramerization_kr)
+
+        self.observable('Bax4',
+             MatchOnce(Bax(loc='i', bh3=1, a6=3) % Bax(loc='i', bh3=1, a6=4) % 
+             Bax(loc='i', bh3=2, a6=3) % Bax(loc='i', bh3=2, a6=4)))
+        #Rule('Bax_Forms_Tetramers_p',
+        #     MatchOnce(Bax(loc='p', bh3=1, a6=None) % Bax(loc='p', bh3=1, a6=None)) +
+        #     MatchOnce(Bax(loc='p', bh3=2, a6=None) % Bax(loc='p', bh3=2, a6=None)) <>
+        #     Bax(loc='p', bh3=1, a6=3) % Bax(loc='p', bh3=1, a6=4) % 
+        #     Bax(loc='p', bh3=2, a6=3) % Bax(loc='p', bh3=2, a6=4), 
+        #     Bax_tetramerization_kf, Bax_tetramerization_kr)
+    #}}}
+
+    #{{{# iBax_binds_tBid()
+    # FIXME
+    """
+    THERE IS A PROBLEM WITH THIS!!!
+    When tBid is bound to Bax, it is prevented from recirculating back to the solution.
+    Therefore you get a sequence of events like:
+    tBid + Bax (full liposome) -> tBid + Bax(i) (full liposome)
+    Bax(p) (full) -> Bax(p) (empty) THIS HAPPENS VERY FAST
+    But also: Bax(i) + tBid (full liposome). When complexed in this way,
+    tBid does not recycle back to the solution. Therefore tBid catalyses the creation
+    of a species Bax(i) which over time shifts the equilibrium of tBid from c to full liposomes.
+
+    """
+    def iBax_binds_tBid():
+        print("tBid_Bax: iBax_binds_tBid()")
+
+        # INHIBITION OF TBID BY BAX
+        kf = self.parameter('tBid_iBax_kf', 1e-1) # Rate of tBid binding to iBax (E + P -> EP)
+        kr = self.parameter('tBid_iBax_kr', 2.5) # Rate of tBid binding to iBax (E + P -> EP)
+
+        tBid = self['tBid']
+        Bax = self['Bax']
+
+        # Binding between mtBid and iBax (activation back-reaction--should be slow)
+        self.rule('tBid_iBax_bind',
+             tBid(loc='m', bh3=None) + Bax(loc='i', bh3=None, a6=None) <>
+             tBid(loc='m', bh3=1) % Bax(loc='i', bh3=1, a6=None),
+             kf, kr)
+        #Rule('tBid_binds_pBax_f', tBid(loc='m', bh3=None) + Bax(loc='p', bh3=None) <>
+        #     tBid(loc='m', bh3=1) % Bax(loc='p', bh3=1),
+        #     tBid_iBax_kf, tBid_iBax_kr)
+        #Rule('tBid_binds_iBax_e',
+        #     tBid(loc='m', dye='e', bh3=None) + Bax(loc='i', dye='e', bh3=None) >>
+        #     tBid(loc='m', dye='e', bh3=1) % Bax(loc='i', dye='e', bh3=1),
+        #     tBid_iBax_kf)
+    #}}}
+
+## MODEL BUILDING FUNCTIONS
     #{{{# build_model0
     def build_model0(self):
         print "---------------------------"
@@ -143,6 +255,38 @@ class tBid_Bax(object):
         #dye_release(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None))
     #}}}
 
+    #{{{# build_model1
+    def build_model1(self):
+        print "---------------------------"
+        print "tBid_Bax: Building model 1:"
+
+        self.translocate_tBid_Bax()
+        self.tBid_activates_Bax(bax_site='a6')
+        self.Bax_dimerizes()
+    #}}}
+
+    #{{{# build_model2 - Bax tetramerization
+    def build_model2(self):
+        print "---------------------------"
+        print "tBid_Bax: Building model 2:"
+
+        self.translocate_tBid_Bax()
+        self.tBid_activates_Bax(bax_site='a6')
+        self.Bax_dimerizes()
+        self.Bax_tetramerizes()
+    #}}}
+
+    #{{{# build_model3 - iBax-tBid binding, tetramerization
+    def build_model3(self):
+        print "---------------------------"
+        print "tBid_Bax: Building model 3:"
+
+        self.translocate_tBid_Bax()
+        self.tBid_activates_Bax(bax_site='a6')
+        self.iBax_binds_tBid()
+        self.Bax_dimerizes()
+        self.Bax_tetramerizes()
+    #}}}
 
 ## OTHER FUNCS ###################################################
 #{{{
@@ -181,55 +325,6 @@ class tBid_Bax(object):
              Bax_i_to_c)
     #}}}
 
-    #{{{# Bax_dimerizes()
-    def Bax_dimerizes():
-        print("Bax_dimerizes()")
-        """CONSTRAINTS:
-         - If the late phase of the 62c signal is an indication of dimerization, it
-           starts to manifest around 500s.
-         - In SATSOURA, Fig 4. appears to indicate that the Bax-Bax FRET reaches
-           steady-state at around 12 minutes.
-        """
-     
-        # Rate of dimerization formation/oligomerization of activated Bax (s^-1). 
-        Bax_dimerization_kf = Parameter('Bax_dimerization_kf', 1e-2) # was 1
-        Bax_dimerization_kr = Parameter('Bax_dimerization_kr', 1e0)
-
-    #    Rule('Bax_Forms_Dimers',
-    #         Bax(loc='i', bh3=None, a6=None) + Bax(loc='i', bh3=None, a6=None) <>
-    #         Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None),
-    #         Bax_dimerization_kf, Bax_dimerization_kr)
-        Rule('Bax_Forms_Dimers',
-             Bax(loc='i', bh3=None, a6=None) + Bax(loc='i', bh3=None, a6=None) <>
-             Pore(),
-             Bax_dimerization_kf, Bax_dimerization_kr)
-    #}}}
-
-    #{{{# Bax_tetramerizes
-    def Bax_tetramerizes():
-        """ CONSTRAINTS:
-        In Lovell Fig S1, about 80% of the Bax is at membranes (inserted,
-        non-extractable, resistant to gel filtration etc.) after       
-        """
-
-        """ This function depends on Bax_dimerization to be called as well."""
-        # Rate of dimerization formation/oligomerization of activated Bax (s^-1). 
-        Parameter('Bax_tetramerization_kf', 1e-2) # was 1
-        Parameter('Bax_tetramerization_kr', 1e-2) 
-
-        Rule('Bax_Forms_Tetramers',
-             MatchOnce(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None)) +
-             MatchOnce(Bax(loc='i', bh3=2, a6=None) % Bax(loc='i', bh3=2, a6=None)) <>
-             Bax(loc='i', bh3=1, a6=3) % Bax(loc='i', bh3=1, a6=4) % 
-             Bax(loc='i', bh3=2, a6=3) % Bax(loc='i', bh3=2, a6=4), 
-             Bax_tetramerization_kf, Bax_tetramerization_kr)
-        Rule('Bax_Forms_Tetramers_p',
-             MatchOnce(Bax(loc='p', bh3=1, a6=None) % Bax(loc='p', bh3=1, a6=None)) +
-             MatchOnce(Bax(loc='p', bh3=2, a6=None) % Bax(loc='p', bh3=2, a6=None)) <>
-             Bax(loc='p', bh3=1, a6=3) % Bax(loc='p', bh3=1, a6=4) % 
-             Bax(loc='p', bh3=2, a6=3) % Bax(loc='p', bh3=2, a6=4), 
-             Bax_tetramerization_kf, Bax_tetramerization_kr)
-    #}}}
 
     #{{{# Bax_aggregates_at_pores()  
     def Bax_aggregates_at_pores():
@@ -239,35 +334,6 @@ class tBid_Bax(object):
              aggregation_rate_k)
     #}}}#
 
-    #{{{# Bax_inhibits_tBid()
-    # FIXME
-    """
-    THERE IS A PROBLEM WITH THIS!!!
-    When tBid is bound to Bax, it is prevented from recirculating back to the solution.
-    Therefore you get a sequence of events like:
-    tBid + Bax (full liposome) -> tBid + Bax(i) (full liposome)
-    Bax(p) (full) -> Bax(p) (empty) THIS HAPPENS VERY FAST
-    But also: Bax(i) + tBid (full liposome). When complexed in this way,
-    tBid does not recycle back to the solution. Therefore tBid catalyses the creation
-    of a species Bax(i) which over time shifts the equilibrium of tBid from c to full liposomes.
-
-    """
-    def Bax_inhibits_tBid():
-        # INHIBITION OF TBID BY BAX
-        Parameter('tBid_iBax_kf', 1e-1) # Rate of tBid binding to iBax (E + P -> EP)
-        Parameter('tBid_iBax_kr', 1) # Rate of tBid binding to iBax (E + P -> EP)
-
-        # Binding between mtBid and iBax (activation back-reaction--should be slow)
-        Rule('tBid_binds_iBax_f', tBid(loc='m', bh3=None) + Bax(loc='i', bh3=None) <>
-             tBid(loc='m', bh3=1) % Bax(loc='i', bh3=1),
-             tBid_iBax_kf, tBid_iBax_kr)
-        Rule('tBid_binds_pBax_f', tBid(loc='m', bh3=None) + Bax(loc='p', bh3=None) <>
-             tBid(loc='m', bh3=1) % Bax(loc='p', bh3=1),
-             tBid_iBax_kf, tBid_iBax_kr)
-        #Rule('tBid_binds_iBax_e', tBid(loc='m', dye='e', bh3=None) + Bax(loc='i', dye='e', bh3=None) >>
-        #     tBid(loc='m', dye='e', bh3=1) % Bax(loc='i', dye='e', bh3=1),
-        #     tBid_iBax_kf)
-    #}}}
 
     #{{{# tBid_reverses_Bax()
     def tBid_reverses_Bax():
