@@ -71,8 +71,14 @@ mcmc = mcmc_hessian.MCMC(opts)
 
 
 # Plot "Before" curves
+plt.plot(tspan, ydata_norm)
+before = odesolve(m1c.model, tspan)
+before_array = before.view().reshape(len(tspan), len(before.dtype))
+iBax_before = before_array[:,5]
+iBax_before_norm = iBax_before / max(iBax_before)
+plt.plot(tspan, iBax_before_norm[:])
 
-mcmc.run()
+#mcmc.run()
 
 
 
