@@ -9,23 +9,16 @@ class tBid_Bax(object):
 
 ## VIRTUAL FUNCTIONS
 
-    #{{{# within_compartment_rsf()
     def within_compartment_rsf(self):
         raise NotImplementedError()
-    #}}}
 
-    #{{{# translocate_tBid_Bax()
     def translocate_tBid_Bax():
         raise NotImplementedError()
-    #}}}
 
-    #{{{# run_model()
     def run_model():
         raise NotImplementedError()
-    #}}} 
 
 ## DEFAULT IMPLEMENTATIONS
-    #{{{# __init__    
     def __init__(self, params_dict=None):
         self.model = Model('tBid_Bax', _export=False)
 
@@ -33,9 +26,7 @@ class tBid_Bax(object):
         # by name; any parameters not included in the dict will be set
         # to default values
         self.params_dict = params_dict
-    #}}}
 
-    #{{{# declare_monomers()
     def declare_monomers(self):
         self.monomer('tBid', ['bh3', 'loc'],
                 {'loc': ['c', 'm']})
@@ -47,9 +38,7 @@ class tBid_Bax(object):
         #Monomer('Pore', [], {})
         #Monomer('Vesicles', ['dye'],
         #        {'dye': ['f', 'e']})
-    #}}}
 
-    #{{{# tBid_activates_Bax()
     def tBid_activates_Bax(self, bax_site='a6'):
         """Takes two arguments:
             - bax_site specifies the name of the site on Bax to which
@@ -137,9 +126,6 @@ class tBid_Bax(object):
         self.observable('tBidBax', tBid(loc='m', bh3=1) % Bax(loc='m', a6=1))
         self.observable('iBax', Bax(loc='i', bh3=None, a6=None))
 
-    #}}}
-
-    #{{{# Bax_dimerizes()
     def Bax_dimerizes(self):
         """CONSTRAINTS:
          - If the late phase of the 62c signal is an indication of dimerization, it
@@ -167,9 +153,7 @@ class tBid_Bax(object):
     #         Bax(loc='i', bh3=None, a6=None) + Bax(loc='i', bh3=None, a6=None) <>
     #         Pore(),
     #         Bax_dimerization_kf, Bax_dimerization_kr)
-    #}}}
 
-    #{{{# Bax_tetramerizes
     def Bax_tetramerizes(self):
         """ CONSTRAINTS:
         In Lovell Fig S1, about 80% of the Bax is at membranes (inserted,
@@ -200,9 +184,7 @@ class tBid_Bax(object):
         #     Bax(loc='p', bh3=1, a6=3) % Bax(loc='p', bh3=1, a6=4) % 
         #     Bax(loc='p', bh3=2, a6=3) % Bax(loc='p', bh3=2, a6=4), 
         #     Bax_tetramerization_kf, Bax_tetramerization_kr)
-    #}}}
 
-    #{{{# iBax_binds_tBid()
     # FIXME
     """
     THERE IS A PROBLEM WITH THIS!!!
@@ -237,10 +219,8 @@ class tBid_Bax(object):
         #     tBid(loc='m', dye='e', bh3=None) + Bax(loc='i', dye='e', bh3=None) >>
         #     tBid(loc='m', dye='e', bh3=1) % Bax(loc='i', dye='e', bh3=1),
         #     tBid_iBax_kf)
-    #}}}
 
 ## MODEL BUILDING FUNCTIONS
-    #{{{# build_model0
     def build_model0(self):
         print "---------------------------"
         print "tBid_Bax: Building model 0:"
@@ -253,20 +233,18 @@ class tBid_Bax(object):
         #Bax_dimerizes()
         #dye_release(Pore())
         #dye_release(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None))
-    #}}}
 
-    #{{{# build_model1
     def build_model1(self):
+        """Activation, dimerization."""
         print "---------------------------"
         print "tBid_Bax: Building model 1:"
 
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='a6')
         self.Bax_dimerizes()
-    #}}}
 
-    #{{{# build_model2 - Bax tetramerization
     def build_model2(self):
+        """Bax tetramerization."""
         print "---------------------------"
         print "tBid_Bax: Building model 2:"
 
@@ -274,10 +252,9 @@ class tBid_Bax(object):
         self.tBid_activates_Bax(bax_site='a6')
         self.Bax_dimerizes()
         self.Bax_tetramerizes()
-    #}}}
 
-    #{{{# build_model3 - iBax-tBid binding, tetramerization
     def build_model3(self):
+        """iBax-tBid binding, tetramerization."""
         print "---------------------------"
         print "tBid_Bax: Building model 3:"
 
@@ -286,11 +263,9 @@ class tBid_Bax(object):
         self.iBax_binds_tBid()
         self.Bax_dimerizes()
         self.Bax_tetramerizes()
-    #}}}
 
 ## OTHER FUNCS ###################################################
-#{{{
-    #{{{# Bax_auto_activates()
+
     def Bax_auto_activates(target_bax_site='a6'):
         # Andrews suggests that tBid/Bax Kd should work out to 25nM
         Parameter('iBax_mBax_kf', 1e-4) # Forward rate of iBax binding to Bax (E + S -> ES)
@@ -312,9 +287,7 @@ class tBid_Bax(object):
              Bax(loc='i', bh3=1) % Bax(loc='m', **target_bax_site_bound) >>
              Bax(loc='i', bh3=None) + Bax(loc='i', **target_bax_site_unbound),
              mBaxiBax_to_iBaxiBax_k)
-    #}}}
 
-    #{{{# Bax_reverses()
     def Bax_reverses():
         Parameter('Bax_i_to_c', 1e-4)
         Rule('Bax_reverses',
@@ -323,19 +296,13 @@ class tBid_Bax(object):
         Rule('Bax_reverses_p',
              Bax(loc='p', bh3=None, a6=None) >> Bax(loc='c', bh3=None, a6=None),
              Bax_i_to_c)
-    #}}}
 
-
-    #{{{# Bax_aggregates_at_pores()  
     def Bax_aggregates_at_pores():
         Parameter('aggregation_rate_k', 1e-4)
         Rule('Bax_aggregates_at_pores',
              Bax(loc='p') + Bax(loc='m') >> Bax(loc='p') + Bax(loc='p'),
              aggregation_rate_k)
-    #}}}#
 
-
-    #{{{# tBid_reverses_Bax()
     def tBid_reverses_Bax():
         Parameter('iBaxtBid_to_mBaxtBid_k', 1e-3) # Rate of the EP->ES transition # FIXME
 
@@ -344,9 +311,7 @@ class tBid_Bax(object):
              tBid(loc='m', bh3=1) % Bax(loc='i', bh3=1) >>
              tBid(loc='m', bh3=1) % Bax(loc='m', bh3=1),
              iBaxtBid_to_mBaxtBid_k)
-    #}}}
 
-    #{{{# basal_Bax_activation()
     def basal_Bax_activation():
         # Spontaneous rate of transition of Bax from the mitochondrial to the inserted state
         Parameter('basal_Bax_kf', 1e-3) # Implies average time is 10000 seconds???
@@ -356,10 +321,7 @@ class tBid_Bax(object):
                 [basal_Bax_kf, basal_Bax_kr], sitename='loc')
         two_state_equilibrium(Bax(bh3=None, dye='e'), 'm', 'i',
                 [basal_Bax_kf, basal_Bax_kr], sitename='loc')
-    #}}}
-#}}}
 
-#{{{ self.set...
     def monomer(self, *args, **kwargs):
         m = Monomer(*args, _export=False, **kwargs)
         self.model.add_component(m)
@@ -399,7 +361,4 @@ class tBid_Bax(object):
 
     def __getitem__(self, index):
         return self.model.all_components()[index]
-
-
-#}}}
 
