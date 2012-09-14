@@ -25,7 +25,7 @@ class tBid_Bax_sitec(tBid_Bax):
         # given below (which match those of the deterministic simulations)
         self.scaling_factor = scaling_factor
 
-        self.parameter('Vesicles_0', 5, factor=self.scaling_factor)
+        self.parameter('Vesicles_0', 1, factor=self.scaling_factor)
         self.parameter('tBid_0', 20, factor=self.scaling_factor)
         self.parameter('Bax_0', 100, factor=self.scaling_factor)
 
