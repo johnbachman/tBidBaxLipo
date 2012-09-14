@@ -11,9 +11,7 @@ from pylab import *
 # Try single exponential fit to each mean curve
 rep = Report()
 
-#{{{# do_fit()
 def do_fit(report=None, fittype='double_exp'):
-
     for i, nbd in enumerate(nbdall):
         #if (not nbd_names[i] == '3c'): continue
 
@@ -131,9 +129,7 @@ def do_fit(report=None, fittype='double_exp'):
 
     if (report):
         report.writeReport()
-#}}}#
 
-#{{{# plot_raw()
 def plot_raw(report=None):
     for i, nbd in enumerate(nbdall):
         if (nbd_names[i] == '62c'):
@@ -155,9 +151,7 @@ def plot_raw(report=None):
             report.addCurrentFigure()
     if (report):
         report.writeReport()
-#}}}
 
-#{{{# plot_normalized()
 def plot_normalized(report=None):
     for i, nbd in enumerate(nbdall):
         if (nbd_names[i] == '62c'):
@@ -179,9 +173,7 @@ def plot_normalized(report=None):
             report.addCurrentFigure()
     if (report):
         report.writeReport()
-#}}}
 
-#{{{# plot_avg()
 def plot_avg(plot_std=False, report=None):
     norm_averages, norm_stds = calc_norm_avg_std()
 
@@ -204,9 +196,7 @@ def plot_avg(plot_std=False, report=None):
             report.addCurrentFigure()
     if (report):
         report.writeReport()
-#}}}
 
-#{{{# calc_norm_avg_std()
 def calc_norm_avg_std():
     norm_averages = []
     norm_stds = []
@@ -218,9 +208,7 @@ def calc_norm_avg_std():
         norm_stds.append(std(norm_replicates, axis=0))
 
     return [norm_averages, norm_stds]
-#}}}
 
-#{{{# normalize_min_max()
 def normalize_min_max(replicates):
     """
     Simple normalization that scales each trajectory to have 0 as its min
@@ -236,20 +224,31 @@ def normalize_min_max(replicates):
         normalized_replicates.append(normalized_replicate)
 
     return normalized_replicates
-#}}}
 
-#{{{# normalize_fit()
 def normalize_fit(replicates):
     """
-    Normalization that choose one (the first) trajectory as a reference,
-    and then chooses appropriate scaling parameters (min and max vals) to
-    minimize the deviation of the other trajectories from the reference
-    trajectory.
+    Find normalization parameters that minimize differences between replicates.
+
+    Chooses one (the first) trajectory as a reference, and then chooses
+    appropriate scaling parameters (min and max vals) to minimize the deviation
+    of the other trajectories from the reference trajectory.
+
+    Parameters
+    ----------
+    replicates : list of numpy.array objects
+        Each entry in the list is a numpy.array containing the data for one
+        repeat of the experiment.
+
+    Returns
+    -------
+    list of numpy.array objects
+        The replicate data after normalization.
     """
+
     normalized_replicates = []
 
     # Choose the first replicate (arbitrarily) as the one to fit to,
-    # and normalize it
+    # and normalize it to the range [0, 1]
     reference = array(replicates[0])
     reference = (reference - min(reference)) / (max(reference) - min(reference)) 
     normalized_replicates.append(reference)
@@ -272,10 +271,8 @@ def normalize_fit(replicates):
         normalized_replicates.append(normalized_replicate)
 
     return normalized_replicates
-#}}}
 
 ## COMMENTS #############################################################
-#{{{# Fits and parameters
 """
 The result of double exponential fitting yields estimates for k1 and k2
 in the following order (largest/fastest to smallest/slowest):
@@ -298,5 +295,4 @@ would be to average the k1s from the two fits that actually fit:
 62c:  1.098e-04, SD: 1.553e-04 (worthless)
 
 """
-#}}}
 
