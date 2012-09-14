@@ -261,22 +261,26 @@ class tBid_Bax_1c(tBid_Bax):
 
     The way this is written,
 
-    - Bax equilibrates equally between the cytosolic and peripherally bound state to both full and
-    empty liposomes.
+    - Bax equilibrates equally between the cytosolic and peripherally bound
+      state to both full and empty liposomes.
 
     - But, once in the "inserted" state, it can't dissociate from the vesicle!!
-      (i.e., there's no reversal either to the cytosolic or peripherally bound states).
+      (i.e., there's no reversal either to the cytosolic or peripherally bound
+      states).
 
-    - Further, there's no reversal from the porated back to the inserted state--instead Bax
-      goes from porated to the peripherally bound state on an empty vesicle.
+    - Further, there's no reversal from the porated back to the inserted
+      state--instead Bax goes from porated to the peripherally bound state on
+      an empty vesicle.
 
-    There is a tradeoff between k_pore_rev and k_eflx. If k_pore_rev is slow, this means that pores,
-    once formed, are very stable, and so the trend is for almost all Bax to end up as oligomerized. Once
-    pore-state Bax reaches steady state, dye release occurs basically linearly afterwards.
+    There is a tradeoff between k_pore_rev and k_eflx. If k_pore_rev is slow,
+    this means that pores, once formed, are very stable, and so the trend is
+    for almost all Bax to end up as oligomerized. Once pore-state Bax reaches
+    steady state, dye release occurs basically linearly afterwards.
 
-    Also note that in this model, once Bax is in the inserted state, it cannot revert back to the peripherally
-    bound state without first passing through the pore state. Also note that it cannot dissociate from the 
-    membrane unless it is in the 'm' (peripherally bound) state.
+    Also note that in this model, once Bax is in the inserted state, it cannot
+    revert back to the peripherally bound state without first passing through
+    the pore state. Also note that it cannot dissociate from the membrane
+    unless it is in the 'm' (peripherally bound) state.
 
     There is a cycle in that Bax can go from m to m via
     mtBid + mBax <-> mtBid:mBax (<)-> mtBid + iBax (<)-> pBax
@@ -285,31 +289,32 @@ class tBid_Bax_1c(tBid_Bax):
     Therefore we need to have
     tBid_Bax_kf * tBid_Bax_kc * k_pore = tBid_Bax_kr * (tBid_iBax_kf) * k_pore_rev
 
-    The product of the rate constants in both directions should be the same--even though dye is released in this process,
-    one would imagine that the process would proceed exactly the same even without dye.
+    The product of the rate constants in both directions should be the
+    same--even though dye is released in this process, one would imagine that
+    the process would proceed exactly the same even without dye.
 
-    If the whole chain is at equilibrium, then each individual link must be at equilibrium.
+    If the whole chain is at equilibrium, then each individual link must be at
+    equilibrium.
 
     Behavior of the model:---------
-    - Why does mftBid not come down as the number of empty vesicles goes up? Theoretically,
-    as tBid cycles back and forth to the cytoplasm, it should unbind, return to dye='none',
-    and then be dye='e' after rebinding an empty vesicle.
+    - Why does mftBid not come down as the number of empty vesicles goes up?
+      Theoretically, as tBid cycles back and forth to the cytoplasm, it should
+      unbind, return to dye='none', and then be dye='e' after rebinding an
+      empty vesicle.
 
+    In the Almeida model, the pore is presumed to have a particular average
+    lifetime, and the transition from P_lf to P* is determined by some first
+    order rate, and then The rate of the efflux reaction is proportional to the
+    amount of pBax(full), the lifetime of the transition between pBax(full) ->
+    pBax(empty), along with the efflux rate constant.
 
-    In the Almeida model, the pore is presumed to have a particular average lifetime,
-    and the transition from P_lf to P* is determined by some first order rate,
-    and then 
-    The rate of the efflux reaction is proportional to the amount of pBax(full),
-    the lifetime of the transition between pBax(full) -> pBax(empty), along with the
-    efflux rate constant.
-
-
-    So imagine that there are precisely 100 (V) vesicles, and 100 Bax molecules. Now
-    suppose that at a given time there is precisely 1 Bax molecule in the pore state
-    on a full vesicle, and this is sufficient to trigger dye release. Further
-    suppose that pore formation is irreversible. Within that timestep (say, 1 second),
-    you would expect that the pBax(full) concentration would go to 0, and the CF
-    (efflux) function would change by precisely 1%.
+    So imagine that there are precisely 100 (V) vesicles, and 100 Bax
+    molecules. Now suppose that at a given time there is precisely 1 Bax
+    molecule in the pore state on a full vesicle, and this is sufficient to
+    trigger dye release. Further suppose that pore formation is irreversible.
+    Within that timestep (say, 1 second), you would expect that the pBax(full)
+    concentration would go to 0, and the CF (efflux) function would change by
+    precisely 1%.
 
     """
     #}}}
