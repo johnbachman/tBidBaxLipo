@@ -1,3 +1,7 @@
+"""
+Code to generate reports documenting model behavior and output.
+"""
+
 from tempfile import NamedTemporaryFile
 import txt2pdf
 from pyPdf import PdfFileWriter, PdfFileReader
