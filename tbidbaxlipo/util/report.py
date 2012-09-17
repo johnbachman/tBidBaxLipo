@@ -12,6 +12,7 @@ class Report():
     tempFileList = []
 
     def addText(self, text):
+        """Add text to the report."""
         # Write the text to a temporary text file
         text_file = NamedTemporaryFile(suffix='.txt', mode='w')
         text_file.write(text)
@@ -20,12 +21,19 @@ class Report():
         self.tempFileList.append(text_file)
 
     def addTextFile(self, filename):
+        """Include the contents of a text file in the report."""
         text_file = open(filename, 'r')
         text = text_file.read()
         addText(text)
         text_file.close()
 
     def addCurrentFigure(self):
+        """Add the current figure to the report.
+        
+        Uses the matplotlib function savefig to export the figure to a
+        temporary PDF file which is incorporated into the report.
+        """
+
         fig_file = NamedTemporaryFile(suffix='.pdf')
         savefig(fig_file.name)
         #pdf_file = PdfPages(fig_file.name)
@@ -34,6 +42,8 @@ class Report():
         self.tempFileList.append(fig_file)
 
     def writeReport(self, outputfilename='report'):
+        """Output the complete report to the given PDF file."""
+
         output = PdfFileWriter()
 
         for tempFile in self.tempFileList:
