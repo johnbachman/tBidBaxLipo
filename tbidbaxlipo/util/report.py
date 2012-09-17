@@ -13,7 +13,9 @@ class Report():
     """A class to facilitate the creation of model analysis documents
     incorporating both figures (from simulations, etc.) and text.
     """
-    tempFileList = []
+
+    def __init__(self):
+        self.tempFileList = []
 
     def addText(self, text):
         """Add text to the report."""
@@ -46,7 +48,14 @@ class Report():
         self.tempFileList.append(fig_file)
 
     def writeReport(self, outputfilename='report'):
-        """Output the complete report to the given PDF file."""
+        """Output the complete report to the given PDF file.
+        
+        Parameters
+        ----------
+        outputfilename : string
+            The name of the output file for the report. *Note* that the .pdf
+            extension will be appended to the given filename.
+        """
 
         output = PdfFileWriter()
 
