@@ -7,7 +7,8 @@ from data.nbd_data import *
 #from data.nbd_data_62c import nbd62c, time
 from util.report import Report
 from util.fitting import Parameter, fit, residuals
-from pylab import legend, title, plot, xlabel, ylabel
+from matplotlib.pyplot import legend, title, plot, xlabel, ylabel, figure
+from numpy import array
 
 rep = Report()
 
@@ -179,7 +180,7 @@ def plot_raw(report=None):
             plot(time, replicate, label='No. ' + str(j), figure=rawfig)
 
         legend(loc='lower right')
-        title('Bax ' + nbd_names[i] + ' Data, Normalized')
+        title('Bax ' + nbd_names[i] + ' Data, Original')
 
         if (report):
             report.addCurrentFigure()
