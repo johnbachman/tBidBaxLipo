@@ -8,7 +8,7 @@ from data.nbd_data import *
 from util.report import Report
 from util.fitting import Parameter, fit, residuals
 from matplotlib.pyplot import legend, title, plot, xlabel, ylabel, figure
-from numpy import array
+from numpy import array, mean, std
 
 rep = Report()
 
