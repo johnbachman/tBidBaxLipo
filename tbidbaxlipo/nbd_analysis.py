@@ -1,17 +1,33 @@
+"""
+Functions for normalizing, fitting, and plotting the NBD-Bax experimental
+data.
+"""
+
 from data.nbd_data import *
 #from data.nbd_data_62c import nbd62c, time
 from util.report import Report
 from util.fitting import Parameter, fit, residuals
-from pylab import *
+from pylab import legend, title, plot, xlabel, ylabel
 
-# How does signal increase with hydrophobicity? Need an additional parameter
-# to describe magnitude of hydrophobicity at each position. If linear, can
-# be a simple proportionality constant to the species concentration.
-
-# Try single exponential fit to each mean curve
 rep = Report()
 
-def do_fit(report=None, fittype='double_exp'):
+# Plotting Functions
+# ==================
+
+def plot_fit(report=None, fittype='double_exp'):
+    """Fit the NBD data using the chosen fit function.
+
+    Parameters
+    ----------
+    report : :py:class:`tbidbaxlipo.util.Report`
+        If provided, writes all plots the given Report object. If
+        None (default value), does not write a Report.
+    fittype : string
+        A string designating the fitting function to use.
+        Default value is 'double_exp'. See source for the full
+        set of fitting functions.
+    """
+
     for i, nbd in enumerate(nbdall):
         #if (not nbd_names[i] == '3c'): continue
 
@@ -39,8 +55,10 @@ def do_fit(report=None, fittype='double_exp'):
             k3 = Parameter(0.1)
             fmax3 = Parameter(0.0025)
 
+            # Define fitting functions
             def single_exp (t):    return (f0() + (fmax()*(1 - exp(-k1()*t))))
-            def exp_lin(t):        return (f0() + (fmax()*(1 - exp(-k1()*t))) + (m()*t))
+            def exp_lin(t):        return (f0() + (fmax()*(1 - exp(-k1()*t)))+
+                                           (m()*t))
             def double_exp(t):     return (f0() + (fmax()*(1 - exp(-k1()*t)))  +
                                            (fmax2()*(1 - exp(-k2()*t))))
             def triple_exp(t):     return (f0() + (fmax()*(1 - exp(-k1()*t)))  +
@@ -49,11 +67,17 @@ def do_fit(report=None, fittype='double_exp'):
             def exp_hyperbola(t):  return (f0() + (fmax()*(1 - exp(-k1()*t))) +
                                            (fmax2()*(1 - (1/(1 + (k2()*t) )) )))
             #def linked_eq(t):    return (f0() + (fmax()*exp(-k1()*t)*(-1 + exp(-k2()*t))))
-            def linked_eq(t):      return (f0() + (k1()*(1 - exp(-k2()*t)) - k2()*(1 - exp(-k1()*t))) * (fmax()/(k1() - k2())))
-            def linked_eq2(t):     return (f0() + (1/(k1() - k2())) * (fmax()*k1()*(exp(-k2()*t) - exp(-k1()*t)) + fmax2()*(k1()*(1 - exp(-k2()*t)) - k2()*(1 - exp(-k1()*t)))))
-
-            def exp_exp(t):    return (f0() + (fmax()*(1 - exp(-fmax3()*(1-exp(-k3()*t))+k1()))) + (fmax2()*(1 - exp(-k2()*t))))
-            #def linked_eq(t):      return (f0() + (fmax()*exp(-k3()*t)*(-1 + exp(-k2()*t)   )))
+            def linked_eq(t):      return (f0() + (k1()*(1 - exp(-k2()*t)) -
+                                           k2()*(1 - exp(-k1()*t))) *
+                                           (fmax()/(k1() - k2())))
+            def linked_eq2(t):     return (f0() + (1/(k1() - k2())) *
+                                           (fmax()*k1()*(exp(-k2()*t) -
+                                           exp(-k1()*t)) + fmax2()*(k1()*(1 -
+                                           exp(-k2()*t)) - k2()*(1 -
+                                           exp(-k1()*t)))))
+            def exp_exp(t):        return (f0() + (fmax()*(1 -
+                                          exp(-fmax3()*(1-exp(-k3()*t))+k1()))) +
+                                          (fmax2()*(1 - exp(-k2()*t))))
 
             if (fittype == 'single_exp'):
                 fit(single_exp, [k1, fmax], array(replicate), array(time))
@@ -82,12 +106,14 @@ def do_fit(report=None, fittype='double_exp'):
             else:
                 raise Exception('unknown fit type')
 
+            # Save the parameter values from the fit
             k1s.append(k1())
             fmaxs.append(fmax())
             k2s.append(k2())
             fmax2s.append(fmax2())
             k3s.append(k3())
 
+            # Plot the data from the replicate along with the fit
             plot(time, replicate, label='No. ' + str(j), figure=fitfig)
             model_vals = map(fitfunc, time)
             plot(time, model_vals, 'k', label='__nolabel__', figure=fitfig)
@@ -119,18 +145,28 @@ def do_fit(report=None, fittype='double_exp'):
         print(fmax2s)
         print('Mean fmax2: %.3e, SD: %.3e' % (mean(array(fmax2s)), std(array(fmax2s))))
 
+        # Plot residuals
         resfig = figure()
         for res in reslist:
             plot(time, res, figure=resfig)
         title('Residuals for ' + nbd_names[i])
         if (report):
             report.addCurrentFigure()
+
     # end iteration over mutants
 
     if (report):
         report.writeReport()
 
 def plot_raw(report=None):
+    """Plot original (raw) experimental NBD data.
+
+    Parameters
+    ----------
+    report : :py:class:`tbidbaxlipo.util.Report`
+        If not None (default), writes the plots to the given Report object.
+    """ 
+
     for i, nbd in enumerate(nbdall):
         if (nbd_names[i] == '62c'):
             time = time_c62
@@ -138,8 +174,6 @@ def plot_raw(report=None):
             time = time_other
 
         rawfig = figure()
-        #norm_replicates = normalize_min_max(nbd)
-        #norm_replicates = normalize_fit(nbd)
 
         for j, replicate in enumerate(nbd):
             plot(time, replicate, label='No. ' + str(j), figure=rawfig)
@@ -153,6 +187,14 @@ def plot_raw(report=None):
         report.writeReport()
 
 def plot_normalized(report=None):
+    """Plot experimental NBD data normalized from 0 to 1.
+
+    Parameters
+    ----------
+    report : :py:class:`tbidbaxlipo.util.Report`
+        If not None (default), writes the plots to the given Report object.
+    """ 
+
     for i, nbd in enumerate(nbdall):
         if (nbd_names[i] == '62c'):
             time = time_c62
@@ -175,6 +217,17 @@ def plot_normalized(report=None):
         report.writeReport()
 
 def plot_avg(plot_std=False, report=None):
+    """Plots the average trajectory for each mutant.
+
+    Parameters
+    ----------
+    plot_std : boolean
+        If True, plots the standard deviation at each point using error bars.
+        Default value is false.
+    report : :py:class:`tbidbaxlipo.util.Report`
+        If not None (default), writes the plots to the given Report object.
+    """
+
     norm_averages, norm_stds = calc_norm_avg_std()
 
     for i, nbd in enumerate(nbdall):
@@ -197,24 +250,17 @@ def plot_avg(plot_std=False, report=None):
     if (report):
         report.writeReport()
 
-def calc_norm_avg_std():
-    norm_averages = []
-    norm_stds = []
-
-    for i, nbd in enumerate(nbdall):
-        norm_replicates = array(normalize_fit(nbd))
-
-        norm_averages.append(mean(norm_replicates, axis=0))
-        norm_stds.append(std(norm_replicates, axis=0))
-
-    return [norm_averages, norm_stds]
+# Normalization Functions
+# =======================
 
 def normalize_min_max(replicates):
+    """Simple normalization of each trajectory to [0, 1].
+
+    Scales each trajectory to have 0 as its min and 1 as its max. The problem
+    with this is that noisy spikes in the data lead to inappropriate values for
+    the max.
     """
-    Simple normalization that scales each trajectory to have 0 as its min
-    and 1 as its max. The problem with this is that noisy spikes in the
-    data lead to inappropriate values for the max.
-    """
+    
     normalized_replicates = []
     for i, replicate in enumerate(replicates):
         replicate = array(replicate)
@@ -272,6 +318,30 @@ def normalize_fit(replicates):
 
     return normalized_replicates
 
+def calc_norm_avg_std():
+    """Calculates an average (and SD) trajectory for each of the NBD mutants,
+    once normalized.
+    
+    Returns
+    -------
+    list : [[numpy.array, numpy.array...], [numpy.array, numpy.array...]]
+        A list of lists containing two elements. The first element is a list
+        of numpy.array objects, each of which contains the average trajectory
+        for an NBD mutant. The second element is the corresponding list
+        of SD trajectories.
+    """
+
+    norm_averages = []
+    norm_stds = []
+
+    for i, nbd in enumerate(nbdall):
+        norm_replicates = array(normalize_fit(nbd))
+
+        norm_averages.append(mean(norm_replicates, axis=0))
+        norm_stds.append(std(norm_replicates, axis=0))
+
+    return [norm_averages, norm_stds]
+
 ## COMMENTS #############################################################
 """
 The result of double exponential fitting yields estimates for k1 and k2
@@ -295,4 +365,9 @@ would be to average the k1s from the two fits that actually fit:
 62c:  1.098e-04, SD: 1.553e-04 (worthless)
 
 """
+# How does signal increase with hydrophobicity? Need an additional parameter
+# to describe magnitude of hydrophobicity at each position. If linear, can
+# be a simple proportionality constant to the species concentration.
+
+# Try single exponential fit to each mean curve
 
