@@ -77,17 +77,14 @@ def do_fit():
         obs_max = max(obs)
         yout_norm = obs / obs_max    
 
-        return numpy.sum((ydata_norm - yout_norm) ** 2 / (2 * sigma ** 2))
+        return numpy.sum((ydata_norm - yout_norm) ** 2 / (2 * sigmas ** 2))
 
     # Set the random number generator seed
     seed = 2
     random = numpy.random.RandomState(seed)
 
     # Set the standard deviation
-    # This value is calculated by averaging the standard deviation
-    # of the normalized NBD-C62 data across all the timepoints:
-    sigma = numpy.mean(nbd_stds[1])
-    print("sigma = %f" % sigma)
+    sigmas = nbd_stds[1]
 
     # Initialize the MCMC arguments
     opts = mcmc_hessian.MCMCOpts()
