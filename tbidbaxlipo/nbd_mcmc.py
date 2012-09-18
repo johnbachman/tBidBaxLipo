@@ -97,7 +97,7 @@ def do_fit():
     # estimate rates only (not initial conditions) from wild guesses
     opts.estimate_params = [p for p in model.parameters if not p.name.endswith('_0') ]
     opts.initial_values = [p.value for p in opts.estimate_params]
-    opts.nsteps = 100
+    opts.nsteps = 10000
     opts.likelihood_fn = likelihood
     opts.step_fn = step
     opts.use_hessian = True
@@ -110,6 +110,7 @@ def do_fit():
 
     # Plot "After" curves
     if True:
+        plt.ion()
         plt.figure()
         plt.plot(tspan, ydata_norm)
         after = mcmc.simulate()
@@ -119,6 +120,7 @@ def do_fit():
         plt.plot(tspan, iBax_after_norm[:])
         plt.show()
 
+    return mcmc
 
 def prior(mcmc, position):
     # TODO Need to put some decent priors on the on and off rates
@@ -151,8 +153,8 @@ def plot_from_params(params_dict):
 
     plt.plot(tspan, ydata_norm)
     output = odesolve(model, tspan)
-    output_array = output.view().reshape(len(tspan), len(output.dtype))
-    iBax = (2*output_array[:,6]) + (4*output_array[:,7]) # Add Bax dimers and tetramers
+    #output_array = output.view().reshape(len(tspan), len(output.dtype))
+    iBax = 2*output['Bax2'] + 4*output['Bax4']
     iBax_norm = iBax / max(iBax)
     plt.plot(tspan, iBax_norm[:])
 
