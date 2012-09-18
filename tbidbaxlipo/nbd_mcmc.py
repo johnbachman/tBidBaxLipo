@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from tBid_Bax_1c import tBid_Bax_1c
 import nbd_analysis
 import pickle
+from tbidbaxlipo.util.report import Report
 
 # Prepare the data
 # ================
@@ -96,9 +97,11 @@ def do_fit():
 
     print model.parameters
     # estimate rates only (not initial conditions) from wild guesses
-    opts.estimate_params = [p for p in model.parameters if not p.name.endswith('_0') ]
+    opts.estimate_params = [p for p in model.parameters
+                              if not p.name.endswith('_0')
+                                 and p.name != 'tbid_transloc_kr']
     opts.initial_values = [p.value for p in opts.estimate_params]
-    opts.nsteps = 10000
+    opts.nsteps = 5000
     opts.likelihood_fn = likelihood
     opts.step_fn = step
     opts.use_hessian = True
@@ -110,23 +113,28 @@ def do_fit():
     mcmc.run()
 
     # Pickle it!
-    output_file = open('nbd62c_m1c_10k.pck', 'w')
-    pickle.dump(mcmc, output_file)
-    output_file.close()
+    #mcmc.solver = None # FIXME This is a hack to make the MCMC pickleable
+    #output_file = open('nbd62c_m1c_10k.pck', 'w')
+    #pickle.dump(mcmc, output_file)
+    #output_file.close()
+
+    # Set to best fit position
+    mcmc.position = mcmc.positions[numpy.argmin(mcmc.likelihoods)]
 
     # Plot "After" curves
-    if True:
-        plt.ion()
-        plt.figure()
-        plt.plot(tspan, ydata_norm)
-        after = mcmc.simulate()
-        #after_array = before.view().reshape(len(tspan), len(before.dtype))
-        iBax_after = 2*after[:,6] + 4*after[:,7]
-        iBax_after_norm = iBax_after / max(iBax_after)
-        plt.plot(tspan, iBax_after_norm[:])
-        plt.show()
+    plt.ion()
+    plt.figure()
+    plt.plot(tspan, ydata_norm)
+    after = mcmc.simulate()
+    iBax_after = 2*after[:,6] + 4*after[:,7]
+    iBax_after_norm = iBax_after / max(iBax_after)
+    plt.plot(tspan, iBax_after_norm[:])
+    plt.show()
 
-    
+    rep = Report()
+    rep.addCurrentFigure()
+    rep.writeReport('nbd_mcmc_fit')
+
     return mcmc
 
 def prior(mcmc, position):
@@ -166,6 +174,15 @@ def plot_from_params(params_dict):
     plt.plot(tspan, iBax_norm[:])
 
     plt.show()
+
+
+# Main function
+# =============
+
+if __name__ == '__main__':
+    do_fit()
+
+
 
 """
 Notes
