@@ -115,7 +115,7 @@ def do_fit():
     output_file.close()
 
     # Plot "After" curves
-    if False:
+    if True:
         plt.ion()
         plt.figure()
         plt.plot(tspan, ydata_norm)
