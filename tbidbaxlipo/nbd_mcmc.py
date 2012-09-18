@@ -8,6 +8,7 @@ import numpy
 import matplotlib.pyplot as plt
 from tBid_Bax_1c import tBid_Bax_1c
 import nbd_analysis
+import pickle
 
 # Prepare the data
 # ================
@@ -106,10 +107,15 @@ def do_fit():
     mcmc = mcmc_hessian.MCMC(opts)
 
     # Run it!
-    mcmc.run()
+    #mcmc.run()
+
+    # Pickle it!
+    output_file = open('nbd62c_m1c_10k.pck', 'w')
+    pickle.dump(mcmc, output_file)
+    output_file.close()
 
     # Plot "After" curves
-    if True:
+    if False:
         plt.ion()
         plt.figure()
         plt.plot(tspan, ydata_norm)
@@ -120,6 +126,7 @@ def do_fit():
         plt.plot(tspan, iBax_after_norm[:])
         plt.show()
 
+    
     return mcmc
 
 def prior(mcmc, position):
