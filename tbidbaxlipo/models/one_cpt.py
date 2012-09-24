@@ -6,11 +6,11 @@ from pylab import *
 from util.fitting import fit, fit_initial, mse
 from util import color_iter
 import util.fitting as fitting
-from tBid_Bax_core import tBid_Bax
+from tbidbaxlipo.models import core
 #from tBidBax_model import tBidBax
 #}}}
 
-class tBid_Bax_1c(tBid_Bax):
+class Builder(core.Builder):
 
     #{{{# within_compartment_rsf()
     def within_compartment_rsf(self):

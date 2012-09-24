@@ -10,10 +10,10 @@ import util.fitting as fitting
 from scipy.stats import poisson
 from pysb import kappa
 from pysb import bng
-from tBid_Bax_core import tBid_Bax
+from tbidbaxlipo.models import core
 #}}}
 
-class tBid_Bax_nc(tBid_Bax):
+class Builder(core.Builder):
 
     #{{{# within_compartment_rsf()
     def within_compartment_rsf(self):

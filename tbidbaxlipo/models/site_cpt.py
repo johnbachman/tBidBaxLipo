@@ -10,10 +10,10 @@ from util import color_iter
 from scipy.stats import poisson
 from pysb import bng
 from pysb import kappa
-from tBid_Bax_core import tBid_Bax
+from tbidbaxlipo.models import core
 #}}}
 
-class tBid_Bax_sitec(tBid_Bax):
+class Builder(core.Builder):
     
     #{{{# __init__()
     def __init__(self, scaling_factor=10, params_dict=None):
