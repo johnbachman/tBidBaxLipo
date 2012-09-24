@@ -16,8 +16,8 @@ from util.report import Report
 from pysb.integrate import odesolve
 
 # Select the dataset ######################
-print("Using gridv1.")
-from data.gridv1 import time, data_tbidmaj
+print("Using gridv2.")
+from data.gridv2 import time, data_tbidmaj
 
 colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
 
@@ -294,7 +294,32 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
     """ Given a lipid concentration, plot the initial or final rate vs. Bax
     concentration dose response, with a separate curve for each tBid
     concentration.
+
+    Parameters
+    ----------
+    lipo_conc_str : string
+        The lipid concentration for the dose response. Default is '10'.
+    rate : string: 'k0' or 'ki'
+        The rate to plot as a function of concentration. Can be either
+        'k0' (the initial rate) or 'ki' (the "intermediate", or final, rate).
+        Default is 'k0'.
+    loglogplot : boolean
+        Whether to plot the dose response on a log scale or not.
+        Default is False.
+    fittype : string: 'linear', 'power', 'hill', or 'hillexp'
+        The function to fit to the dose response data. 
+        Note that fitting of this type is only done if the model argument
+        is None (see below).
+    model : pysb.core.Model
+        The model to simulate and compare to the dose response data.
+        Default is None.
+    axis : string: 'tBid' or 'Bax'
+        The axis over which to calculate the dose response (i.e., the y-axis).
+        Default is 'Bax'.
+    report : :py:class:`tbidbaxlipo.util.Report`
+        The Report object to add the dose response figures to. Default is None.
     """
+    
     plt.ion()
     plt.figure()
     col_index = 0
@@ -408,7 +433,8 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
             rise2 = log(data_arr[3]) - log(data_arr[2])
             run2 = log(concs[3]) - log(concs[2])
             slope2 = rise2 / run2
-            print(outer_conc_str + 'nm ' + outer_axis + ': Slope1,2=' + str(slope1) + ', ' + str(slope2)) # TODO
+            print(outer_conc_str + 'nm ' + outer_axis + ': Slope1,2=' + str(slope1) + ', '
+                            + str(slope2)) # TODO
         else:
             plt.plot(concs, data_arr, data_marker + col, label=data_legend)
 
