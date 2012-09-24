@@ -160,11 +160,6 @@ class Builder(object):
         self.observable('Bax2', 
              MatchOnce(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None)))
 
-    #    Rule('Bax_Forms_Dimers',
-    #         Bax(loc='i', bh3=None, a6=None) + Bax(loc='i', bh3=None, a6=None) <>
-    #         Pore(),
-    #         Bax_dimerization_kf, Bax_dimerization_kr)
-
     def Bax_tetramerizes(self):
         """ CONSTRAINTS:
         In Lovell Fig S1, about 80% of the Bax is at membranes (inserted,
@@ -189,12 +184,6 @@ class Builder(object):
         self.observable('Bax4',
              MatchOnce(Bax(loc='i', bh3=1, a6=3) % Bax(loc='i', bh3=1, a6=4) % 
              Bax(loc='i', bh3=2, a6=3) % Bax(loc='i', bh3=2, a6=4)))
-        #Rule('Bax_Forms_Tetramers_p',
-        #     MatchOnce(Bax(loc='p', bh3=1, a6=None) % Bax(loc='p', bh3=1, a6=None)) +
-        #     MatchOnce(Bax(loc='p', bh3=2, a6=None) % Bax(loc='p', bh3=2, a6=None)) <>
-        #     Bax(loc='p', bh3=1, a6=3) % Bax(loc='p', bh3=1, a6=4) % 
-        #     Bax(loc='p', bh3=2, a6=3) % Bax(loc='p', bh3=2, a6=4), 
-        #     Bax_tetramerization_kf, Bax_tetramerization_kr)
 
     # FIXME
     """
@@ -206,7 +195,6 @@ class Builder(object):
     But also: Bax(i) + tBid (full liposome). When complexed in this way,
     tBid does not recycle back to the solution. Therefore tBid catalyses the creation
     of a species Bax(i) which over time shifts the equilibrium of tBid from c to full liposomes.
-
     """
     def iBax_binds_tBid():
         print("tBid_Bax: iBax_binds_tBid()")
@@ -223,31 +211,19 @@ class Builder(object):
              tBid(loc='m', bh3=None) + Bax(loc='i', bh3=None, a6=None) <>
              tBid(loc='m', bh3=1) % Bax(loc='i', bh3=1, a6=None),
              kf, kr)
-        #Rule('tBid_binds_pBax_f', tBid(loc='m', bh3=None) + Bax(loc='p', bh3=None) <>
-        #     tBid(loc='m', bh3=1) % Bax(loc='p', bh3=1),
-        #     tBid_iBax_kf, tBid_iBax_kr)
-        #Rule('tBid_binds_iBax_e',
-        #     tBid(loc='m', dye='e', bh3=None) + Bax(loc='i', dye='e', bh3=None) >>
-        #     tBid(loc='m', dye='e', bh3=1) % Bax(loc='i', dye='e', bh3=1),
-        #     tBid_iBax_kf)
 
 ## MODEL BUILDING FUNCTIONS
     def build_model0(self):
         print "---------------------------"
-        print "tBid_Bax: Building model 0:"
+        print "core: Building model 0:"
 
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='a6')
-        #dye_release(Bax(loc='i', bh3=None))
-        #pores_from_Bax_monomers()
-        #Bax_dimerizes()
-        #dye_release(Pore())
-        #dye_release(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None))
 
     def build_model1(self):
         """Activation, dimerization."""
         print "---------------------------"
-        print "tBid_Bax: Building model 1:"
+        print "core: Building model 1:"
 
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='a6')
@@ -256,7 +232,7 @@ class Builder(object):
     def build_model2(self):
         """Bax tetramerization."""
         print "---------------------------"
-        print "tBid_Bax: Building model 2:"
+        print "core: Building model 2:"
 
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='a6')
@@ -266,7 +242,7 @@ class Builder(object):
     def build_model3(self):
         """iBax-tBid binding, tetramerization."""
         print "---------------------------"
-        print "tBid_Bax: Building model 3:"
+        print "core: Building model 3:"
 
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='a6')
