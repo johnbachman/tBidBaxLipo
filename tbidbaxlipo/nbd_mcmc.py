@@ -110,7 +110,7 @@ def do_fit():
     mcmc.run()
 
     # Pickle it!
-    #mcmc.solver = None # FIXME This is a hack to make the MCMC pickleable
+    mcmc.solver = None # FIXME This is a hack to make the MCMC pickleable
     #output_file = open('nbd62c_m1c_10k.pck', 'w')
     #pickle.dump(mcmc, output_file)
     #output_file.close()
