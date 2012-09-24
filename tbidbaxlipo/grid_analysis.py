@@ -1,4 +1,3 @@
-#{{{ IMPORTS
 import math
 from scipy import linspace, polyval, polyfit, sqrt, stats, randn, optimize
 #from numpy import *
@@ -11,9 +10,7 @@ from pysb.integrate import odesolve
 # Select the dataset ######################
 print("Using gridv2.")
 from data.gridv2 import time, data_tbidmaj
-#}}}
 
-#{{{# INITIAL CALCULATIONS
 colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
 
 # Assumes the grid is uniform/symmetric
@@ -24,6 +21,7 @@ bax_concs_str = sort_numeric(data_tbidmaj[lipo_concs_str[0]][tbid_concs_str[0]].
 # Reconfigure data array into "Bax major" order
 # (i.e., indexing is lipo/Bax/tBid, rather than lipo/tBid/Bax
 data_baxmaj = {}
+
 for lipo_conc_str in lipo_concs_str:
     data_baxmaj[lipo_conc_str] = {}
     for bax_conc_str in bax_concs_str:
@@ -31,9 +29,7 @@ for lipo_conc_str in lipo_concs_str:
         for tbid_conc_str in tbid_concs_str:
             data_baxmaj[lipo_conc_str][bax_conc_str][tbid_conc_str] = \
                           data_tbidmaj[lipo_conc_str][tbid_conc_str][bax_conc_str]
-#}}}
 
-#{{{# apply_func_to_grid
 def apply_func_to_grid(func, grid, **kw_args):
     """ Iterate through the grid structure to reach the underlying timecourse
         and apply the function, reconstructing a new data structure in which
@@ -50,9 +46,7 @@ def apply_func_to_grid(func, grid, **kw_args):
                 out_data[x][y][z] = func(grid[x][y][z], grid, x, y, z, **kw_args)
                 #print out_data[x][y][z]
     return out_data
-#}}}
 
-#{{{# calc_k0
 def calc_k0(timecourse, grid, x, y, z, dt=900):
     """ For the given pore formation (i.e., p(t)) timecourse, calculate
         the initial pore formation rate by dividing the increase at
@@ -66,9 +60,7 @@ def calc_k0(timecourse, grid, x, y, z, dt=900):
     #bax_only_k0 = (bax_only_timecourse[1] - bax_only_timecourse[0]) / float(dt)
     #rate = rate - bax_only_k0
     return rate
-#}}}
 
-#{{{# calc_ki
 def calc_ki(timecourse, grid, x, y, z, start_time_index=10):
     """ For the given pore formation (i.e., p(t)) timecourse, calculate a
         linear regression to the secondary kinetics, which is defined as the
@@ -81,9 +73,7 @@ def calc_ki(timecourse, grid, x, y, z, start_time_index=10):
     plin = timecourse[start_time_index:len(time)]
     (slope, intercept) = polyfit(tlin, plin, 1)
     return [slope, intercept]
-#}}}
 
-#{{{# calc_pores
 def calc_pores(timecourse, grid, x, y, z):
     p_timecourse = []
     for val in timecourse:
@@ -94,9 +84,7 @@ def calc_pores(timecourse, grid, x, y, z):
         else: 
             p_timecourse.append(-math.log(float(p)))
     return p_timecourse
-#}}}
 
-#{{{# calc_pores_bgsub
 def calc_pores_bgsub(timecourse, grid, x, y, z):
     p_timecourse = []
     for i, val in enumerate(timecourse):
@@ -116,18 +104,14 @@ def calc_pores_bgsub(timecourse, grid, x, y, z):
             p_timecourse.append(p)
             #p_timecourse.append((float(p)))
     return p_timecourse
-#}}}
 
-#{{{# calc_bgsub()
 def calc_bgsub(timecourse, grid, x, y, z):
     bgsub_timecourse = []
     for i, val in enumerate(timecourse):
         val = val - grid[x]['0']['0'][i]     
         bgsub_timecourse.append(val)
     return bgsub_timecourse
-#}}}
 
-#{{{# CALCULATE P, K0, KI
 tbid_concs = [float(conc_str) for conc_str in sort_numeric(data_tbidmaj[lipo_conc_str].keys())]
 bax_concs = [float(conc_str) for conc_str in sort_numeric(data_baxmaj[lipo_conc_str].keys())]
 #p = apply_func_to_grid(calc_pores, data_tbidmaj)    
@@ -136,31 +120,24 @@ p = apply_func_to_grid(calc_pores_bgsub, data_tbidmaj)
 k0 = apply_func_to_grid(calc_k0, p, dt=time[1])
 ki = apply_func_to_grid(calc_ki, p)
 data_bgsub = apply_func_to_grid(calc_bgsub, data_tbidmaj)
-#}}}
 
 ## UTILITY FUNCTIONS FOR PLOTTING/ANALYSIS ###################################
-#{{{# get_timecourses_v_bax()
 def get_timecourses_v_bax(lipo_conc_str, tbid_conc_str):
     bax_dict = p[lipo_conc_str][tbid_conc_str]
     return [bax_dict[key] for key in sort_numeric(bax_dict.keys())]
-#}}}
-#{{{# get_k0_v_bax()
+
 def get_k0_v_bax(lipo_conc_str, tbid_conc_str):
     bax_dict = k0[lipo_conc_str][tbid_conc_str]
     return [bax_dict[key] for key in sort_numeric(bax_dict.keys())]
-#}}}
-#{{{# get_k0_v_tbid()
+
 def get_k0_v_tbid(lipo_conc_str, bax_conc_str):
     bax_dict = k0[lipo_conc_str][tbid_conc_str]
     return [k0[lipo_conc_str][key][bax_conc_str] for key in tbid_concs_str]
-#}}}
-#{{{# get_ki_v_bax()
+
 def get_ki_v_bax(lipo_conc_str, tbid_conc_str):
     bax_dict = ki[lipo_conc_str][tbid_conc_str]
     return [bax_dict[key][0] for key in sort_numeric(bax_dict.keys())]
-#}}}
 
-#{{{# get_rate_regression()
 def get_rate_regression(timecourse, fittype, tbid_conc=None, bax_conc=None):
     # FIXME Get rid of tbid_conc and bax_conc?
     # Initial parameter guesses
@@ -172,7 +149,6 @@ def get_rate_regression(timecourse, fittype, tbid_conc=None, bax_conc=None):
     # Define fitting function
     #def biphasic(t): return (ki_parm()*t) + ( (k0_parm() - ki_parm()) *
     #                                          ((1 - exp(-kt_parm()*t))/kt_parm()) )
-
     k = Parameter(0.0025)
     k2 = Parameter(0.00025)
     fmax = Parameter(4)
@@ -221,10 +197,8 @@ def get_rate_regression(timecourse, fittype, tbid_conc=None, bax_conc=None):
     fit_time = linspace(0, max(time), 200)
     fit_vals = map(fitfunc, fit_time) 
     return (fit_time, fit_vals, mse_val)
-#}}}
 
 ## PLOTTING FUNCTIONS ########################################################
-#{{{# plot_timecourses
 def plot_timecourses(lipo_conc_str, fixed_conc_str, data,
                      fixed_axis='tBid', fittype='explin', model=None, report=None):
     col_index = 0
@@ -303,9 +277,7 @@ def plot_timecourses(lipo_conc_str, fixed_conc_str, data,
 
     if (report):
         report.addCurrentFigure()
-#}}}
 
-#{{{# plot_dose_response()
 def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype='power',
                        model=None, axis='Bax', report=None):
     """ Given a lipid concentration, plot the initial or final rate vs. Bax
@@ -462,7 +434,6 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
 
     if (report):
         report.addCurrentFigure()
-#}}}
 
 def get_model_k0(model, k0_time=900):
     t = linspace(0, k0_time, 100)
@@ -472,7 +443,6 @@ def get_model_k0(model, k0_time=900):
 
 
 ## COMMENTS ##################################################################
-#{{{# COMMENTS ON THE DATA
 """
 Comments on the data: 
 
@@ -529,9 +499,7 @@ Subtract out liposome only condition
 # Plot initial rate vp as a function of tbid and as a function of bax, and tbid/bax ratio
 # Plot secondary rate (> 1hr?) as a function of tbid and as a function of bax, and tbid/bax ratio
 """
-#}}}
 
-#{{{# ERROR MODEL
 """
 Sources of error:
 * Error in the signal read. This should be related to the actual counts generated
@@ -574,9 +542,7 @@ and for values (e.g. rates) derived from these values.
 However, the magnification of error is irrelevant when fits are being performed
 directly against the data.
 """
-#}}}
 
-#{{{# DEPRECATED/TRASH
 ##############################################################################
 ### DEPRECATED/TRASH ########################################################
 ##############################################################################
@@ -599,4 +565,3 @@ def plot_ki_regression(lipo_conc_str, tbid_conc_str, bax_conc_str, start_time_in
     title("p(t), with k_i regression line shown")
     xlabel("Time (sec)")
     ylabel("p(t)")
-#}}}
