@@ -5,9 +5,10 @@ from pysb.core import SelfExporter
 from pysb.macros import *
 #import inspect
 
-class tBid_Bax(object):
+class Builder(object):
 
-## VIRTUAL FUNCTIONS
+    # VIRTUAL FUNCTIONS
+    # =================
 
     def within_compartment_rsf(self):
         raise NotImplementedError()
@@ -18,29 +19,39 @@ class tBid_Bax(object):
     def run_model():
         raise NotImplementedError()
 
-## DEFAULT IMPLEMENTATIONS
-    def __init__(self, params_dict=None):
-        self.model = Model('tBid_Bax', _export=False)
+    # DEFAULT IMPLEMENTATIONS
+    # =======================
 
-        # The params_dict allows any parameter value to be overriden
-        # by name; any parameters not included in the dict will be set
-        # to default values
+    def __init__(self, params_dict=None):
+        """Base constructor for all model builder classes.
+
+        Parameters
+        ----------
+        params_dict : dict
+            The params_dict allows any parameter value to be overriden
+            by name; any parameters not included in the dict will be set
+            to default values. For example, if params_dict contains::
+
+                {'tBid_Bax_kf': 1e-2}
+
+            then the parameter tBid_Bax_kf will be assigned a value of 1e-2;
+            all other parameters will take on default values.
+        """
+
+        self.model = Model('tBid_Bax', _export=False)
         self.params_dict = params_dict
 
     def declare_monomers(self):
+        """Declares signatures for tBid and Bax."""
         self.monomer('tBid', ['bh3', 'loc'],
                 {'loc': ['c', 'm']})
         self.monomer('Bax', ['bh3', 'a6', 'loc'],
                 {'loc': ['c','m', 'i', 'p']})
-        #self.monomer('Vesicles', [], {})
-        #self.monomer('Pores')
-
-        #Monomer('Pore', [], {})
-        #Monomer('Vesicles', ['dye'],
-        #        {'dye': ['f', 'e']})
 
     def tBid_activates_Bax(self, bax_site='a6'):
-        """Takes two arguments:
+        """Default implementation of Bax activation by tBid.
+
+        Takes two arguments:
             - bax_site specifies the name of the site on Bax to which
               the bh3 site on tBid binds.
             - vesicles_conc is a Parameter object containing the concentration
@@ -61,15 +72,15 @@ class tBid_Bax(object):
         #   15 minutes.
         # FIXME The forward rate should be normalized according to protein/lipid ratio in some way
 
-        # Since the surface area of each vesicle is the same,
-        # the effect of changing vesicle concentration on the forward rate will be
-        # by altering the expected concentration of tBid and Bax per vesicle.
-        # If there is one compartment, 100 Bax and 100 tBid, then the rate will be scaled
-        # to take into account 100 of each.
-        # If there are 100 compartments, then the rate should be scaled to take into account
-        # 1 of each. The scaling should therefore most likely be simple linear scaling
-        # by dividing by the number of compartments, which is in the same units as the
-        # protein concentration (e.g., nanomolar).
+        # Since the surface area of each vesicle is the same, the effect of
+        # changing vesicle concentration on the forward rate will be by
+        # altering the expected concentration of tBid and Bax per vesicle.  If
+        # there is one compartment, 100 Bax and 100 tBid, then the rate will be
+        # scaled to take into account 100 of each.  If there are 100
+        # compartments, then the rate should be scaled to take into account 1
+        # of each. The scaling should therefore most likely be simple linear
+        # scaling by dividing by the number of compartments, which is in the
+        # same units as the protein concentration (e.g., nanomolar).
 
         # In the deterministic case, if the fundamental forward rate of binding
         # between tBid and Bax is kf, this should really be normalized by the
@@ -227,7 +238,6 @@ class tBid_Bax(object):
 
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='a6')
-
         #dye_release(Bax(loc='i', bh3=None))
         #pores_from_Bax_monomers()
         #Bax_dimerizes()
