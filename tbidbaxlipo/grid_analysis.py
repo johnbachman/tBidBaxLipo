@@ -8,7 +8,7 @@ Example usage::
 
 import math
 from scipy import linspace, polyval, polyfit, sqrt, stats, randn, optimize
-from numpy import array, exp
+from numpy import array, exp, log
 import matplotlib.pyplot as plt
 from util.fitting import Parameter, fit, fit_initial, mse
 from util.numsort import sorted_copy as sort_numeric
@@ -306,10 +306,10 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
     loglogplot : boolean
         Whether to plot the dose response on a log scale or not.
         Default is False.
-    fittype : string: 'linear', 'power', 'hill', or 'hillexp'
-        The function to fit to the dose response data. 
-        Note that fitting of this type is only done if the model argument
-        is None (see below).
+    fittype : None or string: 'linear', 'power', 'hill', or 'hillexp'
+        The function to fit to the dose response data. If None, no fitting
+        is performed. Note that fitting of this type is only done if the
+        model argument is None (see below).
     model : pysb.core.Model
         The model to simulate and compare to the dose response data.
         Default is None.
@@ -424,7 +424,7 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
         data_legend = outer_conc_str + " " + outer_axis if fittype==None else '_nolegend_'
 
         if (loglogplot):
-            loglog(concs, data_arr, data_marker + col, label=data_legend)
+            plt.loglog(concs, data_arr, data_marker + col, label=data_legend)
             rise1 = log(data_arr[2]) - log(data_arr[1])
             run1 = log(concs[2]) - log(concs[1])
             slope1 = rise1 / run1
@@ -450,7 +450,7 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
             fit_x_vals = linspace(0, 1.01*max(concs), 50) # TODO: Magic numbers 0 and 300
             fit_y_vals = map(fitfunc, fit_x_vals)
             if (loglogplot):
-                loglog(fit_x_vals, fit_y_vals, '-'+col, label=outer_conc_str + " " + outer_axis)
+                plt.loglog(fit_x_vals, fit_y_vals, '-'+col, label=outer_conc_str + " " + outer_axis)
             else:
                 plt.plot(fit_x_vals, fit_y_vals, '-'+col, label=outer_conc_str + " " + outer_axis) 
 
