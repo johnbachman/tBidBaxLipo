@@ -1,15 +1,23 @@
+"""
+Example usage::
+
+    import grid_analysis as g
+    g.plot_timecourses('10', '21.5', g.p)
+
+"""
+
 import math
 from scipy import linspace, polyval, polyfit, sqrt, stats, randn, optimize
-#from numpy import *
-from pylab import *
+from numpy import array, exp
+import matplotlib.pyplot as plt
 from util.fitting import Parameter, fit, fit_initial, mse
 from util.numsort import sorted_copy as sort_numeric
 from util.report import Report
 from pysb.integrate import odesolve
 
 # Select the dataset ######################
-print("Using gridv2.")
-from data.gridv2 import time, data_tbidmaj
+print("Using gridv1.")
+from data.gridv1 import time, data_tbidmaj
 
 colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
 
@@ -201,9 +209,12 @@ def get_rate_regression(timecourse, fittype, tbid_conc=None, bax_conc=None):
 ## PLOTTING FUNCTIONS ########################################################
 def plot_timecourses(lipo_conc_str, fixed_conc_str, data,
                      fixed_axis='tBid', fittype='explin', model=None, report=None):
+    plt.ion()
+    plt.figure()
+
     col_index = 0
-    figure()
     total_mse = 0
+
     # Check which concentration axis we're varying
     if (fixed_axis == 'tBid'):
         var_concs_str = bax_concs_str
@@ -252,10 +263,10 @@ def plot_timecourses(lipo_conc_str, fixed_conc_str, data,
             mse_val = 0 # FIXME
 
         # Plot the data along with the fit/model trace
-        plot(time, timecourse, 's'+col, label="_nolegend_")
+        plt.plot(time, timecourse, 's'+col, label="_nolegend_")
 
         if (not fittype==None):
-            plot(fit_time, fit_vals, '-'+col, label=var_conc_str + " " + var_axis)
+            plt.plot(fit_time, fit_vals, '-'+col, label=var_conc_str + " " + var_axis)
 
         #e = abs(randn(len(timecourse)))
         #print e
@@ -263,11 +274,11 @@ def plot_timecourses(lipo_conc_str, fixed_conc_str, data,
 
         total_mse += mse_val
 
-    legend(loc='upper left')
-    title('Fits for ' + lipo_conc_str + 'uL lipid, ' + fixed_conc_str + 'nM ' + fixed_axis)
+    plt.legend(loc='upper left')
+    plt.title('Fits for ' + lipo_conc_str + 'uL lipid, ' + fixed_conc_str + 'nM ' + fixed_axis)
     #+ ', Fit: ' + (fittype if model == None else 'model'))
-    ylabel('p(t) (avg pores per vesicle)')
-    xlabel('Time (sec)')
+    plt.ylabel('p(t) (avg pores per vesicle)')
+    plt.xlabel('Time (sec)')
     if (fittype == None):
         pass
     elif (model == None): 
@@ -281,9 +292,11 @@ def plot_timecourses(lipo_conc_str, fixed_conc_str, data,
 def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype='power',
                        model=None, axis='Bax', report=None):
     """ Given a lipid concentration, plot the initial or final rate vs. Bax
-        concentration dose response, with a separate curve for each tBid
-        concentration. """
-    figure()
+    concentration dose response, with a separate curve for each tBid
+    concentration.
+    """
+    plt.ion()
+    plt.figure()
     col_index = 0
     total_mse = 0
 
@@ -397,11 +410,11 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
             slope2 = rise2 / run2
             print(outer_conc_str + 'nm ' + outer_axis + ': Slope1,2=' + str(slope1) + ', ' + str(slope2)) # TODO
         else:
-            plot(concs, data_arr, data_marker + col, label=data_legend)
+            plt.plot(concs, data_arr, data_marker + col, label=data_legend)
 
         # Plot fit
         if (not model == None):
-            plot(model_x_vals, model_y_vals, '-'+col, label=outer_conc_str + " " + outer_axis)
+            plt.plot(model_x_vals, model_y_vals, '-'+col, label=outer_conc_str + " " + outer_axis)
 
         if (fitfunc):
             # Show fit error
@@ -413,7 +426,7 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
             if (loglogplot):
                 loglog(fit_x_vals, fit_y_vals, '-'+col, label=outer_conc_str + " " + outer_axis)
             else:
-                plot(fit_x_vals, fit_y_vals, '-'+col, label=outer_conc_str + " " + outer_axis) 
+                plt.plot(fit_x_vals, fit_y_vals, '-'+col, label=outer_conc_str + " " + outer_axis) 
 
         #if (not loglogplot):
         #    plot(concs, data_arr, '-s'+col, label=tbid_conc_str + " cBid")
@@ -423,13 +436,13 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
         #    log_data = log(data_arr[1:len(concs)])
         #    plot(log_concs, log_data, 's-'+col, label=tbid_conc_str + " cBid")
 
-    title(rate + ' vs. ' + axis + ', ' + lipo_conc_str + 'uL Lipid' +
+    plt.title(rate + ' vs. ' + axis + ', ' + lipo_conc_str + 'uL Lipid' +
           ('' if fittype==None else ('; Fit: ' + fittype + ', MSE: ' + str(total_mse))))
     #legend([conc + ' cBid' for conc in tbid_concs_str], loc='upper left')
-    legend(loc='upper left')
+    plt.legend(loc='upper left')
 
-    xlabel(axis + ' (nM)')
-    ylabel('rate (d(pores/ves)/dt, in seconds)')
+    plt.xlabel(axis + ' (nM)')
+    plt.ylabel('rate (d(pores/ves)/dt, in seconds)')
     print("Total MSE: " + str(total_mse))
 
     if (report):
@@ -558,10 +571,10 @@ def plot_ki_regression(lipo_conc_str, tbid_conc_str, bax_conc_str, start_time_in
     plin = pfull[start_time_index:len(time)]
     (slope, intercept) = polyfit(tlin, plin, 1)
     pcalc = polyval([slope, intercept], tlin)
-    plot(time, pfull, 's-')
-    plot(tlin, pcalc)
+    plt.plot(time, pfull, 's-')
+    plt.plot(tlin, pcalc)
     err = sqrt(sum((pcalc-plin)**2)/(len(plin)))
     print "slope: ", slope, " error: ", err
-    title("p(t), with k_i regression line shown")
-    xlabel("Time (sec)")
-    ylabel("p(t)")
+    plt.title("p(t), with k_i regression line shown")
+    plt.xlabel("Time (sec)")
+    plt.ylabel("p(t)")
