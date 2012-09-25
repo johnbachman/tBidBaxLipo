@@ -2,11 +2,9 @@ __author__ = 'johnbachman'
 
 #{{{# IMPORTS
 from pysb import *
-#from pysb.macros import *
-from pylab import *
-#from util.fitting import fit, fit_initial, mse
+from numpy import array, recarray, mean, std
+from matplotlib import pyplot as plt
 from util import color_iter 
-#import util.fitting as fitting
 from scipy.stats import poisson
 from pysb import bng
 from pysb import kappa
@@ -16,18 +14,18 @@ from tbidbaxlipo.models import core
 class Builder(core.Builder):
     
     #{{{# __init__()
-    def __init__(self, scaling_factor=10, params_dict=None):
+    def __init__(self, scaling_factor=50, params_dict=None):
         # Sets self.model = Model(), and self.params_dict
-        tBid_Bax.__init__(self, params_dict=params_dict)
+        core.Builder.__init__(self, params_dict=params_dict)
 
         # This is the only variable that needs to be set to rescale
         # the simulation according to the nominal initial concentrations
         # given below (which match those of the deterministic simulations)
         self.scaling_factor = scaling_factor
 
-        self.parameter('Vesicles_0', 1, factor=self.scaling_factor)
-        self.parameter('tBid_0', 20, factor=self.scaling_factor)
-        self.parameter('Bax_0', 100, factor=self.scaling_factor)
+        self.parameter('Vesicles_0', 4, factor=self.scaling_factor)
+        self.parameter('tBid_0', 2, factor=self.scaling_factor)
+        self.parameter('Bax_0', 30, factor=self.scaling_factor)
 
         # The compartment list needs to be built before declaring monomers
         self.cpt_list = ['c%d' % cpt_num for cpt_num in range(1, self['Vesicles_0'].value+1)]
@@ -36,35 +34,28 @@ class Builder(core.Builder):
         # Now, monomers can be declared
         self.declare_monomers(self.cpt_list)
 
-        #{{{# INITIAL CONDITIONS
-        tBid = self['tBid']
-        Bax = self['Bax']
-
-        self.initial(tBid(bh3=None, loc='c', cpt='solution'), self['tBid_0'])
-        self.initial(Bax(bh3=None, a6=None, loc='c', cpt='solution'), self['Bax_0'])
-        #}}}
-
+        # Declare initial conditions
+        self.initial(self['tBid'](bh3=None, loc='c', cpt='solution'), self['tBid_0'])
+        self.initial(self['Bax'](bh3=None, a6=None, loc='c', cpt='solution'), self['Bax_0'])
     #}}}
 
     #{{{# declare_monomers()
-    # Needs to override the default from the base class because each
-    # monomer has to have a list of possible compartments associated
-    # with it
     def declare_monomers(self, cpt_list):
+        """The monomer declarations need to override the default from the base
+        class because each monomer has to have a list of possible compartments
+        associated with it."""
 
         self.monomer('tBid', ['bh3', 'loc', 'cpt'],
                 {'loc': ['c', 'm'], 'cpt':cpt_list}),
         self.monomer('Bax', ['bh3', 'a6', 'loc', 'cpt'],
                 {'loc': ['c','m', 'i', 'p'],
                  'cpt': cpt_list})
-        #self.monomer('Vesicles', [], {})
-        #self.monomer('Pores')
     #}}}
 
     #{{{# MODEL MACROS
     #{{{# translocate_tBid_Bax()
     def translocate_tBid_Bax(self):
-        print("tBid_Bax_sitec: translocate_tBid_Bax()")
+        print("site_cpt: translocate_tBid_Bax()")
 
         tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
                                           factor = (1 / float(self.scaling_factor)))
@@ -94,8 +85,8 @@ class Builder(core.Builder):
                      Bax(loc='c', cpt='solution', bh3=None, a6=None),
                      Bax_transloc_kr)
 
-        # OBSERVABLES
-        # Translocation
+        # Observables
+        # -----------
         self.observable('ctBid', tBid(loc='c', cpt='solution'))
         self.observable('mtBid', tBid(loc='m'))
         self.observable('cBax', Bax(loc='c', cpt='solution'))
@@ -109,7 +100,7 @@ class Builder(core.Builder):
 
     #{{{# tBid_activates_Bax()
     def tBid_activates_Bax(self, bax_site='a6'):
-        print("tBid_Bax_sitec: tBid_activates_Bax(bax_site=" + bax_site + ")")
+        print("site_cpt: tBid_activates_Bax(bax_site=" + bax_site + ")")
 
         # Forward rate of tBid binding to Bax (E + S -> ES)
         tBid_mBax_kf = self.parameter('tBid_mBax_kf', 1e-2)
@@ -148,8 +139,8 @@ class Builder(core.Builder):
              tBid(loc='m', bh3=None) + Bax(loc='i', **bax_site_unbound),
              tBid_iBax_kc)
 
-        # OBSERVABLES
-        # Activation
+        # Observables
+        # -----------
         self.observable('iBax', Bax(loc='i'))
         self.observable('tBidBax', tBid(loc='m', bh3=1) % Bax(loc='m', a6=1))
 
@@ -163,49 +154,57 @@ class Builder(core.Builder):
 
     #{{{# RUNNING THE MODEL
     def run_model(self, tmax=12000, num_sims=1, use_kappa=True, figure_ids=[0, 1]):
-        xrecs = []
-        dr_all = []
+        xrecs = []   # The array to store the simulation data
+        dr_all = []  # TODO: Delete this
+
+        # Run multiple simulations and collect data
         for i in range(0, num_sims):
+            # Run simulation using Kappa:
             if use_kappa:
-                ssa_result = kappa.get_kasim_data(self.model, time=tmax, points=100,
+                ssa_result = kappa.run_simulation(self.model, time=tmax, points=100,
                                      output_dir='simdata')
                 xrecs.append(ssa_result)
+            # Run simulation using BNG SSA implementation:
             else:
                 ssa_result = bng.run_ssa(self.model, t_end=tmax, n_steps=100, cleanup=True)
                 xrecs.append(ssa_result)
                 #dr_all.append(get_dye_release(model, 'pores', ssa_result))
 
+        # Convert the multiple simulations in an array...
         xall = array([x.tolist() for x in xrecs])
+
+        # ...and calculate the Mean and SD across the simulations
         x_std = recarray(xrecs[0].shape, dtype=xrecs[0].dtype, buf=std(xall, 0))
         x_avg = recarray(xrecs[0].shape, dtype=xrecs[0].dtype, buf=mean(xall, 0))
 
+        # Plotting parameters, aliases
         ci = color_iter()
         marker = 'x'
-        linestyle = ''
-
+        linestyle = '-'
         tBid_0 = self['tBid_0']
         Bax_0 = self['Bax_0']
 
-        # Translocation
-        figure(figure_ids[0])
-        errorbar(x_avg['time'], x_avg['ctBid']/tBid_0.value,
+        # Translocation: plot cyto/mito tBid, and cyto/mito Bax
+        plt.ion()
+        plt.figure(figure_ids[0])
+        plt.errorbar(x_avg['time'], x_avg['ctBid']/tBid_0.value,
                  yerr=x_std['ctBid']/tBid_0.value,
                  color=ci.next(), marker=marker, linestyle=linestyle)
-        errorbar(x_avg['time'], x_avg['mtBid']/tBid_0.value,
+        plt.errorbar(x_avg['time'], x_avg['mtBid']/tBid_0.value,
                  yerr=x_std['mtBid']/tBid_0.value,
                  color=ci.next(), marker=marker, linestyle=linestyle)
-        errorbar(x_avg['time'], x_avg['cBax']/Bax_0.value,
-                 yerr=x_std['cBax']/Bax_0.value,
-                 color=ci.next(), marker=marker, linestyle=linestyle)
-        errorbar(x_avg['time'], x_avg['mBax']/Bax_0.value,
-                 yerr=x_std['mBax']/Bax_0.value,
-                 color=ci.next(), marker=marker, linestyle=linestyle)
+        #plt.errorbar(x_avg['time'], x_avg['cBax']/Bax_0.value,
+        #         yerr=x_std['cBax']/Bax_0.value,
+        #         color=ci.next(), marker=marker, linestyle=linestyle)
+        #plt.errorbar(x_avg['time'], x_avg['mBax']/Bax_0.value,
+        #         yerr=x_std['mBax']/Bax_0.value,
+        #         color=ci.next(), marker=marker, linestyle=linestyle)
 
-        # Activation
-        errorbar(x_avg['time'], x_avg['iBax']/Bax_0.value,
+        # Activation: plot iBax and tBidBax
+        plt.errorbar(x_avg['time'], x_avg['iBax']/Bax_0.value,
                  yerr=x_std['iBax']/Bax_0.value, label='iBax',
                  color=ci.next(), marker=marker, linestyle=linestyle)
-        errorbar(x_avg['time'], x_avg['tBidBax']/tBid_0.value,
+        plt.errorbar(x_avg['time'], x_avg['tBidBax']/tBid_0.value,
                  yerr=x_std['tBidBax']/tBid_0.value,
                  color=ci.next(), marker=marker, linestyle=linestyle)
 
@@ -259,8 +258,8 @@ class Builder(core.Builder):
             if (not cpt.name == 'solution'):
                 total += output['%s_%s' % (observable_name, cpt.name)]
         mean = total / len(model.compartments)
-        figure()
-        plot(output['time'], mean)
+        plt.figure()
+        plt.plot(output['time'], mean)
 
     def get_dye_release(model, pore_observable_name, output):
         num_timepoints = len(output['time'])
@@ -277,10 +276,11 @@ class Builder(core.Builder):
         return dye_release
 
     def plot_compartment_all(model, observable_name, output):
-        figure()
+        plt.ion()
+        plt.figure()
         for i, cpt in enumerate(model.compartments):
             if (not cpt.name == 'solution'):
-                plot(output['time'], output['%s_%s' % (observable_name, cpt.name)])
+                plt.plot(output['time'], output['%s_%s' % (observable_name, cpt.name)])
 
     def plot_predicted_p(model, observable_name, output):
         # Iterate through data, and at each time point, get the fraction
@@ -319,7 +319,8 @@ class Builder(core.Builder):
 
 
     def plot_dist(data):
-        figure()
+        plt.ion()
+        plt.figure()
 
         #end_counts = get_compartment_dist(model, observable_name, output)
 
@@ -331,7 +332,7 @@ class Builder(core.Builder):
         print "total membrane-bound tBid: "
         print total_count
 
-        h, bins = histogram(data, bins=bins)
+        h, bins = plt.histogram(data, bins=bins)
         h = h / float(len(data))
         print "bins: "
         print bins
@@ -339,7 +340,7 @@ class Builder(core.Builder):
         print h
         print "sum h: %f" % sum(h)
         #bar(bins[0:len(bins)-1], h)
-        plot(bins[0:len(bins)-1], h)
+        plt.plot(bins[0:len(bins)-1], h)
 
         mean_counts = mean(data)
         print "mean counts: "
@@ -349,7 +350,7 @@ class Builder(core.Builder):
         #poisson_counts = poisson.pmf(bins, ^)
         print "sum poisson:  %f" % sum(poisson_counts)
         print poisson_counts
-        plot(bins, poisson_counts)
+        plt.plot(bins, poisson_counts)
     #}}}
 
     #{{{# COMMENTS
@@ -504,11 +505,11 @@ class Builder(core.Builder):
         x = odesolve(model, t)
 
         ci = color_iter()
-        figure(1)
+        plt.figure(1)
         # Translocation
-        plot(t, (x['ctBid'])/tBid_0.value, label='ctBid', color=ci.next())
-        plot(t, (x['mtBid'])/tBid_0.value, label='mtBid', color=ci.next())
-        plot(t, (x['cBax'])/Bax_0.value, label='cBax', color=ci.next())
-        plot(t, (x['mBax'])/Bax_0.value, label='mBax', color=ci.next())
-        legend()
+        plt.plot(t, (x['ctBid'])/tBid_0.value, label='ctBid', color=ci.next())
+        plt.plot(t, (x['mtBid'])/tBid_0.value, label='mtBid', color=ci.next())
+        plt.plot(t, (x['cBax'])/Bax_0.value, label='cBax', color=ci.next())
+        plt.plot(t, (x['mBax'])/Bax_0.value, label='mBax', color=ci.next())
+        plt.legend()
     #}}}
