@@ -20,8 +20,14 @@ Possible variations on this linear approach would include:
 - The possibility of Bax reversibility, that is, that at any, certain, or all
   points in the pathway Bax could revert to a fully solvated state
 
+- The possibility that one or more of the signals are dependent on
+  oligomerization: hence these steps will bimolecular which will have a
+  nonlinear kinetics. For example, the c62 step could be dependent on Bax-Bax
+  dimerization; this could contribute to 
+
 - The possibility of heterogeneity in the pathway, or branching; multiple ways
   of reaching the final, membrane-associated state
+
 
 An additional complication is linking the kinetics of the conformational
 changes to the changes in the observed signal. 
@@ -73,6 +79,12 @@ sites_initial_state = {
 
 Initial(Bax(**sites_initial_state), Parameter('Bax_0', 1))
 
+Parameter('c3_scaling', 1)
+Parameter('c62_scaling', 1)
+Parameter('c120_scaling', 1)
+Parameter('c122_scaling', 1)
+Parameter('c126_scaling', 1)
+
 def linear_pathway_from_ordering(site_ordering):
     """Builds a model in which each residue transitions in a given order.
 
@@ -99,12 +111,12 @@ def linear_pathway_from_ordering(site_ordering):
 
         # The equilibration rule defining the insertion step
         equilibrate(Bax(**site_states_lhs), Bax(**site_states_rhs),
-                    [1e-3, 1e-3])   
+                    [1e-2, 1e-4])   
        
         # The product of this step becomes the reactant for the next step:
         site_states_lhs = site_states_rhs.copy()
 
-example_ordering = ['c62', 'c3', 'c120', 'c122', 'c126']
+example_ordering = ['c3', 'c62', 'c126', 'c122', 'c120']
 
 linear_pathway_from_ordering(example_ordering)
 
