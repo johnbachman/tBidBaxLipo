@@ -7,10 +7,15 @@ from data.nbd_data import *
 #from data.nbd_data_62c import nbd62c, time
 from util.report import Report
 from util.fitting import Parameter, fit, residuals
-from matplotlib.pyplot import legend, title, plot, xlabel, ylabel, figure
+from matplotlib.pyplot import legend, title, plot, xlabel, ylabel, figure, \
+                              ion, show
 from numpy import array, mean, std, exp
 
+__all__ = ['plot_fit', 'plot_raw', 'plot_normalized', 'plot_avg',
+           'normalize_min_max', 'normalize_fit', 'calc_norm_avg_std']
+
 rep = Report()
+ion()
 
 # Plotting Functions
 # ==================
@@ -127,6 +132,7 @@ def plot_fit(report=None, fittype='double_exp'):
         xlabel('Time (seconds)')
         ylabel('Fold-Change Increase')
         title('Bax ' + nbd_names[i] + ' Data vs. ' + fittype + ' Model')
+        show()
 
         if (report):
             report.addCurrentFigure()
@@ -151,6 +157,7 @@ def plot_fit(report=None, fittype='double_exp'):
         for res in reslist:
             plot(time, res, figure=resfig)
         title('Residuals for ' + nbd_names[i])
+        show()
         if (report):
             report.addCurrentFigure()
 
