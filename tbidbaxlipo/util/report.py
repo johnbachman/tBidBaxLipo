@@ -6,8 +6,15 @@ from tempfile import NamedTemporaryFile
 import txt2pdf
 from pyPdf import PdfFileWriter, PdfFileReader
 import os
+import os.path
 from pylab import savefig
 from matplotlib.backends.backend_pdf import PdfPages
+import sys
+from pygments import highlight
+from pygments.lexers import PythonLexer
+from pygments.formatters import LatexFormatter
+import re
+import subprocess
 
 class Report():
     """A class to facilitate the creation of model analysis documents
@@ -16,6 +23,31 @@ class Report():
 
     def __init__(self):
         self.tempFileList = []
+
+    def addPythonCode(self, filename):
+        input_file = open(filename, 'r')
+        tex_file = NamedTemporaryFile(suffix='.tex', mode='w')
+        tex_file_name = os.path.basename(tex_file.name)
+        pdf_filename = re.sub('\.tex$', '.pdf', tex_file_name)
+
+        code = input_file.readlines()
+        code = ''.join(code)
+        formatter = LatexFormatter(style='colorful', full=True)
+
+        highlight(code, PythonLexer(), formatter, outfile=tex_file)
+        tex_file.flush()
+
+        #print 'fname ' + tex_file.name
+        p = subprocess.Popen(['pdflatex', tex_file.name],
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (p_out, p_err) = p.communicate()
+        if p.returncode:
+            raise Exception(p_out.rstrip("at line")+"\n"+p_err.rstrip())
+
+        self.tempFileList.append(open(pdf_filename, 'r'))
+
+        os.unlink(re.sub('\.pdf$', '.log', pdf_filename))
+        os.unlink(re.sub('\.pdf$', '.aux', pdf_filename))
 
     def addText(self, text):
         """Add text to the report."""
@@ -30,7 +62,7 @@ class Report():
         """Include the contents of a text file in the report."""
         text_file = open(filename, 'r')
         text = text_file.read()
-        addText(text)
+        self.addText(text)
         text_file.close()
 
     def addCurrentFigure(self):
@@ -66,6 +98,7 @@ class Report():
 
             if fileType == 'pdf':
                 input = PdfFileReader(file(tempFileName, "rb"))
+                os.unlink(tempFileName)
             elif fileType == 'txt':
                 pdftext = txt2pdf.pyText2Pdf()
                 pdftext._ifile = tempFileName
