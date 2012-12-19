@@ -1,7 +1,50 @@
-from pysb import *
-from pysb.macros import reversibly_translocate
+"""
+A model of sequential insertion of NBD-labeled cysteines on Bax.
 
-# Common to all models
+The simplest type of model is a linear insertion pathway that proceeds from
+each site being soluble to each site being membrane-associated (to some
+degree). Association with tBid is not considered explicitly--if the NBD signal
+is due to association with tBid then this is simply considered a contributor to
+the rate of transition for that residue.
+
+One nice thing about this approach is that observables naturally take care
+of the "summing" that needs to occur to aggregate the signal associated with
+several states. For example, if c62 is the first state to make the s -> m
+transition, then the signal that should be fit to the data will be the sum
+of all the states that include a membrane-bound c62. This is taken care of
+by the Observable('Baxc62', Bax(c62='m')), which, because of don't care 
+don't write, will automatically take all of these other states into account.
+
+Possible variations on this linear approach would include:
+
+- The possibility of Bax reversibility, that is, that at any, certain, or all
+  points in the pathway Bax could revert to a fully solvated state
+
+- The possibility of heterogeneity in the pathway, or branching; multiple ways
+  of reaching the final, membrane-associated state
+
+An additional complication is linking the kinetics of the conformational
+changes to the changes in the observed signal. 
+
+- The simplest model is that each residue makes a single transition from
+  solvated to desolvated, and once desolvated, has a particular signal itensity
+  associated with it. This model assumes that any subsequent conformational
+  changes don't affect the signal further. In this case only the
+  conformational states being measured (i.e., the number of cysteine mutants)
+  need to be considered.
+
+- A more general model would be that a residue could have a signal value
+  associated with each individual conformational state, with the possibility
+  that the signal could first increase as it moved through a high intensity
+  state, and then decrease as it reached a final, lower intensity state. An
+  additional wrinkle here is that the number of conformational states is not
+  limited to the ones being measured here (there could be greater or fewer).
+
+"""
+
+from pysb import *
+from pysb.macros import equilibrate
+
 Model()
 
 Monomer('Bax', ['c3', 'c62', 'c120', 'c122', 'c126', 'c184'],
@@ -12,19 +55,68 @@ Monomer('Bax', ['c3', 'c62', 'c120', 'c122', 'c126', 'c184'],
      'c126': ['s', 'm'],
      'c184': ['s', 'm']})
 
-Observe('Baxc3', Bax(c3='m'))
-Observe('Baxc62', Bax(c62='m'))
-Observe('Baxc120', Bax(c120='m'))
-Observe('Baxc122', Bax(c122='m'))
-Observe('Baxc126', Bax(c126='m'))
-Observe('Baxc184', Bax(c184='m'))
+Observable('Baxc3', Bax(c3='m'))
+Observable('Baxc62', Bax(c62='m'))
+Observable('Baxc120', Bax(c120='m'))
+Observable('Baxc122', Bax(c122='m'))
+Observable('Baxc126', Bax(c126='m'))
+Observable('Baxc184', Bax(c184='m'))
 
+# The baseline state--all sites are soluble
+sites_initial_state = {
+        'c3':'s',
+       'c62':'s',
+      'c120':'s',
+      'c122':'s',
+      'c126':'s',
+      'c184':'s'}
+
+Initial(Bax(**sites_initial_state), Parameter('Bax_0', 1))
+
+def linear_pathway_from_ordering(site_ordering):
+    """Builds a model in which each residue transitions in a given order.
+
+    Sites go from 's' to 'm' in a stepwise fashion, that is, a site cannot
+    make the transition unless all previous sites in the order have already
+    made the transition. A series of reversible rules are generated
+    specifying this sequence based on the given ordering.
+
+    Parameters
+    ----------
+    site_ordering : list of strings (sites)
+        A list of site names (e.g., ['c62', 'c3', ...]) that specify the order
+        in which the sites transition from solvated to desolvated (e.g.,
+        c62 is first, then c3, etc.).
+    """
+
+    # "lhs" denotes the "left hand side" of the rule, that is, the reactant
+    # ("rhs" will denote the right hand side, i.e., the product)
+    site_states_lhs = sites_initial_state.copy()
+
+    for i, current_site in enumerate(site_ordering):
+        site_states_rhs = site_states_lhs.copy()
+        site_states_rhs[current_site] = 'm'
+
+        # The equilibration rule defining the insertion step
+        equilibrate(Bax(**site_states_lhs), Bax(**site_states_rhs),
+                    [1e-3, 1e-3])   
+       
+        # The product of this step becomes the reactant for the next step:
+        site_states_lhs = site_states_rhs.copy()
+
+example_ordering = ['c62', 'c3', 'c120', 'c122', 'c126']
+
+linear_pathway_from_ordering(example_ordering)
+
+
+
+# ------------------------------------------------------------------
 # Takes a monomer pattern as an argument
 def all_parallel():
     for site in Bax.sites:
         reversibly_translocate(Bax(), 's', 'm', locname=site)
 
-def linear_pathway(num_phases):
+def linear_pathway_groups(num_phases):
     """ Partition the sites into n groups.
     Rule 1: from all sites in solvent to insertion of sites in first group.
     Rule 2: from all sites in first group inserted to this plus all sites in second group.
@@ -43,10 +135,7 @@ def linear_pathway(num_phases):
         for prev_group in enumerate(group_list[0:i]):
             # For each group, iterate over sites
             lhs_sites = [site for site in prev_group]
-              
                 
-        Rule('r' + str(i),
-             Bax
 
     """
     For each phase, choo
@@ -62,8 +151,6 @@ def linear_pathway(num_phases):
     Rule('b5', Bax(c62='m', c3='s') <> Bax(c62='m', c3='m'), kf, kr)
     Rule('b6', Bax(c62='m', c3='s') <> Bax(c62='m', c3='m'), kf, kr)
     """
-
-
 
 """
 Way to approach this:
