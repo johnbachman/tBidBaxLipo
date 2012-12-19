@@ -2,11 +2,11 @@
 fluorescence data using MCMC.
 """
 
-import mcmc_hessian
+import bayessb
 from pysb.integrate import odesolve
 import numpy
 import matplotlib.pyplot as plt
-from tBid_Bax_1c import tBid_Bax_1c
+from models import one_cpt
 import nbd_analysis
 import pickle
 from tbidbaxlipo.util.report import Report
@@ -55,7 +55,7 @@ params_dict_after = {'Bax_dimerization_kf': 0.00039997477906346336,
 # Build the model
 # ===============
 
-m1c = tBid_Bax_1c(params_dict=params_dict_before)
+m1c = one_cpt.Builder(params_dict=params_dict_before)
 m1c.build_model2()
 model = m1c.model
 
@@ -88,7 +88,7 @@ def do_fit():
     sigmas = nbd_stds[1]
 
     # Initialize the MCMC arguments
-    opts = mcmc_hessian.MCMCOpts()
+    opts = bayessb.MCMCOpts()
     opts.model = model
     opts.tspan = tspan
 
@@ -104,13 +104,13 @@ def do_fit():
     opts.use_hessian = True
     opts.hessian_period = opts.nsteps / 10 # Calculate the Hessian 10 times
     opts.seed = seed
-    mcmc = mcmc_hessian.MCMC(opts)
+    mcmc = bayessb.MCMC(opts)
 
     # Run it!
     mcmc.run()
 
     # Pickle it!
-    mcmc.solver = None # FIXME This is a hack to make the MCMC pickleable
+    #mcmc.solver = None # FIXME This is a hack to make the MCMC pickleable
     #output_file = open('nbd62c_m1c_10k.pck', 'w')
     #pickle.dump(mcmc, output_file)
     #output_file.close()
@@ -157,7 +157,7 @@ def plot_from_params(params_dict):
     """Plot the model output using the given parameter value."""
 
     # The specific model may need to be changed here
-    m1c = tBid_Bax_1c(params_dict=params_dict)
+    m1c = one_cpt.Builder(params_dict=params_dict)
     m1c.build_model2()
     model = m1c.model
 
@@ -186,22 +186,23 @@ Notes
 
 Basic version:
 
-We fit the kinetic parameters in the model and make assumptions about the observables
-and their relation to the NBD signals (e.g., we can first do Bax2 for the Bax62C data,
-and compare it to a case where Bax62C is tBid/Bax driven).
+We fit the kinetic parameters in the model and make assumptions about the
+observables and their relation to the NBD signals (e.g., we can first do Bax2
+for the Bax62C data, and compare it to a case where Bax62C is tBid/Bax driven).
 
 So--need to load the data (the three curves, and then normalize it to 0->1)
-Then run the model, fitting only the kinetic parameters (not the initial conditions),
-evaluate the objective function over the timecourse. Use a figure for the error based on the
-variance in the data in a relatively straight-line area, and/or over a short distance.
+Then run the model, fitting only the kinetic parameters (not the initial
+conditions), evaluate the objective function over the timecourse. Use a figure
+for the error based on the variance in the data in a relatively straight-line
+area, and/or over a short distance.
 
-Build out the ODE/core model with Bax2 binding and Bax4. So will have many parameters...
+Build out the ODE/core model with Bax2 binding and Bax4. So will have many
+parameters...
 
 Advanced version
 
-Ideally, would have a way of pre-equilibrating the system for the just-Bax condition,
-and then perturb it with the addition of tBid.
+Ideally, would have a way of pre-equilibrating the system for the just-Bax
+condition, and then perturb it with the addition of tBid.
 
-Could develop more comprehensive/enumerated set of hypotheses where the Bax binding was due
-to other states
-"""
+Could develop more comprehensive/enumerated set of hypotheses where the Bax
+binding was due to other states """
