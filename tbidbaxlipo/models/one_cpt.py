@@ -20,7 +20,7 @@ class Builder(core.Builder):
     #{{{# initialize_model()
     def __init__(self, params_dict=None):
         # Sets self.model = Model(), and self.param_dict
-        tBid_Bax.__init__(self, params_dict=params_dict)
+        core.Builder.__init__(self, params_dict=params_dict)
 
         self.declare_monomers()
 
