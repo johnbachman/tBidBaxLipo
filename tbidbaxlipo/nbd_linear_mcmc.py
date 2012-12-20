@@ -10,6 +10,7 @@ import nbd_analysis as nbd
 import pickle
 from tbidbaxlipo.util.report import Report
 from nbd_model import model
+from scipy.interpolate import interp1d
 
 # Prepare the data
 # ================
@@ -40,13 +41,22 @@ def do_fit():
         c126_scaling = params[5]
 
         c3_model = yout['Baxc3'] * c3_scaling
-        #c62_model = yout['Baxc62'] * c62_scaling
+
+        c62_f = numpy.vectorize(interp1d(nbd.time_other, yout['Baxc62'],
+                                         bounds_error=False))
+        # Only use c62 up until 3589 seconds so that we don't get a bounds
+        # error (nbd.time_other only goes up to 3590, whereas nbd.time_c2
+        # goes up to 3594.7 seconds)
+        c62_interp = c62_f(nbd.time_c62[0:1794])
+        c62_model = c62_interp * c62_scaling
+
         c120_model = yout['Baxc120'] * c120_scaling
         c122_model = yout['Baxc122'] * c122_scaling
         c126_model = yout['Baxc126'] * c126_scaling
 
         err  = numpy.sum((nbd_avgs[0] - c3_model)**2 / (2 * nbd_stds[0]**2))
-        #err += numpy.sum((nbd_avgs[1] - c62_model)**2 / (2 * nbd_stds[1]**2))
+        err += numpy.sum((nbd_avgs[1][0:1794] - c62_model)**2 /
+                (2 * nbd_stds[1][0:1794]**2))
         err += numpy.sum((nbd_avgs[2] - c120_model)**2 / (2 * nbd_stds[2]**2))
         err += numpy.sum((nbd_avgs[3] - c122_model)**2 / (2 * nbd_stds[3]**2))
         err += numpy.sum((nbd_avgs[4] - c126_model)**2 / (2 * nbd_stds[4]**2))
@@ -68,7 +78,7 @@ def do_fit():
                               if not p.name.endswith('_0')]
                                  
     opts.initial_values = [p.value for p in opts.estimate_params]
-    opts.nsteps = 50
+    opts.nsteps = 
     opts.likelihood_fn = likelihood
     opts.step_fn = step
     opts.use_hessian = False
