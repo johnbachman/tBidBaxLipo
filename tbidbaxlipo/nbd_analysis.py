@@ -9,7 +9,7 @@ from util.report import Report
 from util.fitting import Parameter, fit, residuals
 from matplotlib.pyplot import legend, title, plot, xlabel, ylabel, figure, \
                               ion, show
-from numpy import array, mean, std, exp
+from numpy import array, mean, std, exp, min, max
 
 __all__ = ['plot_fit', 'plot_raw', 'plot_normalized', 'plot_avg',
            'normalize_min_max', 'normalize_fit', 'calc_norm_avg_std']
@@ -33,8 +33,12 @@ def plot_fit(report=None, fittype='double_exp'):
         Default value is 'double_exp'. See source for the full
         set of fitting functions.
     """
-
+    norm_replicates_list = []
     for i, nbd in enumerate(nbdall):
+        norm_replicates_list.append(array(normalize_fit(nbd)))
+
+    for i, nbd in enumerate(norm_replicates_list):
+    #for i, nbd in enumerate(nbdall):
         #if (not nbd_names[i] == '3c'): continue
 
         if (nbd_names[i] == '62c'):
@@ -317,7 +321,6 @@ def normalize_fit(replicates):
 
         # Define the "model" func (just the normalization equation)
         def normalization_eqn(repl): return (repl - fit_min_val()) / (fit_max_val() - fit_min_val())
-
         fit(normalization_eqn, [fit_min_val, fit_max_val], array(reference), array(replicate))
 
         replicate = array(replicate)
