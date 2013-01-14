@@ -13,6 +13,7 @@ Contents:
 
    intro
    modules/index
+   todo
 
 Indices and tables
 ==================
