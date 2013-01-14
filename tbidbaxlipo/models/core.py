@@ -1,9 +1,88 @@
+"""
+TODOs:
+
+- Since the models that I'm most interested in are the two_cpt and the site_cpt
+  ones, this should ideally be written in such a way that the models don't have
+  to be re-implemented--perhaps flag the rules that need to be given
+  compartment specific implementations by adding a parameter?
+
+- I should list, in this document, an outline of the alternative to mechanism
+  that I want to explore, before implementing them.
+
+- Since many of the mechanistic alternatives involve differences in binding
+  site, or alternative conformational changes, it might be more useful to
+  approach this by building up a set of rules as objects and then
+  programmatically composing models from these rules using tables.
+
+tBid Binding to Bax
+-------------------
+
+- tBid binds to Bax at the a6 (rear) site to trigger conformational change.
+
+- tBid binds to Bax at the bh3 (front) site to trigger conformational change
+  (perhaps more appropriate for Bak than Bax).
+
+- tBid binds first at the rear site, then once conformational change is
+  triggered, to the BH3 site (groove).
+
+tBid Dissociation/Bax conformational Change
+-------------------------------------------
+
+- tBid binding at the rear triggers a conformational change in Bax that makes
+  the BH3 exposed but inhibits further binding by tBid at that site.
+
+- tBid binding at the rear triggers a conformational change that exposes the
+  BH3 but allows tBid to stay bound
+
+- Perhaps Bax BH3:groove dimerization triggers the conformational change in 
+  the rear site that prevents further tBid binding, but tBid can stay bound
+  until then.
+
+It will be important to see how these alternatives affect predictions about
+tBid/Bax interactions as they related to Andrews FRET experiments.
+
+Bax Insertion
+-------------
+
+Many alternatives are possible in terms of insertion of Bax helices, including
+N-terminus first or C-terminus first, or a5-a6 insertion preceding activation
+or dimerization. Perhaps the way to model this is to represent these as
+distinct insertion events that can be inserted into the pathway in any order--
+however this will require some trickery to get the preconditions of the rules
+to work correctly.
+
+Possible conditioning could include the bound states, either to a tBid, to
+another Bax in a dimer, or to Baxes at the tetramerization site; it could
+also obviously include which other insertion events have already taken place.
+
+Bax Oligomerization
+-------------------
+
+- Apparent consensus model: Bax (and Bak) dimerize first by the BH3:groove
+  interface, which makes the a6:a6 interface accessible, by conformational
+  change. They then bind by the a6:a6 interface to form higher-order oligomers.
+  The oligomers are not bounded in size.
+
+- The "daisy-chain" model, perhaps one in which the Bax/Bak BH3 engages the
+  rear pocket of an adjacent Bax/Bak in the chain.
+
+- The "daisy-chain" model with sequential BH3:groove interfaces that are not
+  reciprocal 
+
+Bcl-XL and Retrotranslocation
+-----------------------------
+
+- Basic model: BclXL/Bcl2 binds the 
+
+"""
 __author__ = 'johnbachman'
 
 from pysb import *
 from pysb.core import SelfExporter
 from pysb.macros import *
 #import inspect
+
+SelfExporter.do_export = False
 
 class Builder(object):
 
