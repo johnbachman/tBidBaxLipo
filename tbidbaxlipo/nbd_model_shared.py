@@ -21,11 +21,11 @@ def declare_shared_components():
          'c184': ['s', 'm']})
 
     Parameter('Bax_0', 1)
-    Parameter('c3_scaling', 1)
-    Parameter('c62_scaling', 1)
-    Parameter('c120_scaling', 1)
-    Parameter('c122_scaling', 1)
-    Parameter('c126_scaling', 1)
+    Parameter('c3_scaling', 0.7584)
+    Parameter('c62_scaling', 0.9204)
+    Parameter('c120_scaling', 0.975)
+    Parameter('c122_scaling', 0.952)
+    Parameter('c126_scaling', 0.966)
 
     alias_model_components()
 
