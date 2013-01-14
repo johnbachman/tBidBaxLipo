@@ -28,14 +28,13 @@ Possible variations on this linear approach would include:
 - The possibility of heterogeneity in the pathway, or branching; multiple ways
   of reaching the final, membrane-associated state
 
-
 An additional complication is linking the kinetics of the conformational
 changes to the changes in the observed signal. 
 
 - The simplest model is that each residue makes a single transition from
-  solvated to desolvated, and once desolvated, has a particular signal itensity
-  associated with it. This model assumes that any subsequent conformational
-  changes don't affect the signal further. In this case only the
+  solvated to desolvated, and once desolvated, has a particular signal
+  intensity associated with it. This model assumes that any subsequent
+  conformational changes don't affect the signal further. In this case only the
   conformational states being measured (i.e., the number of cysteine mutants)
   need to be considered.
 
