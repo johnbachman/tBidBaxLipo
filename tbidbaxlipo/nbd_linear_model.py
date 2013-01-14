@@ -49,40 +49,11 @@ changes to the changes in the observed signal.
 
 from pysb import *
 from pysb.macros import equilibrate
+import nbd_model_shared
 
 Model()
 
-Monomer('Bax', ['c3', 'c62', 'c120', 'c122', 'c126', 'c184'],
-    {'c3': ['s', 'm'],
-     'c62': ['s', 'm'],
-     'c120': ['s', 'm'],
-     'c122': ['s', 'm'],
-     'c126': ['s', 'm'],
-     'c184': ['s', 'm']})
-
-Observable('Baxc3', Bax(c3='m'))
-Observable('Baxc62', Bax(c62='m'))
-Observable('Baxc120', Bax(c120='m'))
-Observable('Baxc122', Bax(c122='m'))
-Observable('Baxc126', Bax(c126='m'))
-Observable('Baxc184', Bax(c184='m'))
-
-# The baseline state--all sites are soluble
-sites_initial_state = {
-        'c3':'s',
-       'c62':'s',
-      'c120':'s',
-      'c122':'s',
-      'c126':'s',
-      'c184':'s'}
-
-Initial(Bax(**sites_initial_state), Parameter('Bax_0', 1))
-
-Parameter('c3_scaling', 1)
-Parameter('c62_scaling', 1)
-Parameter('c120_scaling', 1)
-Parameter('c122_scaling', 1)
-Parameter('c126_scaling', 1)
+nbd_model_shared.declare_shared_components()
 
 def linear_pathway_from_ordering(site_ordering):
     """Builds a model in which each residue transitions in a given order.
@@ -102,7 +73,7 @@ def linear_pathway_from_ordering(site_ordering):
 
     # "lhs" denotes the "left hand side" of the rule, that is, the reactant
     # ("rhs" will denote the right hand side, i.e., the product)
-    site_states_lhs = sites_initial_state.copy()
+    site_states_lhs = nbd_model_shared.sites_initial_state.copy()
 
     for i, current_site in enumerate(site_ordering):
         site_states_rhs = site_states_lhs.copy()

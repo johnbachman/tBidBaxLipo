@@ -9,8 +9,10 @@ import matplotlib.pyplot as plt
 import nbd_analysis as nbd
 import pickle
 from tbidbaxlipo.util.report import Report
-from nbd_model import model
+#from nbd_model import model
+from nbd_parallel_model import model
 from scipy.interpolate import interp1d
+import sys
 
 # Prepare the data
 # ================
@@ -21,7 +23,7 @@ nbd_avgs, nbd_stds = nbd.calc_norm_avg_std()
 # MCMC Functions
 # ==============
 
-def do_fit():
+def do_fit(basename='nbd_mcmc', random_seed=1):
     """Runs MCMC on the globally defined model."""
 
     # Define the likelihood function
@@ -41,7 +43,10 @@ def do_fit():
         c126_scaling = params[5]
 
         c3_model = yout['Baxc3'] * c3_scaling
-
+        c120_model = yout['Baxc120'] * c120_scaling
+        c122_model = yout['Baxc122'] * c122_scaling
+        c126_model = yout['Baxc126'] * c126_scaling
+        # -- c62 calculation --
         c62_f = numpy.vectorize(interp1d(nbd.time_other, yout['Baxc62'],
                                          bounds_error=False))
         # Only use c62 up until 3589 seconds so that we don't get a bounds
@@ -50,11 +55,8 @@ def do_fit():
         c62_interp = c62_f(nbd.time_c62[0:1794])
         c62_model = c62_interp * c62_scaling
 
-        c120_model = yout['Baxc120'] * c120_scaling
-        c122_model = yout['Baxc122'] * c122_scaling
-        c126_model = yout['Baxc126'] * c126_scaling
-
         err  = numpy.sum((nbd_avgs[0] - c3_model)**2 / (2 * nbd_stds[0]**2))
+        # Again, only use data up to 3589 seconds for c62
         err += numpy.sum((nbd_avgs[1][0:1794] - c62_model)**2 /
                 (2 * nbd_stds[1][0:1794]**2))
         err += numpy.sum((nbd_avgs[2] - c120_model)**2 / (2 * nbd_stds[2]**2))
@@ -62,10 +64,6 @@ def do_fit():
         err += numpy.sum((nbd_avgs[4] - c126_model)**2 / (2 * nbd_stds[4]**2))
 
         return err
-
-    # Set the random number generator seed
-    seed = 4
-    random = numpy.random.RandomState(seed)
 
     # Initialize the MCMC arguments
     opts = bayessb.MCMCOpts()
@@ -78,22 +76,24 @@ def do_fit():
                               if not p.name.endswith('_0')]
                                  
     opts.initial_values = [p.value for p in opts.estimate_params]
-    opts.nsteps = 
+    opts.nsteps = 10000
     opts.likelihood_fn = likelihood
     opts.step_fn = step
-    opts.use_hessian = False
+    opts.use_hessian = True
     opts.hessian_period = opts.nsteps / 10 # Calculate the Hessian 10 times
-    opts.seed = seed
+    opts.seed = random_seed
     mcmc = bayessb.MCMC(opts)
 
     # Run it!
     mcmc.run()
 
     # Pickle it!
-    #mcmc.solver = None # FIXME This is a hack to make the MCMC pickleable
-    #output_file = open('nbd62c_m1c_10k.pck', 'w')
-    #pickle.dump(mcmc, output_file)
-    #output_file.close()
+    output_basename = '%s_%d_steps_seed_%d' % \
+                      (basename, opts.nsteps, random_seed)
+    mcmc.options.likelihood_fn = None
+    output_file = open('%s.pck' % output_basename, 'w')
+    pickle.dump(mcmc, output_file)
+    output_file.close()
 
     # Set to best fit position
     mcmc.position = mcmc.positions[numpy.argmin(mcmc.likelihoods)]
@@ -111,14 +111,13 @@ def do_fit():
     plt.plot(tspan, x['Baxc120'] * best_fit_params[3], 'b', label='c120 model')
     plt.plot(tspan, x['Baxc122'] * best_fit_params[4], 'm', label='c122 model')
     plt.plot(tspan, x['Baxc126'] * best_fit_params[5], 'k', label='c126 model')
-    plt.show()
     plt.legend(loc='lower right')
 
     plt.show()
 
     rep = Report()
     rep.addCurrentFigure()
-    rep.writeReport('nbd_mcmc_fit')
+    rep.writeReport(output_basename)
 
     p_name_vals = zip([p.name for p in model.parameters], best_fit_params)
     print('\n'.join(['%s: %g' % (p_name_vals[i][0], p_name_vals[i][1])
@@ -134,13 +133,6 @@ def plot_data():
     plt.plot(nbd.time_other, nbd_avgs[3], 'm.', label='c122 data', alpha=alpha)
     plt.plot(nbd.time_other, nbd_avgs[4], 'k.', label='c126 data', alpha=alpha)
 
-def prior(mcmc, position):
-    # TODO Need to put some decent priors on the on and off rates
-    #mean = math.log10([1e-2, 1e7])
-    #var = [100, 100]
-    #return numpy.sum((position - means) ** 2 / ( 2 * var))
-    pass
-
 def step(mcmc):
     """The function to call at every iteration. Currently just prints
     out a few progress indicators.
@@ -150,36 +142,14 @@ def step(mcmc):
             (mcmc.iter, mcmc.sig_value, mcmc.T, mcmc.acceptance/(mcmc.iter+1),
              mcmc.accept_likelihood, mcmc.accept_prior, mcmc.accept_posterior)
 
-
-# Plotting
-# ========
-
-def plot_from_params(params_dict):
-    """Plot the model output using the given parameter value."""
-
-    # The specific model may need to be changed here
-    m1c = one_cpt.Builder(params_dict=params_dict)
-    m1c.build_model2()
-    model = m1c.model
-
-    plt.ion()
-
-    plt.plot(tspan, ydata_norm)
-    output = odesolve(model, tspan)
-    #output_array = output.view().reshape(len(tspan), len(output.dtype))
-    iBax = 2*output['Bax2'] + 4*output['Bax4']
-    iBax_norm = iBax / max(iBax)
-    plt.plot(tspan, iBax_norm[:])
-
-    plt.show()
-
-
 # Main function
 # =============
 
 if __name__ == '__main__':
-    mcmc = do_fit()
-
+    if (len(sys.argv) == 3):
+        mcmc = do_fit(basename=sys.argv[1], random_seed=int(sys.argv[2]))
+    else:
+        mcmc = do_fit() # Run with the defaults
 
 
 """
