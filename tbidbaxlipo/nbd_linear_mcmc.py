@@ -23,7 +23,7 @@ nbd_avgs, nbd_stds = nbd.calc_norm_avg_std()
 # MCMC Functions
 # ==============
 
-def do_fit(basename='nbd_mcmc', random_seed=1):
+def do_fit(initial_values=None, basename='nbd_mcmc', random_seed=1):
     """Runs MCMC on the globally defined model."""
 
     # Define the likelihood function
@@ -74,12 +74,17 @@ def do_fit(basename='nbd_mcmc', random_seed=1):
     # estimate rates only (not initial conditions) from wild guesses
     opts.estimate_params = [p for p in model.parameters
                               if not p.name.endswith('_0')]
-                                 
-    opts.initial_values = [p.value for p in opts.estimate_params]
-    opts.nsteps = 10000
+
+    if initial_values is not None:
+        opts.initial_values = initial_values
+    else:
+        opts.initial_values = [p.value for p in opts.estimate_params]
+
+    opts.nsteps = 100000
     opts.likelihood_fn = likelihood
     opts.step_fn = step
-    opts.use_hessian = True
+    opts.use_hessian = False
+    #opts.use_hessian = True
     opts.hessian_period = opts.nsteps / 10 # Calculate the Hessian 10 times
     opts.seed = random_seed
     mcmc = bayessb.MCMC(opts)
@@ -91,6 +96,7 @@ def do_fit(basename='nbd_mcmc', random_seed=1):
     output_basename = '%s_%d_steps_seed_%d' % \
                       (basename, opts.nsteps, random_seed)
     mcmc.options.likelihood_fn = None
+    mcmc.options.step_fn = None
     output_file = open('%s.pck' % output_basename, 'w')
     pickle.dump(mcmc, output_file)
     output_file.close()
@@ -146,9 +152,20 @@ def step(mcmc):
 # =============
 
 if __name__ == '__main__':
-    if (len(sys.argv) == 3):
-        mcmc = do_fit(basename=sys.argv[1], random_seed=int(sys.argv[2]))
+    if (len(sys.argv) == 4):
+        # The first command line argument should contain the name of the
+        # file to unpickle to get the list of starting values
+        input_file = open(sys.argv[1], 'r')
+        initial_value_list = pickle.load(input_file)
+
+        # The second command line argument contains the index into the
+        # matrix of starting values identifying the vector of values to use.
+        # This value is also used here as the random seed.
+        index = int(sys.argv[2])
+        mcmc = do_fit(initial_values=initial_value_list[index],
+                      basename=sys.argv[3], random_seed=index)
     else:
+        print("Running do_fit() with the default arguments...")
         mcmc = do_fit() # Run with the defaults
 
 
