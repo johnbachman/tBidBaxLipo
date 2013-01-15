@@ -1,5 +1,6 @@
 from pysb import *
 from pysb.util import alias_model_components
+import numpy as np
 
 # The baseline state--all sites are soluble
 sites_initial_state = {
@@ -37,5 +38,22 @@ def declare_shared_components():
     Observable('Baxc184', Bax(c184='m'))
 
     Initial(Bax(**sites_initial_state), Bax_0)
+
+def random_initial_values(num_sets):
+    """Get a matrix of random initial values for the scaling parameters.
+    
+    The argument num_sets specifies the number of sets of parameter sets
+    to produce. For example, to run 10 different MCMC chains, generate 10
+    parameter sets.
+
+    Note that because the initial value parameter Bax_0 is not estimated,
+    it does not have an included random initial value.
+    """
+    initial_values_list = []
+
+    for i in range(0, num_sets):
+        initial_values_list.append(np.random.uniform(low=0.5, high=1.1, size=5))
+
+    return initial_values_list
 
 
