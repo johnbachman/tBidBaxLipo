@@ -18,6 +18,19 @@ Rule('c120_insertion', Bax(c120='s') >> Bax(c120='m'), c120_insertion_rate)
 Rule('c122_insertion', Bax(c122='s') >> Bax(c122='m'), c122_insertion_rate)
 Rule('c126_insertion', Bax(c126='s') >> Bax(c126='m'), c126_insertion_rate)
 
+num_parameters = 5 
+
+def prior(mcmc, position):
+    # In linear space
+    # TODO: Write the prior function for the shared parameters
+    # in the shared module
+    means = np.array(([1.0] * nbd_model_shared.num_parameters) +
+                     ([1e-3] * num_parameters))
+    variances = np.array(([0.1] * nbd_model_shared.num_parameters) +
+                         ([1e3] * num_parameters))
+    position_linear = 10**position
+    return np.sum((position_linear - means)**2 / (2 * variances))
+
 def random_initial_values(num_sets):
     """Generate a random sample of initial values for parameter estimation.
 
@@ -40,7 +53,7 @@ def random_initial_values(num_sets):
     initial_values_list = []
     for i in range(0, num_sets):
         initial_values_list.append(10 ** np.random.uniform(low=lower_bound,
-                                                     high=upper_bound, size=5))
+                                                     high=upper_bound, size=num_parameters))
 
     # Concatenate with the randomized initial values from nbd_model_shared
     return np.concatenate((nbd_model_shared.random_initial_values(num_sets),

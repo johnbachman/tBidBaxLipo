@@ -39,6 +39,8 @@ def declare_shared_components():
 
     Initial(Bax(**sites_initial_state), Bax_0)
 
+num_parameters = 5
+
 def random_initial_values(num_sets):
     """Get a matrix of random initial values for the scaling parameters.
     
@@ -52,7 +54,7 @@ def random_initial_values(num_sets):
     initial_values_list = []
 
     for i in range(0, num_sets):
-        initial_values_list.append(np.random.uniform(low=0.5, high=1.1, size=5))
+        initial_values_list.append(np.random.uniform(low=0.5, high=1.1, size=num_parameters))
 
     return initial_values_list
 
