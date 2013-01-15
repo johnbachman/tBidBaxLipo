@@ -7,7 +7,6 @@ simdata/*
 
 *.pyc
 *.swp
-*.pck
 *.csv
 anneal_output.txt
 *.xlsx
