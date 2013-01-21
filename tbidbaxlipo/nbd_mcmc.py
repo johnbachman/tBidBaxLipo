@@ -53,21 +53,25 @@ def do_fit(initial_values=None, basename='nbd_mcmc', random_seed=1):
 
     print model.parameters
     # estimate rates only (not initial conditions) from wild guesses
-    opts.estimate_params = [p for p in model.parameters
-                              if not p.name.endswith('_0')]
-    #opts.estimate_params = [model.parameters['c3_scaling'],
-    #                        model.parameters['c3_insertion_rate']]
+    #opts.estimate_params = [p for p in model.parameters
+    #                          if not p.name.endswith('_0')]
+    # TODO Set the params to fit here TODO TODO TODO
+    opts.estimate_params = [model.parameters['c3_scaling'],
+                            model.parameters['c3_insertion_rate'],
+                            model.parameters['c120_scaling'],
+                            model.parameters['c120_insertion_rate']]
 
     if initial_values is not None:
         opts.initial_values = initial_values
     else:
         opts.initial_values = [p.value for p in opts.estimate_params]
 
-    opts.nsteps = 500 #2000
+    opts.nsteps = 1000 #2000
     opts.likelihood_fn = likelihood
+    #opts.prior_fn = prior
     opts.step_fn = step
     opts.use_hessian = True #True
-    opts.hessian_period = opts.nsteps / 2 #10 # Calculate the Hessian 10 times
+    opts.hessian_period = opts.nsteps / 10 #10 # Calculate the Hessian 10 times
     opts.seed = random_seed
     mcmc = bayessb.MCMC(opts)
 
@@ -80,12 +84,13 @@ def do_fit(initial_values=None, basename='nbd_mcmc', random_seed=1):
 
     initial_params = mcmc.cur_params(position=mcmc.initial_position)
 
+    # TODO TODO TODO Set the curves to plot here
     x = mcmc.simulate(position=mcmc.initial_position, observables=True)
     plt.plot(tspan, x['Baxc3'] * initial_params[1], 'r', label='c3 model')
-    plt.plot(tspan, x['Baxc62'] * initial_params[2], 'g', label='c62 model')
+    #plt.plot(tspan, x['Baxc62'] * initial_params[2], 'g', label='c62 model')
     plt.plot(tspan, x['Baxc120'] * initial_params[3], 'b', label='c120 model')
-    plt.plot(tspan, x['Baxc122'] * initial_params[4], 'm', label='c122 model')
-    plt.plot(tspan, x['Baxc126'] * initial_params[5], 'k', label='c126 model')
+    #plt.plot(tspan, x['Baxc122'] * initial_params[4], 'm', label='c122 model')
+    #plt.plot(tspan, x['Baxc126'] * initial_params[5], 'k', label='c126 model')
     plt.legend(loc='lower right')
     plt.title('Before')
     plt.show()
@@ -119,11 +124,12 @@ def do_fit(initial_values=None, basename='nbd_mcmc', random_seed=1):
 
     x = mcmc.simulate(position=best_fit_position, observables=True)
 
+    # TODO TODO TODO Set the curves to plot here
     plt.plot(tspan, x['Baxc3'] * best_fit_params[1], 'r', label='c3 model')
-    plt.plot(tspan, x['Baxc62'] * best_fit_params[2], 'g', label='c62 model')
+    #plt.plot(tspan, x['Baxc62'] * best_fit_params[2], 'g', label='c62 model')
     plt.plot(tspan, x['Baxc120'] * best_fit_params[3], 'b', label='c120 model')
-    plt.plot(tspan, x['Baxc122'] * best_fit_params[4], 'm', label='c122 model')
-    plt.plot(tspan, x['Baxc126'] * best_fit_params[5], 'k', label='c126 model')
+    #plt.plot(tspan, x['Baxc122'] * best_fit_params[4], 'm', label='c122 model')
+    #plt.plot(tspan, x['Baxc126'] * best_fit_params[5], 'k', label='c126 model')
     plt.legend(loc='lower right')
     plt.title('After')
 
@@ -171,9 +177,10 @@ def likelihood(mcmc, position):
     c122_model = yout['Baxc122'] * c122_scaling
     c126_model = yout['Baxc126'] * c126_scaling
 
+    # TODO TODO TODO Set the components of the obj func here
     err  = numpy.sum((nbd_avgs[0] - c3_model)**2 / (2 * nbd_stds[0]**2))
     #err += numpy.sum((nbd_avgs[1] - c62_model)**2 / (2 * nbd_stds[1]**2))
-    #err += numpy.sum((nbd_avgs[2] - c120_model)**2 / (2 * nbd_stds[2]**2))
+    err += numpy.sum((nbd_avgs[2] - c120_model)**2 / (2 * nbd_stds[2]**2))
     #err += numpy.sum((nbd_avgs[3] - c122_model)**2 / (2 * nbd_stds[3]**2))
     #err += numpy.sum((nbd_avgs[4] - c126_model)**2 / (2 * nbd_stds[4]**2))
 
@@ -217,24 +224,6 @@ def likelihood(mcmc, position):
     """
     return err
 
-def likelihood2(mcmc, position):
-    """The likelihood function. Calculates the error between model and data
-    to give a measure of the likelihood of observing the data given the
-    current parameter values.
-    """
-    yout = mcmc.simulate(position, observables=True)
-
-    params = mcmc.cur_params(position)
-    
-    c3_scaling   = params[1]
-
-    c3_model = yout['Baxc3'] * c3_scaling
-
-    err  = numpy.sum((nbd_avgs[0] - c3_model)**2 / (2 * nbd_stds[0]**2))
-
-    return err
-
-
 def step(mcmc):
     """The function to call at every iteration. Currently just prints
     out a few progress indicators.
@@ -262,10 +251,15 @@ if __name__ == '__main__':
                       basename=sys.argv[3], random_seed=index)
     else:
         print("Running do_fit() with the default arguments...")
-        #initial_values = random_initial_values(1)
+        initial_values = random_initial_values(num_sets=3, num_residues=2)
         #mcmc = do_fit(initial_values=initial_values[0]) # Run with the defaults
-        initial_values = [0.5, 0.5, 0.5, 0.5, 0.5, 0.1, 0.1, 0.1, 0.1, 0.1]
-        mcmc = do_fit(initial_values=initial_values)
+        #initial_values = [0.5, 0.5, 0.5, 0.5, 0.5, 0.1, 0.1, 0.1, 0.1, 0.1]
+        mcmc = do_fit(initial_values=initial_values[0], random_seed=1,
+                basename='nbd_mcmc_c3n120')
+        mcmc = do_fit(initial_values=initial_values[1], random_seed=2,
+                basename='nbd_mcmc_c3n120')
+        mcmc = do_fit(initial_values=initial_values[2], random_seed=3,
+                basename='nbd_mcmc_c3n120')
 """
 Notes
 
