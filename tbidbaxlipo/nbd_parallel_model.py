@@ -47,7 +47,7 @@ def random_initial_values(num_sets=1, num_residues=5):
     parameter sets.
     """
 
-    lower_bound = -6
+    lower_bound = -5
     upper_bound = 0
     initial_values_list = []
     for i in range(0, num_sets):
