@@ -51,11 +51,13 @@ from pysb import *
 from pysb.macros import equilibrate
 import nbd_model_shared
 
+site_list = ['c3', 'c62', 'c126', 'c122', 'c120']
+
 Model()
 
 nbd_model_shared.declare_shared_components()
 
-def linear_pathway_from_ordering(site_ordering):
+def linear_pathway_from_ordering(site_ordering, parameters):
     """Builds a model in which each residue transitions in a given order.
 
     Sites go from 's' to 'm' in a stepwise fashion, that is, a site cannot
@@ -79,16 +81,18 @@ def linear_pathway_from_ordering(site_ordering):
         site_states_rhs = site_states_lhs.copy()
         site_states_rhs[current_site] = 'm'
 
+        print current_site
+        print(parameters[(2*i):(2*i+2)])
+
         # The equilibration rule defining the insertion step
         equilibrate(Bax(**site_states_lhs), Bax(**site_states_rhs),
-                    [1e-2, 1e-4])   
+                parameters[(2*i):(2*i+2)])   
        
         # The product of this step becomes the reactant for the next step:
         site_states_lhs = site_states_rhs.copy()
 
-example_ordering = ['c3', 'c62', 'c126', 'c122', 'c120']
 
-linear_pathway_from_ordering(example_ordering)
+#linear_pathway_from_ordering(site_list, [1e-2, 1e-4]*5)
 
 
 
@@ -118,21 +122,6 @@ def linear_pathway_groups(num_phases):
             # For each group, iterate over sites
             lhs_sites = [site for site in prev_group]
                 
-
-    """
-    For each phase, choo
-    reversibly_translocate(Bax(), 's', 'm', locname='c62')
-
-    Rule('b1', Bax(c3='s', c62='s', c120='s', c122='s', c126='s', c184='s') <>
-               Bax(c3='s', c62='s', c120='s', c122='s', c126='s', c184='s'), kf, kr)
-
- ) <> Bax(c62='m', c3='m'), kf, kr)
-    Rule('b2', Bax(c3='m', c120='s') <> Bax(c3='m', c120='m'), kf, kr)
-    Rule('b3', Bax(c62='u', c3='s') <> Bax(c62='m', c3='m'), kf, kr)
-    Rule('b4', Bax(c62='m', c3='s') <> Bax(c62='m', c3='m'), kf, kr)
-    Rule('b5', Bax(c62='m', c3='s') <> Bax(c62='m', c3='m'), kf, kr)
-    Rule('b6', Bax(c62='m', c3='s') <> Bax(c62='m', c3='m'), kf, kr)
-    """
 
 """
 Way to approach this:
@@ -234,27 +223,4 @@ Two branches can have different lengths
 
 Branched
 """
-
-
-def separate_species():
-    Monomer('c3', ['loc'], {'loc': ['s', 'm']})
-    Monomer('c62', ['loc'], {'loc': ['s', 'm']})
-    Monomer('c120', ['loc'], {'loc': ['s', 'm']})
-    Monomer('c122', ['loc'], {'loc': ['s', 'm']})
-    Monomer('c126', ['loc'], {'loc': ['s', 'm']})
-    Monomer('c184', ['loc'], {'loc': ['s', 'm']})
-
-    Initial(c3(loc='s'), Parameter('c3_max', 5))
-    Initial(c62(loc='s'), Parameter('c62_max', 5))
-    Initial(c120(loc='s'), Parameter('c120_max', 5))
-    Initial(c122(loc='s'), Parameter('c122_max', 5))
-    Initial(c126(loc='s'), Parameter('c126_max', 5))
-    Initial(c184(loc='s'), Parameter('c184_max', 5))
-
-    Observe('c3', c3())
-    Observe('c62', c62())
-    Observe('c120', c120())
-    Observe('c122', c122())
-    Observe('c126', c126())
-    Observe('c184', c184())
 
