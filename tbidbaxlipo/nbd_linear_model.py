@@ -50,6 +50,8 @@ changes to the changes in the observed signal.
 from pysb import *
 from pysb.macros import equilibrate
 import nbd_model_shared
+import numpy as np
+from itertools import chain
 
 site_list = ['c3', 'c62', 'c126', 'c122', 'c120']
 
@@ -81,9 +83,6 @@ def linear_pathway_from_ordering(site_ordering, parameters):
         site_states_rhs = site_states_lhs.copy()
         site_states_rhs[current_site] = 'm'
 
-        print current_site
-        print(parameters[(2*i):(2*i+2)])
-
         # The equilibration rule defining the insertion step
         equilibrate(Bax(**site_states_lhs), Bax(**site_states_rhs),
                 parameters[(2*i):(2*i+2)])   
@@ -94,8 +93,28 @@ def linear_pathway_from_ordering(site_ordering, parameters):
 
 #linear_pathway_from_ordering(site_list, [1e-2, 1e-4]*5)
 
+def random_initial_values(num_sets=1):
+    initial_values_list = []
 
+    kf_lower_bound = -5
+    kf_upper_bound = -1
+    kr_lower_bound = -5
+    kr_upper_bound = -1
+    
+    num_parameter_pairs = 5
 
+    for i in range(0, num_sets):
+        kfs = 10 ** np.random.uniform(low=kf_lower_bound, high=kf_upper_bound,
+                                      size=num_parameter_pairs)
+        krs = 10 ** np.random.uniform(low=kr_lower_bound, high=kr_upper_bound,
+                                      size=num_parameter_pairs)
+        initial_values_list.append(list(chain.from_iterable(zip(kfs, krs))))
+
+    # Concatenate with the randomized initial values from nbd_model_shared
+    return np.concatenate((nbd_model_shared.random_initial_values(
+                                        num_sets=num_sets, num_residues=5),
+                           initial_values_list), axis=1)
+ 
 # ------------------------------------------------------------------
 # Takes a monomer pattern as an argument
 def all_parallel():
