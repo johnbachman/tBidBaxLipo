@@ -57,8 +57,8 @@ def do_fit(initial_values=None, basename='nbd_mcmc', random_seed=1):
     #                          if not p.name.endswith('_0')]
     # TODO Set the params to fit here TODO TODO TODO
     opts.estimate_params = [model.parameters['c3_scaling'],
-                            model.parameters['c3_insertion_rate'],
                             model.parameters['c120_scaling'],
+                            model.parameters['c3_insertion_rate'],
                             model.parameters['c120_insertion_rate']]
 
     if initial_values is not None:
