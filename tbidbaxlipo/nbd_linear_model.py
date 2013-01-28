@@ -91,7 +91,7 @@ def linear_pathway_from_ordering(site_ordering, parameters):
         site_states_lhs = site_states_rhs.copy()
 
 
-#linear_pathway_from_ordering(site_list, [1e-2, 1e-4]*5)
+linear_pathway_from_ordering(site_list, [1e-2, 1e-4]*5)
 
 def random_initial_values(num_sets=1):
     initial_values_list = []
