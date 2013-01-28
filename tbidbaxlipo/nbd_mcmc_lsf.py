@@ -18,7 +18,7 @@ if __name__ == '__main__':
         elif sys.argv[1] == 'linear':
             for i in range(0, num_chains):
                 cmdstr = "bsub -q %s python nbd_mcmc.py " \
-                         "nbd_mcmc_linear_random_initial_values.pck %d " \
+                         "nbd_linear_random_initial_values.pck %d " \
                          "nbd_mcmc_linear" % \
                          (queue, i)
                 print cmdstr
