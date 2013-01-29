@@ -20,7 +20,7 @@ import glob
 #    'nbd_mcmc_linear_2000_steps_seed_16.pck',
 #    'nbd_mcmc_linear_2000_steps_seed_18.pck']
 
-chain_file_list = glob.glob('nbd_mcmc_c3c120_*steps_seed*.pck')
+chain_file_list = glob.glob('nbd_mcmc_parallel_*steps_seed*.pck')
 
 chain_set = []
 total_steps = 0
