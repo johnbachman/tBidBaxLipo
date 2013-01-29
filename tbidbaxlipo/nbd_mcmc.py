@@ -11,8 +11,8 @@ import pickle
 from tbidbaxlipo.util.report import Report
 #from nbd_model import model
 #import nbd_parallel_model
-#from nbd_parallel_model import model, prior, random_initial_values
-from nbd_linear_model import model, random_initial_values
+from nbd_parallel_model import model, prior, random_initial_values
+#from nbd_linear_model import model, random_initial_values
 from scipy.interpolate import interp1d
 import sys
 
@@ -59,6 +59,7 @@ def do_fit(initial_values=None, basename='nbd_mcmc', random_seed=1):
     #opts.prior_fn = prior
     opts.step_fn = step
     opts.use_hessian = True #True
+    opts.hessian_scale = 100
     opts.hessian_period = opts.nsteps / 10 #10 # Calculate the Hessian 10 times
     opts.seed = random_seed
     mcmc = bayessb.MCMC(opts)
@@ -205,7 +206,7 @@ if __name__ == '__main__':
         #mcmc = do_fit(initial_values=initial_values[0]) # Run with the defaults
         #initial_values = [0.5, 0.5, 0.5, 0.5, 0.5, 0.1, 0.1, 0.1, 0.1, 0.1]
         mcmc1 = do_fit(initial_values=initial_values[0], random_seed=1,
-                basename='nbd_mcmc_linear')
+                basename='nbd_mcmc_parallel')
         #mcmc2 = do_fit(initial_values=initial_values[1], random_seed=2,
         #        basename='nbd_mcmc_linear')
         #mcmc3 = do_fit(initial_values=initial_values[2], random_seed=3,
