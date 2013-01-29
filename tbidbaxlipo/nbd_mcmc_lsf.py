@@ -2,6 +2,7 @@ import sys
 import numpy as np
 from pysb.integrate import odesolve
 import subprocess
+import time
 
 # The calls to odesolve are done to insure that the chains don't crash on each other
 # trying to run scipy.weave at the same time.
@@ -40,6 +41,7 @@ if __name__ == '__main__':
         elif sys.argv[1] == 'parallel':
             from nbd_parallel_model import model
             x = odesolve(model, t)            
+            time.sleep(5)
             for i in range(0, num_chains):
                 cmd_list = ["bsub", "-q", queue, "python", "nbd_mcmc.py",
                             "nbd_mcmc_parallel_random_initial_values.pck",
