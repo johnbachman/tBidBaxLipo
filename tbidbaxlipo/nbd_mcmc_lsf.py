@@ -12,7 +12,7 @@ t = np.linspace(0, 60*60*3, 100)
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print "Please specify a fit type (c3, c3c120, or linear)."
+        print "Please specify a fit type (c3, c3c120, parallel or linear)."
     else:
         # Fit parallel model with c3 only
         if sys.argv[1] == 'c3':
