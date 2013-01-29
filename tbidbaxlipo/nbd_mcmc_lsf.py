@@ -41,7 +41,7 @@ if __name__ == '__main__':
         elif sys.argv[1] == 'parallel':
             from nbd_parallel_model import model
             x = odesolve(model, t)            
-            time.sleep(5)
+            time.sleep(10)
             for i in range(0, num_chains):
                 cmd_list = ["bsub", "-q", queue, "python", "nbd_mcmc.py",
                             "nbd_mcmc_parallel_random_initial_values.pck",
