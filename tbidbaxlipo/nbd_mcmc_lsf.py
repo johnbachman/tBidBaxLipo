@@ -9,7 +9,6 @@ import time
 
 num_chains = 20
 queue = 'sorger_1d'
-t = np.linspace(0, 60*60*3, 100)
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
