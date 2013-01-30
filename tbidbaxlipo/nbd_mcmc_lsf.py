@@ -17,8 +17,6 @@ if __name__ == '__main__':
     else:
         # Fit parallel model with c3 only
         if sys.argv[1] == 'c3':
-            from nbd_parallel_model import model
-            x = odesolve(model, t)            
             for i in range(0, num_chains):
                 cmd_list = ["bsub", "-q", queue, "python", "nbd_mcmc_c3.py",
                             "nbd_mcmc_c3_random_initial_values.pck",
@@ -28,8 +26,6 @@ if __name__ == '__main__':
 
         # Fit parallel model with c3 and c120 only
         elif sys.argv[1] == 'c3c120':
-            from nbd_parallel_model import model
-            x = odesolve(model, t)            
             for i in range(0, num_chains):
                 cmd_list = ["bsub", "-q", queue, "python", "nbd_mcmc_c3c120.py",
                             "nbd_mcmc_c3c120_random_initial_values.pck",
@@ -39,9 +35,6 @@ if __name__ == '__main__':
 
         # Fit parallel model
         elif sys.argv[1] == 'parallel':
-            from nbd_parallel_model import model
-            x = odesolve(model, t)            
-            time.sleep(10)
             for i in range(0, num_chains):
                 cmd_list = ["bsub", "-q", queue, "python", "nbd_mcmc.py",
                             "nbd_mcmc_parallel_random_initial_values.pck",
@@ -51,8 +44,6 @@ if __name__ == '__main__':
 
         # Fit linear model
         elif sys.argv[1] == 'linear':
-            from nbd_linear_model import model
-            x = odesolve(model, t)            
             for i in range(0, num_chains):
                 cmd_list = ["bsub", "-q", queue, "python", "nbd_mcmc.py",
                             "nbd_mcmc_linear_random_initial_values.pck",
