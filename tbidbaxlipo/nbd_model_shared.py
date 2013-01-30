@@ -39,9 +39,22 @@ def declare_shared_components():
 
     Initial(Bax(**sites_initial_state), Bax_0)
 
+def prior(position, num_residues=5):
+    # The parameters get passed in in log scale, since these are
+    # scaling parameters we want to convert them to linear scale.
+    position = 10**position
+
+    # Gaussians centered around 0.95, with a variance of 0.1
+    # i.e., a SD of ~0.33.
+    means = np.array([0.95] * num_residues)
+    variances = np.array([0.1] * num_residues)
+
+    return np.sum((position - means)**2 / (2 * variances))
+
+
 def random_initial_values(num_sets=1, num_residues=5):
     """Get a matrix of random initial values for the scaling parameters.
-    
+
     The argument num_sets specifies the number of sets of parameter sets
     to produce. For example, to run 10 different MCMC chains, generate 10
     parameter sets.

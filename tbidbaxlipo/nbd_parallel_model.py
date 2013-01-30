@@ -20,15 +20,26 @@ Rule('c126_insertion', Bax(c126='s') >> Bax(c126='m'), c126_insertion_rate)
 
 
 def prior(mcmc, position, num_residues=5):
-    # In linear space
-    # TODO: Write the prior function for the shared parameters
-    # in the shared module
-    means = np.array(([1.0] * nbd_model_shared.num_residues) +
-                     ([1e-3] * num_residues))
-    variances = np.array(([0.1] * nbd_model_shared.num_residues) +
-                         ([1e3] * num_residues))
-    position_linear = 10**position
-    return np.sum((position_linear - means)**2 / (2 * variances))
+    """Get the prior distribution for the parameters of the parallel model.
+    Main role is to prevent the fitting algorithm from going off the deep end
+    and getting lost."""
+
+    # Uniform prior on [-5, 0]
+    if min(position[num_residues:]) < -5 or max(position[num_residues:]) > 0:
+      return np.inf
+
+    # The scaling parameters should be the first num_residues entries in the
+    # position array; get them and pass them to the prior function from the
+    # shared module
+    scaling_parameters = position[0:num_residues]
+    scaling_prior = nbd_model_shared.prior(scaling_parameters,
+                                           num_residues=num_residues)
+    return scaling_prior
+
+    #means = np.array([-3.0] * num_residues)
+    #variances = np.array([1.0] * num_residues)
+
+    #return scaling_prior + np.sum((position[num_residues:] - means)**2 / (2 * variances))
 
 def random_initial_values(num_sets=1, num_residues=5):
     """Generate a random sample of initial values for parameter estimation.
@@ -47,7 +58,7 @@ def random_initial_values(num_sets=1, num_residues=5):
     parameter sets.
     """
 
-    lower_bound = -5
+    lower_bound = -4
     upper_bound = 0
     initial_values_list = []
     for i in range(0, num_sets):
