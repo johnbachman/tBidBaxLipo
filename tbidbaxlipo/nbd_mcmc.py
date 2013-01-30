@@ -9,10 +9,8 @@ import matplotlib.pyplot as plt
 import nbd_analysis as nbd
 import pickle
 from tbidbaxlipo.util.report import Report
-#from nbd_model import model
-#import nbd_parallel_model
-from nbd_parallel_model import model, prior, random_initial_values
-#from nbd_linear_model import model, random_initial_values
+#from nbd_parallel_model import model, prior, random_initial_values
+from nbd_linear_model import model, random_initial_values
 from scipy.interpolate import interp1d
 import sys
 
@@ -25,9 +23,6 @@ nbd_avgs, nbd_stds = nbd.calc_norm_avg_std()
 # Cut off the last two timepoints from C62 so that it's the same length
 nbd_avgs[1] = nbd_avgs[1][0:-2]
 nbd_stds[1] = nbd_stds[1][0:-2]
-
-# FIXME can probably get rid of this
-likelihood_matrix = []
 
 # MCMC Functions
 # ==============
@@ -43,29 +38,24 @@ def do_fit(initial_values=None, basename='nbd_mcmc', random_seed=1):
     # estimate rates only (not initial conditions) from wild guesses
     opts.estimate_params = [p for p in model.parameters
                               if not p.name.endswith('_0')]
-    # TODO Set the params to fit here TODO TODO TODO
-    #opts.estimate_params = [model.parameters['c3_scaling'],
-    #                        model.parameters['c3_insertion_rate'],
-    #                        model.parameters['c120_scaling'],
-    #                        model.parameters['c120_insertion_rate']]
 
     if initial_values is not None:
         opts.initial_values = initial_values
     else:
         opts.initial_values = [p.value for p in opts.estimate_params]
 
-    opts.nsteps = 2000 #2000
+    opts.nsteps = 4000 #2000
     opts.likelihood_fn = likelihood
     #opts.prior_fn = prior
     opts.step_fn = step
-    opts.use_hessian = True #True
+    opts.use_hessian = True
     opts.hessian_scale = 100
     opts.hessian_period = opts.nsteps / 10 #10 # Calculate the Hessian 10 times
     opts.seed = random_seed
     mcmc = bayessb.MCMC(opts)
 
     mcmc.initialize()
-    
+
     # Plot "Before" curves -------
     plt.ion()
     plt.figure()
@@ -73,7 +63,7 @@ def do_fit(initial_values=None, basename='nbd_mcmc', random_seed=1):
 
     initial_params = mcmc.cur_params(position=mcmc.initial_position)
 
-    # TODO TODO TODO Set the curves to plot here
+    # Set the curves to plot here
     x = mcmc.simulate(position=mcmc.initial_position, observables=True)
     plt.plot(tspan, x['Baxc3'] * initial_params[1], 'r', label='c3 model')
     plt.plot(tspan, x['Baxc62'] * initial_params[2], 'g', label='c62 model')
@@ -113,7 +103,7 @@ def do_fit(initial_values=None, basename='nbd_mcmc', random_seed=1):
 
     x = mcmc.simulate(position=best_fit_position, observables=True)
 
-    # TODO TODO TODO Set the curves to plot here
+    # Set the curves to plot here
     plt.plot(tspan, x['Baxc3'] * best_fit_params[1], 'r', label='c3 model')
     plt.plot(tspan, x['Baxc62'] * best_fit_params[2], 'g', label='c62 model')
     plt.plot(tspan, x['Baxc120'] * best_fit_params[3], 'b', label='c120 model')
@@ -165,7 +155,6 @@ def likelihood(mcmc, position):
     c122_model = yout['Baxc122'] * c122_scaling
     c126_model = yout['Baxc126'] * c126_scaling
 
-    # TODO TODO TODO Set the components of the obj func here
     err  = numpy.sum((nbd_avgs[0] - c3_model)**2 / (2 * nbd_stds[0]**2))
     err += numpy.sum((nbd_avgs[1] - c62_model)**2 / (2 * nbd_stds[1]**2))
     err += numpy.sum((nbd_avgs[2] - c120_model)**2 / (2 * nbd_stds[2]**2))
@@ -201,12 +190,17 @@ if __name__ == '__main__':
                       basename=sys.argv[3], random_seed=index)
     else:
         print("Running do_fit() with the default arguments...")
-        #initial_values = random_initial_values(num_sets=3, num_residues=2)
+        #initial_values = 10 ** numpy.array([ 0.14630763, -0.08978846, -0.37332934,
+        #                  -0.86792919, -0.18098907,
+        #                  -0.19341629, -4.09769903, -0.27148786,  0.07000052, -1.72920935])
+        #mcmc1 = do_fit(initial_values=initial_values, random_seed=11,
+        #        basename='nbd_mcmc_parallel_numericaltest')
+
         initial_values = random_initial_values(num_sets=3)
-        #mcmc = do_fit(initial_values=initial_values[0]) # Run with the defaults
-        #initial_values = [0.5, 0.5, 0.5, 0.5, 0.5, 0.1, 0.1, 0.1, 0.1, 0.1]
-        mcmc1 = do_fit(initial_values=initial_values[0], random_seed=1,
-                basename='nbd_mcmc_parallel')
+        mcmc = do_fit(initial_values=initial_values[0]) # Run with the defaults
+
+        #mcmc1 = do_fit(initial_values=initial_values[0], random_seed=1,
+        #        basename='nbd_mcmc_parallel')
         #mcmc2 = do_fit(initial_values=initial_values[1], random_seed=2,
         #        basename='nbd_mcmc_linear')
         #mcmc3 = do_fit(initial_values=initial_values[2], random_seed=3,
