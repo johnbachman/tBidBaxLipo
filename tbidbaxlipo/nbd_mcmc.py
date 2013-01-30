@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 import nbd_analysis as nbd
 import pickle
 from tbidbaxlipo.util.report import Report
-#from nbd_parallel_model import model, prior, random_initial_values
-from nbd_linear_model import model, random_initial_values
+from nbd_parallel_model import model, prior, random_initial_values
+#from nbd_linear_model import model, random_initial_values
 from scipy.interpolate import interp1d
 import sys
 
@@ -27,7 +27,7 @@ nbd_stds[1] = nbd_stds[1][0:-2]
 # MCMC Functions
 # ==============
 
-def do_fit(initial_values=None, basename='nbd_mcmc', random_seed=1):
+def do_fit(initial_values=None, basename='nbd_mcmc', random_seed=1, show_plot=False):
     """Runs MCMC on the globally defined model."""
 
     # Initialize the MCMC arguments
@@ -46,10 +46,10 @@ def do_fit(initial_values=None, basename='nbd_mcmc', random_seed=1):
 
     opts.nsteps = 4000 #2000
     opts.likelihood_fn = likelihood
-    #opts.prior_fn = prior
+    opts.prior_fn = prior
     opts.step_fn = step
     opts.use_hessian = True
-    opts.hessian_scale = 100
+    opts.hessian_scale = 1
     opts.hessian_period = opts.nsteps / 10 #10 # Calculate the Hessian 10 times
     opts.seed = random_seed
     mcmc = bayessb.MCMC(opts)
@@ -72,7 +72,8 @@ def do_fit(initial_values=None, basename='nbd_mcmc', random_seed=1):
     plt.plot(tspan, x['Baxc126'] * initial_params[5], 'k', label='c126 model')
     plt.legend(loc='lower right')
     plt.title('Before')
-    plt.show()
+    if show_plot:
+        plt.show()
 
     p_name_vals = zip([p.name for p in model.parameters], initial_params)
     print('\n'.join(['%s: %g' % (p_name_vals[i][0], p_name_vals[i][1])
@@ -111,8 +112,8 @@ def do_fit(initial_values=None, basename='nbd_mcmc', random_seed=1):
     plt.plot(tspan, x['Baxc126'] * best_fit_params[5], 'k', label='c126 model')
     plt.legend(loc='lower right')
     plt.title('After')
-
-    plt.show()
+    if show_plot:
+        plt.show()
 
     rep = Report()
     rep.addCurrentFigure()
@@ -187,7 +188,7 @@ if __name__ == '__main__':
         # This value is also used here as the random seed.
         index = int(sys.argv[2])
         mcmc = do_fit(initial_values=initial_value_list[index],
-                      basename=sys.argv[3], random_seed=index)
+                      basename=sys.argv[3], random_seed=index, show_plot=False)
     else:
         print("Running do_fit() with the default arguments...")
         #initial_values = 10 ** numpy.array([ 0.14630763, -0.08978846, -0.37332934,
@@ -197,7 +198,7 @@ if __name__ == '__main__':
         #        basename='nbd_mcmc_parallel_numericaltest')
 
         initial_values = random_initial_values(num_sets=3)
-        mcmc = do_fit(initial_values=initial_values[0]) # Run with the defaults
+        mcmc = do_fit(initial_values=initial_values[0], show_plot=True) # Run with the defaults
 
         #mcmc1 = do_fit(initial_values=initial_values[0], random_seed=1,
         #        basename='nbd_mcmc_parallel')
