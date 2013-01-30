@@ -86,7 +86,7 @@ def linear_pathway_from_ordering(site_ordering, parameters):
         # The equilibration rule defining the insertion step
         equilibrate(Bax(**site_states_lhs), Bax(**site_states_rhs),
                 parameters[(2*i):(2*i+2)])   
-       
+
         # The product of this step becomes the reactant for the next step:
         site_states_lhs = site_states_rhs.copy()
 
@@ -100,7 +100,7 @@ def random_initial_values(num_sets=1):
     kf_upper_bound = -1
     kr_lower_bound = -5
     kr_upper_bound = -1
-    
+
     num_parameter_pairs = 5
 
     for i in range(0, num_sets):
@@ -130,7 +130,7 @@ def linear_pathway_groups(num_phases):
 
     # Should return list of (n) lists of sites (strings) 
     group_list = partition(Bax.sites, n)
-    
+
     # Iterate over site groups
     all_prev = {}
     for i, group in enumerate(group_list):
@@ -140,7 +140,7 @@ def linear_pathway_groups(num_phases):
         for prev_group in enumerate(group_list[0:i]):
             # For each group, iterate over sites
             lhs_sites = [site for site in prev_group]
-                
+
 
 """
 Way to approach this:
