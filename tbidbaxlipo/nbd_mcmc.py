@@ -27,7 +27,8 @@ nbd_stds[1] = nbd_stds[1][0:-2]
 # MCMC Functions
 # ==============
 
-def do_fit(initial_values=None, basename='nbd_mcmc', random_seed=1, show_plot=False):
+def do_fit(initial_values=None, basename='nbd_mcmc', random_seed=1,
+           show_plot=False):
     """Runs MCMC on the globally defined model."""
 
     # Initialize the MCMC arguments
@@ -48,9 +49,18 @@ def do_fit(initial_values=None, basename='nbd_mcmc', random_seed=1, show_plot=Fa
     opts.likelihood_fn = likelihood
     opts.prior_fn = prior
     opts.step_fn = step
+
     opts.use_hessian = True
+    #opts.anneal_length = 4000
     opts.hessian_scale = 1
     opts.hessian_period = opts.nsteps / 10 #10 # Calculate the Hessian 10 times
+
+    opts.sigma_adj_interval = 20
+    opts.sigma_step = 0.9
+    opts.sigma_max = 100
+    opts.sigma_min = 0
+
+    #opts.norm_step_size = 1.
     opts.seed = random_seed
     mcmc = bayessb.MCMC(opts)
 
@@ -168,10 +178,15 @@ def step(mcmc):
     """The function to call at every iteration. Currently just prints
     out a few progress indicators.
     """
+    window = 200.
     if mcmc.iter % 20 == 0:
-        print 'iter=%-5d  sigma=%-.3f  T=%-.3f  acc=%-.3f, lkl=%g  prior=%g  post=%g' % \
-            (mcmc.iter, mcmc.sig_value, mcmc.T, mcmc.acceptance/(mcmc.iter+1.),
-             mcmc.accept_likelihood, mcmc.accept_prior, mcmc.accept_posterior)
+        print 'iter=%-5d  sigma=%-.3f  T=%-.3f  loc_acc=%-.3f  ' \
+              'glob_acc=%-.3f  lkl=%g  prior=%g  post=%g' % \
+              (mcmc.iter, mcmc.sig_value, mcmc.T,
+               numpy.sum(mcmc.accepts[mcmc.iter - window:mcmc.iter+1]) /
+               float(window),
+               mcmc.acceptance/(mcmc.iter+1.), mcmc.accept_likelihood,
+               mcmc.accept_prior, mcmc.accept_posterior)
 
 # Main function
 # =============
@@ -196,9 +211,10 @@ if __name__ == '__main__':
         #                  -0.19341629, -4.09769903, -0.27148786,  0.07000052, -1.72920935])
         #mcmc1 = do_fit(initial_values=initial_values, random_seed=11,
         #        basename='nbd_mcmc_parallel_numericaltest')
-
+        numpy.random.seed(1)
         initial_values = random_initial_values(num_sets=3)
-        mcmc = do_fit(initial_values=initial_values[0], show_plot=True) # Run with the defaults
+        mcmc = do_fit(initial_values=initial_values[0], show_plot=True,
+                      random_seed=1) # Run with the defaults
 
         #mcmc1 = do_fit(initial_values=initial_values[0], random_seed=1,
         #        basename='nbd_mcmc_parallel')
