@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 import nbd_analysis as nbd
 import pickle
 from tbidbaxlipo.util.report import Report
-from nbd_parallel_model import model, prior, random_initial_values
-#from nbd_linear_model import model, random_initial_values
+#from nbd_parallel_model import model, prior, random_initial_values
+from nbd_linear_model import model, random_initial_values, prior
 from scipy.interpolate import interp1d
 import sys
 
@@ -206,22 +206,18 @@ if __name__ == '__main__':
                       basename=sys.argv[3], random_seed=index, show_plot=False)
     else:
         print("Running do_fit() with the default arguments...")
-        #initial_values = 10 ** numpy.array([ 0.14630763, -0.08978846, -0.37332934,
-        #                  -0.86792919, -0.18098907,
-        #                  -0.19341629, -4.09769903, -0.27148786,  0.07000052, -1.72920935])
-        #mcmc1 = do_fit(initial_values=initial_values, random_seed=11,
-        #        basename='nbd_mcmc_parallel_numericaltest')
+
+        # Run the pathological case
+        #input_file = open('nbd_mcmc_parallel_random_initial_values.pck')
+        #initial_value_list = pickle.load(input_file)
+        #mcmc11 = do_fit(initial_values=initial_value_list[11], random_seed=11,
+        #                basename='nbd_mcmc_parallel11_gausspr')
+        
         numpy.random.seed(1)
         initial_values = random_initial_values(num_sets=3)
         mcmc = do_fit(initial_values=initial_values[0], show_plot=True,
                       random_seed=1) # Run with the defaults
 
-        #mcmc1 = do_fit(initial_values=initial_values[0], random_seed=1,
-        #        basename='nbd_mcmc_parallel')
-        #mcmc2 = do_fit(initial_values=initial_values[1], random_seed=2,
-        #        basename='nbd_mcmc_linear')
-        #mcmc3 = do_fit(initial_values=initial_values[2], random_seed=3,
-        #        basename='nbd_mcmc_linear')
 """
 Notes
 
