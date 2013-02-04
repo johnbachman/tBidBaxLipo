@@ -90,8 +90,26 @@ def linear_pathway_from_ordering(site_ordering, parameters):
         # The product of this step becomes the reactant for the next step:
         site_states_lhs = site_states_rhs.copy()
 
+num_residues = 5
 
-linear_pathway_from_ordering(site_list, [1e-2, 1e-4]*5)
+## Build the default model # FIXME this should be parameterized
+linear_pathway_from_ordering(site_list, [1e-2, 1e-4] * num_residues)
+
+# -- FITTING-RELATED FUNCTIONS -----------
+
+kf_means = np.array([-3.0] * num_residues)
+kr_means = np.array([-3.0] * num_residues)
+means = list(chain.from_iterable(zip(kf_means, kr_means)))
+variances = np.array([1.0] * num_residues * 2)
+
+def prior(mcmc, position):
+    scaling_parameters = position[0:num_residues]
+    scaling_prior = nbd_model_shared.prior(scaling_parameters,
+                                           num_residues=num_residues)
+    # Lognormal prior with given means and variances (in log10)
+    return scaling_prior + \
+           np.sum((position[num_residues:] - means)**2 / (2 * variances))
+
 
 def random_initial_values(num_sets=1):
     initial_values_list = []
@@ -101,25 +119,18 @@ def random_initial_values(num_sets=1):
     kr_lower_bound = -5
     kr_upper_bound = -1
 
-    num_parameter_pairs = 5
-
     for i in range(0, num_sets):
         kfs = 10 ** np.random.uniform(low=kf_lower_bound, high=kf_upper_bound,
-                                      size=num_parameter_pairs)
+                                      size=num_residues)
         krs = 10 ** np.random.uniform(low=kr_lower_bound, high=kr_upper_bound,
-                                      size=num_parameter_pairs)
+                                      size=num_residues)
         initial_values_list.append(list(chain.from_iterable(zip(kfs, krs))))
 
     # Concatenate with the randomized initial values from nbd_model_shared
     return np.concatenate((nbd_model_shared.random_initial_values(
                                         num_sets=num_sets, num_residues=5),
                            initial_values_list), axis=1)
- 
-# ------------------------------------------------------------------
-# Takes a monomer pattern as an argument
-def all_parallel():
-    for site in Bax.sites:
-        reversibly_translocate(Bax(), 's', 'm', locname=site)
+
 
 def linear_pathway_groups(num_phases):
     """ Partition the sites into n groups.
