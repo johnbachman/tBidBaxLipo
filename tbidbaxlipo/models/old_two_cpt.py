@@ -1,25 +1,23 @@
 __author__ = 'johnbachman'
 
-#{{{# IMPORTS
+# IMPORTS
 from pysb import *
 from pysb.macros import *
 from pylab import *
 from pysb.integrate import odesolve
 from util.fitting import fit, fit_initial, mse
 import util.fitting as fitting
-#}}}
 
 model = Model('tBidBax_2c_model')
 
 from model_core import *
 
-#{{{# COMPARTMENTS
+# COMPARTMENTS
 Compartment('solution', dimension=3, parent=None)
 Compartment('full_ves', dimension=2, parent=solution)
 Compartment('empty_ves', dimension=2, parent=solution)
-#}}}
 
-#{{{# INITIAL CONDITIONS
+# INITIAL CONDITIONS
 """Note on vesicle concentration SATSOURA:
 It was found that the measured r was often higher than the
 estimated r, with large variations observed from preparation-to-preparation.
@@ -41,9 +39,8 @@ Initial(Bax(loc='c', bh3=None, a6=None) ** solution, Bax_0)
 Initial(Vesicles() ** full_ves, Vesicles_0)
 #Initial(Bax(loc='i', bh3=1, dye='f', a6=None) % Bax(loc='i', bh3=1, dye='f', a6=None), Bax2_0)
 #Initial(Vesicles(dye='e'), Parameter('eVesicles_0', Vesicles_0.value*0.1))
-#}}}
 
-#{{{# OBSERVABLES
+# OBSERVABLES
 #Observable('eVes', Vesicles(dye='e'))
 #Observable('pores', Pores())
 Observable('ctBid', tBid(loc='c'))
@@ -68,10 +65,8 @@ Observable('mBax', Bax(loc='m'))
 #Observable('metBid', tBid(loc='m', dye='e'))
 #Observable('tBidBax', tBid(bh3=1) % Bax(a6=1))
 #Observable('tBidiBax', tBid(bh3=1) % Bax(bh3=1, loc='i'))
-#}}}
 
-#{{{# MODEL MACROS
-#{{{# translocate_tBid_Bax_ode_cmpt()
+# MODEL MACROS
 def translocate_tBid_Bax_2c():
     print("translocate_tBid_Bax_2c()")
 
@@ -127,9 +122,7 @@ def translocate_tBid_Bax_2c():
              Bax(loc='m', bh3=None, a6=None) ** cpt >>
              Bax(loc='c', bh3=None, a6=None) ** solution,
              Bax_transloc_kr)
-#}}}
 
-#{{{# dye_release()
 def dye_release(pore_forming_species):
     print("dye_release(" + str(pore_forming_species) + ")")
     # Rate of dye release while pores persist. Also a scaling factor for how much pore-state
@@ -189,12 +182,11 @@ steps.
                
  
 
-#}}}
 
 ######################################
 
 
-#{{{# MODEL BUILDING FUNCTIONS
+# MODEL BUILDING FUNCTIONS
 def build_2c_model0():
     print "--------------------------------"
     print "Building 2c model 0:"
@@ -262,7 +254,6 @@ def build_model4():
     pores_from_Bax_tetramers()
     #Bax_auto_activates(target_bax_site='a6')
     #Bax_inhibits_tBid()
-#}}}
 
 build_2c_model0()
 
@@ -275,7 +266,7 @@ def load_params(param_set):
             print(("WARNING: parameter %s in the given parameter set does not " +
                    "exist in this model, it is being ignored.") % param_name)
 
-#{{{# RUNNING THE MODEL
+# RUNNING THE MODEL
 def run_model(tmax=12000, fittype='explin'):
     t = linspace(0, tmax, 1000)
     x = odesolve(model, t)
@@ -311,9 +302,8 @@ def run_model(tmax=12000, fittype='explin'):
     #xlabel("Time (seconds)")
     #ylabel("Pores per vesicle")
 
-#}}}
 
-#{{{#  COMMENTS
+#  COMMENTS
 """
 Simple model of tBid-Bax interaction, consisting only of tBid's activation of
 Bax. The basic enzyme-substrate model.
@@ -380,9 +370,8 @@ you would expect that the pBax(full) concentration would go to 0, and the CF
 (efflux) function would change by precisely 1%.
 
 """
-#}}}
 
-#{{{# EXTRA
+# EXTRA
 """
     # Fit eVes trajectory
     k = fitting.Parameter(0.0025)
@@ -443,4 +432,3 @@ you would expect that the pBax(full) concentration would go to 0, and the CF
         legend(loc='lower right')
     return x
 """
-#}}}

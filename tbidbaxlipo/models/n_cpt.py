@@ -1,6 +1,5 @@
 __author__ = 'johnbachman'
 
-#{{{# IMPORTS
 from pysb import *
 from pysb.macros import *
 #from pylab import *
@@ -10,16 +9,12 @@ from scipy.stats import poisson
 from pysb import kappa
 from pysb import bng
 from tbidbaxlipo.models import core
-#}}}
 
 class Builder(core.Builder):
 
-    #{{{# within_compartment_rsf()
     def within_compartment_rsf(self):
         return 1.0
-    #}}}
 
-    #{{{# __init__()
     def __init__(self, scaling_factor=10, params_dict=None):
         # Sets self.model = Model(), and self.params_dict
         tBid_Bax.__init__(self, params_dict=params_dict)
@@ -35,11 +30,10 @@ class Builder(core.Builder):
 
         self.declare_monomers()
 
-        #{{{# COMPARTMENTS
+        # COMPARTMENTS
         solution = self.compartment('solution', dimension=3, parent=None)
         for i in range(1, self['Vesicles_0'].value+1):
             self.compartment('c' + str(i), dimension=2, parent=solution)
-        #}}}
 
         tBid = self['tBid']
         Bax = self['Bax']
@@ -47,7 +41,7 @@ class Builder(core.Builder):
         self.initial(tBid(bh3=None, loc='c') ** solution, self['tBid_0'])
         self.initial(Bax(bh3=None, a6=None, loc='c') ** solution, self['Bax_0'])
 
-        #{{{# OBSERVABLES
+        # OBSERVABLES
         self.observable('ctBid', tBid(loc='c') ** solution)
         self.observable('mtBid', tBid(loc='m'))
         self.observable('cBax', Bax(loc='c') ** solution)
@@ -66,11 +60,8 @@ class Builder(core.Builder):
                 self.observable('tBidBax_%s' % cpt.name,
                             tBid(loc='m', bh3=1) % Bax(loc='m', a6=1) ** cpt)
                 #self.observable('Bax2_%s' % cpt.name, MatchOnce(Bax(bh3=1) % Bax(bh3=1) ** cpt))
-        #}}}
-    #}}}
 
-    #{{{# MODEL MACROS
-    #{{{# translocate_tBid_Bax()
+    # MODEL MACROS
     def translocate_tBid_Bax(self):
         print("tBid_Bax_nc: translocate_tBid_Bax()")
 
@@ -105,9 +96,7 @@ class Builder(core.Builder):
                      Bax(loc='m', bh3=None, a6=None) ** cpt >>
                      Bax(loc='c', bh3=None, a6=None) ** solution,
                      Bax_transloc_kr)
-    #}}}
 
-    #{{{# pores_from_Bax_monomers()
     def pores_from_Bax_monomers(self):
         print("pores_from_Bax_monomers()")
 
@@ -124,9 +113,7 @@ class Builder(core.Builder):
         for i, cpt in enumerate(model.compartments):
             if (not cpt.name == 'solution'):
                 Observable('pores_%s' % cpt.name, Pores() ** cpt)
-    #}}}
 
-    #{{{# pores_from_Bax_dimers()
     def pores_from_Bax_dimers(self):
         """Basically a way of counting the time-integrated amount of
            forward pore formation."""
@@ -139,10 +126,7 @@ class Builder(core.Builder):
              MatchOnce(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None)) >>
              MatchOnce(Bax(loc='p', bh3=1, a6=None) % Bax(loc='p', bh3=1, a6=None)) + Pores(),
              pore_formation_rate_k)
-    #}}}
-    #}}}
 
-    #{{{# RUNNING THE MODEL
     def run_model(self, tmax=12000, num_sims=1, figure_ids=[0, 1]):
         xrecs = []
         dr_all = []
@@ -224,11 +208,10 @@ class Builder(core.Builder):
         #title("Dye release calculated via compartmental model")
 
         return xrecs[0]
-    #}}}
 
 
 
-#{{{# SSA data analysis functions
+# SSA data analysis functions
 def plot_compartment_mean(model, observable_name, output):
     total = 0
     for i, cpt in enumerate(model.compartments):
@@ -326,10 +309,9 @@ def plot_dist(data):
     print "sum poisson:  %f" % sum(poisson_counts)
     print poisson_counts
     plot(bins, poisson_counts)
-#}}}
 
 
-#{{{# COMMENTS
+# COMMENTS
 """
 Things I would want to know:
 * Is pore formation actually independent?
@@ -408,9 +390,8 @@ gamma_molec = k / 361.32 * 10^8 * molec * sec)
 gamma_molec = k / 3.6132 * 10^10 * molec * sec)
 
 """
-#}}}
 
-#{{{# OTHER
+# OTHER
 def rate_calcs(nm_rate):
 
     vol = 60e-6
@@ -454,4 +435,3 @@ def run_model_ode(tmax=12000):
     plot(t, (x['cBax'])/Bax_0.value, label='cBax', color=ci.next())
     plot(t, (x['mBax'])/Bax_0.value, label='mBax', color=ci.next())
     legend()
-#}}}

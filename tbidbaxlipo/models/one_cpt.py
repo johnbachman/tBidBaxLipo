@@ -5,35 +5,29 @@ solution compartment and a single homogeneous membrane compartment.
 
 __author__ = 'johnbachman'
 
-#{{{# IMPORTS
+# IMPORTS
 from pysb import *
 #from pylab import *
 from tbidbaxlipo.util.fitting import fit, fit_initial, mse
 from tbidbaxlipo.util import color_iter
 from tbidbaxlipo.models import core
-#from tBidBax_model import tBidBax
-#}}}
 
 class Builder(core.Builder):
 
-    #{{{# within_compartment_rsf()
     def within_compartment_rsf(self):
         return 1.0 / (self['Vesicles_0'].value)
-    #}}}
 
-    #{{{# initialize_model()
     def __init__(self, params_dict=None):
         # Sets self.model = Model(), and self.param_dict
         core.Builder.__init__(self, params_dict=params_dict)
 
         self.declare_monomers()
 
-        #{{{# COMPARTMENTS
+        # COMPARTMENTS
         solution = self.compartment('solution', dimension=3, parent=None)
         self.compartment('ves', dimension=2, parent=solution)
-        #}}}
 
-        #{{{# INITIAL CONDITIONS
+        # INITIAL CONDITIONS
         self.parameter('Vesicles_0', 5)
         self.parameter('tBid_0', 20)
         self.parameter('Bax_0', 100)
@@ -43,9 +37,8 @@ class Builder(core.Builder):
 
         self.initial(tBid(loc='c', bh3=None) ** solution, self['tBid_0'])
         self.initial(Bax(loc='c', bh3=None, a6=None) ** solution, self['Bax_0'])
-        #}}}
 
-        #{{{# OBSERVABLES
+        # OBSERVABLES
         self.observable('ctBid', tBid(loc='c'))
         self.observable('mtBid', tBid(loc='m'))
         self.observable('cBax', Bax(loc='c'))
@@ -66,11 +59,8 @@ class Builder(core.Builder):
         #Observable('metBid', tBid(loc='m', dye='e'))
         #Observable('tBidBax', tBid(bh3=1) % Bax(a6=1))
         #Observable('tBidiBax', tBid(bh3=1) % Bax(bh3=1, loc='i'))
-        #}}}
-    #}}}
 
-    #{{{# MODEL MACROS
-    #{{{# translocate_tBid_Bax()
+    # MODEL MACROS
     def translocate_tBid_Bax(self):
         print("one_cpt: translocate_tBid_Bax()")
 
@@ -100,9 +90,7 @@ class Builder(core.Builder):
              Bax(loc='m', bh3=None, a6=None) ** ves >>
              Bax(loc='c', bh3=None, a6=None) ** solution,
              Bax_transloc_kr)
-    #}}}
 
-    #{{{# pores_from_Bax_monomers()
     def pores_from_Bax_monomers():
         """Basically a way of counting the time-integrated amount of
            forward pore formation."""
@@ -127,9 +115,7 @@ class Builder(core.Builder):
         #Rule('Pores_Recycle',
         #     Bax(loc='p') >> Bax(loc='c'),
         #     pore_recycling_rate_k)
-    #}}}#
 
-    #{{{# pores_from_Bax_dimers()
     def pores_from_Bax_dimers():
         """Basically a way of counting the time-integrated amount of
            forward pore formation."""
@@ -147,9 +133,7 @@ class Builder(core.Builder):
              Bax(loc='p', bh3=1, a6=None) % Bax(loc='p', bh3=1, a6=None) >>
              Bax(loc='c', bh3=None, a6=None) + Bax(loc='c', bh3=None, a6=None),
              pore_recycling_rate_k)
-    #}}}
 
-    #{{{# pores_from_Bax_tetramers()
     def pores_from_Bax_tetramers():
         """Basically a way of counting the time-integrated amount of
            forward pore formation."""
@@ -171,10 +155,8 @@ class Builder(core.Builder):
         #     Bax(loc='c', bh3=1, a6=3) + Bax(loc='c', bh3=1, a6=4) +
         #     Bax(loc='c', bh3=2, a6=3) + Bax(loc='c', bh3=2, a6=4),
         #     pore_recycling_rate_k)
-    #}}}
-    #}}}
 
-    #{{{# RUNNING THE MODEL
+    # RUNNING THE MODEL
     def run_model(self, tmax=12000, figure_ids=[0,1]):
         from pysb.integrate import odesolve # Postpone integrator test msg
 
@@ -247,9 +229,8 @@ class Builder(core.Builder):
         #ylabel("Pores per vesicle")
 
         return x
-    #}}}
 
-    #{{{#  COMMENTS
+    #  COMMENTS
     """
     Simple model of tBid-Bax interaction, consisting only of tBid's activation of
     Bax. The basic enzyme-substrate model.
@@ -321,5 +302,4 @@ class Builder(core.Builder):
     precisely 1%.
 
     """
-    #}}}
 

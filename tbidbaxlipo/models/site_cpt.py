@@ -1,6 +1,6 @@
 __author__ = 'johnbachman'
 
-#{{{# IMPORTS
+# IMPORTS
 from pysb import *
 from numpy import array, recarray, mean, std
 from matplotlib import pyplot as plt
@@ -9,11 +9,9 @@ from scipy.stats import poisson
 from pysb import bng
 from pysb import kappa
 from tbidbaxlipo.models import core
-#}}}
 
 class Builder(core.Builder):
     
-    #{{{# __init__()
     def __init__(self, scaling_factor=50, params_dict=None):
         # Sets self.model = Model(), and self.params_dict
         core.Builder.__init__(self, params_dict=params_dict)
@@ -37,9 +35,7 @@ class Builder(core.Builder):
         # Declare initial conditions
         self.initial(self['tBid'](bh3=None, loc='c', cpt='solution'), self['tBid_0'])
         self.initial(self['Bax'](bh3=None, a6=None, loc='c', cpt='solution'), self['Bax_0'])
-    #}}}
 
-    #{{{# declare_monomers()
     def declare_monomers(self, cpt_list):
         """The monomer declarations need to override the default from the base
         class because each monomer has to have a list of possible compartments
@@ -50,10 +46,8 @@ class Builder(core.Builder):
         self.monomer('Bax', ['bh3', 'a6', 'loc', 'cpt'],
                 {'loc': ['c','m', 'i', 'p'],
                  'cpt': cpt_list})
-    #}}}
 
-    #{{{# MODEL MACROS
-    #{{{# translocate_tBid_Bax()
+    # MODEL MACROS
     def translocate_tBid_Bax(self):
         print("site_cpt: translocate_tBid_Bax()")
 
@@ -96,9 +90,7 @@ class Builder(core.Builder):
             if (not cpt_name == 'solution'):
                 self.observable('tBid_%s' % cpt_name, tBid(cpt=cpt_name))
                 self.observable('Bax_%s' % cpt_name, Bax(cpt=cpt_name))
-    #}}}
 
-    #{{{# tBid_activates_Bax()
     def tBid_activates_Bax(self, bax_site='a6'):
         print("site_cpt: tBid_activates_Bax(bax_site=" + bax_site + ")")
 
@@ -149,10 +141,8 @@ class Builder(core.Builder):
                 self.observable('iBax_%s' % cpt_name, Bax(loc='i', cpt=cpt_name))
                 self.observable('tBidBax_%s' % cpt_name,
                             tBid(loc='m', bh3=1, cpt=cpt_name) % Bax(loc='m', a6=1, cpt=cpt_name))
-    #}}}
-    #}}}
 
-    #{{{# RUNNING THE MODEL
+    # RUNNING THE MODEL
     def run_model(self, tmax=12000, num_sims=1, use_kappa=True, figure_ids=[0, 1]):
         xrecs = []   # The array to store the simulation data
         dr_all = []  # TODO: Delete this
@@ -246,12 +236,11 @@ class Builder(core.Builder):
         #title("Dye release calculated via compartmental model")
 
         return xrecs[0]
-    #}}}
 
 
 #---------------------------------------------------------------------
 
-    #{{{# SSA data analysis functions
+    # SSA data analysis functions
     def plot_compartment_mean(model, observable_name, output):
         total = 0
         for i, cpt in enumerate(model.compartments):
@@ -351,9 +340,8 @@ class Builder(core.Builder):
         print "sum poisson:  %f" % sum(poisson_counts)
         print poisson_counts
         plt.plot(bins, poisson_counts)
-    #}}}
 
-    #{{{# COMMENTS
+    # COMMENTS
     """
     Things I would want to know:
     * Is pore formation actually independent?
@@ -432,10 +420,8 @@ class Builder(core.Builder):
     gamma_molec = k / 3.6132 * 10^10 * molec * sec)
 
     """
-    #}}}
 
-    #{{{# OTHER
-    #{{{# pores_from_Bax_monomers()
+    # OTHER
     def pores_from_Bax_monomers():
         print("pores_from_Bax_monomers()")
 
@@ -452,9 +438,7 @@ class Builder(core.Builder):
         for i, cpt in enumerate(model.compartments):
             if (not cpt.name == 'solution'):
                 Observable('pores_%s' % cpt.name, Pores() ** cpt)
-    #}}}
 
-    #{{{# pores_from_Bax_dimers()
     def pores_from_Bax_dimers():
         """Basically a way of counting the time-integrated amount of
            forward pore formation."""
@@ -467,7 +451,6 @@ class Builder(core.Builder):
              MatchOnce(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None)) >>
              MatchOnce(Bax(loc='p', bh3=1, a6=None) % Bax(loc='p', bh3=1, a6=None)) + Pores(),
              pore_formation_rate_k)
-    #}}}
 
     def rate_calcs(nm_rate):
 
@@ -512,4 +495,3 @@ class Builder(core.Builder):
         plt.plot(t, (x['cBax'])/Bax_0.value, label='cBax', color=ci.next())
         plt.plot(t, (x['mBax'])/Bax_0.value, label='mBax', color=ci.next())
         plt.legend()
-    #}}}
