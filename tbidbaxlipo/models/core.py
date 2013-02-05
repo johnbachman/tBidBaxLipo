@@ -74,15 +74,30 @@ Bcl-XL and Retrotranslocation
 
 - Basic model: BclXL/Bcl2 binds the 
 
+The Models
+----------
+
+Model 0
+    - tBid and Bax translocate to membranes.
+
+Model 1. 
+    - tBid and Bax translocate to membranes
+    - tBid causes Bax insertion into membranes
+
+Model 2-inh.
+    - tBid and Bax translocate to membranes
+    - tBid causes Bax insertion into membranes
+    - tBid 
+
 """
 __author__ = 'johnbachman'
 
 from pysb import *
-from pysb.core import SelfExporter
+#from pysb.core import SelfExporter
 from pysb.macros import *
 #import inspect
 
-SelfExporter.do_export = False
+#SelfExporter.do_export = False
 
 class Builder(object):
 
@@ -173,7 +188,7 @@ class Builder(object):
         # given are for that compartment). Since they represent concentrations
         # On that individual compartment, the rate does not need to be normalized
         # by the vesicle concentration.
-        print("tBid_Bax: tBid_activates_Bax(bax_site=" + bax_site + ")")
+        print('core: tBid_activates_Bax(bax_site=%s)' % bax_site)
 
         # Forward rate of tBid binding to Bax (E + S -> ES)
         kf = self.parameter('tBid_mBax_kf', 1e-2, factor=self.within_compartment_rsf())

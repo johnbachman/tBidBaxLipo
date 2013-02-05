@@ -4,7 +4,7 @@ __author__ = 'johnbachman'
 from pysb import *
 from numpy import array, recarray, mean, std
 from matplotlib import pyplot as plt
-from util import color_iter 
+from tbidbaxlipo.util import color_iter 
 from scipy.stats import poisson
 from pysb import bng
 from pysb import kappa

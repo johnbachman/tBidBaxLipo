@@ -1,11 +1,15 @@
+"""
+Implementation of most basic membrane compartmentalization model, with a
+solution compartment and a single homogeneous membrane compartment.
+"""
+
 __author__ = 'johnbachman'
 
 #{{{# IMPORTS
 from pysb import *
-from pylab import *
-from util.fitting import fit, fit_initial, mse
-from util import color_iter
-import util.fitting as fitting
+#from pylab import *
+from tbidbaxlipo.util.fitting import fit, fit_initial, mse
+from tbidbaxlipo.util import color_iter
 from tbidbaxlipo.models import core
 #from tBidBax_model import tBidBax
 #}}}
@@ -68,7 +72,7 @@ class Builder(core.Builder):
     #{{{# MODEL MACROS
     #{{{# translocate_tBid_Bax()
     def translocate_tBid_Bax(self):
-        print("tBid_Bax_ode1c: translocate_tBid_Bax()")
+        print("one_cpt: translocate_tBid_Bax()")
 
         tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
                                           factor=self['Vesicles_0'].value)

@@ -3,10 +3,9 @@ __author__ = 'johnbachman'
 #{{{# IMPORTS
 from pysb import *
 from pysb.macros import *
-from pylab import *
-from util.fitting import fit, fit_initial, mse
-from util import color_iter 
-import util.fitting as fitting
+#from pylab import *
+from tbidbaxlipo.util.fitting import fit, fit_initial, mse
+from tbidbaxlipo.util import color_iter 
 from scipy.stats import poisson
 from pysb import kappa
 from pysb import bng
