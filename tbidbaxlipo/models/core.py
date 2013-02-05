@@ -1,18 +1,38 @@
 """
-TODOs:
+Basic implementation of interactions and mechanisms for tBid/Bax interactions
+with each other and with membranes. Contains macros to build up a variety
+of alternative models of tBid/Bax interactions
 
-- Since the models that I'm most interested in are the two_cpt and the site_cpt
-  ones, this should ideally be written in such a way that the models don't have
-  to be re-implemented--perhaps flag the rules that need to be given
-  compartment specific implementations by adding a parameter?
+Code organization
+=================
 
-- I should list, in this document, an outline of the alternative to mechanism
-  that I want to explore, before implementing them.
+Models of tBid/Bax interactions draw on the same pool of mechanistic facts,
+but may differ in their implementation of how interactions with membranes are
+modeled. As a result, some rules (e.g., those that specify how proteins translocate
+to membranes) have to be written in a compartmen-specific way, whereas others
+can be written in a generic way. To manage this degree of complexity, macros
+implementing tBid/Bax interactions are implemented here in a generic way
+(e.g., :py:method:`tbidbaxlipo.models.core.Builder.tBid_activates_Bax`); if
+compartment-specific modifications are necessary, these functions are overriden
+in child classes (e.g., :py:method:`tbidbaxlipo.models.site_cpt.Builder.tBid_activates_Bax`).
 
-- Since many of the mechanistic alternatives involve differences in binding
-  site, or alternative conformational changes, it might be more useful to
-  approach this by building up a set of rules as objects and then
-  programmatically composing models from these rules using tables.
+Model builders
+--------------
+
+The model builder classes contained in this file and also in
+:py:module:`tbidbaxlipo.models.one_cpt`, 
+:py:module:`tbidbaxlipo.models.n_cpt`, and
+:py:module:`tbidbaxlipo.models.site_cpt`, are used to manage the process of
+building up alternative models. Each of these modules contains a class
+`Builder` that contains an instance of a PySB model. The classes also
+contain a series of methods implementing
+small sub-pieces of mechanism that can be termed "motifs". These motifs
+can be recombined in different ways to create different models.
+
+Individual mechanisms implemented
+=================================
+
+Notes
 
 tBid Binding to Bax
 -------------------
@@ -29,7 +49,8 @@ tBid Dissociation/Bax conformational Change
 -------------------------------------------
 
 - tBid binding at the rear triggers a conformational change in Bax that makes
-  the BH3 exposed but inhibits further binding by tBid at that site.
+  the BH3 exposed but inhibits further binding by tBid at that site. References:
+  [Gavathiotis2008]_, [Kim2009]_.
 
 - tBid binding at the rear triggers a conformational change that exposes the
   BH3 but allows tBid to stay bound
@@ -89,7 +110,15 @@ Model 2-inh.
     - tBid causes Bax insertion into membranes
     - tBid 
 
+To-do list
+----------
+
+.. todo:: List outline of the mechanistic alternatives before implementing them.
+
+.. todo:: Think about how models could be built from rules or macros using tables.
+
 """
+
 __author__ = 'johnbachman'
 
 from pysb import *
@@ -152,46 +181,56 @@ class Builder(object):
               (in the same units as the proteins) of liposomes in the system.
               This value is used to scale the association rate of Bax and tBid
               on the membrane.
+
+        Notes
+        -----
+
+        - Andrews suggests that tBid/Bax Kd should work out to 25nM (once in
+          membrane, presumably)
+
+        - Binding of tBid to Bax during the activation step should be transient
+
+        - The timescale of 3c exposure has a half-life of about 50s (ln 2 /
+          1.381e-2)--this could potentially correspond to the "iBax" form,
+          though arguably this may be better indicated by the a5/6 insertion
+          per the finding of Annis that Bax is multispanning prior to
+          oligomerization
+        - Binding of the BH3 (presumably by tBid?) occurs with an initial rate
+          of ... (check fit)
+        - When tBid is added, 50-80% of Bax binds to liposomes, though this
+          goes down at high Bax/liposome ratios. Lovell fig S1 suggests that
+          this reaches steady state by about 15 minutes.
+
+        - The forward rate should be normalized according to protein/lipid
+          ratio in some way
+
+        Since the surface area of each vesicle is the same, the effect of
+        changing vesicle concentration on the forward rate will be by altering
+        the expected concentration of tBid and Bax per vesicle.  If there is
+        one compartment, 100 Bax and 100 tBid, then the rate will be scaled to
+        take into account 100 of each.  If there are 100 compartments, then the
+        rate should be scaled to take into account 1 of each. The scaling
+        should therefore most likely be simple linear scaling by dividing by
+        the number of compartments, which is in the same units as the protein
+        concentration (e.g., nanomolar).
+
+        In the deterministic case, if the fundamental forward rate of binding
+        between tBid and Bax is kf, this should really be normalized by the P/L
+        ratio of both proteins. So for example, kf * tBid/ves * Bax/ves This
+        because doubling of the vesicle concentration cuts the relative
+        concentrations of both proteins by half, and hence scales the forward
+        rate correspondingly.  In the SSA case, The forward rate should be
+        kf*RSF * tBid * Bax (where the concentrations given are for that
+        compartment). Since they represent concentrations On that individual
+        compartment, the rate does not need to be normalized by the vesicle
+        concentration.
         """
-        # CONSTRAINTS:
-        # - Andrews suggests that tBid/Bax Kd should work out to 25nM (once in membrane, presumably)
-        # - Binding of tBid to Bax during the activation step should be transient
-        # - The timescale of 3c exposure has a half-life of about 50s (ln 2 / 1.381e-2)
-        #   --this could potentially correspond to the "iBax" form, though arguably
-        #   this may be better indicated by the a5/6 insertion per the finding of Annis
-        #   that Bax is multispanning prior to oligomerization
-        # - Binding of the BH3 (presumably by tBid?) occurs with an initial rate of ... (check fit)
-        # - When tBid is added, 50-80% of Bax binds to liposomes, though this goes down at high
-        #   Bax/liposome ratios. Lovell fig S1 suggests that this reaches steady state by about
-        #   15 minutes.
-        # FIXME The forward rate should be normalized according to protein/lipid ratio in some way
 
-        # Since the surface area of each vesicle is the same, the effect of
-        # changing vesicle concentration on the forward rate will be by
-        # altering the expected concentration of tBid and Bax per vesicle.  If
-        # there is one compartment, 100 Bax and 100 tBid, then the rate will be
-        # scaled to take into account 100 of each.  If there are 100
-        # compartments, then the rate should be scaled to take into account 1
-        # of each. The scaling should therefore most likely be simple linear
-        # scaling by dividing by the number of compartments, which is in the
-        # same units as the protein concentration (e.g., nanomolar).
-
-        # In the deterministic case, if the fundamental forward rate of binding
-        # between tBid and Bax is kf, this should really be normalized by the
-        # P/L ratio of both proteins. So for example,
-        # kf * tBid/ves * Bax/ves
-        # This because doubling of the vesicle concentration cuts the relative
-        # concentrations of both proteins by half, and hence scales the forward
-        # rate correspondingly. 
-        # In the SSA case, 
-        # The forward rate should be kf*RSF * tBid * Bax (where the concentrations
-        # given are for that compartment). Since they represent concentrations
-        # On that individual compartment, the rate does not need to be normalized
-        # by the vesicle concentration.
         print('core: tBid_activates_Bax(bax_site=%s)' % bax_site)
 
         # Forward rate of tBid binding to Bax (E + S -> ES)
-        kf = self.parameter('tBid_mBax_kf', 1e-2, factor=self.within_compartment_rsf())
+        kf = self.parameter('tBid_mBax_kf', 1e-2,
+                            factor=self.within_compartment_rsf())
         # Reverse rate of tBid binding to Bax (ES -> E + S)
         kr = self.parameter('tBid_mBax_kr', 1.5)
         # Dissociation of tBid from iBax (EP -> E + P)
@@ -216,28 +255,34 @@ class Builder(object):
              tBid(loc='m', bh3=None) + Bax(loc='m', bh3=None, a6=None),
              kr)
 
-        # tBid dissociates from iBax
+        # tBid dissociates from iBax after activation
         self.rule('tBid_unbinds_iBax',
              tBid(bh3=1) % Bax(loc='m', **bax_site_bound) >>
              tBid(bh3=None) + Bax(loc='i', **bax_site_unbound),
              kc)
+
+        # Activation
+        self.observable('tBidBax', tBid(loc='m', bh3=1) % Bax(loc='m', a6=1))
+        self.observable('iBax', Bax(loc='i', bh3=None, a6=None))
+
+    def Bax_reverses(self):
+        Bax = self['Bax']
 
         # iBax reverses back to mBax
         self.rule('iBax_reverses',
              Bax(loc='i', bh3=None, a6=None) >> Bax(loc='m', bh3=None, a6=None),
              krev)
 
-        # Activation
-        self.observable('tBidBax', tBid(loc='m', bh3=1) % Bax(loc='m', a6=1))
-        self.observable('iBax', Bax(loc='i', bh3=None, a6=None))
-
     def Bax_dimerizes(self):
-        """CONSTRAINTS:
-         - If the late phase of the 62c signal is an indication of dimerization, it
-           starts to manifest around 500s.
-         - In SATSOURA, Fig 4. appears to indicate that the Bax-Bax FRET reaches
+        """
+        Notes
+        -----
+        - If the late phase of the 62c signal is an indication of dimerization, it
+          starts to manifest around 500s.
+        - In SATSOURA, Fig 4. appears to indicate that the Bax-Bax FRET reaches
            steady-state at around 12 minutes.
         """
+
         print("tBid_Bax: Bax_dimerizes()")
      
         # Rate of dimerization formation/oligomerization of activated Bax (s^-1). 
@@ -255,15 +300,19 @@ class Builder(object):
              MatchOnce(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None)))
 
     def Bax_tetramerizes(self):
-        """ CONSTRAINTS:
+        """
+        This function depends on Bax_dimerization to be called as well.
+
+        Notes
+        -----
         In Lovell Fig S1, about 80% of the Bax is at membranes (inserted,
         non-extractable, resistant to gel filtration etc.) after       
         """
+
         print("tBid_Bax: Bax_tetramerizes()")
 
-        """ This function depends on Bax_dimerization to be called as well."""
         # Rate of dimerization formation/oligomerization of activated Bax (s^-1). 
-        Bax_tetramerization_kf = self.parameter('Bax_tetramerization_kf', 1e-2) # was 1
+        Bax_tetramerization_kf = self.parameter('Bax_tetramerization_kf', 1e-2)
         Bax_tetramerization_kr = self.parameter('Bax_tetramerization_kr', 1e-2) 
 
         Bax = self['Bax']
@@ -280,28 +329,40 @@ class Builder(object):
              Bax(loc='i', bh3=2, a6=3) % Bax(loc='i', bh3=2, a6=4)))
 
     # FIXME
-    """
-    THERE IS A PROBLEM WITH THIS!!!
-    When tBid is bound to Bax, it is prevented from recirculating back to the solution.
-    Therefore you get a sequence of events like:
-    tBid + Bax (full liposome) -> tBid + Bax(i) (full liposome)
-    Bax(p) (full) -> Bax(p) (empty) THIS HAPPENS VERY FAST
-    But also: Bax(i) + tBid (full liposome). When complexed in this way,
-    tBid does not recycle back to the solution. Therefore tBid catalyses the creation
-    of a species Bax(i) which over time shifts the equilibrium of tBid from c to full liposomes.
-    """
-    def iBax_binds_tBid():
-        print("tBid_Bax: iBax_binds_tBid()")
+    def iBax_binds_tBid_at_bh3(self):
+        """
+        Notes
+        -----
+        THERE IS A PROBLEM WITH THIS!!!
+
+        When tBid is bound to Bax, it is prevented from recirculating back to
+        the solution.  Therefore you get a sequence of events like:
+
+        - tBid + Bax (full liposome) -> tBid + Bax(i) (full liposome)
+        - Bax(p) (full) -> Bax(p) (empty) THIS HAPPENS VERY FAST
+        - But also: Bax(i) + tBid (full liposome).
+
+        When complexed in this way, tBid does not recycle back to the solution.
+        Therefore tBid catalyses the creation of a species Bax(i) which over
+        time shifts the equilibrium of tBid from c to full liposomes.
+
+        However, if you are not interested in the permeabilization status of
+        liposomes (e.g., if you are using the model only for looking at
+        insertion rates) then this could be OK.
+        """
+        print("tBid_Bax: iBax_binds_tBid_at_bh3()")
 
         # INHIBITION OF TBID BY BAX
-        kf = self.parameter('tBid_iBax_kf', 1e-1) # Rate of tBid binding to iBax (E + P -> EP)
-        kr = self.parameter('tBid_iBax_kr', 2.5) # Rate of tBid binding to iBax (E + P -> EP)
+        # Rate of tBid binding to iBax (E + P -> EP)
+        kf = self.parameter('tBid_iBax_kf', 1e-1)
+        # Rate of tBid binding to iBax (E + P -> EP)
+        kr = self.parameter('tBid_iBax_kr', 2.5)
 
         tBid = self['tBid']
         Bax = self['Bax']
 
         # Binding between mtBid and iBax (activation back-reaction--should be slow)
-        self.rule('tBid_iBax_bind',
+        self.rule('tBid_iBax_bind_at_bh3',
              tBid(loc='m', bh3=None) + Bax(loc='i', bh3=None, a6=None) <>
              tBid(loc='m', bh3=1) % Bax(loc='i', bh3=1, a6=None),
              kf, kr)
@@ -313,6 +374,13 @@ class Builder(object):
 
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='a6')
+
+    def build_model01(self):
+        print "---------------------------"
+        print "core: Building model 0:"
+        self.translocate_tBid_Bax()
+        self.tBid_activates_Bax(bax_site='a6')
+        self.iBax_binds_tBid_at_bh3()
 
     def build_model1(self):
         """Activation, dimerization."""
