@@ -12,6 +12,7 @@ Contents:
 
    intro
    modules/index
+   references
    todo
 
 Indices and tables
