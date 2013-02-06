@@ -18,9 +18,6 @@ compartment-specific modifications are necessary, these functions are overriden
 in child classes (e.g.,
 :py:method:`tbidbaxlipo.models.site_cpt.Builder.tBid_activates_Bax`).
 
-Model builders
---------------
-
 The model builder classes contained in this file and also in
 :py:module:`tbidbaxlipo.models.one_cpt`, :py:module:`tbidbaxlipo.models.n_cpt`,
 and :py:module:`tbidbaxlipo.models.site_cpt`, are used to manage the process of
@@ -150,7 +147,6 @@ __author__ = 'johnbachman'
 from pysb import *
 from pysb.macros import *
 import numpy as np
-import nbd_model_shared
 
 class Builder(object):
 
@@ -184,6 +180,9 @@ class Builder(object):
         """
 
         self.model = Model('tBid_Bax', _export=False)
+        self.estimate_params = []
+        self.parameter_means = np.array([])
+        self.parameter_variances = np.array([])
         self.params_dict = params_dict
 
     def declare_monomers(self):
@@ -215,14 +214,19 @@ class Builder(object):
         fitting function should perform normalization.
         """
 
-        self.parameter('c3_scaling', 0.008)
-        #self.parameter('c62_scaling', 0.9204)
+        self.parameter('c3_scaling', 0.008,
+                       mean=np.log10(0.008), variance=0.04)
+        self.parameter('c62_scaling', 0.009204,
+                       mean=np.log10(0.009204), variance=0.04, estimate=False)
         #self.parameter('c120_scaling', 0.975)
         #self.parameter('c122_scaling', 0.952)
         #self.parameter('c126_scaling', 0.966)
 
         Bax = self['Bax']
         self.observable('Baxc3', Bax(loc='i'))
+        self.observable('Baxc62', Bax(bh3=1))
+
+        # -- Not currently using these for the mech models --
         #self.observable('Baxc3', Bax(c3='m'))
         #self.observable('Baxc62', Bax(c62='m'))
         #self.observable('Baxc120', Bax(c120='m'))
@@ -230,28 +234,12 @@ class Builder(object):
         #self.observable('Baxc126', Bax(c126='m'))
         #self.observable('Baxc184', Bax(c184='m'))
 
-    def prior_for_rate_parameters(self, num_parameters,
-                                  num_scaling_parameters=None):
-
-        means = np.array([-3.0] * num_parameters)
-        variances = np.array([2.0] * num_parameters)
-
-        def prior_func(mcmc, position):
-            if num_scaling_parameters is not None:
-                scaling_prior = nbd_model_shared.prior(
-                        position[0:num_scaling_parameters],
-                        num_scaling_parameters)
-            else:
-                scaling_prior = 0
-
-            return scaling_prior + \
-                   np.sum((position[num_scaling_parameters:] - means)**2 / \
-                          (2 * variances))
-
-        return prior_func
+    def prior(self, mcmc, position):
+        return np.sum((position - self.parameter_means)**2 / \
+                      (2 * self.parameter_variances))
 
     # -- MECHANISTIC MOTIFS ------------------------------------------------
-    def tBid_activates_Bax(self, bax_site='a6'):
+    def tBid_activates_Bax(self, bax_site='bh3'):
         """Default implementation of Bax activation by tBid.
 
         Takes two arguments:
@@ -325,10 +313,10 @@ class Builder(object):
         Bax = self['Bax']
         self.rule('tBid_Bax_bind',
              tBid(loc='m', bh3=None) + Bax(loc='m', bh3=None, a6=None) >>
-             tBid(loc='m', bh3=1) % Bax(loc='m', bh3=None, a6=1),
+             tBid(loc='m', bh3=1) % Bax(loc='m', bh3=1, a6=None),
              kf)
         self.rule('tBid_Bax_unbind',
-             tBid(loc='m', bh3=1) % Bax(loc='m', bh3=None, a6=1) >>
+             tBid(loc='m', bh3=1) % Bax(loc='m', bh3=1, a6=None) >>
              tBid(loc='m', bh3=None) + Bax(loc='m', bh3=None, a6=None),
              kr)
 
@@ -339,10 +327,12 @@ class Builder(object):
              kc)
 
         # Activation
-        self.observable('tBidBax', tBid(loc='m', bh3=1) % Bax(loc='m', a6=1))
-        self.observable('iBax', Bax(loc='i', bh3=None, a6=None))
+        self.observable('tBidBax', tBid(loc='m', bh3=1) % Bax(loc='m', bh3=1))
+        self.observable('iBax', Bax(loc='i'))
 
     def Bax_reverses(self):
+        """Reversion of the inserted form of Bax to the loosely associated
+        state, at which point it can return to the solution."""
         Bax = self['Bax']
 
         # Reversion of active Bax (P -> S)
@@ -445,7 +435,6 @@ class Builder(object):
         Bax = self['Bax']
 
         # Binding between mtBid and iBax
-        # (activation back-reaction--should be slow)
         self.rule('tBid_iBax_bind_at_bh3',
              tBid(loc='m', bh3=None) + Bax(loc='i', bh3=None, a6=None) <>
              tBid(loc='m', bh3=1) % Bax(loc='i', bh3=1, a6=None),
@@ -477,15 +466,6 @@ class Builder(object):
              Bax(loc='i', bh3=None) + Bax(loc='i', **target_bax_site_unbound),
              mBaxiBax_to_iBaxiBax_k)
 
-    def Bax_reverses():
-        Parameter('Bax_i_to_c', 1e-4)
-        Rule('Bax_reverses',
-             Bax(loc='i', bh3=None, a6=None) >> Bax(loc='c', bh3=None, a6=None),
-             Bax_i_to_c)
-        Rule('Bax_reverses_p',
-             Bax(loc='p', bh3=None, a6=None) >> Bax(loc='c', bh3=None, a6=None),
-             Bax_i_to_c)
-
     def Bax_aggregates_at_pores():
         Parameter('aggregation_rate_k', 1e-4)
         Rule('Bax_aggregates_at_pores',
@@ -515,20 +495,29 @@ class Builder(object):
                 [basal_Bax_kf, basal_Bax_kr], sitename='loc')
 
     ## -- MODEL BUILDING FUNCTIONS -------------------------------------------
-    def build_model0(self):
+    def build_model_ta(self):
         print "---------------------------"
-        print "core: Building model 0:"
+        print "core: Building model ta:"
 
-        self.translocate_tBid_Bax()
-        self.tBid_activates_Bax(bax_site='a6')
-
-    def build_model01(self):
-        print "---------------------------"
-        print "core: Building model 01:"
         self.declare_nbd_scaling_parameters()
         self.translocate_tBid_Bax()
-        self.tBid_activates_Bax(bax_site='a6')
+        self.tBid_activates_Bax(bax_site='bh3')
+
+    def build_model_tai(self):
+        print "---------------------------"
+        print "core: Building model tai:"
+        self.declare_nbd_scaling_parameters()
+        self.translocate_tBid_Bax()
+        self.tBid_activates_Bax(bax_site='bh3')
         self.iBax_binds_tBid_at_bh3()
+
+    def build_model_tar(self):
+        print "---------------------------"
+        print "core: Building model tar:"
+        self.declare_nbd_scaling_parameters()
+        self.translocate_tBid_Bax()
+        self.tBid_activates_Bax(bax_site='bh3')
+        self.Bax_reverses()
 
     def build_model1(self):
         """Activation, dimerization."""
@@ -536,7 +525,7 @@ class Builder(object):
         print "core: Building model 1:"
 
         self.translocate_tBid_Bax()
-        self.tBid_activates_Bax(bax_site='a6')
+        self.tBid_activates_Bax(bax_site='bh3')
         self.Bax_dimerizes()
 
     def build_model2(self):
@@ -545,7 +534,7 @@ class Builder(object):
         print "core: Building model 2:"
 
         self.translocate_tBid_Bax()
-        self.tBid_activates_Bax(bax_site='a6')
+        self.tBid_activates_Bax(bax_site='bh3')
         self.Bax_dimerizes()
         self.Bax_tetramerizes()
 
@@ -555,7 +544,7 @@ class Builder(object):
         print "core: Building model 3:"
 
         self.translocate_tBid_Bax()
-        self.tBid_activates_Bax(bax_site='a6')
+        self.tBid_activates_Bax(bax_site='bh3')
         self.iBax_binds_tBid()
         self.Bax_dimerizes()
         self.Bax_tetramerizes()
@@ -567,7 +556,8 @@ class Builder(object):
         self.model.add_component(m)
         return m
 
-    def parameter(self, name, value, factor=1):
+    def parameter(self, name, value, factor=1, estimate=True,
+                  mean=-3.0, variance=2.0):
         """Adds a parameter to the Builder's model instance.
 
         Examines the params_dict attribute of the Builder instance (which is
@@ -592,6 +582,16 @@ class Builder(object):
             The value of the parameter
         factor : number
             A scaling factor to be applied to the parameter value.
+        estimate : boolean
+            Specifies whether the parameter should be included among the
+            parameters to estimate, contained in the set
+            ``Builder.estimate_params``. Defaults to True.
+        mean : float
+            The mean value of the log10 of the parameter's prior (lognormal)
+            distribution. Defaults to -3. Ignored if ``estimate`` is False.
+        variance : float
+            The variance (in log10 space) of the parameter's prior (lognormal)
+            distribution. Defaults to 2.0. Ignored if ``estimate`` is False.
         """
 
         if self.params_dict is None:
@@ -604,6 +604,13 @@ class Builder(object):
 
         p = Parameter(name, param_val, _export=False)
         self.model.add_component(p)
+
+        if estimate:
+            self.estimate_params.append(p)
+            self.parameter_means = np.append(self.parameter_means, mean)
+            self.parameter_variances = np.append(self.parameter_variances,
+                                                 variance)
+
         return p
 
     def rule(self, *args, **kwargs):

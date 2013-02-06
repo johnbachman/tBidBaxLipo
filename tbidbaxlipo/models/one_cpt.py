@@ -94,9 +94,9 @@ class Builder(core.Builder):
         self.compartment('ves', dimension=2, parent=solution)
 
         # INITIAL CONDITIONS
-        self.parameter('Vesicles_0', 5)
-        self.parameter('tBid_0', 20)
-        self.parameter('Bax_0', 100)
+        self.parameter('Vesicles_0', 5, estimate=False)
+        self.parameter('tBid_0', 20, estimate=False)
+        self.parameter('Bax_0', 100, estimate=False)
 
         tBid = self['tBid']
         Bax = self['Bax']
@@ -133,11 +133,13 @@ class Builder(core.Builder):
         print("one_cpt: translocate_tBid_Bax()")
 
         tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
-                                          factor=self['Vesicles_0'].value)
+                                          factor=self['Vesicles_0'].value,
+                                          estimate=False)
         #tBid_transloc_kr = self.parameter('tBid_transloc_kr', 0)
 
         Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
-                                          factor=self['Vesicles_0'].value)
+                                          factor=self['Vesicles_0'].value,
+                                          estimate=False)
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-2)
 
         ves = self['ves']
