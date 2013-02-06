@@ -140,24 +140,21 @@ To-do list
 
 .. todo:: Think about how models could be built from rules or macros using tables.
 
+.. todo:: Make it so macros can be invoked from within the motifs in this
+paradigm.
+
 """
 
 __author__ = 'johnbachman'
 
 from pysb import *
-#from pysb.core import SelfExporter
 from pysb.macros import *
 import numpy as np
 import nbd_model_shared
-#import inspect
-
-#SelfExporter.do_export = False
 
 class Builder(object):
 
-    # VIRTUAL FUNCTIONS
-    # =================
-
+    # -- VIRTUAL FUNCTIONS ----------------------------------------------------
     def within_compartment_rsf(self):
         raise NotImplementedError()
 
@@ -167,9 +164,7 @@ class Builder(object):
     def run_model():
         raise NotImplementedError()
 
-    # DEFAULT IMPLEMENTATIONS
-    # =======================
-
+    # -- CONSTRUCTOR AND MONOMER DECLARATIONS --------------------------------
     def __init__(self, params_dict=None):
         """Base constructor for all model builder classes.
 
@@ -183,7 +178,9 @@ class Builder(object):
                 {'tBid_Bax_kf': 1e-2}
 
             then the parameter tBid_Bax_kf will be assigned a value of 1e-2;
-            all other parameters will take on default values.
+            all other parameters will take on default values. However,
+            note that the parameter value given will be multiplied by any
+            scaling factor passed in when the parameter is declared.
         """
 
         self.model = Model('tBid_Bax', _export=False)
@@ -204,7 +201,20 @@ class Builder(object):
                          'c126': ['s', 'm'],
                          'c184': ['s', 'm']})
 
+    # -- METHODS FOR FITTING/CALIBRATION -----------------------------------
     def declare_nbd_scaling_parameters(self):
+        """
+        .. todo:: Make core.Builder.declare_nbd_scaling_parameters flexible
+            It needs to be able to take parameters that say which scaling
+            parameters should be added. Also, it needs to have a way to
+            specify which observables in the mechanistic model map to the
+            c3, c62, etc. observables.
+
+        .. todo:: Scaling parameter args should scale according the the amount
+        of Bax set as an initial condition; or perhaps more appropriately the
+        fitting function should perform normalization.
+        """
+
         self.parameter('c3_scaling', 0.008)
         #self.parameter('c62_scaling', 0.9204)
         #self.parameter('c120_scaling', 0.975)
@@ -220,16 +230,33 @@ class Builder(object):
         #self.observable('Baxc126', Bax(c126='m'))
         #self.observable('Baxc184', Bax(c184='m'))
 
+    def prior_for_rate_parameters(self, num_parameters,
+                                  num_scaling_parameters=None):
+
+        means = np.array([-3.0] * num_parameters)
+        variances = np.array([2.0] * num_parameters)
+
+        def prior_func(mcmc, position):
+            if num_scaling_parameters is not None:
+                scaling_prior = nbd_model_shared.prior(
+                        position[0:num_scaling_parameters],
+                        num_scaling_parameters)
+            else:
+                scaling_prior = 0
+
+            return scaling_prior + \
+                   np.sum((position[num_scaling_parameters:] - means)**2 / \
+                          (2 * variances))
+
+        return prior_func
+
+    # -- MECHANISTIC MOTIFS ------------------------------------------------
     def tBid_activates_Bax(self, bax_site='a6'):
         """Default implementation of Bax activation by tBid.
 
         Takes two arguments:
             - bax_site specifies the name of the site on Bax to which
               the bh3 site on tBid binds.
-            - vesicles_conc is a Parameter object containing the concentration
-              (in the same units as the proteins) of liposomes in the system.
-              This value is used to scale the association rate of Bax and tBid
-              on the membrane.
 
         Notes
         -----
@@ -244,8 +271,10 @@ class Builder(object):
           though arguably this may be better indicated by the a5/6 insertion
           per the finding of Annis that Bax is multispanning prior to
           oligomerization
+
         - Binding of the BH3 (presumably by tBid?) occurs with an initial rate
           of ... (check fit)
+
         - When tBid is added, 50-80% of Bax binds to liposomes, though this
           goes down at high Bax/liposome ratios. Lovell fig S1 suggests that
           this reaches steady state by about 15 minutes.
@@ -288,6 +317,7 @@ class Builder(object):
         # Create the dicts to parameterize the site that tBid binds to
         bax_site_bound = {bax_site:1}
         bax_site_unbound = {bax_site:None}
+        
 
         #bind(tBid(loc='m'), 'bh3', Bax(loc='m'), bax_site,
         #  [tBid_mBax_kf, tBid_mBax_kr])
@@ -327,27 +357,29 @@ class Builder(object):
         """
         Notes
         -----
-        - If the late phase of the 62c signal is an indication of dimerization, it
-          starts to manifest around 500s.
+        - If the late phase of the 62c signal is an indication of dimerization,
+          it starts to manifest around 500s.
         - In SATSOURA, Fig 4. appears to indicate that the Bax-Bax FRET reaches
-           steady-state at around 12 minutes.
+          steady-state at around 12 minutes.
         """
 
         print("tBid_Bax: Bax_dimerizes()")
      
-        # Rate of dimerization formation/oligomerization of activated Bax (s^-1). 
-        Bax_dimerization_kf = self.parameter('Bax_dimerization_kf', 1e-2) # was 1
+        # Rate of dimerization formation/oligomerization of activated Bax (s^-1)
+        Bax_dimerization_kf = self.parameter('Bax_dimerization_kf', 1e-2)# was 1
         Bax_dimerization_kr = self.parameter('Bax_dimerization_kr', 1e0)
 
         Bax = self['Bax']
 
         self.rule('Bax_Forms_Dimers',
-             Bax(loc='i', bh3=None, a6=None) + Bax(loc='i', bh3=None, a6=None) <>
+             Bax(loc='i', bh3=None, a6=None) +
+             Bax(loc='i', bh3=None, a6=None) <>
              Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None),
              Bax_dimerization_kf, Bax_dimerization_kr)
 
         self.observable('Bax2', 
-             MatchOnce(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None)))
+             MatchOnce(Bax(loc='i', bh3=1, a6=None) %
+                       Bax(loc='i', bh3=1, a6=None)))
 
     def Bax_tetramerizes(self):
         """
@@ -361,15 +393,17 @@ class Builder(object):
 
         print("tBid_Bax: Bax_tetramerizes()")
 
-        # Rate of dimerization formation/oligomerization of activated Bax (s^-1). 
+        # Rate of dimerization formation/oligomerization of activated Bax (s^-1)
         Bax_tetramerization_kf = self.parameter('Bax_tetramerization_kf', 1e-2)
         Bax_tetramerization_kr = self.parameter('Bax_tetramerization_kr', 1e-2) 
 
         Bax = self['Bax']
 
         self.rule('Bax_Forms_Tetramers',
-             MatchOnce(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None)) +
-             MatchOnce(Bax(loc='i', bh3=2, a6=None) % Bax(loc='i', bh3=2, a6=None)) <>
+             MatchOnce(Bax(loc='i', bh3=1, a6=None) %
+                       Bax(loc='i', bh3=1, a6=None)) +
+             MatchOnce(Bax(loc='i', bh3=2, a6=None) %
+                       Bax(loc='i', bh3=2, a6=None)) <>
              Bax(loc='i', bh3=1, a6=3) % Bax(loc='i', bh3=1, a6=4) % 
              Bax(loc='i', bh3=2, a6=3) % Bax(loc='i', bh3=2, a6=4), 
              Bax_tetramerization_kf, Bax_tetramerization_kr)
@@ -378,7 +412,6 @@ class Builder(object):
              MatchOnce(Bax(loc='i', bh3=1, a6=3) % Bax(loc='i', bh3=1, a6=4) % 
              Bax(loc='i', bh3=2, a6=3) % Bax(loc='i', bh3=2, a6=4)))
 
-    # FIXME
     def iBax_binds_tBid_at_bh3(self):
         """
         Notes
@@ -411,32 +444,77 @@ class Builder(object):
         tBid = self['tBid']
         Bax = self['Bax']
 
-        # Binding between mtBid and iBax (activation back-reaction--should be slow)
+        # Binding between mtBid and iBax
+        # (activation back-reaction--should be slow)
         self.rule('tBid_iBax_bind_at_bh3',
              tBid(loc='m', bh3=None) + Bax(loc='i', bh3=None, a6=None) <>
              tBid(loc='m', bh3=1) % Bax(loc='i', bh3=1, a6=None),
              kf, kr)
 
-    def prior_for_rate_parameters(self, num_parameters,
-                                  num_scaling_parameters=None):
+    # -- OTHER MOTIFS --------------------------------------------------------
+    def Bax_auto_activates(target_bax_site='a6'):
+        # Andrews suggests that tBid/Bax Kd should work out to 25nM
+        # Forward rate of iBax binding to Bax (E + S -> ES)
+        Parameter('iBax_mBax_kf', 1e-4)
+        # Reverse rate of iBax binding to Bax (ES -> E + S)
+        Parameter('iBax_mBax_kr', 1e-2)
+        Parameter('mBaxiBax_to_iBaxiBax_k', 1) 
+        # Dissociation of iBax from iBax (EP -> E + P)
+        #Parameter('iBax_iBax_kr', 2.5e-3)
 
-        means = np.array([-3.0] * num_parameters)
-        variances = np.array([2.0] * num_parameters)
+        bind(Bax(loc='i'), 'bh3', Bax(loc='m'), target_bax_site, # FULL
+          [iBax_mBax_kf, iBax_mBax_kr])
+        bind(Bax(loc='p'), 'bh3', Bax(loc='m'), target_bax_site, # FULL
+          [iBax_mBax_kf, iBax_mBax_kr])
 
-        def prior_func(mcmc, position):
-            if num_scaling_parameters is not None:
-                scaling_prior = nbd_model_shared.prior(
-                        position[0:num_scaling_parameters], num_scaling_parameters)
-            else:
-                scaling_prior = 0
+        # Create the dicts to parameterize the site that iBax binds to
+        target_bax_site_bound = {target_bax_site:1}
+        target_bax_site_unbound = {target_bax_site:None}
 
-            return scaling_prior + \
-                   np.sum((position[num_scaling_parameters:] - means)**2 / \
-                          (2 * variances))
+        # Conformational change of Bax (ES -> EP)
+        Rule('mBaxiBax_to_iBaxiBax',
+             Bax(loc='i', bh3=1) % Bax(loc='m', **target_bax_site_bound) >>
+             Bax(loc='i', bh3=None) + Bax(loc='i', **target_bax_site_unbound),
+             mBaxiBax_to_iBaxiBax_k)
 
-        return prior_func
+    def Bax_reverses():
+        Parameter('Bax_i_to_c', 1e-4)
+        Rule('Bax_reverses',
+             Bax(loc='i', bh3=None, a6=None) >> Bax(loc='c', bh3=None, a6=None),
+             Bax_i_to_c)
+        Rule('Bax_reverses_p',
+             Bax(loc='p', bh3=None, a6=None) >> Bax(loc='c', bh3=None, a6=None),
+             Bax_i_to_c)
 
-## MODEL BUILDING FUNCTIONS
+    def Bax_aggregates_at_pores():
+        Parameter('aggregation_rate_k', 1e-4)
+        Rule('Bax_aggregates_at_pores',
+             Bax(loc='p') + Bax(loc='m') >> Bax(loc='p') + Bax(loc='p'),
+             aggregation_rate_k)
+
+    def tBid_reverses_Bax():
+        # Rate of the EP->ES transition # FIXME
+        Parameter('iBaxtBid_to_mBaxtBid_k', 1e-3)
+
+        # REVERSIBILITY OF BAX ACTIVATION BY TBID (EP -> ES)
+        Rule('iBaxtBid_to_mBaxtBid',
+             tBid(loc='m', bh3=1) % Bax(loc='i', bh3=1) >>
+             tBid(loc='m', bh3=1) % Bax(loc='m', bh3=1),
+             iBaxtBid_to_mBaxtBid_k)
+
+    def basal_Bax_activation():
+        # Spontaneous rate of transition of Bax from the mitochondrial to the
+        # inserted state
+        # Implies average time is 10000 seconds???
+        Parameter('basal_Bax_kf', 1e-3)
+        Parameter('basal_Bax_kr', 10)
+
+        two_state_equilibrium(Bax(bh3=None, dye='f'), 'm', 'i',
+                [basal_Bax_kf, basal_Bax_kr], sitename='loc')
+        two_state_equilibrium(Bax(bh3=None, dye='e'), 'm', 'i',
+                [basal_Bax_kf, basal_Bax_kr], sitename='loc')
+
+    ## -- MODEL BUILDING FUNCTIONS -------------------------------------------
     def build_model0(self):
         print "---------------------------"
         print "core: Building model 0:"
@@ -482,66 +560,7 @@ class Builder(object):
         self.Bax_dimerizes()
         self.Bax_tetramerizes()
 
-## OTHER FUNCS ###################################################
-
-    def Bax_auto_activates(target_bax_site='a6'):
-        # Andrews suggests that tBid/Bax Kd should work out to 25nM
-        Parameter('iBax_mBax_kf', 1e-4) # Forward rate of iBax binding to Bax (E + S -> ES)
-        Parameter('iBax_mBax_kr', 1e-2)   # Reverse rate of iBax binding to Bax (ES -> E + S)
-        Parameter('mBaxiBax_to_iBaxiBax_k', 1) 
-        #Parameter('iBax_iBax_kr', 2.5e-3)   # Dissociation of iBax from iBax (EP -> E + P)
-
-        bind(Bax(loc='i'), 'bh3', Bax(loc='m'), target_bax_site, # FULL
-          [iBax_mBax_kf, iBax_mBax_kr])
-        bind(Bax(loc='p'), 'bh3', Bax(loc='m'), target_bax_site, # FULL
-          [iBax_mBax_kf, iBax_mBax_kr])
-
-        # Create the dicts to parameterize the site that iBax binds to
-        target_bax_site_bound = {target_bax_site:1}
-        target_bax_site_unbound = {target_bax_site:None}
-
-        # Conformational change of Bax (ES -> EP)
-        Rule('mBaxiBax_to_iBaxiBax',
-             Bax(loc='i', bh3=1) % Bax(loc='m', **target_bax_site_bound) >>
-             Bax(loc='i', bh3=None) + Bax(loc='i', **target_bax_site_unbound),
-             mBaxiBax_to_iBaxiBax_k)
-
-    def Bax_reverses():
-        Parameter('Bax_i_to_c', 1e-4)
-        Rule('Bax_reverses',
-             Bax(loc='i', bh3=None, a6=None) >> Bax(loc='c', bh3=None, a6=None),
-             Bax_i_to_c)
-        Rule('Bax_reverses_p',
-             Bax(loc='p', bh3=None, a6=None) >> Bax(loc='c', bh3=None, a6=None),
-             Bax_i_to_c)
-
-    def Bax_aggregates_at_pores():
-        Parameter('aggregation_rate_k', 1e-4)
-        Rule('Bax_aggregates_at_pores',
-             Bax(loc='p') + Bax(loc='m') >> Bax(loc='p') + Bax(loc='p'),
-             aggregation_rate_k)
-
-    def tBid_reverses_Bax():
-        Parameter('iBaxtBid_to_mBaxtBid_k', 1e-3) # Rate of the EP->ES transition # FIXME
-
-        # REVERSIBILITY OF BAX ACTIVATION BY TBID (EP -> ES)
-        Rule('iBaxtBid_to_mBaxtBid',
-             tBid(loc='m', bh3=1) % Bax(loc='i', bh3=1) >>
-             tBid(loc='m', bh3=1) % Bax(loc='m', bh3=1),
-             iBaxtBid_to_mBaxtBid_k)
-
-    def basal_Bax_activation():
-        # Spontaneous rate of transition of Bax from the mitochondrial to the inserted state
-        Parameter('basal_Bax_kf', 1e-3) # Implies average time is 10000 seconds???
-        Parameter('basal_Bax_kr', 10)
-
-        two_state_equilibrium(Bax(bh3=None, dye='f'), 'm', 'i',
-                [basal_Bax_kf, basal_Bax_kr], sitename='loc')
-        two_state_equilibrium(Bax(bh3=None, dye='e'), 'm', 'i',
-                [basal_Bax_kf, basal_Bax_kr], sitename='loc')
-
-
-    # -- Constructor wrapper functions ------------------------------
+    # -- CONSTRUCTOR WRAPPER FUNCTIONS ---------------------------------------
     def monomer(self, *args, **kwargs):
         """Adds a parameter to the Builder's model instance."""
         m = Monomer(*args, _export=False, **kwargs)
@@ -605,7 +624,6 @@ class Builder(object):
         self.model.add_component(o)
         return o
 
-    # Note: initial is not a component
     def initial(self, *args):
         """Adds an initial condition to the Builder's model instance."""
         self.model.initial(*args)
