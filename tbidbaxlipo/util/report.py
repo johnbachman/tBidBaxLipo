@@ -24,7 +24,10 @@ class Report():
     def __init__(self):
         self.tempFileList = []
 
-    def addPythonCode(self, filename):
+    def add_python_code(self, filename):
+        """Adds the given Python file to the report after applying
+        syntax highlighting with pygments."""
+
         input_file = open(filename, 'r')
         tex_file = NamedTemporaryFile(suffix='.tex', mode='w')
         tex_file_name = os.path.basename(tex_file.name)
@@ -49,7 +52,7 @@ class Report():
         os.unlink(re.sub('\.pdf$', '.log', pdf_filename))
         os.unlink(re.sub('\.pdf$', '.aux', pdf_filename))
 
-    def addText(self, text):
+    def add_text(self, text):
         """Add text to the report."""
         # Write the text to a temporary text file
         text_file = NamedTemporaryFile(suffix='.txt', mode='w')
@@ -58,14 +61,14 @@ class Report():
         print text_file.name
         self.tempFileList.append(text_file)
 
-    def addTextFile(self, filename):
+    def add_text_file(self, filename):
         """Include the contents of a text file in the report."""
         text_file = open(filename, 'r')
         text = text_file.read()
         self.addText(text)
         text_file.close()
 
-    def addCurrentFigure(self):
+    def add_current_figure(self):
         """Add the current figure to the report.
         
         Uses the matplotlib function savefig to export the figure to a
@@ -79,7 +82,7 @@ class Report():
         #pdf_file.close()
         self.tempFileList.append(fig_file)
 
-    def writeReport(self, outputfilename='report'):
+    def write_report(self, outputfilename='report'):
         """Output the complete report to the given PDF file.
         
         Parameters
