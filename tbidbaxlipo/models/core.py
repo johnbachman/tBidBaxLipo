@@ -1,41 +1,64 @@
 """
 Basic implementation of interactions and mechanisms for tBid/Bax interactions
 with each other and with membranes. Contains macros to build up a variety
-of alternative models of tBid/Bax interactions
+of alternative models of tBid/Bax interactions.
 
 Code organization
 =================
 
-Models of tBid/Bax interactions draw on the same pool of mechanistic facts,
-but may differ in their implementation of how interactions with membranes are
-modeled. As a result, some rules (e.g., those that specify how proteins translocate
-to membranes) have to be written in a compartmen-specific way, whereas others
-can be written in a generic way. To manage this degree of complexity, macros
-implementing tBid/Bax interactions are implemented here in a generic way
-(e.g., :py:method:`tbidbaxlipo.models.core.Builder.tBid_activates_Bax`); if
+Models of tBid/Bax interactions draw on the same pool of mechanistic facts, but
+may differ in their implementation of how interactions with membranes are
+modeled. As a result, some rules (e.g., those that specify how proteins
+translocate to membranes) have to be written in a compartmen-specific way,
+whereas others can be written in a generic way. To manage this degree of
+complexity, macros implementing tBid/Bax interactions are implemented here in a
+generic way (e.g.,
+:py:method:`tbidbaxlipo.models.core.Builder.tBid_activates_Bax`); if
 compartment-specific modifications are necessary, these functions are overriden
-in child classes (e.g., :py:method:`tbidbaxlipo.models.site_cpt.Builder.tBid_activates_Bax`).
+in child classes (e.g.,
+:py:method:`tbidbaxlipo.models.site_cpt.Builder.tBid_activates_Bax`).
 
 Model builders
 --------------
 
 The model builder classes contained in this file and also in
-:py:module:`tbidbaxlipo.models.one_cpt`, 
-:py:module:`tbidbaxlipo.models.n_cpt`, and
-:py:module:`tbidbaxlipo.models.site_cpt`, are used to manage the process of
+:py:module:`tbidbaxlipo.models.one_cpt`, :py:module:`tbidbaxlipo.models.n_cpt`,
+and :py:module:`tbidbaxlipo.models.site_cpt`, are used to manage the process of
 building up alternative models. Each of these modules contains a class
-`Builder` that contains an instance of a PySB model. The classes also
-contain a series of methods implementing
-small sub-pieces of mechanism that can be termed "motifs". These motifs
-can be recombined in different ways to create different models.
+`Builder` that contains an instance of a PySB model. The classes also contain a
+series of methods implementing small sub-pieces of mechanism that can be termed
+"motifs". These motifs can be recombined in different ways to create different
+models.
+
+The pattern for model construction used here does not rely on the SelfExporter
+class of PySB. Instead, the ``Builder`` class contains an instance of a PySB
+model object. Monomers, Parameters, Rules, etc. are added to this model object
+by invoking the wrapper functions included in
+:py:module:`tbidbaxlipo.model.core`. These include
+
+- :py:method:`tbidbaxlipo.model.core.Builder.monomer`
+- :py:method:`tbidbaxlipo.model.core.Builder.parameter`
+- :py:method:`tbidbaxlipo.model.core.Builder.rule`
+- :py:method:`tbidbaxlipo.model.core.Builder.compartment`
+- :py:method:`tbidbaxlipo.model.core.Builder.initial`
+- :py:method:`tbidbaxlipo.model.core.Builder.observable`
+
+Each of these functions invokes the appropriate PySB component constructor
+while setting the argument ``_export=False`` so that the SelfExporter is not
+invoked. The created components are then added to the instance of the model
+contained in the builder class.
+
+In addition, the model builder class implements the ``__getitem__`` method so
+that invoking ``self['component_name']`` from within any method returns the
+component with the given name.
 
 Individual mechanisms implemented
 =================================
 
-Notes
-
 tBid Binding to Bax
 -------------------
+
+- :py:method:`tbidbaxlipo.models.core.Builder.tBid_activates_Bax`
 
 - tBid binds to Bax at the a6 (rear) site to trigger conformational change.
 
@@ -96,7 +119,7 @@ Bcl-XL and Retrotranslocation
 - Basic model: BclXL/Bcl2 binds the 
 
 The Models
-----------
+==========
 
 Model 0
     - tBid and Bax translocate to membranes.
@@ -111,7 +134,7 @@ Model 2-inh.
     - tBid 
 
 To-do list
-----------
+==========
 
 .. todo:: List outline of the mechanistic alternatives before implementing them.
 
@@ -517,12 +540,41 @@ class Builder(object):
         two_state_equilibrium(Bax(bh3=None, dye='e'), 'm', 'i',
                 [basal_Bax_kf, basal_Bax_kr], sitename='loc')
 
+
+    # -- Constructor wrapper functions ------------------------------
     def monomer(self, *args, **kwargs):
+        """Adds a parameter to the Builder's model instance."""
         m = Monomer(*args, _export=False, **kwargs)
         self.model.add_component(m)
         return m
 
     def parameter(self, name, value, factor=1):
+        """Adds a parameter to the Builder's model instance.
+
+        Examines the params_dict attribute of the Builder instance (which is
+        set in the constructor,
+        :py:method:`tbidbaxlipo.models.core.Builder.__init__`).  If the
+        parameter with the given name is in the ``params_dict``, then the value
+        in the ``params_dict`` is used to construct the parameter, and the
+        argument ``value`` is ignored. If the parameter is not in
+        ``params_dict``, then the parameter is assigned ``value``.
+
+        Furthermore, in all cases the parameter value is multiplied by a
+        scaling factor specified by the argument ``factor``. This allows rate
+        scaling factor that are dependent on lipid concentrations or on units
+        (deterministic vs. stochastic) to be handled by keeping the same
+        parameter value but passing in the appropriate value for ``factor``.
+
+        Parameters
+        ----------
+        name : string
+            The name of the parameter to add
+        value : number
+            The value of the parameter
+        factor : number
+            A scaling factor to be applied to the parameter value.
+        """
+
         if self.params_dict is None:
             param_val = value * factor
         else:
@@ -536,24 +588,30 @@ class Builder(object):
         return p
 
     def rule(self, *args, **kwargs):
+        """Adds a rule to the Builder's model instance."""
         r = Rule(*args, _export=False, **kwargs)
         self.model.add_component(r)
         return r 
 
     def compartment(self, *args, **kwargs):
+        """Adds a compartment to the Builder's model instance."""
         c = Compartment(*args, _export=False, **kwargs)
         self.model.add_component(c)
         return c 
 
     def observable(self, *args, **kwargs):
+        """Adds an observable to the Builder's model instance."""
         o = Observable(*args, _export=False, **kwargs)
         self.model.add_component(o)
         return o
 
     # Note: initial is not a component
     def initial(self, *args):
+        """Adds an initial condition to the Builder's model instance."""
         self.model.initial(*args)
 
     def __getitem__(self, index):
+        """Returns the component with the given string index
+        from the instance of the model contained by the Builder."""
         return self.model.all_components()[index]
 
