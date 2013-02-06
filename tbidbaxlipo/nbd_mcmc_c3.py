@@ -106,9 +106,12 @@ def generate_figures(mcmc, do_report=True, basename='nbd_mcmc'):
 
     # TODO TODO TODO Set the curves to plot here
     x = mcmc.simulate(position=mcmc.initial_position, observables=True)
+    #plt.plot(mcmc.options.tspan,
+    #         x['Baxc3'] * initial_params[3], 'r', label='c3 model')
     plt.plot(mcmc.options.tspan,
-             x['Baxc3'] * initial_params[3], 'r', label='c3 model')
-    #plt.plot(tspan, x['Baxc62'] * initial_params[2], 'g', label='c62 model')
+              (x['Baxc62'] / mcmc.options.model.parameters['Bax_0'].value) *
+               initial_params[3],
+               'g', label='c62 model')
     #plt.plot(tspan, x['Baxc120'] * initial_params[3], 'b', label='c120 model')
     #plt.plot(tspan, x['Baxc122'] * initial_params[4], 'm', label='c122 model')
     #plt.plot(tspan, x['Baxc126'] * initial_params[5], 'k', label='c126 model')
@@ -145,9 +148,12 @@ def generate_figures(mcmc, do_report=True, basename='nbd_mcmc'):
     x = mcmc.simulate(position=best_fit_position, observables=True)
 
     # TODO TODO TODO Set the curves to plot here
+    #plt.plot(mcmc.options.tspan,
+    #         x['Baxc3'] * best_fit_params[3], 'r', label='c3 model')
     plt.plot(mcmc.options.tspan,
-             x['Baxc3'] * best_fit_params[3], 'r', label='c3 model')
-    #plt.plot(tspan, x['Baxc62'] * best_fit_params[2], 'g', label='c62 model')
+              (x['Baxc62'] / mcmc.options.model.parameters['Bax_0'].value) *
+               best_fit_params[3],
+               'g', label='c62 model')
     #plt.plot(tspan, x['Baxc120'] * best_fit_params[3], 'b', label='c120 model')
     #plt.plot(tspan, x['Baxc122'] * best_fit_params[4], 'm', label='c122 model')
     #plt.plot(tspan, x['Baxc126'] * best_fit_params[5], 'k', label='c126 model')
@@ -182,7 +188,9 @@ def generate_figures(mcmc, do_report=True, basename='nbd_mcmc'):
         cur_position_linear = mcmc.cur_params(cur_position)
         # FIXME magic number 3!!!)
         plt.plot(mcmc.options.tspan,
-                 x['Baxc3'] * cur_position_linear[3], alpha=0.02, color='r')
+                  (x['Baxc62'] / mcmc.options.model.parameters['Bax_0'].value) *
+                   cur_position_linear[3],
+                   'g', alpha=0.02, label='c62 model')
 
     plt.title("Sampling of %d accepted positions" % num_to_plot)
     plt.show()
@@ -226,13 +234,11 @@ def generate_figures(mcmc, do_report=True, basename='nbd_mcmc'):
 
 def plot_data():
     alpha = 0.5
-    plt.plot(nbd.time_other, nbd_avgs[0], 'r.', label='c3 data', alpha=alpha)
-    """
+    #plt.plot(nbd.time_other, nbd_avgs[0], 'r.', label='c3 data', alpha=alpha)
     plt.plot(nbd.time_other, nbd_avgs[1], 'g.', label='c62 data', alpha=alpha)
-    plt.plot(nbd.time_other, nbd_avgs[2], 'b.', label='c120 data', alpha=alpha)
-    plt.plot(nbd.time_other, nbd_avgs[3], 'm.', label='c122 data', alpha=alpha)
-    plt.plot(nbd.time_other, nbd_avgs[4], 'k.', label='c126 data', alpha=alpha)
-    """
+    #plt.plot(nbd.time_other, nbd_avgs[2], 'b.', label='c120 data', alpha=alpha)
+    #plt.plot(nbd.time_other, nbd_avgs[3], 'm.', label='c122 data', alpha=alpha)
+    #plt.plot(nbd.time_other, nbd_avgs[4], 'k.', label='c126 data', alpha=alpha)
 
 # Define the likelihood function
 def likelihood(mcmc, position):
@@ -247,21 +253,21 @@ def likelihood(mcmc, position):
 
     # TODO Need to be able to get the indices from the model so that
     # they're not hardcoded
-    c3_scaling   = params[3]
-    #c62_scaling  = params[2]
+    #c3_scaling   = params[3]
+    c62_scaling  = params[3]
     #c120_scaling = params[3]
     #c122_scaling = params[4]
     #c126_scaling = params[5]
 
-    c3_model = yout['Baxc3'] * c3_scaling
-    #c62_model = yout['Baxc62'] * c62_scaling
+    #c3_model = yout['Baxc3'] * c3_scaling
+    c62_model = yout['Baxc62'] * c62_scaling
     #c120_model = yout['Baxc120'] * c120_scaling
     #c122_model = yout['Baxc122'] * c122_scaling
     #c126_model = yout['Baxc126'] * c126_scaling
 
     # TODO TODO TODO Set the components of the obj func here
-    err  = numpy.sum((nbd_avgs[0] - c3_model)**2 / (2 * nbd_stds[0]**2))
-    #err += numpy.sum((nbd_avgs[1] - c62_model)**2 / (2 * nbd_stds[1]**2))
+    #err  = numpy.sum((nbd_avgs[0] - c3_model)**2 / (2 * nbd_stds[0]**2))
+    err = numpy.sum((nbd_avgs[1] - c62_model)**2 / (2 * nbd_stds[1]**2))
     #err += numpy.sum((nbd_avgs[2] - c120_model)**2 / (2 * nbd_stds[2]**2))
     #err += numpy.sum((nbd_avgs[3] - c122_model)**2 / (2 * nbd_stds[3]**2))
     #err += numpy.sum((nbd_avgs[4] - c126_model)**2 / (2 * nbd_stds[4]**2))
@@ -304,19 +310,37 @@ if __name__ == '__main__':
         print("Running do_fit() with the default arguments...")
 
         from tbidbaxlipo.models import one_cpt
-        b = one_cpt.Builder()
+
+        params_dict_after = {
+            'Bax_dimerization_kf': 0.00039997477906346336,
+            'Bax_dimerization_kr': 0.013749131382056693,
+            'Bax_tetramerization_kf': 0.00093066359281583318,
+            'Bax_tetramerization_kr': 0.0002291780988903229,
+            'Bax_transloc_kf': 5.007883980982208,
+            'Bax_transloc_kr': 171.1669217159442,
+            'iBax_reverse_k': 0.2713605496448912,
+            'tBid_iBax_kc': 11.621431266275815,
+            'tBid_mBax_kf': 0.062823108082142434,
+            'tBid_mBax_kr': 0.036115738840543629,
+            'tBid_transloc_kf': 0.046433226280901206,
+            'tBid_transloc_kr': 0.0}
+
+        b = one_cpt.Builder(params_dict=params_dict_after)
 
         # -- select model ---
         #b.build_model_ta()
 
         #b.build_model_tar()
 
-        b.build_model_tai()
+        #b.build_model_tai()
+
+        b.build_model_tardt()
+
         # -----
 
         random_seed = 1
-        nsteps = 40000
-        basename = '%s_%d_steps_seed_%d' % ('nbd_mcmc', nsteps, random_seed)
+        nsteps = 1000
+        basename = '%s_%d_steps_seed_%d' % ('tardt_c62', nsteps, random_seed)
 
         mcmc = do_fit(b.model, b.prior, estimate_params=b.estimate_params,
                       basename=basename, random_seed=random_seed, nsteps=nsteps)

@@ -164,6 +164,9 @@ class Builder(object):
     def __init__(self, params_dict=None):
         """Base constructor for all model builder classes.
 
+        Initializes collections of the parameters to estimate, as well
+        as the means and variances of their priors.
+
         Parameters
         ----------
         params_dict : dict
@@ -200,6 +203,9 @@ class Builder(object):
                          'c126': ['s', 'm'],
                          'c184': ['s', 'm']})
 
+        # FIXME won't work for model builders that override declare_monomers
+        self.declare_nbd_scaling_parameters()
+
     # -- METHODS FOR FITTING/CALIBRATION -----------------------------------
     def declare_nbd_scaling_parameters(self):
         """
@@ -214,17 +220,17 @@ class Builder(object):
         fitting function should perform normalization.
         """
 
-        self.parameter('c3_scaling', 0.008,
-                       mean=np.log10(0.008), variance=0.04)
-        self.parameter('c62_scaling', 0.009204,
-                       mean=np.log10(0.009204), variance=0.04, estimate=False)
+        #self.parameter('c3_scaling', 0.008,
+        #               mean=np.log10(0.008), variance=0.04)
+        self.parameter('c62_scaling', 0.9204,
+                       mean=np.log10(0.9204), variance=0.04)
         #self.parameter('c120_scaling', 0.975)
         #self.parameter('c122_scaling', 0.952)
         #self.parameter('c126_scaling', 0.966)
 
         Bax = self['Bax']
         self.observable('Baxc3', Bax(loc='i'))
-        self.observable('Baxc62', Bax(bh3=1))
+        self.observable('Baxc62', MatchOnce(Bax(bh3=1)))
 
         # -- Not currently using these for the mech models --
         #self.observable('Baxc3', Bax(c3='m'))
@@ -333,6 +339,9 @@ class Builder(object):
     def Bax_reverses(self):
         """Reversion of the inserted form of Bax to the loosely associated
         state, at which point it can return to the solution."""
+
+        print('core: Bax_reverses')
+
         Bax = self['Bax']
 
         # Reversion of active Bax (P -> S)
@@ -353,7 +362,7 @@ class Builder(object):
           steady-state at around 12 minutes.
         """
 
-        print("tBid_Bax: Bax_dimerizes()")
+        print("core: Bax_dimerizes")
      
         # Rate of dimerization formation/oligomerization of activated Bax (s^-1)
         Bax_dimerization_kf = self.parameter('Bax_dimerization_kf', 1e-2)# was 1
@@ -381,7 +390,7 @@ class Builder(object):
         non-extractable, resistant to gel filtration etc.) after       
         """
 
-        print("tBid_Bax: Bax_tetramerizes()")
+        print("core: Bax_tetramerizes()")
 
         # Rate of dimerization formation/oligomerization of activated Bax (s^-1)
         Bax_tetramerization_kf = self.parameter('Bax_tetramerization_kf', 1e-2)
@@ -423,7 +432,7 @@ class Builder(object):
         liposomes (e.g., if you are using the model only for looking at
         insertion rates) then this could be OK.
         """
-        print("tBid_Bax: iBax_binds_tBid_at_bh3()")
+        print("core: iBax_binds_tBid_at_bh3()")
 
         # INHIBITION OF TBID BY BAX
         # Rate of tBid binding to iBax (E + P -> EP)
@@ -495,29 +504,77 @@ class Builder(object):
                 [basal_Bax_kf, basal_Bax_kr], sitename='loc')
 
     ## -- MODEL BUILDING FUNCTIONS -------------------------------------------
+    """
+    Alternatives for activation: initial activation could occu
+    - a6 of bh3, leading to
+    - Fully activated state or simply c3 exposed, a9 inserted.
+    - tBid can dissociate at the activation step, or not.
+    - From there, fully activated Bax can bind tBid again at a6 or bh3;
+    - Fully activated Bax could be reversible, or not.
+    - Fully activated Bax could dimerize, or not
+    - Partially activated (loosely inserted) Bax can bind tBid at a6 or bh3,
+      and:
+       - do nothing (i.e., just fluoresce) or become fully activated
+    - Fully activated Bax can either remain bound to tBid (at a6, or bh3)
+      (which can subsequently dissociate) - or dissociate immediately
+     
+
+    leading to
+    """
     def build_model_ta(self):
         print "---------------------------"
         print "core: Building model ta:"
 
-        self.declare_nbd_scaling_parameters()
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
 
     def build_model_tai(self):
         print "---------------------------"
         print "core: Building model tai:"
-        self.declare_nbd_scaling_parameters()
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.iBax_binds_tBid_at_bh3()
 
+    def build_model_tad(self):
+        print "---------------------------"
+        print "core: Building model tad:"
+        self.translocate_tBid_Bax()
+        self.tBid_activates_Bax(bax_site='bh3')
+        self.Bax_dimerizes()
+
+    def build_model_taid(self):
+        print "---------------------------"
+        print "core: Building model taid:"
+        self.translocate_tBid_Bax()
+        self.tBid_activates_Bax(bax_site='bh3')
+        self.iBax_binds_tBid_at_bh3()
+        self.Bax_dimerizes()
+
     def build_model_tar(self):
         print "---------------------------"
         print "core: Building model tar:"
-        self.declare_nbd_scaling_parameters()
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.Bax_reverses()
+
+    def build_model_tard(self):
+        print "---------------------------"
+        print "core: Building model tard:"
+        self.translocate_tBid_Bax()
+        self.tBid_activates_Bax(bax_site='bh3')
+        self.Bax_reverses()
+        self.Bax_dimerizes()
+
+    def build_model_tardt(self):
+        print "---------------------------"
+        print "core: Building model tardt:"
+        self.translocate_tBid_Bax()
+        self.tBid_activates_Bax(bax_site='bh3')
+        self.Bax_reverses()
+        self.Bax_dimerizes()
+        self.Bax_tetramerizes()
+
+    # -------------------
 
     def build_model1(self):
         """Activation, dimerization."""
