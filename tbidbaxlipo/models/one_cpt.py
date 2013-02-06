@@ -1,13 +1,79 @@
 """
 Implementation of most basic membrane compartmentalization model, with a
 solution compartment and a single homogeneous membrane compartment.
+
+Requirements of the model (these should be incorporated into tests):
+- partitioning of tBid into membranes should occur rapidly and lead to nearly all
+  (> 90-95%) of tBid in the membrane at equilibrium
+
+Things that are unknown:
+- Does the partitioning of tBid and/or Bax to the membrane saturate,
+  or is the leveling off due to non-ideal partitioning or aggregation?
+
+The way this is written,
+
+- Bax equilibrates equally between the cytosolic and peripherally bound
+  state to both full and empty liposomes.
+
+- But, once in the "inserted" state, it can't dissociate from the vesicle!!
+  (i.e., there's no reversal either to the cytosolic or peripherally bound
+  states).
+
+- Further, there's no reversal from the porated back to the inserted
+  state--instead Bax goes from porated to the peripherally bound state on
+  an empty vesicle.
+
+There is a tradeoff between k_pore_rev and k_eflx. If k_pore_rev is slow, this
+means that pores, once formed, are very stable, and so the trend is for almost
+all Bax to end up as oligomerized. Once pore-state Bax reaches steady state,
+dye release occurs basically linearly afterwards.
+
+Also note that in this model, once Bax is in the inserted state, it cannot
+revert back to the peripherally bound state without first passing through the
+pore state. Also note that it cannot dissociate from the membrane unless it is
+in the 'm' (peripherally bound) state.
+
+There is a cycle in that Bax can go from m to m via
+mtBid + mBax <-> mtBid:mBax (<)-> mtBid + iBax (<)-> pBax
+              K1               K2                 K3
+
+Therefore we need to have
+tBid_Bax_kf * tBid_Bax_kc * k_pore = tBid_Bax_kr * (tBid_iBax_kf) * k_pore_rev
+
+The product of the rate constants in both directions should be the same--even
+though dye is released in this process, one would imagine that the process
+would proceed exactly the same even without dye.
+
+If the whole chain is at equilibrium, then each individual link must be at
+equilibrium.
+
+Behavior of the model:---------
+
+- Why does mftBid not come down as the number of empty vesicles goes up?
+  Theoretically, as tBid cycles back and forth to the cytoplasm, it should
+  unbind, return to dye='none', and then be dye='e' after rebinding an
+  empty vesicle.
+
+In the Almeida model, the pore is presumed to have a particular average
+lifetime, and the transition from P_lf to P* is determined by some first order
+rate, and then The rate of the efflux reaction is proportional to the amount of
+pBax(full), the lifetime of the transition between pBax(full) -> pBax(empty),
+along with the efflux rate constant.
+
+So imagine that there are precisely 100 (V) vesicles, and 100 Bax molecules.
+Now suppose that at a given time there is precisely 1 Bax molecule in the pore
+state on a full vesicle, and this is sufficient to trigger dye release. Further
+suppose that pore formation is irreversible.  Within that timestep (say, 1
+second), you would expect that the pBax(full) concentration would go to 0, and
+the CF (efflux) function would change by precisely 1%.
+
 """
 
 __author__ = 'johnbachman'
 
-# IMPORTS
 from pysb import *
-#from pylab import *
+import numpy as np
+from matplotlib import pyplot as plt
 from tbidbaxlipo.util.fitting import fit, fit_initial, mse
 from tbidbaxlipo.util import color_iter
 from tbidbaxlipo.models import core
@@ -36,7 +102,9 @@ class Builder(core.Builder):
         Bax = self['Bax']
 
         self.initial(tBid(loc='c', bh3=None) ** solution, self['tBid_0'])
-        self.initial(Bax(loc='c', bh3=None, a6=None) ** solution, self['Bax_0'])
+        self.initial(Bax(loc='c', bh3=None, a6=None,
+                     c3='s', c62='s', c120='s', c122='s', c126='s', c184='s')
+                     ** solution, self['Bax_0'])
 
         # OBSERVABLES
         self.observable('ctBid', tBid(loc='c'))
@@ -66,7 +134,7 @@ class Builder(core.Builder):
 
         tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
                                           factor=self['Vesicles_0'].value)
-        tBid_transloc_kr = self.parameter('tBid_transloc_kr', 0)
+        #tBid_transloc_kr = self.parameter('tBid_transloc_kr', 0)
 
         Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
                                           factor=self['Vesicles_0'].value)
@@ -80,9 +148,9 @@ class Builder(core.Builder):
         self.rule('tBid_translocates_sol_to_%s' % ves.name,
              tBid(loc='c') ** solution >> tBid(loc='m') ** ves,
              tBid_transloc_kf)
-        self.rule('tBid_translocates_%s_to_sol' % ves.name,
-             tBid(loc='m', bh3=None) ** ves >> tBid(loc='c', bh3=None) ** solution,
-             tBid_transloc_kr)
+        #self.rule('tBid_translocates_%s_to_sol' % ves.name,
+        #     tBid(loc='m', bh3=None) ** ves >> tBid(loc='c', bh3=None) ** solution,
+        #     tBid_transloc_kr)
         self.rule('Bax_translocates_sol_to_%s' % ves.name,
              Bax(loc='c') ** solution >> Bax(loc='m') ** ves,
              Bax_transloc_kf)
@@ -93,9 +161,10 @@ class Builder(core.Builder):
 
     def pores_from_Bax_monomers():
         """Basically a way of counting the time-integrated amount of
-           forward pore formation."""
+           forward pore formation.
+        """
 
-        print("pores_from_Bax_monomers()")
+        print("one_cpt: pores_from_Bax_monomers()")
 
         Parameter('pore_formation_rate_k', 1e-3)
         #Parameter('pore_recycling_rate_k', 0)
@@ -138,9 +207,7 @@ class Builder(core.Builder):
         """Basically a way of counting the time-integrated amount of
            forward pore formation."""
 
-        Parameter('pore_formation_rate_k', 100) # This is going to be 
-        #Parameter('scaled_pore_formation_rate_k', 0.03) # This is going to be 
-        #Parameter('pore_recycling_rate_k', 1e-3)
+        Parameter('pore_formation_rate_k', 100)
 
         Rule('Pores_From_Bax_Tetramers', 
              MatchOnce(Bax(loc='i', bh3=1, a6=3) % Bax(loc='i', bh3=1, a6=4) % 
@@ -160,25 +227,29 @@ class Builder(core.Builder):
     def run_model(self, tmax=12000, figure_ids=[0,1]):
         from pysb.integrate import odesolve # Postpone integrator test msg
 
-        t = linspace(0, tmax, 1000)
+        t = np.linspace(0, tmax, 1000)
         x = odesolve(self.model, t)
 
         ci = color_iter()
-        figure(1)
 
         tBid_0 = self['tBid_0']
         Bax_0 = self['Bax_0']
 
+        plt.ion()
+
         # Translocation
-        figure(figure_ids[0])
-        plot(t, (x['ctBid'])/tBid_0.value, label='ctBid', color=ci.next())
-        plot(t, (x['mtBid'])/tBid_0.value, label='mtBid', color=ci.next())
-        plot(t, (x['cBax'])/Bax_0.value, label='cBax', color=ci.next())
-        plot(t, (x['mBax'])/Bax_0.value, label='mBax', color=ci.next())
+        plt.figure(figure_ids[0])
+        plt.plot(t, (x['ctBid'])/tBid_0.value, label='ctBid', color=ci.next())
+        plt.plot(t, (x['mtBid'])/tBid_0.value, label='mtBid', color=ci.next())
+        plt.plot(t, (x['cBax'])/Bax_0.value, label='cBax', color=ci.next())
+        plt.plot(t, (x['mBax'])/Bax_0.value, label='mBax', color=ci.next())
 
         # Activation
-        plot(t, x['iBax']/Bax_0.value, label='iBax', color=ci.next())
-        plot(t, x['tBidBax']/tBid_0.value, label='tBidBax', color=ci.next())
+        plt.plot(t, x['iBax']/Bax_0.value, label='iBax', color=ci.next())
+        plt.plot(t, x['tBidBax']/tBid_0.value, label='tBidBax', color=ci.next())
+        plt.legend(loc='right')
+        plt.show()
+
         # Pore formation
         #plot(t, (x['pBax'])/Bax_0.value, label='pBax')
 
@@ -231,75 +302,3 @@ class Builder(core.Builder):
         return x
 
     #  COMMENTS
-    """
-    Simple model of tBid-Bax interaction, consisting only of tBid's activation of
-    Bax. The basic enzyme-substrate model.
-
-    Requirements of the model (these should be incorporated into tests):
-    - partitioning of tBid into membranes should occur rapidly and lead to nearly all
-      (> 90-95%) of tBid in the membrane at equilibrium
-    - 
-
-    Things that are unknown:
-    - Does the partitioning of tBid and/or Bax to the membrane saturate,
-      or is the leveling off due to non-ideal partitioning or aggregation?
-
-    The way this is written,
-
-    - Bax equilibrates equally between the cytosolic and peripherally bound
-      state to both full and empty liposomes.
-
-    - But, once in the "inserted" state, it can't dissociate from the vesicle!!
-      (i.e., there's no reversal either to the cytosolic or peripherally bound
-      states).
-
-    - Further, there's no reversal from the porated back to the inserted
-      state--instead Bax goes from porated to the peripherally bound state on
-      an empty vesicle.
-
-    There is a tradeoff between k_pore_rev and k_eflx. If k_pore_rev is slow,
-    this means that pores, once formed, are very stable, and so the trend is
-    for almost all Bax to end up as oligomerized. Once pore-state Bax reaches
-    steady state, dye release occurs basically linearly afterwards.
-
-    Also note that in this model, once Bax is in the inserted state, it cannot
-    revert back to the peripherally bound state without first passing through
-    the pore state. Also note that it cannot dissociate from the membrane
-    unless it is in the 'm' (peripherally bound) state.
-
-    There is a cycle in that Bax can go from m to m via
-    mtBid + mBax <-> mtBid:mBax (<)-> mtBid + iBax (<)-> pBax
-                  K1               K2                 K3
-
-    Therefore we need to have
-    tBid_Bax_kf * tBid_Bax_kc * k_pore = tBid_Bax_kr * (tBid_iBax_kf) * k_pore_rev
-
-    The product of the rate constants in both directions should be the
-    same--even though dye is released in this process, one would imagine that
-    the process would proceed exactly the same even without dye.
-
-    If the whole chain is at equilibrium, then each individual link must be at
-    equilibrium.
-
-    Behavior of the model:---------
-    - Why does mftBid not come down as the number of empty vesicles goes up?
-      Theoretically, as tBid cycles back and forth to the cytoplasm, it should
-      unbind, return to dye='none', and then be dye='e' after rebinding an
-      empty vesicle.
-
-    In the Almeida model, the pore is presumed to have a particular average
-    lifetime, and the transition from P_lf to P* is determined by some first
-    order rate, and then The rate of the efflux reaction is proportional to the
-    amount of pBax(full), the lifetime of the transition between pBax(full) ->
-    pBax(empty), along with the efflux rate constant.
-
-    So imagine that there are precisely 100 (V) vesicles, and 100 Bax
-    molecules. Now suppose that at a given time there is precisely 1 Bax
-    molecule in the pore state on a full vesicle, and this is sufficient to
-    trigger dye release. Further suppose that pore formation is irreversible.
-    Within that timestep (say, 1 second), you would expect that the pBax(full)
-    concentration would go to 0, and the CF (efflux) function would change by
-    precisely 1%.
-
-    """
-

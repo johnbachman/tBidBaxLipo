@@ -124,6 +124,8 @@ __author__ = 'johnbachman'
 from pysb import *
 #from pysb.core import SelfExporter
 from pysb.macros import *
+import numpy as np
+import nbd_model_shared
 #import inspect
 
 #SelfExporter.do_export = False
@@ -168,8 +170,32 @@ class Builder(object):
         """Declares signatures for tBid and Bax."""
         self.monomer('tBid', ['bh3', 'loc'],
                 {'loc': ['c', 'm']})
-        self.monomer('Bax', ['bh3', 'a6', 'loc'],
-                {'loc': ['c','m', 'i', 'p']})
+        self.monomer('Bax',
+                        ['bh3', 'a6', 'loc',
+                         'c3', 'c62', 'c120', 'c122', 'c126', 'c184'],
+                        {'loc':  ['c', 'm', 'i', 'p'],
+                         'c3':   ['s', 'm'],
+                         'c62':  ['s', 'm'],
+                         'c120': ['s', 'm'],
+                         'c122': ['s', 'm'],
+                         'c126': ['s', 'm'],
+                         'c184': ['s', 'm']})
+
+    def declare_nbd_scaling_parameters(self):
+        self.parameter('c3_scaling', 0.008)
+        #self.parameter('c62_scaling', 0.9204)
+        #self.parameter('c120_scaling', 0.975)
+        #self.parameter('c122_scaling', 0.952)
+        #self.parameter('c126_scaling', 0.966)
+
+        Bax = self['Bax']
+        self.observable('Baxc3', Bax(loc='i'))
+        #self.observable('Baxc3', Bax(c3='m'))
+        #self.observable('Baxc62', Bax(c62='m'))
+        #self.observable('Baxc120', Bax(c120='m'))
+        #self.observable('Baxc122', Bax(c122='m'))
+        #self.observable('Baxc126', Bax(c126='m'))
+        #self.observable('Baxc184', Bax(c184='m'))
 
     def tBid_activates_Bax(self, bax_site='a6'):
         """Default implementation of Bax activation by tBid.
@@ -235,8 +261,6 @@ class Builder(object):
         kr = self.parameter('tBid_mBax_kr', 1.5)
         # Dissociation of tBid from iBax (EP -> E + P)
         kc = self.parameter('tBid_iBax_kc', 1e-1)
-        # Reversion of active Bax (P -> S)
-        krev = self.parameter('iBax_reverse_k', 1e-2)
 
         # Create the dicts to parameterize the site that tBid binds to
         bax_site_bound = {bax_site:1}
@@ -267,6 +291,9 @@ class Builder(object):
 
     def Bax_reverses(self):
         Bax = self['Bax']
+
+        # Reversion of active Bax (P -> S)
+        krev = self.parameter('iBax_reverse_k', 1e-2)
 
         # iBax reverses back to mBax
         self.rule('iBax_reverses',
@@ -367,6 +394,25 @@ class Builder(object):
              tBid(loc='m', bh3=1) % Bax(loc='i', bh3=1, a6=None),
              kf, kr)
 
+    def prior_for_rate_parameters(self, num_parameters,
+                                  num_scaling_parameters=None):
+
+        means = np.array([-3.0] * num_parameters)
+        variances = np.array([2.0] * num_parameters)
+
+        def prior_func(mcmc, position):
+            if num_scaling_parameters is not None:
+                scaling_prior = nbd_model_shared.prior(
+                        position[0:num_scaling_parameters], num_scaling_parameters)
+            else:
+                scaling_prior = 0
+
+            return scaling_prior + \
+                   np.sum((position[num_scaling_parameters:] - means)**2 / \
+                          (2 * variances))
+
+        return prior_func
+
 ## MODEL BUILDING FUNCTIONS
     def build_model0(self):
         print "---------------------------"
@@ -377,7 +423,8 @@ class Builder(object):
 
     def build_model01(self):
         print "---------------------------"
-        print "core: Building model 0:"
+        print "core: Building model 01:"
+        self.declare_nbd_scaling_parameters()
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='a6')
         self.iBax_binds_tBid_at_bh3()
