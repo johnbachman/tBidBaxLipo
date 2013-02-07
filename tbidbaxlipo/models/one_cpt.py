@@ -112,6 +112,9 @@ class Builder(core.Builder):
         self.observable('cBax', Bax(loc='c'))
         self.observable('mBax', Bax(loc='m'))
 
+        # SCALING PARAMETERS
+        self.declare_nbd_scaling_parameters()
+
         #Observable('eVes', Vesicles(dye='e'))
         #Observable('ePore', Pore() ** empty_ves)
         #Observable('fPore', Pore() ** full_ves)
@@ -247,6 +250,9 @@ class Builder(core.Builder):
         plt.plot(t, (x['mBax'])/Bax_0.value, label='mBax', color=ci.next())
 
         # Activation
+        plt.plot(t, ((x['Baxc62']/Bax_0.value) *
+                     self.model.parameters['c62_scaling'].value),
+                 label='Baxc62', color=ci.next())
         plt.plot(t, x['iBax']/Bax_0.value, label='iBax', color=ci.next())
         plt.plot(t, x['tBidBax']/tBid_0.value, label='tBidBax', color=ci.next())
         plt.legend(loc='right')

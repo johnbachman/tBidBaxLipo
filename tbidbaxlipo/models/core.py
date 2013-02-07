@@ -115,21 +115,6 @@ Bcl-XL and Retrotranslocation
 
 - Basic model: BclXL/Bcl2 binds the 
 
-The Models
-==========
-
-Model 0
-    - tBid and Bax translocate to membranes.
-
-Model 1. 
-    - tBid and Bax translocate to membranes
-    - tBid causes Bax insertion into membranes
-
-Model 2-inh.
-    - tBid and Bax translocate to membranes
-    - tBid causes Bax insertion into membranes
-    - tBid 
-
 To-do list
 ==========
 
@@ -203,9 +188,6 @@ class Builder(object):
                          'c126': ['s', 'm'],
                          'c184': ['s', 'm']})
 
-        # FIXME won't work for model builders that override declare_monomers
-        self.declare_nbd_scaling_parameters()
-
     # -- METHODS FOR FITTING/CALIBRATION -----------------------------------
     def declare_nbd_scaling_parameters(self):
         """
@@ -230,7 +212,7 @@ class Builder(object):
 
         Bax = self['Bax']
         self.observable('Baxc3', Bax(loc='i'))
-        self.observable('Baxc62', MatchOnce(Bax(bh3=1)))
+        self.observable('Baxc62', Bax(bh3=1))
 
         # -- Not currently using these for the mech models --
         #self.observable('Baxc3', Bax(c3='m'))
@@ -366,7 +348,7 @@ class Builder(object):
      
         # Rate of dimerization formation/oligomerization of activated Bax (s^-1)
         Bax_dimerization_kf = self.parameter('Bax_dimerization_kf', 1e-2)# was 1
-        Bax_dimerization_kr = self.parameter('Bax_dimerization_kr', 1e0)
+        Bax_dimerization_kr = self.parameter('Bax_dimerization_kr', 1e-2)
 
         Bax = self['Bax']
 
