@@ -189,38 +189,49 @@ class Builder(object):
                          'c184': ['s', 'm']})
 
     # -- METHODS FOR FITTING/CALIBRATION -----------------------------------
-    def declare_nbd_scaling_parameters(self):
+    def declare_nbd_scaling_parameters(self, nbd_sites):
         """
+        Adds parameters and observables for fitting the NBD fluorescence data.
+
+        Nominal values for the scaling parameters, as well as means and
+        variances for their prior distributions, are set here.
+
+        Note that the observables that are associated with the different
+        NBD fluorescence states represent assumptions of the model, so they
+        are subject to revision.
+
+        Parameters
+        ----------
+        nbd_sites : list of strings
+            A list of strings containing one or more of 'c3', 'c62', 'c120',
+            'c122', 'c126'. Any entries other than these are ignored.
+
         .. todo:: Make core.Builder.declare_nbd_scaling_parameters flexible
             It needs to be able to take parameters that say which scaling
             parameters should be added. Also, it needs to have a way to
             specify which observables in the mechanistic model map to the
             c3, c62, etc. observables.
-
-        .. todo:: Scaling parameter args should scale according the the amount
-        of Bax set as an initial condition; or perhaps more appropriately the
-        fitting function should perform normalization.
         """
 
-        #self.parameter('c3_scaling', 0.008,
-        #               mean=np.log10(0.008), variance=0.04)
-        self.parameter('c62_scaling', 0.9204,
-                       mean=np.log10(0.9204), variance=0.04)
-        #self.parameter('c120_scaling', 0.975)
-        #self.parameter('c122_scaling', 0.952)
-        #self.parameter('c126_scaling', 0.966)
-
         Bax = self['Bax']
-        self.observable('Baxc3', Bax(loc='i'))
-        self.observable('Baxc62', Bax(bh3=1))
 
-        # -- Not currently using these for the mech models --
-        #self.observable('Baxc3', Bax(c3='m'))
-        #self.observable('Baxc62', Bax(c62='m'))
-        #self.observable('Baxc120', Bax(c120='m'))
-        #self.observable('Baxc122', Bax(c122='m'))
-        #self.observable('Baxc126', Bax(c126='m'))
-        #self.observable('Baxc184', Bax(c184='m'))
+        if 'c3' in nbd_sites: 
+            self.parameter('c3_scaling', 0.8,
+                           mean=np.log10(0.8), variance=0.04)
+            self.observable('Baxc3', Bax(loc='i'))
+        if 'c62' in nbd_sites:
+            self.parameter('c62_scaling', 0.9204,
+                   mean=np.log10(0.9204), variance=0.04)
+            self.observable('Baxc62', Bax(bh3=1))
+        if 'c120' in nbd_sites:
+            self.parameter('c120_scaling', 0.975,
+                   mean=np.log10(0.975), variance=0.04)
+        if 'c122' in nbd_sites:
+            self.parameter('c122_scaling', 0.952,
+                   mean=np.log10(0.952), variance=0.04)
+        if 'c126' in nbd_sites:
+            self.parameter('c126_scaling', 0.966,
+                   mean=np.log10(0.966), variance=0.04)
 
     def prior(self, mcmc, position):
         return np.sum((position - self.parameter_means)**2 / \
