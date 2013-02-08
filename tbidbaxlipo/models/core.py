@@ -215,24 +215,34 @@ class Builder(object):
         """
 
         Bax = self['Bax']
+        site_set = False
 
         if 'c3' in nbd_sites: 
             self.parameter('c3_scaling', 0.8,
                            mean=np.log10(0.8), variance=0.04)
             self.observable('Baxc3', Bax(loc='i'))
+            site_set = True
         if 'c62' in nbd_sites:
             self.parameter('c62_scaling', 0.9204,
                    mean=np.log10(0.9204), variance=0.04)
             self.observable('Baxc62', Bax(bh3=1))
+            site_set = True
         if 'c120' in nbd_sites:
             self.parameter('c120_scaling', 0.975,
                    mean=np.log10(0.975), variance=0.04)
+            site_set = True
         if 'c122' in nbd_sites:
             self.parameter('c122_scaling', 0.952,
                    mean=np.log10(0.952), variance=0.04)
+            site_set = True
         if 'c126' in nbd_sites:
             self.parameter('c126_scaling', 0.966,
                    mean=np.log10(0.966), variance=0.04)
+            site_set = True
+
+        if not site_set:
+            raise Exception('Failed to set any NBD scaling parameters!')
+
 
     def prior(self, mcmc, position):
         return np.sum((position - self.parameter_means)**2 / \
@@ -588,38 +598,6 @@ class Builder(object):
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.Bax_reverses()
-        self.Bax_dimerizes()
-        self.Bax_tetramerizes()
-
-    # -------------------
-
-    def build_model1(self):
-        """Activation, dimerization."""
-        print "---------------------------"
-        print "core: Building model 1:"
-
-        self.translocate_tBid_Bax()
-        self.tBid_activates_Bax(bax_site='bh3')
-        self.Bax_dimerizes()
-
-    def build_model2(self):
-        """Bax tetramerization."""
-        print "---------------------------"
-        print "core: Building model 2:"
-
-        self.translocate_tBid_Bax()
-        self.tBid_activates_Bax(bax_site='bh3')
-        self.Bax_dimerizes()
-        self.Bax_tetramerizes()
-
-    def build_model3(self):
-        """iBax-tBid binding, tetramerization."""
-        print "---------------------------"
-        print "core: Building model 3:"
-
-        self.translocate_tBid_Bax()
-        self.tBid_activates_Bax(bax_site='bh3')
-        self.iBax_binds_tBid()
         self.Bax_dimerizes()
         self.Bax_tetramerizes()
 
