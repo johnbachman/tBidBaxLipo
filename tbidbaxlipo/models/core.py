@@ -188,6 +188,7 @@ class Builder(object):
                          'c126': ['s', 'm'],
                          'c184': ['s', 'm']})
 
+
     # -- METHODS FOR FITTING/CALIBRATION -----------------------------------
     def declare_nbd_scaling_parameters(self, nbd_sites):
         """
@@ -237,6 +238,29 @@ class Builder(object):
         return np.sum((position - self.parameter_means)**2 / \
                       (2 * self.parameter_variances))
 
+    def random_initial_values(self):
+        """Return a set of random initial values for parameter estimation.
+
+        Uses the lognormal prior distributions specified for the parameters to
+        be estimated. Currently it uses the specified variance, though it may
+        be worth considering using a larger variance to ensure that the
+        starting positions are "overdispersed."
+
+        Note that this must be called after the model has been built using one
+        of the model building methods--otherwise the parameters won't have been
+        created!
+
+        Returns
+        -------
+        An array of initial parameter values in the same order as the
+        parameters in self.estimate_params, and drawn from lognormal (base 10)
+        distributions with the means given by self.parameter_means and the
+        variances given by self.parameter_variances.
+        """
+        return self.parameter_means + \
+               (np.random.randn(len(self.estimate_params)) * \
+                self.parameter_variances)
+        
     # -- MECHANISTIC MOTIFS ------------------------------------------------
     def tBid_activates_Bax(self, bax_site='bh3'):
         """Default implementation of Bax activation by tBid.
