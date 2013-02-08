@@ -243,7 +243,6 @@ class Builder(object):
         if not site_set:
             raise Exception('Failed to set any NBD scaling parameters!')
 
-
     def prior(self, mcmc, position):
         return np.sum((position - self.parameter_means)**2 / \
                       (2 * self.parameter_variances))
@@ -267,9 +266,9 @@ class Builder(object):
         distributions with the means given by self.parameter_means and the
         variances given by self.parameter_variances.
         """
-        return self.parameter_means + \
+        return 10 ** (self.parameter_means + \
                (np.random.randn(len(self.estimate_params)) * \
-                self.parameter_variances)
+                self.parameter_variances))
         
     # -- MECHANISTIC MOTIFS ------------------------------------------------
     def tBid_activates_Bax(self, bax_site='bh3'):
