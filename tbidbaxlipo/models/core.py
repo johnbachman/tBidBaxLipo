@@ -543,9 +543,7 @@ class Builder(object):
        - do nothing (i.e., just fluoresce) or become fully activated
     - Fully activated Bax can either remain bound to tBid (at a6, or bh3)
       (which can subsequently dissociate) - or dissociate immediately
-     
-
-    leading to
+      leading to
     """
     def build_model_ta(self):
         print "---------------------------"
