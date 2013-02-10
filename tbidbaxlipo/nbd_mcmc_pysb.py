@@ -60,7 +60,7 @@ def do_fit(model, likelihood, prior=None, estimate_params=None,
     opts.sigma_min = 0.01
     opts.accept_rate_target = 0.23
     opts.accept_window = 300
-    opts.sigma_adj_interval = 1
+    opts.sigma_adj_interval = 100
 
     opts.use_hessian = True
     opts.hessian_scale = 1
@@ -275,15 +275,14 @@ def step(mcmc):
     """
     window = mcmc.options.accept_window
 
-    cumulative_accept_error = \
-            numpy.sum(mcmc.accept_error[(mcmc.iter - window):
-                                     mcmc.iter]) / window
+    local_acc = numpy.sum(mcmc.accepts[(mcmc.iter - window):mcmc.iter]) / \
+                          float(window)
 
     if mcmc.iter % 20 == 0:
         print 'iter=%-5d  sigma=%-.3f  T=%-.3f  loc_acc=%-.3f  ' \
               'glob_acc=%-.3f  lkl=%g  prior=%g  post=%g' % \
               (mcmc.iter, mcmc.sig_value, mcmc.T,
-               cumulative_accept_error,
+               local_acc,
                mcmc.acceptance/(mcmc.iter+1.), mcmc.accept_likelihood,
                mcmc.accept_prior, mcmc.accept_posterior)
 
