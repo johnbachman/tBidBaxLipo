@@ -100,7 +100,7 @@ def do_fit(model, likelihood, prior=None, estimate_params=None,
 
     return mcmc
 
-def nbd_timecourse(mcmc, position, nbd_site):
+def nbd_timecourse(mcmc, position, nbd_observable):
     """Simulates the model at the given parameter position and returns
     the appropriately scaled timecourse for the given NBD site."""
 
@@ -109,18 +109,10 @@ def nbd_timecourse(mcmc, position, nbd_site):
     total_Bax = mcmc.options.model.parameters['Bax_0'].value
     cur_params = mcmc.cur_params(position=position)
     scaling_factor = cur_params[3]
+    return (x[nbd_observable] / total_Bax) * scaling_factor 
 
-    if nbd_site == 'c3':
-        obs_name = 'Baxc3'
-    elif nbd_site == 'c62':
-        obs_name = 'Baxc62'
-    else:
-        raise Exception('Unrecognized NBD site!')
-
-    return (x[obs_name] / total_Bax) * scaling_factor 
-
-def generate_figures(mcmc, nbd_site, do_report=True, mixed_start=None,
-                     basename='nbd_mcmc', num_samples=500):   
+def generate_figures(mcmc, nbd_site, nbd_observable, do_report=True,
+                     mixed_start=None, basename='nbd_mcmc', num_samples=500):   
     """Takes an MCMC chain and plots a series of useful visualizations of the
     walk, the quality of the fit, etc.
     """
@@ -130,7 +122,7 @@ def generate_figures(mcmc, nbd_site, do_report=True, mixed_start=None,
         rep = Report()
 
     # Plot "Before" curves -------
-    x = nbd_timecourse(mcmc, mcmc.initial_position, nbd_site)
+    x = nbd_timecourse(mcmc, mcmc.initial_position, nbd_observable)
     plt.figure()
     plot_data(nbd_site)
     plt.plot(mcmc.options.tspan, x, 'b', label=nbd_site)
@@ -159,7 +151,7 @@ def generate_figures(mcmc, nbd_site, do_report=True, mixed_start=None,
     mixed_accepted_positions = mixed_positions[mcmc.accepts[mixed_start:]]
     last_position = mixed_accepted_positions[-1,:]
 
-    x = nbd_timecourse(mcmc, last_position, nbd_site)
+    x = nbd_timecourse(mcmc, last_position, nbd_observable)
     plt.figure()
     plot_data(nbd_site)
     plt.plot(mcmc.options.tspan, x, 'b', label=nbd_site)
@@ -188,7 +180,7 @@ def generate_figures(mcmc, nbd_site, do_report=True, mixed_start=None,
     num_to_plot = min(num_samples, max_position_index)
     for i in range(num_to_plot):
         cur_position = mixed_accepted_positions[max_position_index - i,:]
-        x = nbd_timecourse(mcmc, cur_position, nbd_site)
+        x = nbd_timecourse(mcmc, cur_position, nbd_observable)
         plt.plot(mcmc.options.tspan, x, 'b', label=nbd_site, alpha=0.02)
     plt.title("Last %d accepted positions" % num_to_plot)
     plt.show()
@@ -242,13 +234,11 @@ def plot_data(nbd_site):
     #plt.plot(nbd.time_other, nbd_avgs[4], 'k.', label='c126 data', alpha=alpha)
 
 # A function to generate the likelihood function
-def get_likelihood_function(nbd_site):
+def get_likelihood_function(nbd_site, nbd_observable):
     """Returns a likelihood function for the specified NBD site."""
     if nbd_site == 'c3':
-        obs_name = 'Baxc3'
         data_index = 0
     elif nbd_site == 'c62':
-        obs_name = 'Baxc62'
         data_index = 1
     else:
         raise Exception('Invalid value for nbd_site!')
@@ -260,7 +250,7 @@ def get_likelihood_function(nbd_site):
         # they're not hardcoded
         params = mcmc.cur_params(position)
 
-        timecourse = ((yout[obs_name] /
+        timecourse = ((yout[nbd_observable] /
                        mcmc.options.model.parameters['Bax_0'].value)
                       * params[3])
 
@@ -300,6 +290,7 @@ if __name__ == '__main__':
     # We set these all to None so later on we can make sure they were
     # properly initialized.
     nbd_site = None
+    nbd_observable = None
     random_seed = None
     model = None
 
@@ -311,10 +302,11 @@ if __name__ == '__main__':
     if 'nbd_site' not in kwargs or \
             'random_seed' not in kwargs or \
             'nsteps' not in kwargs or \
-            'model' not in kwargs:
+            'model' not in kwargs or \
+            'nbd_observable' not in kwargs:
         raise Exception('One or more needed arguments was not specified! ' \
                 'Arguments must include nbd_site, random_seed, model, ' \
-                'and nsteps.')
+                'nbd_observable and nsteps.')
 
     # Because the NBD site(s) to fit has to be specified when the model
     # builder object is created, we get this arg first.
@@ -324,8 +316,18 @@ if __name__ == '__main__':
     else:
         nbd_site = kwargs['nbd_site']
 
-    # Now that we have the NBD site, we can instantiate the Builder:
+    # Now that we have the NBD site we can instantiate the Builder:
     builder = Builder(nbd_sites=[nbd_site])
+
+    # The observable associated with the NBD site signal also has to be
+    # specified:
+    observables = [o.name for o in builder.model.observables]
+
+    if kwargs['nbd_observable'] not in observables:
+        raise Exception('%s is not an allowed NBD observable!' %
+                        kwargs['nbd_observable'])
+    else:
+        nbd_observable = kwargs['nbd_observable']
 
     # ...and then we get the model, which is specified as a string from the
     # set seen below.
@@ -348,18 +350,19 @@ if __name__ == '__main__':
     nsteps = int(kwargs['nsteps'])
 
     # A sanity check to make sure everything worked:
-    if None in [model, nbd_site, random_seed, nsteps]:
+    if None in [model, nbd_site, random_seed, nsteps, nbd_observable]:
         raise Exception('Something went wrong! One of the arguments to ' \
                         'do_fit was not initialized properly.')
 
     # We programmatically build up the base filename from the provided args:
-    basename = '%s_%s_%d_s%d' % (kwargs['model'], nbd_site, nsteps, random_seed)
+    basename = '%s_%s_%s_%d_s%d' % (kwargs['model'], nbd_site, nbd_observable,
+                                    nsteps, random_seed)
 
     # Call do_fit to get things started, feeding in the prior,
     # estimate_params, and randomized initial values from the Builder
     # object:
     mcmc = do_fit(model,
-                  get_likelihood_function(nbd_site),
+                  get_likelihood_function(nbd_site, nbd_observable),
                   prior=builder.prior,
                   estimate_params=builder.estimate_params,
                   basename=basename,
@@ -368,6 +371,6 @@ if __name__ == '__main__':
                   initial_values=builder.random_initial_values())
 
     # When sampling is completed, make the figures:
-    generate_figures(mcmc, nbd_site, basename=basename)
+    generate_figures(mcmc, nbd_site, nbd_observable, basename=basename)
 
     print "Done."

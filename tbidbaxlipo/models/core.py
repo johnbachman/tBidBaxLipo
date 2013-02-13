@@ -180,14 +180,13 @@ class Builder(object):
         self.monomer('Bax',
                         ['bh3', 'a6', 'loc',
                          'c3', 'c62', 'c120', 'c122', 'c126', 'c184'],
-                        {'loc':  ['c', 'm', 'i', 'p'],
+                        {'loc':  ['c', 'm', 'i', 'a', 'p'],
                          'c3':   ['s', 'm'],
                          'c62':  ['s', 'm'],
                          'c120': ['s', 'm'],
                          'c122': ['s', 'm'],
                          'c126': ['s', 'm'],
                          'c184': ['s', 'm']})
-
 
     # -- METHODS FOR FITTING/CALIBRATION -----------------------------------
     def declare_nbd_scaling_parameters(self, nbd_sites):
@@ -220,12 +219,10 @@ class Builder(object):
         if 'c3' in nbd_sites: 
             self.parameter('c3_scaling', 0.8,
                            mean=np.log10(0.8), variance=0.04)
-            self.observable('Baxc3', Bax(loc='i'))
             site_set = True
         if 'c62' in nbd_sites:
             self.parameter('c62_scaling', 0.9204,
                    mean=np.log10(0.9204), variance=0.04)
-            self.observable('Baxc62', Bax(bh3=1))
             site_set = True
         if 'c120' in nbd_sites:
             self.parameter('c120_scaling', 0.975,
@@ -358,10 +355,6 @@ class Builder(object):
              tBid(bh3=None) + Bax(loc='i', **bax_site_unbound),
              kc)
 
-        # Activation
-        self.observable('tBidBax', tBid(loc='m', bh3=1) % Bax(loc='m', bh3=1))
-        self.observable('iBax', Bax(loc='i'))
-
     def Bax_reverses(self):
         """Reversion of the inserted form of Bax to the loosely associated
         state, at which point it can return to the solution."""
@@ -402,10 +395,6 @@ class Builder(object):
              Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None),
              Bax_dimerization_kf, Bax_dimerization_kr)
 
-        self.observable('Bax2', 
-             MatchOnce(Bax(loc='i', bh3=1, a6=None) %
-                       Bax(loc='i', bh3=1, a6=None)))
-
     def Bax_tetramerizes(self):
         """
         This function depends on Bax_dimerization to be called as well.
@@ -432,10 +421,6 @@ class Builder(object):
              Bax(loc='i', bh3=1, a6=3) % Bax(loc='i', bh3=1, a6=4) % 
              Bax(loc='i', bh3=2, a6=3) % Bax(loc='i', bh3=2, a6=4), 
              Bax_tetramerization_kf, Bax_tetramerization_kr)
-
-        self.observable('Bax4',
-             MatchOnce(Bax(loc='i', bh3=1, a6=3) % Bax(loc='i', bh3=1, a6=4) % 
-             Bax(loc='i', bh3=2, a6=3) % Bax(loc='i', bh3=2, a6=4)))
 
     def iBax_binds_tBid_at_bh3(self):
         """

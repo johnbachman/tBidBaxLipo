@@ -111,26 +111,18 @@ class Builder(core.Builder):
         self.observable('mtBid', tBid(loc='m'))
         self.observable('cBax', Bax(loc='c'))
         self.observable('mBax', Bax(loc='m'))
+        self.observable('iBax', Bax(loc='i'))
+        self.observable('aBax', Bax(loc='a'))
+        self.observable('tBidBax', tBid(bh3=1) % Bax(bh3=1))
+        self.observable('Bax2', Bax(bh3=1) % Bax(bh3=1))
+        self.observable('Baxbh3', Bax(bh3=1))
+        #self.observable('Bax4',
+        #     MatchOnce(Bax(loc='i', bh3=1, a6=3) % Bax(loc='i', bh3=1, a6=4) % 
+        #     Bax(loc='i', bh3=2, a6=3) % Bax(loc='i', bh3=2, a6=4)))
 
         # SCALING PARAMETERS
         if nbd_sites is not None:
             self.declare_nbd_scaling_parameters(nbd_sites)
-
-        #Observable('eVes', Vesicles(dye='e'))
-        #Observable('ePore', Pore() ** empty_ves)
-        #Observable('fPore', Pore() ** full_ves)
-        #Observable('Bax2', MatchOnce(Bax(bh3=1, a6=None) % Bax(bh3=1, a6=None)))
-        #Observable('Bax4', MatchOnce(
-        #    Bax(bh3=1, a6=3) % Bax(bh3=1, a6=4) %
-        #    Bax(bh3=2, a6=3) % Bax(bh3=2, a6=4)))
-        #Observable('mfBax', Bax(dye='f'))
-        #Observable('meBax', Bax(dye='e'))
-        #Observable('eVes', Vesicles() ** empty_ves)
-        #Observable('fVes', Vesicles() ** full_ves)
-        #Observable('mftBid', tBid(loc='m', dye='f'))
-        #Observable('metBid', tBid(loc='m', dye='e'))
-        #Observable('tBidBax', tBid(bh3=1) % Bax(a6=1))
-        #Observable('tBidiBax', tBid(bh3=1) % Bax(bh3=1, loc='i'))
 
     # MODEL MACROS
     def translocate_tBid_Bax(self):
