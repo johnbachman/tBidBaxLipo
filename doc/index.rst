@@ -11,6 +11,7 @@ Contents:
 .. toctree::
 
    intro
+   notes
    modules/index
    references
    todo
