@@ -1,10 +1,13 @@
 import numpy as np
+from pysb.report import reporter
 
+@reporter('tBid/Bax increases monotonically')
 def tBid_Bax_monotonically_increasing(mcmc):
     """ .. todo:: document the basis for this"""
     x = mcmc.simulate(position=mcmc.positions[-1], observables=True)
     return monotonic_increasing(x['tBidBax'])
 
+@reporter('iBax increases monotonically')
 def iBax_monotonically_increasing(mcmc):
     """ .. todo:: document the basis for this"""
     x = mcmc.simulate(position=mcmc.positions[-1], observables=True)
