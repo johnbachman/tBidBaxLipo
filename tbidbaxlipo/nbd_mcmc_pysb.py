@@ -294,7 +294,7 @@ def import_mcmc_groups(filenames):
     filenames : list of strings
         List of strings representing the chain filenames to be sorted into
         groups, e.g., of the type returned by ``glob.glob()``.
-    
+
     Returns
     -------
     dict of lists of MCMC objects. The keys in the dict are the filename
@@ -315,11 +315,11 @@ def import_mcmc_groups(filenames):
         (mcmc_args, seed) = prefix.rsplit('_', 1)
         # Check to see if we've imported another chain of this type already.
         # If so, add the current chain to the list of chains for this group:
-        if mcmc_args in groups:
-            groups[chain_args].append(mcmc)
+        if mcmc_args in mcmc_groups:
+            mcmc_groups[mcmc_args].append(mcmc)
         # If not, create a new entry in the dict containing this MCMC
         else:
-            groups[chain_args] = [mcmc]
+            mcmc_groups[mcmc_args] = [mcmc]
 
     return mcmc_groups
 
