@@ -1,8 +1,5 @@
 import sys
-import numpy as np
-from pysb.integrate import odesolve
 import subprocess
-import time
 
 num_chains = 20
 queue = 'sorger_1d'

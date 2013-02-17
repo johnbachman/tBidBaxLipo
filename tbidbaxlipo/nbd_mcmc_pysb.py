@@ -276,6 +276,53 @@ def step(mcmc):
                mcmc.acceptance/(mcmc.iter+1.), mcmc.accept_likelihood,
                mcmc.accept_prior, mcmc.accept_posterior)
 
+# Chain handling helper function
+# ==============================
+def import_mcmc_groups(filenames):
+    """Loads the chains into groups representing multiple runs of the same model.
+
+    Assumes that the pickle filenames are structured as
+
+        basename = '%s_%s_%s_%d_s%d.pck' % (model, nbd_site, nbd_observable,
+                                        nsteps, random_seed)
+
+    With the suffix ``.pck`` and the seed coming last in the
+    underscore-separated arguments.
+
+    Parameter
+    ---------
+    filenames : list of strings
+        List of strings representing the chain filenames to be sorted into
+        groups, e.g., of the type returned by ``glob.glob()``.
+    
+    Returns
+    -------
+    dict of lists of MCMC objects. The keys in the dict are the filename
+    prefixes that represent the arguments to the MCMC procedure (e.g.,
+    ``tard_c3_iBax_4000``. Each dict entry contains a list of MCMC objects
+    associated those run conditions.
+    """
+
+    mcmc_groups = {}
+
+    for filename in filenames:
+        # Load the MCMC object from the pickle file
+        mcmc = pickle.load(open(filename))
+        # Split off the suffix from the filename
+        (prefix, suffix) = filename.split('.')
+        # Separate the filename into the final argument identifying the
+        # random seed, and everything that comes before it:
+        (mcmc_args, seed) = prefix.rsplit('_', 1)
+        # Check to see if we've imported another chain of this type already.
+        # If so, add the current chain to the list of chains for this group:
+        if mcmc_args in groups:
+            groups[chain_args].append(mcmc)
+        # If not, create a new entry in the dict containing this MCMC
+        else:
+            groups[chain_args] = [mcmc]
+
+    return mcmc_groups
+
 # Main function
 # =============
 
