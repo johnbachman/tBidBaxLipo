@@ -38,7 +38,15 @@ plt.ion()
 num_params = len(mcmc.options.estimate_params)
 for i in range(num_params):
     plt.figure()
-    for mcmc in mcmc_set:
-        plt.plot(mcmc.positions[:,i])
+    #for mcmc in mcmc_set:
+    #    plt.plot(mcmc.positions[:,i])
+    for j, mcmc in enumerate(mcmc_set):
+        mixed_positions = mcmc.positions[mixed_start:,:]
+        mixed_accepts = mixed_positions[mcmc.accepts[mixed_start:]]
+        thinned_accepts = mixed_accepts[::thin]
+        accept_steps = steps[mcmc.accepts[mixed_start:]]
+        thinned_accept_steps = accept_steps[::thin]
+        plt.plot(thinned_accept_steps, thinned_accepts[:,i], label=chain_file_l
+    plt.legend(loc='lower left', prop={'size':7})
     plt.show()
 

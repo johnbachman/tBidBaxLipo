@@ -142,7 +142,7 @@ def generate_figures(mcmc, nbd_site, nbd_observable, do_report=True,
     print init_vals_str
     if do_report:
         rep.add_text(init_vals_str)
-    
+
     # Plot "After" curves ------------
     # Set to last fit position
     if mixed_start is None:
@@ -172,7 +172,7 @@ def generate_figures(mcmc, nbd_site, nbd_observable, do_report=True,
     print last_vals_str
     if do_report:
         rep.add_text(last_vals_str)
-   
+
     # Plot sampling of fits # FIXME should be real sampling------
     plt.figure()
     plot_data(nbd_site)
@@ -379,7 +379,7 @@ if __name__ == '__main__':
     # ...and then we get the model, which is specified as a string from the
     # set seen below.
     if kwargs['model'] not in ['ta', 'tar', 'tai', 'tar', 'tad',
-                               'tard', 'tardt']:
+                               'tard', 'tardt', 'taid']:
         raise Exception('%s is not an allowed model!' %
                         kwargs['model'])
     else:
@@ -408,6 +408,8 @@ if __name__ == '__main__':
     # Call do_fit to get things started, feeding in the prior,
     # estimate_params, and randomized initial values from the Builder
     # object:
+    numpy.random.seed(random_seed)
+
     mcmc = do_fit(model,
                   get_likelihood_function(nbd_site, nbd_observable),
                   prior=builder.prior,
