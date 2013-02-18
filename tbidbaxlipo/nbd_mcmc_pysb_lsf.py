@@ -2,11 +2,11 @@ import sys
 import subprocess
 
 num_chains = 20
-queue = 'sorger_1d'
+queue = 'short'
 
 if __name__ == '__main__':
     for i in range(0, num_chains):
-        cmd_list = ["bsub", "-q", queue,
+        cmd_list = ["bsub", "-q", queue, "-W", "12:00",
                     "python", "nbd_mcmc_pysb.py",
                     "random_seed=%d" % i]
         cmd_list += sys.argv[1:]
