@@ -18,7 +18,9 @@ from tbidbaxlipo.util.report import Report
 from scipy.interpolate import interp1d
 import sys
 
-model_names = ['ta', 'tar', 'tai', 'tar', 'tad', 'tard', 'tardt', 'taid']
+model_names = ['ta', 'tai', 'taid', 'taidt', 'tair', 'taird', 'tairdt',
+               'tad', 'tadt', 'tar', 'tard', 'tardt']
+
 nbd_site_names = ['c3', 'c62']
 
 # Prepare the data
@@ -63,11 +65,11 @@ def do_fit(model, likelihood, prior=None, estimate_params=None,
     opts.sigma_min = 0.01
     opts.accept_rate_target = 0.23
     opts.accept_window = 300
-    opts.sigma_adj_interval = 100
-
+    opts.sigma_adj_interval = 300
+    opts.anneal_length = nsteps / 2
     opts.use_hessian = True
     opts.hessian_scale = 1
-    opts.hessian_period = opts.nsteps / 10 #10
+    opts.hessian_period = opts.nsteps / 5 #10
 
     opts.seed = random_seed
     mcmc = bayessb.MCMC(opts)
@@ -92,7 +94,7 @@ def do_fit(model, likelihood, prior=None, estimate_params=None,
     mcmc.options.likelihood_fn = None
     mcmc.options.prior_fn = None
     mcmc.options.step_fn = None
-    output_file = open('%s.pck' % basename, 'w')
+    output_file = open('%s.mcmc' % basename, 'w')
     pickle.dump(mcmc, output_file)
     output_file.close()
     # Restore the functions for interactive use
