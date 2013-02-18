@@ -544,13 +544,6 @@ class Builder(object):
         self.tBid_activates_Bax(bax_site='bh3')
         self.iBax_binds_tBid_at_bh3()
 
-    def build_model_tad(self):
-        print "---------------------------"
-        print "core: Building model tad:"
-        self.translocate_tBid_Bax()
-        self.tBid_activates_Bax(bax_site='bh3')
-        self.Bax_dimerizes()
-
     def build_model_taid(self):
         print "---------------------------"
         print "core: Building model taid:"
@@ -558,6 +551,57 @@ class Builder(object):
         self.tBid_activates_Bax(bax_site='bh3')
         self.iBax_binds_tBid_at_bh3()
         self.Bax_dimerizes()
+
+    def build_model_taidt(self):
+        print "---------------------------"
+        print "core: Building model taidt:"
+        self.translocate_tBid_Bax()
+        self.tBid_activates_Bax(bax_site='bh3')
+        self.iBax_binds_tBid_at_bh3()
+        self.Bax_dimerizes()
+        self.Bax_tetramerizes()
+
+    def build_model_tair(self):
+        print "---------------------------"
+        print "core: Building model tair:"
+        self.translocate_tBid_Bax()
+        self.tBid_activates_Bax(bax_site='bh3')
+        self.iBax_binds_tBid_at_bh3()
+        self.Bax_reverses()
+
+    def build_model_taird(self):
+        print "---------------------------"
+        print "core: Building model taird:"
+        self.translocate_tBid_Bax()
+        self.tBid_activates_Bax(bax_site='bh3')
+        self.iBax_binds_tBid_at_bh3()
+        self.Bax_reverses()
+        self.Bax_dimerizes()         
+
+    def build_model_tairdt(self):
+        print "---------------------------"
+        print "core: Building model tairdt:"
+        self.translocate_tBid_Bax()
+        self.tBid_activates_Bax(bax_site='bh3')
+        self.iBax_binds_tBid_at_bh3()
+        self.Bax_reverses()
+        self.Bax_dimerizes()
+        self.Bax_tetramerizes()
+
+    def build_model_tad(self):
+        print "---------------------------"
+        print "core: Building model tad:"
+        self.translocate_tBid_Bax()
+        self.tBid_activates_Bax(bax_site='bh3')
+        self.Bax_dimerizes()
+
+    def build_model_tadt(self):
+        print "---------------------------"
+        print "core: Building model tadt:"
+        self.translocate_tBid_Bax()
+        self.tBid_activates_Bax(bax_site='bh3')
+        self.Bax_dimerizes()
+        self.Bax_tetramerizes()
 
     def build_model_tar(self):
         print "---------------------------"
