@@ -116,9 +116,9 @@ class Builder(core.Builder):
         self.observable('tBidBax', tBid(bh3=1) % Bax(bh3=1))
         self.observable('Bax2', Bax(bh3=1) % Bax(bh3=1))
         self.observable('Baxbh3', Bax(bh3=1))
-        #self.observable('Bax4',
-        #     MatchOnce(Bax(loc='i', bh3=1, a6=3) % Bax(loc='i', bh3=1, a6=4) % 
-        #     Bax(loc='i', bh3=2, a6=3) % Bax(loc='i', bh3=2, a6=4)))
+        self.observable('Bax4',
+             MatchOnce(Bax(loc='i', bh3=1, a6=3) % Bax(loc='i', bh3=1, a6=4) % 
+                       Bax(loc='i', bh3=2, a6=3) % Bax(loc='i', bh3=2, a6=4)))
 
         # SCALING PARAMETERS
         if nbd_sites is not None:
