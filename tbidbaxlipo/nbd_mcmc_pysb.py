@@ -66,7 +66,6 @@ def do_fit(model, likelihood, prior=None, estimate_params=None,
     opts.hessian_scale = 1
     opts.hessian_period = opts.nsteps / 10 #10
 
-
     opts.seed = random_seed
     mcmc = bayessb.MCMC(opts)
 
@@ -286,8 +285,8 @@ def import_mcmc_groups(filenames):
         basename = '%s_%s_%s_%d_s%d.pck' % (model, nbd_site, nbd_observable,
                                         nsteps, random_seed)
 
-    With the suffix ``.pck`` and the seed coming last in the
-    underscore-separated arguments.
+    With the suffix ``.xxx`` separated by a dot and the seed coming last in
+    the underscore-separated arguments.
 
     Parameter
     ---------
@@ -297,17 +296,15 @@ def import_mcmc_groups(filenames):
 
     Returns
     -------
-    dict of lists of MCMC objects. The keys in the dict are the filename
+    dict of lists of MCMC filenames. The keys in the dict are the filename
     prefixes that represent the arguments to the MCMC procedure (e.g.,
-    ``tard_c3_iBax_4000``. Each dict entry contains a list of MCMC objects
-    associated those run conditions.
+    ``tard_c3_iBax_4000``. Each dict entry contains a list of MCMC filenames
+    associated with those run conditions.
     """
 
     mcmc_groups = {}
 
     for filename in filenames:
-        # Load the MCMC object from the pickle file
-        mcmc = pickle.load(open(filename))
         # Split off the suffix from the filename
         (prefix, suffix) = filename.split('.')
         # Separate the filename into the final argument identifying the
@@ -316,10 +313,10 @@ def import_mcmc_groups(filenames):
         # Check to see if we've imported another chain of this type already.
         # If so, add the current chain to the list of chains for this group:
         if mcmc_args in mcmc_groups:
-            mcmc_groups[mcmc_args].append(mcmc)
+            mcmc_groups[mcmc_args].append(filename)
         # If not, create a new entry in the dict containing this MCMC
         else:
-            mcmc_groups[mcmc_args] = [mcmc]
+            mcmc_groups[mcmc_args] = [filename]
 
     return mcmc_groups
 
