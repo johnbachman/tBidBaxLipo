@@ -18,6 +18,9 @@ from tbidbaxlipo.util.report import Report
 from scipy.interpolate import interp1d
 import sys
 
+model_names = ['ta', 'tar', 'tai', 'tar', 'tad', 'tard', 'tardt', 'taid']
+nbd_site_names = ['c3', 'c62']
+
 # Prepare the data
 # ================
 
@@ -354,7 +357,7 @@ if __name__ == '__main__':
 
     # Because the NBD site(s) to fit has to be specified when the model
     # builder object is created, we get this arg first.
-    if kwargs['nbd_site'] not in ['c3', 'c62']:
+    if kwargs['nbd_site'] not in nbd_site_names:
         raise Exception('%s is not an allowed NBD site!' %
                         kwargs['nbd_site'])
     else:
@@ -375,8 +378,7 @@ if __name__ == '__main__':
 
     # ...and then we get the model, which is specified as a string from the
     # set seen below.
-    if kwargs['model'] not in ['ta', 'tar', 'tai', 'tar', 'tad',
-                               'tard', 'tardt', 'taid']:
+    if kwargs['model'] not in model_names:
         raise Exception('%s is not an allowed model!' %
                         kwargs['model'])
     else:
