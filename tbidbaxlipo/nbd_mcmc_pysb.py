@@ -12,275 +12,275 @@ import bayessb
 from pysb.integrate import odesolve
 import numpy
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import nbd_analysis as nbd
 import pickle
 from tbidbaxlipo.util.report import Report
-from scipy.interpolate import interp1d
-import sys
 
 model_names = ['ta', 'tai', 'taid', 'taidt', 'tair', 'taird', 'tairdt',
                'tad', 'tadt', 'tar', 'tard', 'tardt']
 
 nbd_site_names = ['c3', 'c62']
 
-# Prepare the data
-# ================
+class NBD_MCMC(bayessb.MCMC):
 
-tspan = nbd.time_other
-nbd_avgs, nbd_stds = nbd.calc_norm_avg_std()
+    def __init__(self, options, nbd_avgs, nbd_stds, nbd_site, nbd_observable, builder):
+        """Initialize parent bayessb.MCMC and then set additional fields.
 
-# The c62 data is on a slightly different timescale and has two extra
-# datapoints. For simplicity, we simply remove them.
-nbd_avgs[1] = nbd_avgs[1][0:-2]
-nbd_stds[1] = nbd_stds[1][0:-2]
+        Parameters
+        ----------
+        data_avgs : list of numpy.array
+        data_stds : list of numpy.array
+        nbd_site : string
+        nbd_observable : string
+        builder : tbidbaxlipo.models.core.Builder
+        """
 
-# MCMC Functions
-# ==============
+        bayessb.MCMC.__init__(self, options)
+        self.nbd_avgs = nbd_avgs
+        self.nbd_stds = nbd_stds
+        self.nbd_site = nbd_site
+        self.nbd_observable = nbd_observable
+        self.builder = builder
 
-def do_fit(model, likelihood, prior=None, estimate_params=None,
-           initial_values=None, basename='nbd_mcmc',
-           random_seed=1, nsteps=2000):
-    """Runs MCMC on the given model."""
+        # Set the MCMC functions
+        self.options.likelihood_fn = self.get_likelihood_function()
+        self.options.prior_fn = self.builder.prior
+        self.options.step_fn = self.step
 
-    # Initialize the MCMC arguments
-    opts = bayessb.MCMCOpts()
-    opts.model = model
-    opts.tspan = nbd.time_other
-    opts.estimate_params = estimate_params
+    # Pickling functions for this class
+    def __getstate__(self):
+        self.options.likelihood_fn = None
+        self.options.prior_fn = None
+        self.options.step_fn = None
+        mcmc_state = bayessb.MCMC.__getstate__(self)
+        #nbd_mcmc_state = self.__dict__.copy()
+        #return (mcmc_state, nbd_mcmc_state)
+        return mcmc_state
 
-    # Set the initial values for the parameters
-    if initial_values is not None:
-        opts.initial_values = initial_values
-    else:
-        opts.initial_values = [p.value for p in opts.estimate_params]
+    def __setstate__(self, state):
+        #(mcmc_state, nbd_mcmc_state) = state
+        bayessb.MCMC.__setstate__(self, state)
+        #self.__dict__.update(nbd_mcmc_state)
+        self.options.likelihood_fn = self.get_likelihood_function()
+        self.options.prior_fn = self.builder.prior
+        self.options.step_fn = self.step
 
-    opts.nsteps = nsteps
-    opts.likelihood_fn = likelihood
-    opts.step_fn = step
-    if prior is not None:
-        opts.prior_fn = prior
+    # MCMC Functions
+    # ==============
+    def do_fit(self):
+        """Runs MCMC on the given model."""
 
-    opts.sigma_step = 0.9
-    opts.sigma_max = 50
-    opts.sigma_min = 0.01
-    opts.accept_rate_target = 0.23
-    opts.accept_window = 300
-    opts.sigma_adj_interval = 300
-    opts.anneal_length = nsteps / 2
-    opts.use_hessian = True
-    opts.hessian_scale = 1
-    opts.hessian_period = opts.nsteps / 5 #10
+        self.initialize()
 
-    opts.seed = random_seed
-    mcmc = bayessb.MCMC(opts)
+        # Print initial parameter values
+        init_vals = zip([p.name for p in self.options.model.parameters],
+                          self.cur_params(position=self.initial_position))
+        init_vals_str = 'Initial values:\n'
+        init_vals_str += '\n'.join(['%s: %g' % (init_vals[i][0],
+                                                 init_vals[i][1])
+                                     for i in range(0, len(init_vals))])
+        print "------------------------"
+        print init_vals_str
+        print "------------------------"
 
-    mcmc.initialize()
+        # Run it!
+        self.run()
 
-    # Print initial parameter values
-    init_vals = zip([p.name for p in mcmc.options.model.parameters],
-                      mcmc.cur_params(position=mcmc.initial_position))
-    init_vals_str = 'Initial values:\n'
-    init_vals_str += '\n'.join(['%s: %g' % (init_vals[i][0],
-                                             init_vals[i][1])
-                                 for i in range(0, len(init_vals))])
-    print "------------------------"
-    print init_vals_str
-    print "------------------------"
+        # Pickle it, setting functions to None:
+        #self.options.likelihood_fn = None
+        #self.options.prior_fn = None
+        #self.options.step_fn = None
+        # Restore the functions for interactive use
+        #self.options.likelihood_fn = likelihood
+        #self.options.prior_fn = prior
+        #self.options.step_fn = step
 
-    # Run it!
-    mcmc.run()
+    def nbd_timecourse(mcmc, position, nbd_observable):
+        """Simulates the model at the given parameter position and returns
+        the appropriately scaled timecourse for the given NBD site."""
 
-    # Pickle it, setting functions to None:
-    mcmc.options.likelihood_fn = None
-    mcmc.options.prior_fn = None
-    mcmc.options.step_fn = None
-    output_file = open('%s.mcmc' % basename, 'w')
-    pickle.dump(mcmc, output_file)
-    output_file.close()
-    # Restore the functions for interactive use
-    mcmc.options.likelihood_fn = likelihood
-    mcmc.options.prior_fn = prior
-    mcmc.options.step_fn = step
+        x = mcmc.simulate(position=position, observables=True)
 
-    return mcmc
+        total_Bax = mcmc.options.model.parameters['Bax_0'].value
+        cur_params = mcmc.cur_params(position=position)
+        scaling_factor = cur_params[3]
+        return (x[nbd_observable] / total_Bax) * scaling_factor 
 
-def nbd_timecourse(mcmc, position, nbd_observable):
-    """Simulates the model at the given parameter position and returns
-    the appropriately scaled timecourse for the given NBD site."""
+    def generate_figures(mcmc, nbd_site, nbd_observable, do_report=True,
+                         mixed_start=None, basename='nbd_mcmc', num_samples=500):   
+        """Takes an MCMC chain and plots a series of useful visualizations of the
+        walk, the quality of the fit, etc.
+        """
+        plt.ion()
 
-    x = mcmc.simulate(position=position, observables=True)
+        if do_report:
+            rep = Report()
 
-    total_Bax = mcmc.options.model.parameters['Bax_0'].value
-    cur_params = mcmc.cur_params(position=position)
-    scaling_factor = cur_params[3]
-    return (x[nbd_observable] / total_Bax) * scaling_factor 
-
-def generate_figures(mcmc, nbd_site, nbd_observable, do_report=True,
-                     mixed_start=None, basename='nbd_mcmc', num_samples=500):   
-    """Takes an MCMC chain and plots a series of useful visualizations of the
-    walk, the quality of the fit, etc.
-    """
-    plt.ion()
-
-    if do_report:
-        rep = Report()
-
-    # Plot "Before" curves -------
-    x = nbd_timecourse(mcmc, mcmc.initial_position, nbd_observable)
-    plt.figure()
-    plot_data(nbd_site)
-    plt.plot(mcmc.options.tspan, x, 'b', label=nbd_site)
-    plt.legend(loc='lower right')
-    plt.title('Before')
-    plt.show()
-    if do_report:
-        rep.add_current_figure()
-
-    # Print initial parameter values
-    init_vals = zip([p.name for p in mcmc.options.model.parameters],
-                      mcmc.cur_params(position=mcmc.initial_position))
-    init_vals_str = 'Initial values:\n'
-    init_vals_str += '\n'.join(['%s: %g' % (init_vals[i][0],
-                                             init_vals[i][1])
-                                 for i in range(0, len(init_vals))])
-    print init_vals_str
-    if do_report:
-        rep.add_text(init_vals_str)
-
-    # Plot "After" curves ------------
-    # Set to last fit position
-    if mixed_start is None:
-        mixed_start = mcmc.options.nsteps / 2
-    mixed_positions = mcmc.positions[mixed_start:,:]
-    mixed_accepted_positions = mixed_positions[mcmc.accepts[mixed_start:]]
-    last_position = mixed_accepted_positions[-1,:]
-
-    x = nbd_timecourse(mcmc, last_position, nbd_observable)
-    plt.figure()
-    plot_data(nbd_site)
-    plt.plot(mcmc.options.tspan, x, 'b', label=nbd_site)
-    plt.legend(loc='lower right')
-    plt.title('Final accepted position')
-    plt.show()
-    if do_report:
-        rep.add_current_figure()
-
-    # Print final parameter values
-    last_fit_params = mcmc.cur_params(position=last_position)
-    last_vals = zip([p.name for p in mcmc.options.model.parameters],
-                       last_fit_params)
-    last_vals_str = 'Final values:\n'
-    last_vals_str += '\n'.join(['%s: %g' % (last_vals[i][0],
-                                            last_vals[i][1])
-                                for i in range(0, len(last_vals))])
-    print last_vals_str
-    if do_report:
-        rep.add_text(last_vals_str)
-
-    # Plot sampling of fits # FIXME should be real sampling------
-    plt.figure()
-    plot_data(nbd_site)
-    max_position_index = len(mixed_accepted_positions) - 1
-    num_to_plot = min(num_samples, max_position_index)
-    for i in range(num_to_plot):
-        cur_position = mixed_accepted_positions[max_position_index - i,:]
-        x = nbd_timecourse(mcmc, cur_position, nbd_observable)
-        plt.plot(mcmc.options.tspan, x, 'b', label=nbd_site, alpha=0.02)
-    plt.title("Last %d accepted positions" % num_to_plot)
-    plt.show()
-    if do_report:
-        rep.add_current_figure()
-
-    # Plot marginal distributions of parameters ---------------
-    for i, cur_param in enumerate(mcmc.options.estimate_params):
+        # Plot "Before" curves -------
+        x = nbd_timecourse(mcmc, mcmc.initial_position, nbd_observable)
         plt.figure()
-        plt.hist(mixed_accepted_positions[:,i])
-        plt.title("%s, last %d accepts: initval %f" %
-                (cur_param.name, len(mixed_accepted_positions[:,i]),
-                 cur_param.value))
+        plot_data(nbd_site)
+        plt.plot(mcmc.options.tspan, x, 'b', label=nbd_site)
+        plt.legend(loc='lower right')
+        plt.title('Before')
         plt.show()
-
         if do_report:
             rep.add_current_figure()
 
-    # Plot convergence traces of all parameters
-    plt.figure()
-    plt.plot(mcmc.positions)
-    plt.title("Parameter traces")
-    plt.legend([p.name for p in mcmc.options.estimate_params], loc='lower left',
-               prop={'size':7})
-    plt.show()
-    if do_report:
-        rep.add_current_figure()
+        # Print initial parameter values
+        init_vals = zip([p.name for p in mcmc.options.model.parameters],
+                          mcmc.cur_params(position=mcmc.initial_position))
+        init_vals_str = 'Initial values:\n'
+        init_vals_str += '\n'.join(['%s: %g' % (init_vals[i][0],
+                                                 init_vals[i][1])
+                                     for i in range(0, len(init_vals))])
+        print init_vals_str
+        if do_report:
+            rep.add_text(init_vals_str)
 
-    # Add code to report
-    if do_report:
-        # Add the code for the fitting (this file)
-        rep.add_python_code('nbd_mcmc_pysb.py')
-       
-        # Add the code for the model
-        rep.add_python_code('models/core.py')
-        rep.add_python_code('models/one_cpt.py')
+        # Plot "After" curves ------------
+        # Set to last fit position
+        if mixed_start is None:
+            mixed_start = mcmc.options.nsteps / 2
+        mixed_positions = mcmc.positions[mixed_start:,:]
+        mixed_accepted_positions = mixed_positions[mcmc.accepts[mixed_start:]]
+        last_position = mixed_accepted_positions[-1,:]
 
-        # Write the report 
-        rep.write_report(basename)
+        x = nbd_timecourse(mcmc, last_position, nbd_observable)
+        plt.figure()
+        plot_data(nbd_site)
+        plt.plot(mcmc.options.tspan, x, 'b', label=nbd_site)
+        plt.legend(loc='lower right')
+        plt.title('Final accepted position')
+        plt.show()
+        if do_report:
+            rep.add_current_figure()
 
-def plot_data(nbd_site):
-    alpha = 0.5
-    if nbd_site == 'c3':
-        plt.plot(nbd.time_other, nbd_avgs[0], 'r.', label='c3 data',
-                 alpha=alpha)
-    elif nbd_site == 'c62':
-        plt.plot(nbd.time_other, nbd_avgs[1], 'g.', label='c62 data',
-                 alpha=alpha)
-    #plt.plot(nbd.time_other, nbd_avgs[2], 'b.', label='c120 data', alpha=alpha)
-    #plt.plot(nbd.time_other, nbd_avgs[3], 'm.', label='c122 data', alpha=alpha)
-    #plt.plot(nbd.time_other, nbd_avgs[4], 'k.', label='c126 data', alpha=alpha)
+        # Print final parameter values
+        last_fit_params = mcmc.cur_params(position=last_position)
+        last_vals = zip([p.name for p in mcmc.options.model.parameters],
+                           last_fit_params)
+        last_vals_str = 'Final values:\n'
+        last_vals_str += '\n'.join(['%s: %g' % (last_vals[i][0],
+                                                last_vals[i][1])
+                                    for i in range(0, len(last_vals))])
+        print last_vals_str
+        if do_report:
+            rep.add_text(last_vals_str)
 
-# A function to generate the likelihood function
-def get_likelihood_function(nbd_site, nbd_observable):
-    """Returns a likelihood function for the specified NBD site."""
-    if nbd_site == 'c3':
-        data_index = 0
-    elif nbd_site == 'c62':
-        data_index = 1
-    else:
-        raise Exception('Invalid value for nbd_site!')
+        # Plot sampling of fits # FIXME should be real sampling------
+        plt.figure()
+        plot_data(nbd_site)
+        max_position_index = len(mixed_accepted_positions) - 1
+        num_to_plot = min(num_samples, max_position_index)
+        for i in range(num_to_plot):
+            cur_position = mixed_accepted_positions[max_position_index - i,:]
+            x = nbd_timecourse(mcmc, cur_position, nbd_observable)
+            plt.plot(mcmc.options.tspan, x, 'b', label=nbd_site, alpha=0.02)
+        plt.title("Last %d accepted positions" % num_to_plot)
+        plt.show()
+        if do_report:
+            rep.add_current_figure()
 
-    def likelihood(mcmc, position):
-        yout = mcmc.simulate(position, observables=True)
+        # Plot marginal distributions of parameters ---------------
+        for i, cur_param in enumerate(mcmc.options.estimate_params):
+            plt.figure()
+            plt.hist(mixed_accepted_positions[:,i])
+            plt.title("%s, last %d accepts: initval %f" %
+                    (cur_param.name, len(mixed_accepted_positions[:,i]),
+                     cur_param.value))
+            plt.show()
 
-        # TODO Need to be able to get the indices from the model so that
-        # they're not hardcoded
-        params = mcmc.cur_params(position)
+            if do_report:
+                rep.add_current_figure()
 
-        timecourse = ((yout[nbd_observable] /
-                       mcmc.options.model.parameters['Bax_0'].value)
-                      * params[3])
+        # Plot convergence traces of all parameters
+        plt.figure()
+        plt.plot(mcmc.positions)
+        plt.title("Parameter traces")
+        plt.legend([p.name for p in mcmc.options.estimate_params], loc='lower left',
+                   prop={'size':7})
+        plt.show()
+        if do_report:
+            rep.add_current_figure()
 
-        return numpy.sum((nbd_avgs[data_index] - timecourse)**2 /
-                         (2 * nbd_stds[data_index]**2))
+        # Add code to report
+        if do_report:
+            # Add the code for the fitting (this file)
+            rep.add_python_code('nbd_mcmc_pysb.py')
 
-    return likelihood
+            # Add the code for the model
+            rep.add_python_code('models/core.py')
+            rep.add_python_code('models/one_cpt.py')
 
-def step(mcmc):
-    """The function to call at every iteration. Currently just prints
-    out a few progress indicators.
-    """
-    window = mcmc.options.accept_window
+            # Write the report 
+            rep.write_report(basename)
 
-    local_acc = numpy.sum(mcmc.accepts[(mcmc.iter - window):mcmc.iter]) / \
-                          float(window)
+    def plot_data(nbd_site):
+        alpha = 0.5
+        if nbd_site == 'c3':
+            plt.plot(nbd.time_other, nbd_avgs[0], 'r.', label='c3 data',
+                     alpha=alpha)
+        elif nbd_site == 'c62':
+            plt.plot(nbd.time_other, nbd_avgs[1], 'g.', label='c62 data',
+                     alpha=alpha)
+        #plt.plot(nbd.time_other, nbd_avgs[2], 'b.', label='c120 data', alpha=alpha)
+        #plt.plot(nbd.time_other, nbd_avgs[3], 'm.', label='c122 data', alpha=alpha)
+        #plt.plot(nbd.time_other, nbd_avgs[4], 'k.', label='c126 data', alpha=alpha)
 
-    if mcmc.iter % 20 == 0:
-        print 'iter=%-5d  sigma=%-.3f  T=%-.3f  loc_acc=%-.3f  ' \
-              'glob_acc=%-.3f  lkl=%g  prior=%g  post=%g' % \
-              (mcmc.iter, mcmc.sig_value, mcmc.T,
-               local_acc,
-               mcmc.acceptance/(mcmc.iter+1.), mcmc.accept_likelihood,
-               mcmc.accept_prior, mcmc.accept_posterior)
+    # A function to generate the likelihood function
+    def get_likelihood_function(self):
+        """Returns a likelihood function for the specified NBD site."""
+        if self.nbd_site == 'c3':
+            data_index = 0
+        elif self.nbd_site == 'c62':
+            data_index = 1
+        else:
+            raise Exception('Invalid value for nbd_site!')
+
+        def likelihood(mcmc, position):
+            yout = mcmc.simulate(position, observables=True)
+
+            # TODO Need to be able to get the indices from the model so that
+            # they're not hardcoded
+            params = mcmc.cur_params(position)
+
+            timecourse = ((yout[self.nbd_observable] /
+                           mcmc.options.model.parameters['Bax_0'].value)
+                          * params[3])
+
+            return numpy.sum((self.nbd_avgs[data_index] - timecourse)**2 /
+                             (2 * self.nbd_stds[data_index]**2))
+
+        return likelihood
+
+    def get_basename(self, model_name):
+        """A function for standardizing, in one place, the format for pickled
+        NBD_MCMC objects.
+        """
+        return '%s_%s_%s_%d_s%d' % (model_name, self.nbd_site,
+                                    self.nbd_observable, self.options.nsteps,
+                                    self.options.seed)
+
+    @staticmethod
+    def step(mcmc):
+        """The function to call at every iteration. Currently just prints
+        out a few progress indicators.
+        """
+        window = mcmc.options.accept_window
+
+        local_acc = numpy.sum(mcmc.accepts[(mcmc.iter - window):mcmc.iter]) / \
+                              float(window)
+
+        if mcmc.iter % 20 == 0:
+            print 'iter=%-5d  sigma=%-.3f  T=%-.3f  loc_acc=%-.3f  ' \
+                  'glob_acc=%-.3f  lkl=%g  prior=%g  post=%g' % \
+                  (mcmc.iter, mcmc.sig_value, mcmc.T,
+                   local_acc,
+                   mcmc.acceptance/(mcmc.iter+1.), mcmc.accept_likelihood,
+                   mcmc.accept_prior, mcmc.accept_posterior)
+
 
 # Chain handling helper function
 # ==============================
@@ -327,102 +327,3 @@ def import_mcmc_groups(filenames):
 
     return mcmc_groups
 
-# Main function
-# =============
-
-if __name__ == '__main__':
-    # Set the type of model to be built here
-    from tbidbaxlipo.models.one_cpt import Builder
-
-    # Keyword args are set at the command line as e.g., key=val
-    # and subsequently split at the equals sign
-    kwargs = dict([arg.split('=') for arg in sys.argv[1:]])
-
-    # We set these all to None so later on we can make sure they were
-    # properly initialized.
-    nbd_site = None
-    nbd_observable = None
-    random_seed = None
-    model = None
-
-    print "Keyword arguments: "
-    print kwargs
-
-    # Before we begin, we make sure we have all the keyword arguments that
-    # we are going to need.
-    if 'nbd_site' not in kwargs or \
-            'random_seed' not in kwargs or \
-            'nsteps' not in kwargs or \
-            'model' not in kwargs or \
-            'nbd_observable' not in kwargs:
-        raise Exception('One or more needed arguments was not specified! ' \
-                'Arguments must include nbd_site, random_seed, model, ' \
-                'nbd_observable and nsteps.')
-
-    # Because the NBD site(s) to fit has to be specified when the model
-    # builder object is created, we get this arg first.
-    if kwargs['nbd_site'] not in nbd_site_names:
-        raise Exception('%s is not an allowed NBD site!' %
-                        kwargs['nbd_site'])
-    else:
-        nbd_site = kwargs['nbd_site']
-
-    # Now that we have the NBD site we can instantiate the Builder:
-    builder = Builder(nbd_sites=[nbd_site])
-
-    # The observable associated with the NBD site signal also has to be
-    # specified:
-    observables = [o.name for o in builder.model.observables]
-
-    if kwargs['nbd_observable'] not in observables:
-        raise Exception('%s is not an allowed NBD observable!' %
-                        kwargs['nbd_observable'])
-    else:
-        nbd_observable = kwargs['nbd_observable']
-
-    # ...and then we get the model, which is specified as a string from the
-    # set seen below.
-    if kwargs['model'] not in model_names:
-        raise Exception('%s is not an allowed model!' %
-                        kwargs['model'])
-    else:
-        # Here we use a bit of Python trickery to avoid a long list of
-        # if/elif statements: we append the model abbreviation to the
-        # build_model function name and then eval it:
-        build_model_cmd = 'builder.build_model_%s()' % kwargs['model']
-        eval(build_model_cmd)
-        model = builder.model
-
-    # Set the random seed:
-    random_seed = int(kwargs['random_seed'])
-
-    # Set the number of steps:
-    nsteps = int(kwargs['nsteps'])
-
-    # A sanity check to make sure everything worked:
-    if None in [model, nbd_site, random_seed, nsteps, nbd_observable]:
-        raise Exception('Something went wrong! One of the arguments to ' \
-                        'do_fit was not initialized properly.')
-
-    # We programmatically build up the base filename from the provided args:
-    basename = '%s_%s_%s_%d_s%d' % (kwargs['model'], nbd_site, nbd_observable,
-                                    nsteps, random_seed)
-
-    # Call do_fit to get things started, feeding in the prior,
-    # estimate_params, and randomized initial values from the Builder
-    # object:
-    numpy.random.seed(random_seed)
-
-    mcmc = do_fit(model,
-                  get_likelihood_function(nbd_site, nbd_observable),
-                  prior=builder.prior,
-                  estimate_params=builder.estimate_params,
-                  basename=basename,
-                  random_seed=random_seed,
-                  nsteps=nsteps,
-                  initial_values=builder.random_initial_values())
-
-    # When sampling is completed, make the figures:
-    generate_figures(mcmc, nbd_site, nbd_observable, basename=basename)
-
-    print "Done."

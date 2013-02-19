@@ -266,7 +266,7 @@ class Builder(object):
         return 10 ** (self.parameter_means + \
                (np.random.randn(len(self.estimate_params)) * \
                 self.parameter_variances))
-        
+
     # -- MECHANISTIC MOTIFS ------------------------------------------------
     def tBid_activates_Bax(self, bax_site='bh3'):
         """Default implementation of Bax activation by tBid.
