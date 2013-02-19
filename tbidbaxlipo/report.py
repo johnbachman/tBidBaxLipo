@@ -1,6 +1,8 @@
 import numpy as np
 from pysb.report import reporter
 
+num_samples = 100
+
 @reporter('Inserted Bax')
 def inserted_Bax(mcmc_set):
     # Get model from first chain in the set
@@ -43,7 +45,6 @@ def Bax_tetramerizes(mcmc_set):
 @reporter('tBid/Bax increases monotonically')
 def tBid_Bax_monotonically_increasing(mcmc_set):
     """ .. todo:: document the basis for this"""
-    num_samples = 100
     num_true = 0
     for i in range(num_samples): 
         x  = mcmc_set.get_sample_simulation()
@@ -54,7 +55,6 @@ def tBid_Bax_monotonically_increasing(mcmc_set):
 @reporter('iBax increases monotonically')
 def iBax_monotonically_increasing(mcmc_set):
     """ .. todo:: document the basis for this"""
-    num_samples = 100
     num_true = 0
     for i in range(num_samples): 
         x  = mcmc_set.get_sample_simulation()
