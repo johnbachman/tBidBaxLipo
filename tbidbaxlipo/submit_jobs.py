@@ -4,12 +4,12 @@ import subprocess
 
 b = Builder()
 
-nsteps = 50000
+nsteps = 300000
 
-model_names = ['tadt', 'tai']
+#model_names = ['tadt', 'tai']
 nbd_site_names = ['c62']
 # nbd_observables = [o.name for o in b.model.observables]
-nbd_observables = ['Baxbh3']
+nbd_observables = ['Baxbh3', 'Bax2', 'tBidBax']
 
 cmd_list = []
 for model in model_names:

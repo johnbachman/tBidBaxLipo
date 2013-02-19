@@ -10,9 +10,9 @@ if __name__ == '__main__':
     kwargs = dict([arg.split('=') for arg in sys.argv[1:]])
 
     for i in range(0, num_chains):
-        output_filename = '%s_%s_%s_%d_s%d' % \
+        output_filename = '%s_%s_%s_%d_s%d.out' % \
                 (kwargs['model'], kwargs['nbd_site'], kwargs['nbd_observable'],
-                 kwargs['nsteps'], i)
+                 int(kwargs['nsteps']), i)
         cmd_list = ["bsub", "-q", queue, "-W", "12:00",
                     "-o", output_filename,
                     "python", "nbd_mcmc_pysb.py",

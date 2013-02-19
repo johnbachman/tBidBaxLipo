@@ -11,6 +11,8 @@ just-Bax condition, and then perturb it with the addition of tBid.
 import bayessb
 from pysb.integrate import odesolve
 import numpy
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import nbd_analysis as nbd
 import pickle
