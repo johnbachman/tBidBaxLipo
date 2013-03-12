@@ -24,7 +24,8 @@ nbd_site_names = ['c3', 'c62']
 
 class NBD_MCMC(bayessb.MCMC):
 
-    def __init__(self, options, nbd_avgs, nbd_stds, nbd_site, nbd_observable, builder):
+    def __init__(self, options, nbd_avgs, nbd_stds, nbd_site, nbd_observable,
+                 builder):
         """Initialize parent bayessb.MCMC and then set additional fields.
 
         Parameters
@@ -108,10 +109,10 @@ class NBD_MCMC(bayessb.MCMC):
         return (x[nbd_observable] / total_Bax) * scaling_factor 
 
     def generate_figures(mcmc, nbd_site, nbd_observable, do_report=True,
-                         mixed_start=None, basename='nbd_mcmc', num_samples=500):   
-        """Takes an MCMC chain and plots a series of useful visualizations of the
-        walk, the quality of the fit, etc.
-        """
+                         mixed_start=None, basename='nbd_mcmc',
+                         num_samples=500):
+        """Takes an MCMC chain and plots a series of useful visualizations of
+        the walk, the quality of the fit, etc."""
         plt.ion()
 
         if do_report:
@@ -199,8 +200,8 @@ class NBD_MCMC(bayessb.MCMC):
         plt.figure()
         plt.plot(mcmc.positions)
         plt.title("Parameter traces")
-        plt.legend([p.name for p in mcmc.options.estimate_params], loc='lower left',
-                   prop={'size':7})
+        plt.legend([p.name for p in mcmc.options.estimate_params],
+                    loc='lower left', prop={'size':7})
         plt.show()
         if do_report:
             rep.add_current_figure()
@@ -225,9 +226,12 @@ class NBD_MCMC(bayessb.MCMC):
         elif nbd_site == 'c62':
             plt.plot(nbd.time_other, nbd_avgs[1], 'g.', label='c62 data',
                      alpha=alpha)
-        #plt.plot(nbd.time_other, nbd_avgs[2], 'b.', label='c120 data', alpha=alpha)
-        #plt.plot(nbd.time_other, nbd_avgs[3], 'm.', label='c122 data', alpha=alpha)
-        #plt.plot(nbd.time_other, nbd_avgs[4], 'k.', label='c126 data', alpha=alpha)
+        #plt.plot(nbd.time_other, nbd_avgs[2], 'b.', label='c120 data',
+        #          alpha=alpha)
+        #plt.plot(nbd.time_other, nbd_avgs[3], 'm.', label='c122 data',
+        #         alpha=alpha)
+        #plt.plot(nbd.time_other, nbd_avgs[4], 'k.', label='c126 data',
+        #         alpha=alpha)
 
     # A function to generate the likelihood function
     def get_likelihood_function(self):
@@ -285,7 +289,8 @@ class NBD_MCMC(bayessb.MCMC):
 # Chain handling helper function
 # ==============================
 def import_mcmc_groups(filenames):
-    """Loads the chains into groups representing multiple runs of the same model.
+    """Loads the chains into groups representing multiple runs of the same
+    model.
 
     Assumes that the pickle filenames are structured as
 
@@ -326,4 +331,3 @@ def import_mcmc_groups(filenames):
             mcmc_groups[mcmc_args] = [filename]
 
     return mcmc_groups
-
