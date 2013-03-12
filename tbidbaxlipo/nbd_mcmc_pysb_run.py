@@ -34,7 +34,6 @@ if __name__ == '__main__':
     random_seed = None
     model = None
 
-
     print "Keyword arguments: "
     print kwargs
 
@@ -104,7 +103,7 @@ if __name__ == '__main__':
     opts.tspan = nbd.time_other
     opts.estimate_params = builder.estimate_params
     opts.initial_values = builder.random_initial_values()
-    opts.nsteps = 50 #nsteps
+    opts.nsteps = nsteps
 
     opts.sigma_step = 0.9
     opts.sigma_max = 50

@@ -16,6 +16,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import pickle
 from tbidbaxlipo.util.report import Report
+from matplotlib.font_manager import FontProperties
 
 model_names = ['ta', 'tai', 'taid', 'taidt', 'tair', 'taird', 'tairdt',
                'tad', 'tadt', 'tar', 'tard', 'tardt']
@@ -218,20 +219,42 @@ class NBD_MCMC(bayessb.MCMC):
             # Write the report 
             rep.write_report(basename)
 
-    def plot_data(nbd_site):
+    def plot_data(self):
         alpha = 0.5
-        if nbd_site == 'c3':
-            plt.plot(nbd.time_other, nbd_avgs[0], 'r.', label='c3 data',
-                     alpha=alpha)
-        elif nbd_site == 'c62':
-            plt.plot(nbd.time_other, nbd_avgs[1], 'g.', label='c62 data',
-                     alpha=alpha)
+        if self.nbd_site == 'c3':
+            plt.plot(self.options.tspan, self.nbd_avgs[0], 'r.',
+                     label='c3 data', alpha=alpha)
+        elif self.nbd_site == 'c62':
+            plt.plot(self.options.tspan, self.nbd_avgs[1], 'g.',
+                     label='c62 data', alpha=alpha)
         #plt.plot(nbd.time_other, nbd_avgs[2], 'b.', label='c120 data',
         #          alpha=alpha)
         #plt.plot(nbd.time_other, nbd_avgs[3], 'm.', label='c122 data',
         #         alpha=alpha)
         #plt.plot(nbd.time_other, nbd_avgs[4], 'k.', label='c126 data',
         #         alpha=alpha)
+
+    def fit_plotting_function(self, position):
+        # TODO Need to be able to get the indices for scaling parameters
+        # from the model so that they're not hardcoded
+
+        # Run the simulation and scale the simulated timecourse
+        yout = self.simulate(position, observables=True)
+        params = self.cur_params(position)
+        timecourse = ((yout[self.nbd_observable] /
+                       self.options.model.parameters['Bax_0'].value)
+                      * params[3])
+
+        # Make the plot
+        plt.figure()
+        self.plot_data()
+        plt.plot(self.options.tspan, timecourse)
+        plt.xlabel('Time')
+        plt.ylabel('Concentration')
+        fontP = FontProperties() 
+        fontP.set_size('small')
+        plt.legend(loc='upper center', prop=fontP, ncol=5,
+                    bbox_to_anchor=(0.5, 1.1), fancybox=True, shadow=True)
 
     # A function to generate the likelihood function
     def get_likelihood_function(self):
