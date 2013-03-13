@@ -317,7 +317,7 @@ def import_mcmc_groups(filenames):
 
     Assumes that the pickle filenames are structured as
 
-        basename = '%s_%s_%s_%d_s%d.pck' % (model, nbd_site, nbd_observable,
+        basename = '%s_%s_%s_%d_s%d.xxx' % (model, nbd_site, nbd_observable,
                                         nsteps, random_seed)
 
     With the suffix ``.xxx`` separated by a dot and the seed coming last in
