@@ -1,5 +1,5 @@
 import numpy as np
-from pysb.report import reporter, Result
+from bayessb.report import reporter, Result
 
 num_samples = 100
 
