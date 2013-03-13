@@ -109,12 +109,12 @@ if __name__ == '__main__':
     opts.sigma_max = 50
     opts.sigma_min = 0.01
     opts.accept_rate_target = 0.23
-    opts.accept_window = 300
-    opts.sigma_adj_interval = 300
+    opts.accept_window = 200
+    opts.sigma_adj_interval = 200
     opts.anneal_length = nsteps / 2
-    opts.use_hessian = False
+    opts.use_hessian = True
     opts.hessian_scale = 1
-    opts.hessian_period = opts.nsteps / 5 #10
+    opts.hessian_period = opts.nsteps / 10 #10
     opts.seed = random_seed
     mcmc = tbidbaxlipo.nbd_mcmc_pysb.NBD_MCMC(opts, nbd_avgs, nbd_stds,
                                 nbd_site, nbd_observable, builder)

@@ -15,7 +15,7 @@ if __name__ == '__main__':
                  int(kwargs['nsteps']), i)
         cmd_list = ["bsub", "-q", queue, "-W", "12:00",
                     "-o", output_filename,
-                    "python", "nbd_mcmc_pysb.py",
+                    "python", "-m", "tbidbaxlipo.nbd_mcmc_pysb_run",
                     "random_seed=%d" % i]
         cmd_list += sys.argv[1:]
         print ' '.join(cmd_list)
