@@ -14,7 +14,8 @@ anneal_output.txt
 *.dot
 *.out
 *.ka
-
+fits/
+imstor
 matlab/
 trash/
 data/trash/
