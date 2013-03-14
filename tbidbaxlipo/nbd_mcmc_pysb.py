@@ -9,6 +9,7 @@ just-Bax condition, and then perturb it with the addition of tBid.
 """
 
 import bayessb
+import os
 from pysb.integrate import odesolve
 import numpy
 import matplotlib
@@ -345,6 +346,8 @@ def import_mcmc_groups(filenames):
         # Separate the filename into the final argument identifying the
         # random seed, and everything that comes before it:
         (mcmc_args, seed) = prefix.rsplit('_', 1)
+        mcmc_args = os.path.basename(mcmc_args)
+
         # Check to see if we've imported another chain of this type already.
         # If so, add the current chain to the list of chains for this group:
         if mcmc_args in mcmc_groups:
