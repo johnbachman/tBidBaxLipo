@@ -1,7 +1,7 @@
 import numpy as np
 from bayessb.report import reporter, Result
 
-num_samples = 100
+reporter_group_name = 'Model topology'
 
 def write_species(mcmc_set_name, model):
     """Write the species list of the model to a file.
@@ -32,6 +32,23 @@ def write_species(mcmc_set_name, model):
         pass
     return species_filename
 
+class TopologyResult(Result):
+    """Implements specific HTML formatting for reporters indicating model
+    topology."""
+    def get_html(self):
+        # Color-code the presence/absence of topology elements
+        if self.value == True:
+            color = "red"
+        else:
+            color = "lightgray"
+        result_str = self.value
+
+        # Add a link to the species list
+        if self.link is not None:
+            result_str = '<a href="%s">%s</a>' % (self.link, result_str)
+
+        return '<td style="background: %s">%s</td>' % (color, result_str)
+
 @reporter('Inserted Bax')
 def inserted_Bax(mcmc_set):
     # Get model from first chain in the set
@@ -42,12 +59,38 @@ def inserted_Bax(mcmc_set):
     species_filename = write_species(mcmc_set.name, model)
 
     if 'iBax' not in observable_names:
-        return Result(False, species_filename)
+        return TopologyResult(False, species_filename)
     # This will be an empty list if the observable never occurs
     if model.observables['iBax'].species:
-        return Result(True, species_filename)
+        return TopologyResult(True, species_filename)
     else:
-        return Result(False, species_filename)
+        return TopologyResult(False, species_filename)
+
+@reporter('Bax reverses')
+def Bax_reverses(mcmc_set):
+    # Get model from first chain in the set
+    model = mcmc_set.chains[0].options.model
+
+    # Write species list to a file
+    species_filename = write_species(mcmc_set.name, model)
+
+    if 'iBax_reverses' in [r.name for r in model.rules]:
+        return TopologyResult(True, species_filename)
+    else:
+        return TopologyResult(False, species_filename)
+
+@reporter('Bax/tBid inhibition ')
+def tBid_inhibits_Bax(mcmc_set):
+    # Get model from first chain in the set
+    model = mcmc_set.chains[0].options.model
+
+    # Write species list to a file
+    species_filename = write_species(mcmc_set.name, model)
+
+    if 'tBid_iBax_bind_at_bh3' in [r.name for r in model.rules]:
+        return TopologyResult(True, species_filename)
+    else:
+        return TopologyResult(False, species_filename)
 
 @reporter('Bax dimerizes')
 def Bax_dimerizes(mcmc_set):
@@ -59,12 +102,12 @@ def Bax_dimerizes(mcmc_set):
     species_filename = write_species(mcmc_set.name, model)
 
     if 'Bax2' not in observable_names:
-        return Result(False, species_filename)
+        return TopologyResult(False, species_filename)
     # This will be an empty list if the observable never occurs
     if model.observables['Bax2'].species:
-        return Result(True, species_filename)
+        return TopologyResult(True, species_filename)
     else:
-        return Result(False, species_filename)
+        return TopologyResult(False, species_filename)
 
 @reporter('Bax tetramerizes')
 def Bax_tetramerizes(mcmc_set):
@@ -76,42 +119,10 @@ def Bax_tetramerizes(mcmc_set):
     species_filename = write_species(mcmc_set.name, model)
 
     if 'Bax4' not in observable_names:
-        return Result(False, species_filename)
+        return TopologyResult(False, species_filename)
     # This will be an empty list if the observable never occurs
     if model.observables['Bax4'].species:
-        return Result(True, species_filename)
+        return TopologyResult(True, species_filename)
     else:
-        return Result(False, species_filename)
-
-@reporter('tBid/Bax increases monotonically')
-def tBid_Bax_monotonically_increasing(mcmc_set):
-    """ .. todo:: document the basis for this"""
-    num_true = 0
-    for i in range(num_samples): 
-        x  = mcmc_set.get_sample_simulation()
-        if monotonic_increasing(x['tBidBax']):
-            num_true += 1
-    return float(num_true) / float(num_samples)
-
-@reporter('iBax increases monotonically')
-def iBax_monotonically_increasing(mcmc_set):
-    """ .. todo:: document the basis for this"""
-    num_true = 0
-    for i in range(num_samples): 
-        x  = mcmc_set.get_sample_simulation()
-        if monotonic_increasing(x['iBax']):
-            num_true += 1
-    return float(num_true) / float(num_samples)
-
-# Helper functions
-# ================
-def monotonic_increasing(x):
-    # TODO rewrite so doesn't allow fixed, unchanging values
-    dx = np.diff(x)
-    return bool(np.all(dx >= 0))
-
-def monotonic_decreasing(x):
-    # TODO rewrite so doesn't allow fixed, unchanging values
-    dx = np.diff(x)
-    return bool(np.all(dx <= 0))
+        return TopologyResult(False, species_filename)
 
