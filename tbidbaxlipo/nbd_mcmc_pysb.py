@@ -235,7 +235,8 @@ class NBD_MCMC(bayessb.MCMC):
         #plt.plot(nbd.time_other, nbd_avgs[4], 'k.', label='c126 data',
         #         alpha=alpha)
 
-    def fit_plotting_function(self, position):
+    def get_observable_timecourse(self, position):
+        """Gets the timecourse associated with the experimental observable."""
         # TODO Need to be able to get the indices for scaling parameters
         # from the model so that they're not hardcoded
 
@@ -245,6 +246,11 @@ class NBD_MCMC(bayessb.MCMC):
         timecourse = ((yout[self.nbd_observable] /
                        self.options.model.parameters['Bax_0'].value)
                       * params[3])
+        return timecourse
+
+    def fit_plotting_function(self, position):
+        """Gets the observable timecourse and plots it against the data."""
+        timecourse = self.get_observable_timecourse(position)
 
         # Make the plot
         plt.figure()
