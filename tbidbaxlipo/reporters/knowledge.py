@@ -37,6 +37,37 @@ def iBax_monotonically_increasing(mcmc_set):
     plt.savefig(plot_filename)
     return Result(float(num_true) / float(num_samples), plot_filename)
 
+@reporter('tBid/Bax K_D')
+def tBidBax_kd(mcmc_set):
+    """ .. todo:: document the basis for this"""
+    num_kds = 10000
+    # Get indices for the tBid/Bax binding constants
+    estimate_params = mcmc = mcmc_set.chains[0].options.estimate_params
+    tBid_iBax_kf_index = None
+    tBid_iBax_kr_index = None
+    for i, p in enumerate(estimate_params):
+        if p.name == 'tBid_iBax_kf':
+            tBid_iBax_kf_index = i
+        elif p.name == 'tBid_iBax_kr':
+            tBid_iBax_kr_index = i
+    # If we couldn't find the parameters, return None for the result
+    if tBid_iBax_kf_index is None or tBid_iBax_kr_index is None:
+        return Result(None, None)
+    # Sample the kr/kf ratio across the pooled chains
+    kd_dist = np.zeros(num_kds)
+    for i in range(num_kds):
+        position = mcmc_set.get_sample_position()
+        kd_dist[i] = position[tBid_iBax_kr_index] / position[tBid_iBax_kf_index]
+    # Calculate the mean and variance
+    mean = kd_dist.mean()
+    # Plot the Kd distribution
+    plot_filename = '%s_tBidiBax_kd_dist.png' % mcmc_set.name
+    plt.figure()
+    plt.hist(kd_dist)
+    plt.savefig(plot_filename)
+    # FIXME FIXME FIXME Make a class for mean/sd results
+    return Result(mean, plot_filename)
+
 # Helper functions
 # ================
 def monotonic_increasing(x):
