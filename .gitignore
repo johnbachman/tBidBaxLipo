@@ -3,8 +3,12 @@
 doc/_build
 
 simdata/*
+*species.txt
 .idea
-
+*.rep
+*.mcmc
+*.png
+*.html
 *.pyc
 *.swp
 *.csv
