@@ -284,8 +284,9 @@ class NBD_MCMC(bayessb.MCMC):
                            mcmc.options.model.parameters['Bax_0'].value)
                           * params[3])
 
-            return numpy.sum((self.nbd_avgs[data_index] - timecourse)**2 /
+            return (numpy.sum((self.nbd_avgs[data_index] - timecourse)**2 /
                              (2 * self.nbd_stds[data_index]**2))
+                    / len(self.nbd_avgs[data_index]))
 
         return likelihood
 
@@ -298,7 +299,7 @@ class NBD_MCMC(bayessb.MCMC):
                                     self.options.seed)
 
     @staticmethod
-    def step(mcmc):
+    def step_adaptive(mcmc):
         """The function to call at every iteration. Currently just prints
         out a few progress indicators.
         """
@@ -315,6 +316,17 @@ class NBD_MCMC(bayessb.MCMC):
                    mcmc.acceptance/(mcmc.iter+1.), mcmc.accept_likelihood,
                    mcmc.accept_prior, mcmc.accept_posterior)
 
+    @staticmethod
+    def step(mcmc):
+        """The function to call at every iteration. Currently just prints
+        out a few progress indicators.
+        """
+        if mcmc.iter % 20 == 0:
+            print 'iter=%-5d  sigma=%-.3f  T=%-.3f ' \
+                  'glob_acc=%-.3f  lkl=%g  prior=%g  post=%g' % \
+                  (mcmc.iter, mcmc.sig_value, mcmc.T,
+                   mcmc.acceptance/(mcmc.iter+1.), mcmc.accept_likelihood,
+                   mcmc.accept_prior, mcmc.accept_posterior)
 
 # Chain handling helper function
 # ==============================

@@ -111,7 +111,7 @@ if __name__ == '__main__':
     opts.accept_rate_target = 0.23
     opts.accept_window = 200
     opts.sigma_adj_interval = 200
-    opts.anneal_length = nsteps / 2
+    opts.anneal_length = nsteps / 10
     opts.use_hessian = True
     opts.hessian_scale = 1
     opts.hessian_period = opts.nsteps / 10 #10
