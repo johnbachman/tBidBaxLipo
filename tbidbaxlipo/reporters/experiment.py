@@ -1,4 +1,4 @@
-from bayessb.report import reporter, Result
+from bayessb.report import reporter, Result, ThumbnailResult
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -11,6 +11,7 @@ def increase_tBid_10x(mcmc_set):
     tspan = mcmc_set.chains[0].options.tspan
     plt.figure()
     plot_filename = '%s_tBid_10x.png' % mcmc_set.name
+    thumbnail_filename = '%s_tBid_10x_th.png' % mcmc_set.name
 
     # Make sure we can call the method 'get_observable_timecourse'
     if not hasattr(mcmc_set.chains[0], 'get_observable_timecourse') or \
@@ -38,9 +39,10 @@ def increase_tBid_10x(mcmc_set):
         plt.plot(tspan, x, color='r', alpha=0.5)
 
     plt.savefig(plot_filename)
+    plt.savefig(thumbnail_filename, dpi=10)
 
     # Make sure to reset the tBid initial condition to its original value!
     model.parameters['tBid_0'].value = old_tBid_0
 
-    return Result('result', plot_filename)
+    return ThumbnailResult(thumbnail_filename, plot_filename)
 
