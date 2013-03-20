@@ -1,16 +1,13 @@
-from nbd_mcmc_pysb import model_names #, nbd_site_names
+from nbd_mcmc_pysb import model_names
 from tbidbaxlipo.models.one_cpt import Builder
 import subprocess
 
 b = Builder()
 
-nsteps = 50000
+nsteps = 150000
 
-model_names = ['ta', 'tar', 'tadt', 'tai', 'tard', 'tair']
-nbd_site_names = ['c3']
-# nbd_observables = [o.name for o in b.model.observables]
-#nbd_observables = ['Baxbh3', 'Bax2', 'tBidBax']
-nbd_observables = ['iBax']
+nbd_site_names = ['c62']
+nbd_observables = ['iBax', 'Baxbh3', 'Bax2', 'tBidBax']
 
 cmd_list = []
 for model in model_names:
