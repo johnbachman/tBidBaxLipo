@@ -1,4 +1,4 @@
-from bayessb.report import reporter, Result
+from bayessb.report import reporter, Result, MeanSdResult
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -57,16 +57,17 @@ def tBidBax_kd(mcmc_set):
     kd_dist = np.zeros(num_kds)
     for i in range(num_kds):
         position = mcmc_set.get_sample_position()
-        kd_dist[i] = position[tBid_iBax_kr_index] / position[tBid_iBax_kf_index]
+        kd_dist[i] = ((10 ** position[tBid_iBax_kr_index]) /
+                      (10 ** position[tBid_iBax_kf_index]))
     # Calculate the mean and variance
     mean = kd_dist.mean()
+    sd = kd_dist.std()
     # Plot the Kd distribution
     plot_filename = '%s_tBidiBax_kd_dist.png' % mcmc_set.name
     plt.figure()
     plt.hist(kd_dist)
     plt.savefig(plot_filename)
-    # FIXME FIXME FIXME Make a class for mean/sd results
-    return Result(mean, plot_filename)
+    return MeanSdResult(mean, sd, plot_filename)
 
 # Helper functions
 # ================
