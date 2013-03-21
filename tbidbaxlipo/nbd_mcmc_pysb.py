@@ -18,6 +18,8 @@ import matplotlib.pyplot as plt
 import pickle
 from tbidbaxlipo.util.report import Report
 from matplotlib.font_manager import FontProperties
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 model_names = ['ta', 'tai', 'taid', 'taidt', 'tair', 'taird', 'tairdt',
                'tad', 'tadt', 'tar', 'tard', 'tardt']
@@ -220,13 +222,14 @@ class NBD_MCMC(bayessb.MCMC):
             # Write the report 
             rep.write_report(basename)
 
-    def plot_data(self):
+    def plot_data(self, axis):
+        """Plots the current data into the given axis."""
         alpha = 0.5
         if self.nbd_site == 'c3':
-            plt.plot(self.options.tspan, self.nbd_avgs[0], 'r.',
+            axis.plot(self.options.tspan, self.nbd_avgs[0], 'r.',
                      label='c3 data', alpha=alpha)
         elif self.nbd_site == 'c62':
-            plt.plot(self.options.tspan, self.nbd_avgs[1], 'g.',
+            axis.plot(self.options.tspan, self.nbd_avgs[1], 'g.',
                      label='c62 data', alpha=alpha)
         #plt.plot(nbd.time_other, nbd_avgs[2], 'b.', label='c120 data',
         #          alpha=alpha)
@@ -253,15 +256,17 @@ class NBD_MCMC(bayessb.MCMC):
         timecourse = self.get_observable_timecourse(position)
 
         # Make the plot
-        plt.figure()
-        self.plot_data()
-        plt.plot(self.options.tspan, timecourse)
-        plt.xlabel('Time')
-        plt.ylabel('Concentration')
+        fig = Figure()
+        ax = fig.gca()
+        self.plot_data(ax)
+        ax.plot(self.options.tspan, timecourse)
+        ax.set_xlabel('Time')
+        ax.set_ylabel('Concentration')
         fontP = FontProperties() 
         fontP.set_size('small')
-        plt.legend(loc='upper center', prop=fontP, ncol=5,
+        ax.legend(loc='upper center', prop=fontP, ncol=5,
                     bbox_to_anchor=(0.5, 1.1), fancybox=True, shadow=True)
+        return fig
 
     # A function to generate the likelihood function
     def get_likelihood_function(self):

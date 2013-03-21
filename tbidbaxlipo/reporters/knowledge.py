@@ -1,7 +1,8 @@
 from bayessb.report import reporter, Result, MeanSdResult, FuzzyBooleanResult
 from bayessb.report.evidence import Evidence, Citation
 import numpy as np
-from matplotlib import pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.figure import Figure
 
 reporter_group_name = 'Prior knowledge'
 num_samples = 100
@@ -31,17 +32,20 @@ doi='doi:10.1016/j.cell.2008.11.010'))
 def tBid_Bax_monotonically_increasing(mcmc_set):
     """ .. todo:: document the basis for this"""
     tspan = mcmc_set.chains[0].options.tspan
-    plt.figure()
+    fig = Figure()
+    ax = fig.gca()
     plot_filename = '%s_tBidBax_monotonic_increasing.png' % mcmc_set.name
 
     num_true = 0
     for i in range(num_samples): 
         x  = mcmc_set.get_sample_simulation()
-        plt.plot(tspan, x['tBidBax'], color='r', alpha=0.5)
+        ax.plot(tspan, x['tBidBax'], color='r', alpha=0.5)
         if monotonic_increasing(x['tBidBax']):
             num_true += 1
-    plt.savefig(plot_filename)
-    plt.close()
+    canvas = FigureCanvasAgg(fig)
+    fig.set_canvas(canvas)
+    fig.savefig(plot_filename)
+
     return FuzzyBooleanResult(float(num_true) / float(num_samples),
                               plot_filename, expectation=1.0)
 
@@ -49,17 +53,20 @@ def tBid_Bax_monotonically_increasing(mcmc_set):
 def iBax_monotonically_increasing(mcmc_set):
     """ .. todo:: document the basis for this"""
     tspan = mcmc_set.chains[0].options.tspan
-    plt.figure()
+    fig = Figure()
+    ax = fig.gca()
     plot_filename = '%s_iBax_monotonic_increasing.png' % mcmc_set.name
 
     num_true = 0
     for i in range(num_samples): 
         x  = mcmc_set.get_sample_simulation()
-        plt.plot(tspan, x['iBax'], color='r', alpha=0.5)
+        ax.plot(tspan, x['iBax'], color='r', alpha=0.5)
         if monotonic_increasing(x['iBax']):
             num_true += 1
-    plt.savefig(plot_filename)
-    plt.close()
+    canvas = FigureCanvasAgg(fig)
+    fig.set_canvas(canvas)
+    fig.savefig(plot_filename)
+
     return FuzzyBooleanResult(float(num_true) / float(num_samples),
                               plot_filename, expectation=1.0)
 
@@ -88,12 +95,16 @@ def tBidBax_kd(mcmc_set):
     # Calculate the mean and variance
     mean = kd_dist.mean()
     sd = kd_dist.std()
+
     # Plot the Kd distribution
     plot_filename = '%s_tBidiBax_kd_dist.png' % mcmc_set.name
-    plt.figure()
-    plt.hist(kd_dist)
-    plt.savefig(plot_filename)
-    plt.close()
+    fig = Figure()
+    ax = fig.gca()
+    ax.hist(kd_dist)
+    canvas = FigureCanvasAgg(fig)
+    fig.set_canvas(canvas)
+    fig.savefig(plot_filename)
+
     return MeanSdResult(mean, sd, plot_filename)
 
 # Helper functions
