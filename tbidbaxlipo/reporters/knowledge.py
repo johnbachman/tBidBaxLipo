@@ -41,6 +41,7 @@ def tBid_Bax_monotonically_increasing(mcmc_set):
         if monotonic_increasing(x['tBidBax']):
             num_true += 1
     plt.savefig(plot_filename)
+    plt.close()
     return FuzzyBooleanResult(float(num_true) / float(num_samples),
                               plot_filename, expectation=1.0)
 
@@ -58,6 +59,7 @@ def iBax_monotonically_increasing(mcmc_set):
         if monotonic_increasing(x['iBax']):
             num_true += 1
     plt.savefig(plot_filename)
+    plt.close()
     return FuzzyBooleanResult(float(num_true) / float(num_samples),
                               plot_filename, expectation=1.0)
 
@@ -91,6 +93,7 @@ def tBidBax_kd(mcmc_set):
     plt.figure()
     plt.hist(kd_dist)
     plt.savefig(plot_filename)
+    plt.close()
     return MeanSdResult(mean, sd, plot_filename)
 
 # Helper functions

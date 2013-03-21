@@ -40,6 +40,7 @@ def increase_tBid_10x(mcmc_set):
 
     plt.savefig(plot_filename)
     plt.savefig(thumbnail_filename, dpi=10)
+    plt.close()
 
     # Make sure to reset the tBid initial condition to its original value!
     model.parameters['tBid_0'].value = old_tBid_0
@@ -81,6 +82,7 @@ def increase_Bax_5x(mcmc_set):
 
     plt.savefig(plot_filename)
     plt.savefig(thumbnail_filename, dpi=10)
+    plt.close()
 
     # Make sure to reset the Bax initial condition to its original value!
     model.parameters['Bax_0'].value = old_Bax_0
