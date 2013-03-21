@@ -1,11 +1,33 @@
 from bayessb.report import reporter, Result, MeanSdResult
+from bayessb.report.evidence import Evidence, Citation
 import numpy as np
 from matplotlib import pyplot as plt
 
 reporter_group_name = 'Prior knowledge'
 num_samples = 100
 
-@reporter('tBid/Bax increases monotonically')
+e = Evidence("""
+When DAC-tBid (20 nM) and NBD-126-Bax (100 nM) were incubated together, energy
+transfer (detected as a decrease in donor fluorescence) was observed only if
+membranes (~2.5 nM liposomes) were also present (Figure 2A), suggesting that
+the two proteins interact only when bound to membranes.
+
+The extent of energy transfer between DAC-tBid and NBD-126-Bax did not decrease
+over time (Figure 2A), suggesting that at steady state some fraction of tBid
+remained bound to Bax in the lipid membrane. This result was unexpected given
+that tBid and Bax do not cofractionate when liposomes or mitochondria are
+solubilized with the detergent CHAPS (Billen et al., 2008).
+""",
+image='http://ars.els-cdn.com/content/image/1-s2.0-S0092867408014396-gr2.jpg',
+citation=Citation(
+"""Lovell, J. F., Billen, L. P., Bindner, S., Shamas-Din, A., Fradin, C.,
+Leber, B., & Andrews, D. W. (2008). Membrane binding by tBid initiates an
+ordered series of events culminating in membrane permeabilization by Bax. Cell,
+135(6), 1074-1084.""",
+pmid='19062087',
+doi='doi:10.1016/j.cell.2008.11.010'))
+
+@reporter('tBid/Bax increases monotonically', evidence=e)
 def tBid_Bax_monotonically_increasing(mcmc_set):
     """ .. todo:: document the basis for this"""
     tspan = mcmc_set.chains[0].options.tspan
