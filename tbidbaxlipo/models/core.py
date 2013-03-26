@@ -139,10 +139,10 @@ class Builder(object):
     def within_compartment_rsf(self):
         raise NotImplementedError()
 
-    def translocate_tBid_Bax():
+    def translocate_tBid_Bax(self):
         raise NotImplementedError()
 
-    def run_model():
+    def run_model(self):
         raise NotImplementedError()
 
     # -- CONSTRUCTOR AND MONOMER DECLARATIONS --------------------------------
@@ -533,7 +533,6 @@ class Builder(object):
     def build_model_ta(self):
         print "---------------------------"
         print "core: Building model ta:"
-
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
 
