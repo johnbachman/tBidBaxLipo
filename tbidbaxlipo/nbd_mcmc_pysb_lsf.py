@@ -11,7 +11,7 @@ if __name__ == '__main__':
 
     for i in range(0, num_chains):
         output_filename = '%s_%s_%s_%d_s%d.out' % \
-                (kwargs['model'], kwargs['nbd_site'], kwargs['nbd_observable'],
+                (kwargs['model'], kwargs['nbd_sites'], kwargs['nbd_observables'],
                  int(kwargs['nsteps']), i)
         cmd_list = ["bsub", "-q", queue, "-W", "12:00",
                     "-o", output_filename,
