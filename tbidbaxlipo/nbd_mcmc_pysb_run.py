@@ -27,10 +27,14 @@ if __name__ == '__main__':
     # and subsequently split at the equals sign
     kwargs = dict([arg.split('=') for arg in sys.argv[1:]])
 
+    # Arguments that can take a list of values (e.g., the nbd sites or
+    # nbd observables) are expected to be separated by this character:
+    SEP_CHAR = '-'
+
     # We set these all to None so later on we can make sure they were
     # properly initialized.
-    nbd_site = None
-    nbd_observable = None
+    nbd_sites = None
+    nbd_observables = None
     random_seed = None
     model = None
 
@@ -39,35 +43,40 @@ if __name__ == '__main__':
 
     # Before we begin, we make sure we have all the keyword arguments that
     # we are going to need.
-    if 'nbd_site' not in kwargs or \
+    if 'nbd_sites' not in kwargs or \
             'random_seed' not in kwargs or \
             'nsteps' not in kwargs or \
             'model' not in kwargs or \
-            'nbd_observable' not in kwargs:
+            'nbd_observables' not in kwargs:
         raise Exception('One or more needed arguments was not specified! ' \
-                'Arguments must include nbd_site, random_seed, model, ' \
-                'nbd_observable and nsteps.')
+                'Arguments must include nbd_sites, random_seed, model, ' \
+                'nbd_observables and nsteps.')
 
     # Because the NBD site(s) to fit has to be specified when the model
     # builder object is created, we get this arg first.
-    if kwargs['nbd_site'] not in nbd_site_names:
-        raise Exception('%s is not an allowed NBD site!' %
-                        kwargs['nbd_site'])
-    else:
-        nbd_site = kwargs['nbd_site']
+    # If more than one NBD site has been specified, it should be separated:
+    nbd_sites = kwargs['nbd_sites'].split(SEP_CHAR)
+    for site in nbd_sites:
+        if site not in nbd_site_names:
+            raise Exception('%s is not an allowed NBD site!' % site)
 
     # Now that we have the NBD site we can instantiate the Builder:
-    builder = Builder(nbd_sites=[nbd_site])
+    builder = Builder(nbd_sites=nbd_sites)
 
     # The observable associated with the NBD site signal also has to be
     # specified:
     observables = [o.name for o in builder.model.observables]
 
-    if kwargs['nbd_observable'] not in observables:
-        raise Exception('%s is not an allowed NBD observable!' %
-                        kwargs['nbd_observable'])
-    else:
-        nbd_observable = kwargs['nbd_observable']
+    # Again, parse in case there is more than one observable:
+    nbd_observables = kwargs['nbd_observables'].split(SEP_CHAR)
+    for nbd_obs in nbd_observables:
+        if nbd_obs not in observables:
+            raise Exception('%s is not an allowed NBD observable!' % nbd_obs)
+
+    # Make sure the number of nbd sites matches the number of observables:
+    if len(nbd_sites) != len(nbd_observables):
+        raise Exception('The number of nbd_sites must match the number of '
+                        'nbd_observables!')
 
     # ...and then we get the model, which is specified as a string from the
     # set seen below.
@@ -89,7 +98,7 @@ if __name__ == '__main__':
     nsteps = int(kwargs['nsteps'])
 
     # A sanity check to make sure everything worked:
-    if None in [model, nbd_site, random_seed, nsteps, nbd_observable]:
+    if None in [model, nbd_sites, random_seed, nsteps, nbd_observables]:
         raise Exception('Something went wrong! One of the arguments to ' \
                         'do_fit was not initialized properly.')
 
@@ -112,12 +121,12 @@ if __name__ == '__main__':
     opts.accept_window = 200
     opts.sigma_adj_interval = 200
     opts.anneal_length = nsteps / 2
-    opts.use_hessian = True
+    opts.use_hessian = False # TRUE
     opts.hessian_scale = 1
     opts.hessian_period = opts.nsteps / 10 #10
     opts.seed = random_seed
     mcmc = tbidbaxlipo.nbd_mcmc_pysb.NBD_MCMC(opts, nbd_avgs, nbd_stds,
-                                nbd_site, nbd_observable, builder)
+                                nbd_sites, nbd_observables, builder)
 
     mcmc.do_fit()
 
@@ -127,6 +136,7 @@ if __name__ == '__main__':
     output_file.close()
 
     # When sampling is completed, make the figures:
-    #generate_figures(mcmc, nbd_site, nbd_observable, basename=basename)
+    mcmc.generate_figures(report_name=mcmc.get_basename(kwargs['model']),
+                          mixed_start=0)
 
     print "Done."

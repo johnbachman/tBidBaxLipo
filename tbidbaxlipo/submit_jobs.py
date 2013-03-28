@@ -15,8 +15,8 @@ for model in model_names:
         for nbd_observable in nbd_observables:
             cmd_list = ["python", "-m", "tbidbaxlipo.nbd_mcmc_pysb_lsf",
                         "model=%s" % model,
-                        "nbd_site=%s" % nbd_site_name,
-                        "nbd_observable=%s" % nbd_observable,
+                        "nbd_sites=%s" % nbd_site_name,
+                        "nbd_observables=%s" % nbd_observable,
                         "nsteps=%d" % nsteps]
             print ' '.join(cmd_list)
             subprocess.call(cmd_list)

@@ -28,7 +28,7 @@ nbd_site_names = ['c3', 'c62']
 
 class NBD_MCMC(bayessb.MCMC):
 
-    def __init__(self, options, nbd_avgs, nbd_stds, nbd_site, nbd_observable,
+    def __init__(self, options, nbd_avgs, nbd_stds, nbd_sites, nbd_observables,
                  builder):
         """Initialize parent bayessb.MCMC and then set additional fields.
 
@@ -36,16 +36,16 @@ class NBD_MCMC(bayessb.MCMC):
         ----------
         data_avgs : list of numpy.array
         data_stds : list of numpy.array
-        nbd_site : string
-        nbd_observable : string
+        nbd_sites : list of strings
+        nbd_observables : list of strings
         builder : tbidbaxlipo.models.core.Builder
         """
 
         bayessb.MCMC.__init__(self, options)
         self.nbd_avgs = nbd_avgs
         self.nbd_stds = nbd_stds
-        self.nbd_site = nbd_site
-        self.nbd_observable = nbd_observable
+        self.nbd_sites = nbd_sites
+        self.nbd_observables = nbd_observables
         self.builder = builder
 
         # Set the MCMC functions
@@ -101,44 +101,26 @@ class NBD_MCMC(bayessb.MCMC):
         #self.options.prior_fn = prior
         #self.options.step_fn = step
 
-    def nbd_timecourse(mcmc, position, nbd_observable):
-        """Simulates the model at the given parameter position and returns
-        the appropriately scaled timecourse for the given NBD site."""
-
-        x = mcmc.simulate(position=position, observables=True)
-
-        total_Bax = mcmc.options.model.parameters['Bax_0'].value
-        cur_params = mcmc.cur_params(position=position)
-        scaling_factor = cur_params[3]
-        return (x[nbd_observable] / total_Bax) * scaling_factor 
-
-    def generate_figures(mcmc, nbd_site, nbd_observable, do_report=True,
-                         mixed_start=None, basename='nbd_mcmc',
-                         num_samples=500):
-        """Takes an MCMC chain and plots a series of useful visualizations of
-        the walk, the quality of the fit, etc."""
+    def generate_figures(self, report_name='report', do_report=True,
+                         mixed_start=None, num_samples=500):
+        """Plots a series of useful visualizations of the walk, the
+        quality of the fit, etc."""
         plt.ion()
 
         if do_report:
             rep = Report()
 
         # Plot "Before" curves -------
-        x = nbd_timecourse(mcmc, mcmc.initial_position, nbd_observable)
-        plt.figure()
-        plot_data(nbd_site)
-        plt.plot(mcmc.options.tspan, x, 'b', label=nbd_site)
-        plt.legend(loc='lower right')
-        plt.title('Before')
-        plt.show()
+        before_fig = self.fit_plotting_function(self.initial_position)
         if do_report:
-            rep.add_current_figure()
+            rep.add_figure(before_fig)
 
         # Print initial parameter values
-        init_vals = zip([p.name for p in mcmc.options.model.parameters],
-                          mcmc.cur_params(position=mcmc.initial_position))
+        init_vals = zip([p.name for p in self.options.model.parameters],
+                          self.cur_params(position=self.initial_position))
         init_vals_str = 'Initial values:\n'
         init_vals_str += '\n'.join(['%s: %g' % (init_vals[i][0],
-                                                 init_vals[i][1])
+                                                init_vals[i][1])
                                      for i in range(0, len(init_vals))])
         print init_vals_str
         if do_report:
@@ -147,24 +129,18 @@ class NBD_MCMC(bayessb.MCMC):
         # Plot "After" curves ------------
         # Set to last fit position
         if mixed_start is None:
-            mixed_start = mcmc.options.nsteps / 2
-        mixed_positions = mcmc.positions[mixed_start:,:]
-        mixed_accepted_positions = mixed_positions[mcmc.accepts[mixed_start:]]
+            mixed_start = self.options.nsteps / 2
+        mixed_positions = self.positions[mixed_start:,:]
+        mixed_accepted_positions = mixed_positions[self.accepts[mixed_start:]]
         last_position = mixed_accepted_positions[-1,:]
 
-        x = nbd_timecourse(mcmc, last_position, nbd_observable)
-        plt.figure()
-        plot_data(nbd_site)
-        plt.plot(mcmc.options.tspan, x, 'b', label=nbd_site)
-        plt.legend(loc='lower right')
-        plt.title('Final accepted position')
-        plt.show()
+        after_fig = self.fit_plotting_function(last_position)
         if do_report:
-            rep.add_current_figure()
+            rep.add_figure(after_fig)
 
         # Print final parameter values
-        last_fit_params = mcmc.cur_params(position=last_position)
-        last_vals = zip([p.name for p in mcmc.options.model.parameters],
+        last_fit_params = self.cur_params(position=last_position)
+        last_vals = zip([p.name for p in self.options.model.parameters],
                            last_fit_params)
         last_vals_str = 'Final values:\n'
         last_vals_str += '\n'.join(['%s: %g' % (last_vals[i][0],
@@ -174,6 +150,7 @@ class NBD_MCMC(bayessb.MCMC):
         if do_report:
             rep.add_text(last_vals_str)
 
+        """
         # Plot sampling of fits # FIXME should be real sampling------
         plt.figure()
         plot_data(nbd_site)
@@ -209,6 +186,7 @@ class NBD_MCMC(bayessb.MCMC):
         plt.show()
         if do_report:
             rep.add_current_figure()
+        """
 
         # Add code to report
         if do_report:
@@ -220,15 +198,15 @@ class NBD_MCMC(bayessb.MCMC):
             rep.add_python_code('models/one_cpt.py')
 
             # Write the report 
-            rep.write_report(basename)
+            rep.write_report(report_name)
 
     def plot_data(self, axis):
         """Plots the current data into the given axis."""
         alpha = 0.5
-        if self.nbd_site == 'c3':
+        if 'c3' in self.nbd_sites:
             axis.plot(self.options.tspan, self.nbd_avgs[0], 'r.',
                      label='c3 data', alpha=alpha)
-        elif self.nbd_site == 'c62':
+        if 'c62' in self.nbd_sites:
             axis.plot(self.options.tspan, self.nbd_avgs[1], 'g.',
                      label='c62 data', alpha=alpha)
         #plt.plot(nbd.time_other, nbd_avgs[2], 'b.', label='c120 data',
@@ -238,59 +216,76 @@ class NBD_MCMC(bayessb.MCMC):
         #plt.plot(nbd.time_other, nbd_avgs[4], 'k.', label='c126 data',
         #         alpha=alpha)
 
-    def get_observable_timecourse(self, position):
-        """Gets the timecourse associated with the experimental observable."""
+    def get_observable_timecourses(self, position):
+        """Gets the timecourses associated with the experimental observables."""
         # TODO Need to be able to get the indices for scaling parameters
         # from the model so that they're not hardcoded
 
-        # Run the simulation and scale the simulated timecourse
+        # Run the simulation and scale the simulated timecourses
         yout = self.simulate(position, observables=True)
         params = self.cur_params(position)
-        timecourse = ((yout[self.nbd_observable] /
-                       self.options.model.parameters['Bax_0'].value)
-                      * params[3])
-        return timecourse
+        timecourses = []
+        for obs in self.nbd_observables:
+            timecourses.append((yout[obs] /
+                           self.options.model.parameters['Bax_0'].value)
+                          * params[3])
+
+        return timecourses
 
     def fit_plotting_function(self, position):
         """Gets the observable timecourse and plots it against the data."""
-        timecourse = self.get_observable_timecourse(position)
-
+        # Run the simulation at the given position
+        timecourses = self.get_observable_timecourses(position)
         # Make the plot
         fig = Figure()
         ax = fig.gca()
+        # Add the data to the plot
         self.plot_data(ax)
-        ax.plot(self.options.tspan, timecourse)
+        # Add the simulations to the plot
+        for timecourse in timecourses:
+            ax.plot(self.options.tspan, timecourse)
+        # Label the plot
         ax.set_xlabel('Time')
         ax.set_ylabel('Concentration')
         fontP = FontProperties() 
         fontP.set_size('small')
         ax.legend(loc='upper center', prop=fontP, ncol=5,
                     bbox_to_anchor=(0.5, 1.1), fancybox=True, shadow=True)
+        canvas = FigureCanvasAgg(fig)
+        fig.set_canvas(canvas)
         return fig
 
     # A function to generate the likelihood function
     def get_likelihood_function(self):
         """Returns a likelihood function for the specified NBD site."""
-        if self.nbd_site == 'c3':
-            data_index = 0
-        elif self.nbd_site == 'c62':
-            data_index = 1
-        else:
-            raise Exception('Invalid value for nbd_site!')
+        data_indices = []
+        if 'c3' in self.nbd_sites:
+            data_indices.append(0)
+        if 'c62' in self.nbd_sites:
+            data_indices.append(1)
+        # Make sure the list is not empty
+        if not data_indices:
+            raise Exception('Failed to initialize data_indices!')
+
+        # Make sure that there is a corresponding data trajectory for each
+        # observable
+        if len(data_indices) != len(self.nbd_observables):
+            raise Exception('Length of list of nbd_sites does not match the '
+                            'list of nbd_observables!')
 
         def likelihood(mcmc, position):
             yout = mcmc.simulate(position, observables=True)
-
             # TODO Need to be able to get the indices from the model so that
             # they're not hardcoded
             params = mcmc.cur_params(position)
-
-            timecourse = ((yout[self.nbd_observable] /
-                           mcmc.options.model.parameters['Bax_0'].value)
-                          * params[3])
-
-            return numpy.sum((self.nbd_avgs[data_index] - timecourse)**2 /
-                             (2 * self.nbd_stds[data_index]**2))
+            err = 0
+            for data_index, obs_name in zip(data_indices, self.nbd_observables):
+                timecourse = ((yout[obs_name] /
+                               mcmc.options.model.parameters['Bax_0'].value)
+                              * params[3])
+                err += numpy.sum((self.nbd_avgs[data_index] - timecourse)**2 /
+                                 (2 * self.nbd_stds[data_index]**2))
+            return err
 
         return likelihood
 
@@ -298,8 +293,10 @@ class NBD_MCMC(bayessb.MCMC):
         """A function for standardizing, in one place, the format for pickled
         NBD_MCMC objects.
         """
-        return '%s_%s_%s_%d_s%d' % (model_name, self.nbd_site,
-                                    self.nbd_observable, self.options.nsteps,
+        return '%s_%s_%s_%d_s%d' % (model_name,
+                                    '-'.join(self.nbd_sites),
+                                    '-'.join(self.nbd_observables),
+                                    self.options.nsteps,
                                     self.options.seed)
 
     @staticmethod
@@ -329,7 +326,7 @@ def import_mcmc_groups(filenames):
 
     Assumes that the pickle filenames are structured as
 
-        basename = '%s_%s_%s_%d_s%d.xxx' % (model, nbd_site, nbd_observable,
+        basename = '%s_%s_%s_%d_s%d.xxx' % (model, nbd_sites, nbd_observables,
                                         nsteps, random_seed)
 
     With the suffix ``.xxx`` separated by a dot and the seed coming last in

@@ -70,13 +70,27 @@ class Report():
 
     def add_current_figure(self):
         """Add the current figure to the report.
-        
+
         Uses the matplotlib function savefig to export the figure to a
         temporary PDF file which is incorporated into the report.
         """
 
         fig_file = NamedTemporaryFile(suffix='.pdf')
         savefig(fig_file.name)
+        #pdf_file = PdfPages(fig_file.name)
+        #pdf_file.savefig()
+        #pdf_file.close()
+        self.tempFileList.append(fig_file)
+
+    def add_figure(self, figure):
+        """Adds the figure to the report.
+
+        Uses the figure method savefig to export the figure to a
+        temporary PDF file which is incorporated into the report.
+        """
+
+        fig_file = NamedTemporaryFile(suffix='.pdf')
+        figure.savefig(fig_file.name)
         #pdf_file = PdfPages(fig_file.name)
         #pdf_file.savefig()
         #pdf_file.close()
