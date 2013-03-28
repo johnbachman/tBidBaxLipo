@@ -23,6 +23,7 @@ class Report():
 
     def __init__(self):
         self.tempFileList = []
+        self.texpdf_filenames = []
 
     def add_python_code(self, filename):
         """Adds the given Python file to the report after applying
@@ -40,7 +41,6 @@ class Report():
         highlight(code, PythonLexer(), formatter, outfile=tex_file)
         tex_file.flush()
 
-        #print 'fname ' + tex_file.name
         p = subprocess.Popen(['pdflatex', tex_file.name],
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (p_out, p_err) = p.communicate()
@@ -48,9 +48,10 @@ class Report():
             raise Exception(p_out.rstrip("at line")+"\n"+p_err.rstrip())
 
         self.tempFileList.append(open(pdf_filename, 'r'))
+        self.texpdf_filenames.append(pdf_filename)
 
-        os.unlink(re.sub('\.pdf$', '.log', pdf_filename))
-        os.unlink(re.sub('\.pdf$', '.aux', pdf_filename))
+        os.unlink(re.sub('\.tex$', '.log', tex_file_name))
+        os.unlink(re.sub('\.tex$', '.aux', tex_file_name))
 
     def add_text(self, text):
         """Add text to the report."""
@@ -98,7 +99,7 @@ class Report():
 
     def write_report(self, outputfilename='report'):
         """Output the complete report to the given PDF file.
-        
+
         Parameters
         ----------
         outputfilename : string
@@ -110,12 +111,15 @@ class Report():
 
         for tempFile in self.tempFileList:
             tempFileName = tempFile.name
-            fileType =  tempFileName[(len(tempFileName)-3):len(tempFileName)]
+            fileType =  tempFileName.split('.')[-1]
             input = None
 
+            # If the PDF file was created by pdflatex and not as a named
+            # temporary file, it needs to be explicitly unlinked
             if fileType == 'pdf':
                 input = PdfFileReader(file(tempFileName, "rb"))
-                os.unlink(tempFileName)
+                if tempFileName in self.texpdf_filenames:
+                    os.unlink(tempFileName)
             elif fileType == 'txt':
                 pdftext = txt2pdf.pyText2Pdf()
                 pdftext._ifile = tempFileName
