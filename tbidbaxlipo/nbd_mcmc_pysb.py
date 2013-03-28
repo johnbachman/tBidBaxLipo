@@ -27,20 +27,27 @@ model_names = ['ta', 'tai', 'taid', 'taidt', 'tair', 'taird', 'tairdt',
 nbd_site_names = ['c3', 'c62']
 
 class NBD_MCMC(bayessb.MCMC):
+    """Fit mechanistic tBid/Bax models to NBD data.
+
+    Initialize parent bayessb.MCMC and then set additional fields.
+
+    Parameters
+    ----------
+    options : MCMCOpts
+        Options for MCMC initialization.
+    nbd_avgs : numpy.array
+        data mean
+    nbd_stds : numpy.array
+        data SD
+    nbd_sites : list of strings
+        Sites from data to fit.
+    nbd_observables : list of strings
+        Observables from model to fit to the sites in nbd_sites.
+    builder : tbidbaxlipo.models.core.Builder
+    """
 
     def __init__(self, options, nbd_avgs, nbd_stds, nbd_sites, nbd_observables,
                  builder):
-        """Initialize parent bayessb.MCMC and then set additional fields.
-
-        Parameters
-        ----------
-        data_avgs : list of numpy.array
-        data_stds : list of numpy.array
-        nbd_sites : list of strings
-        nbd_observables : list of strings
-        builder : tbidbaxlipo.models.core.Builder
-        """
-
         bayessb.MCMC.__init__(self, options)
         self.nbd_avgs = nbd_avgs
         self.nbd_stds = nbd_stds

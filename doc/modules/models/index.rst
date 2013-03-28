@@ -1,5 +1,5 @@
-tBid/Bax Mechanistic Models
-==============================
+tBid/Bax Mechanistic Models (:py:mod:`tbidbaxlipo.models`)
+==========================================================
 
 .. toctree::
    :maxdepth: 2

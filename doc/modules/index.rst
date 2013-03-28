@@ -5,5 +5,8 @@ tBid/Bax/Lipo Module Reference
 
    nbd_analysis
    nbd_mcmc
-   report
+   nbd_mcmc_pysb
    models/index
+   reporters/index
+   report
+
