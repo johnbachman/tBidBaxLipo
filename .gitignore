@@ -3,6 +3,7 @@
 doc/_build
 
 simdata/*
+*.tsv
 *species.txt
 .idea
 *.rep
