@@ -5,4 +5,4 @@ Fitting models by MCMC (:py:mod:`tbidbaxlipo.mcmc`)
 
    nbd_mcmc
    nbd_phenomenological
-
+   submit_jobs
