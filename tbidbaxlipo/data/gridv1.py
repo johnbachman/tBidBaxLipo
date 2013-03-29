@@ -1,6 +1,26 @@
+"""
+Data from the initial tBid/Bax/liposome 3-way titration experiment from
+David Andrews' lab. For details on the experimental protocol, see the
+Powerpoint slides he sent along with the second round of the experiment.
+
+The matrix of dye release data is stored as a dict of dicts of dicts of lists,
+in the package variable ``data_tBidmaj`` in "tBid major" order, that is,
+organized with the volume of liposomes added as the first indexed dimension,
+then tBid, then Bax, then time.
+
+For example, the entry::
+
+    data_tbidmaj['10']['21.5']['300']
+
+returns the timecourse of dye release values for 10 uL of liposomes, 21.5 nM tBid,
+and 300 nM Bax.
+"""
+
 time_min = [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 195]
+"""The timepoints of the measurements in minutes."""
 
 time = [min*60 for min in time_min] 
+"""The timepoints of the measurements in seconds."""
 
 data_tbidmaj = {'10': {'21.5': {u'300': [0, 29.04076675981301,
 36.337520566190491, 43.707398605416415, 49.045467603353273, 53.302342587030893,
@@ -1716,4 +1736,3 @@ u'165': [0, 10.247544598115855, 13.589897775105232, 16.245740629384645,
 26.714210557081898, 29.496697258432221, 32.396095165721633, 33.997778687087155,
 36.745192026655758, 37.41158590050857, 40.077161395919802, 41.141053369965512,
 42.964868182615305, 43.561115332904663, 45.232945577833632]}}} 
-

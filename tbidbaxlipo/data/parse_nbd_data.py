@@ -1,3 +1,8 @@
+"""
+A script to parse the NBD fluorescence data from the Excel spreadsheets sent by
+Justin Kale into Python data files.
+"""
+
 from openpyxl import load_workbook
 from pylab import mean
 from numpy import nan

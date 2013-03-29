@@ -1,3 +1,8 @@
+"""
+A script to parse the dye release data from the Excel spreadsheets sent by
+David Andrews into Python data files.
+"""
+
 import os
 import glob
 import re

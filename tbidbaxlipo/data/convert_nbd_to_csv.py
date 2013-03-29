@@ -1,3 +1,8 @@
+"""
+A script to export the NBD fluorescence timecourse data to a comma-separated
+variable file.
+"""
+
 from nbd_data import *
 
 csv_file = open('nbd_data.csv', 'w')
