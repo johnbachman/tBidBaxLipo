@@ -3,7 +3,8 @@ tBid/Bax/Lipo Module Reference
 
 .. toctree::
 
-   nbd_analysis
+   data/index
+   data_analysis/index
    nbd_mcmc
    nbd_mcmc_pysb
    models/index
