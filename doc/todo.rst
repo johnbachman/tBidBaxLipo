@@ -5,6 +5,9 @@ Near-term todos
 ---------------
 
 * Fix package structure
+* Would be cool if make the docs also ran the various fitting/plotting functions in
+  nbd_analysis and grid_analysis, and stuck them in .html files and added them as a
+  section of the docs
 * Have model construction insert a stringable name into the builder obj
 * Make colors of data and timecourses match in fit_plotting_function
 * Problem with scaling factors and normalization by Bax_0 or tBid_0 when amount

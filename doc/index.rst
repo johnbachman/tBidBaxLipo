@@ -9,6 +9,7 @@ Welcome to tBid/Bax/Lipo's documentation!
 Contents:
 
 .. toctree::
+   :maxdepth: 3
 
    intro
    notes
