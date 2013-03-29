@@ -1,4 +1,7 @@
 """
+Functions for normalizing, plotting, and fitting the ANTS/DPX experimental
+dye release data with a variety of simple functions.
+
 Example usage::
 
     import grid_analysis as g
@@ -7,8 +10,7 @@ Example usage::
 """
 
 import math
-from scipy import linspace, polyval, polyfit, sqrt, stats, randn, optimize
-from numpy import array, exp, log
+import numpy as np
 import matplotlib.pyplot as plt
 from util.fitting import Parameter, fit, fit_initial, mse
 from util.numsort import sorted_copy as sort_numeric
@@ -36,12 +38,16 @@ for lipo_conc_str in lipo_concs_str:
         data_baxmaj[lipo_conc_str][bax_conc_str] = {}
         for tbid_conc_str in tbid_concs_str:
             data_baxmaj[lipo_conc_str][bax_conc_str][tbid_conc_str] = \
-                          data_tbidmaj[lipo_conc_str][tbid_conc_str][bax_conc_str]
+                        data_tbidmaj[lipo_conc_str][tbid_conc_str][bax_conc_str]
 
 def apply_func_to_grid(func, grid, **kw_args):
-    """ Iterate through the grid structure to reach the underlying timecourse
-        and apply the function, reconstructing a new data structure in which
-        the timecourses have been processed by the function. """
+    """Apply a function to the data grid.
+
+    Iterates through the grid structure to reach the underlying timecourse and
+    apply the function, reconstructing a new data structure in which the
+    timecourses have been processed by the function.
+    """
+
     out_data = {}
     x_keys = grid.keys()
     for x in x_keys:
@@ -79,7 +85,7 @@ def calc_ki(timecourse, grid, x, y, z, start_time_index=10):
         be used to calculate the error of the fit. """
     tlin = time[start_time_index:len(time)]
     plin = timecourse[start_time_index:len(time)]
-    (slope, intercept) = polyfit(tlin, plin, 1)
+    (slope, intercept) = np.polyfit(tlin, plin, 1)
     return [slope, intercept]
 
 def calc_pores(timecourse, grid, x, y, z):
@@ -163,13 +169,14 @@ def get_rate_regression(timecourse, fittype, tbid_conc=None, bax_conc=None):
     fmax2 = Parameter(0.4)
     m = Parameter(0.01)
 
-    def single_exp (t): return ((fmax()*(1 - exp(-k()*t))))
-    def exp_lin(t):     return ((fmax()*(1 - exp(-k()*t))) + (m()*t))
-    def double_exp(t):  return ((fmax()*(1 - exp(-k()*t)))  + (fmax2()*(1 - exp(-k2()*t))))
-    def exp_exp(t):     return ((fmax()*(1 - exp((1- exp(-k()*t))   ))))
+    def single_exp (t): return ((fmax()*(1 - np.exp(-k()*t))))
+    def exp_lin(t):     return ((fmax()*(1 - np.exp(-k()*t))) + (m()*t))
+    def double_exp(t):  return ((fmax()*(1 - np.exp(-k()*t)))  +
+                                (fmax2()*(1 - np.exp(-k2()*t))))
+    def exp_exp(t):     return ((fmax()*(1 - np.exp((1- np.exp(-k()*t))   ))))
 
     if (fittype == 'singleexp'):
-        fit(single_exp, [k, fmax], array(timecourse), array(time))
+        fit(single_exp, [k, fmax], np.array(timecourse), np.array(time))
         #fit_initial(single_exp, [k, fmax], array(timecourse), array(time))
         fitfunc = single_exp
     elif (fittype == 'explin'):
@@ -177,23 +184,24 @@ def get_rate_regression(timecourse, fittype, tbid_conc=None, bax_conc=None):
         #if (not (tbid_conc == None and bax_conc == None)):
         #    fmax = Parameter(0.021+(5.2e-5*(float(bax_conc)-30)))
         #    print fmax()
-        fit(exp_lin, [k, fmax, m], array(timecourse), array(time))
+        fit(exp_lin, [k, fmax, m], np.array(timecourse), np.array(time))
         #fit(exp_lin, [ m], array(timecourse), array(time))
         print (fmax(), k(), m())
         #fit_initial(exp_lin, [k, fmax, m], array(timecourse), array(time))
         fitfunc = exp_lin
     elif (fittype == 'doubleexp'):
-        fit(double_exp, [k, fmax, k2, fmax2], array(timecourse), array(time))
+        fit(double_exp, [k, fmax, k2, fmax2], np.array(timecourse),
+            np.array(time))
         #fit_initial(double_exp, [k, fmax, k2, fmax2], array(timecourse), array(time))
         fitfunc = double_exp
     elif (fittype == 'expexp'):
-        fit(exp_exp, [k, fmax], array(timecourse), array(time))
+        fit(exp_exp, [k, fmax], np.array(timecourse), np.array(time))
         #fit_initial(exp_exp, [k, fmax], array(timecourse), array(time))
         fitfunc = exp_exp
     else:
         raise Exception('unknown fit type')
 
-    mse_val = mse(fitfunc, array(timecourse), array(time))
+    mse_val = mse(fitfunc, np.array(timecourse), np.array(time))
 
     # Perform the fit
     #fit(biphasic, [ki_parm, k0_parm, kt_parm], array(timecourse), array(time))
@@ -202,7 +210,7 @@ def get_rate_regression(timecourse, fittype, tbid_conc=None, bax_conc=None):
     #print("k0=" + str(k0_parm()) + ", ki=" + str(ki_parm()) + ", kt=" + str(kt_parm()) )
 
     # Plot original values along with fitted values
-    fit_time = linspace(0, max(time), 200)
+    fit_time = np.linspace(0, max(time), 200)
     fit_vals = map(fitfunc, fit_time) 
     return (fit_time, fit_vals, mse_val)
 
@@ -256,7 +264,7 @@ def plot_timecourses(lipo_conc_str, fixed_conc_str, data,
                 model.parameters['tBid_0'].value = float(tBid_conc_str)
 
             # Run the model
-            fit_time = linspace(0, max(time), 100)
+            fit_time = np.linspace(0, max(time), 100)
             x = odesolve(model, fit_time)
             #fit_vals = (x['eVes']/model.parameters['Vesicles_0'].value)*100
             fit_vals = x['pores'] / 0.038
@@ -354,9 +362,9 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
             raise Exception('The rate (\'k0\' or \'ki\') was not specified.')
 
         model_y_vals = []
-        model_x_vals = linspace(0, 1.01*max(concs), 50) # TODO: Magic numbers 0 and 300
+        model_x_vals = np.linspace(0, 1.01*max(concs), 50)
         fitfunc = None
-        
+
         if (not model == None):
             if (axis == 'Bax'):
                 for conc in model_x_vals:
@@ -371,11 +379,11 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
                 m = Parameter(1)
                 b = Parameter(0)
                 def linear(x): return ((m()*x) + b())
-                fit(linear, [m, b], array(data_arr), array(concs))
+                fit(linear, [m, b], np.array(data_arr), np.array(concs))
                 #print(bid_conc_str + "nm cBid: k=" + str(k()) + ", n=" + str(n())) TODO
                 fitfunc = linear
-                #(slope, intercept) = polyfit(log_concs, log_k0, 1)       
-                #k0_fit = polyval([slope, intercept], log_concs)
+                #(slope, intercept) = np.polyfit(log_concs, log_k0, 1)
+                #k0_fit = np.polyval([slope, intercept], log_concs)
                 #print "slope: ", slope, ", intercept: ", intercept
                 #plot(log_concs, k0_fit, '-')
             elif (fittype == 'power'):
@@ -383,11 +391,11 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
                 k = Parameter(1)
                 n = Parameter(0.4)
                 def powerlaw(x): return (k()*(x**n()))
-                fit(powerlaw, [k, n], array(data_arr), array(concs))
+                fit(powerlaw, [k, n], np.array(data_arr), np.array(concs))
                 #print(bid_conc_str + "nm cBid: k=" + str(k()) + ", n=" + str(n())) TODO
                 fitfunc = powerlaw
-                #(slope, intercept) = polyfit(log_concs, log_k0, 1)       
-                #k0_fit = polyval([slope, intercept], log_concs)
+                #(slope, intercept) = np.polyfit(log_concs, log_k0, 1)
+                #k0_fit = np.polyval([slope, intercept], log_concs)
                 print("exponent: %d" % n())
                 #plot(log_concs, k0_fit, '-')
                 if (axis == 'Bax'):
@@ -398,40 +406,43 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
                 vmax = Parameter(0.0005)
                 nh = Parameter(1)
                 b = data_arr[0]
-                def michaelis_menten(x): return ((vmax()*(x**nh()))/((km()**nh()) + (x**nh())) + b)
+                def michaelis_menten(x): return \
+                        ((vmax()*(x**nh()))/((km()**nh()) + (x**nh())) + b)
                 #def line(x): return (m()*x)+b()
 
                 # Perform the fit
                 if (fittype == 'hillexp'):
-                    fit(michaelis_menten, [km, vmax, nh], array(data_arr), array(concs))
+                    fit(michaelis_menten, [km, vmax, nh], np.array(data_arr),
+                        np.array(concs))
                 else:
-                    fit(michaelis_menten, [km, vmax], array(data_arr), array(concs))
+                    fit(michaelis_menten, [km, vmax], np.array(data_arr),
+                        np.array(concs))
 
                 if (axis == 'Bax'):
                     kcat = vmax() / float(tbid_conc_str)
-                    print(outer_conc_str + "nm cBid: Km=" + str(km()) + ", Vmax=" +
-                            str(vmax()) + ", kcat=" + str(kcat), ", nh=" + str(nh()) )
-
+                    print('%s nm cBid: Km=%f, Vmax=%f, kcat=%f, nh=%f' %
+                          (outer_conc_str, km(), vmax(), kcat(), nh()))
                 fitfunc = michaelis_menten
             elif (fittype == None):
                 pass
             else:
-                raise Exception("Fitting function must be 'hill', 'hillexp', 'power', or None")
-
+                raise Exception("Fitting function must be 'hill', "
+                                "'hillexp', 'power', or None")
 
         # Plot data
         data_marker = 's-' if fittype==None else 's'
-        data_legend = outer_conc_str + " " + outer_axis if fittype==None else '_nolegend_'
+        data_legend = outer_conc_str + " " + outer_axis if fittype==None \
+                                                        else '_nolegend_'
 
         if (loglogplot):
             plt.loglog(concs, data_arr, data_marker + col, label=data_legend)
-            rise1 = log(data_arr[2]) - log(data_arr[1])
-            run1 = log(concs[2]) - log(concs[1])
+            rise1 = np.log(data_arr[2]) - np.log(data_arr[1])
+            run1 = np.log(concs[2]) - np.log(concs[1])
             slope1 = rise1 / run1
             #print "riserise
             #print "run = " + str(run)
-            rise2 = log(data_arr[3]) - log(data_arr[2])
-            run2 = log(concs[3]) - log(concs[2])
+            rise2 = np.log(data_arr[3]) - np.log(data_arr[2])
+            run2 = np.log(concs[3]) - np.log(concs[2])
             slope2 = rise2 / run2
             print(outer_conc_str + 'nm ' + outer_axis + ': Slope1,2=' + str(slope1) + ', '
                             + str(slope2)) # TODO
@@ -444,10 +455,10 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
 
         if (fitfunc):
             # Show fit error
-            mse_val = mse(fitfunc, array(data_arr), array(concs))
+            mse_val = mse(fitfunc, np.array(data_arr), np.array(concs))
             #print ("mse_val = " + str(mse_val))
             total_mse += mse_val
-            fit_x_vals = linspace(0, 1.01*max(concs), 50) # TODO: Magic numbers 0 and 300
+            fit_x_vals = np.linspace(0, 1.01*max(concs), 50) # TODO: Magic numbers 0 and 300
             fit_y_vals = map(fitfunc, fit_x_vals)
             if (loglogplot):
                 plt.loglog(fit_x_vals, fit_y_vals, '-'+col, label=outer_conc_str + " " + outer_axis)
@@ -475,7 +486,7 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
         report.addCurrentFigure()
 
 def get_model_k0(model, k0_time=900):
-    t = linspace(0, k0_time, 100)
+    t = np.linspace(0, k0_time, 100)
     x = odesolve(model, t)
     return (x['pores'][-1] / model.parameters['NUM_VESICLES'].value)/k0_time
 
@@ -595,11 +606,11 @@ def plot_ki_regression(lipo_conc_str, tbid_conc_str, bax_conc_str, start_time_in
     tlin = time[start_time_index:len(time)]
     pfull = p[lipo_conc_str][tbid_conc_str][bax_conc_str]
     plin = pfull[start_time_index:len(time)]
-    (slope, intercept) = polyfit(tlin, plin, 1)
-    pcalc = polyval([slope, intercept], tlin)
+    (slope, intercept) = np.polyfit(tlin, plin, 1)
+    pcalc = np.polyval([slope, intercept], tlin)
     plt.plot(time, pfull, 's-')
     plt.plot(tlin, pcalc)
-    err = sqrt(sum((pcalc-plin)**2)/(len(plin)))
+    err = np.sqrt(sum((pcalc-plin)**2)/(len(plin)))
     print "slope: ", slope, " error: ", err
     plt.title("p(t), with k_i regression line shown")
     plt.xlabel("Time (sec)")
