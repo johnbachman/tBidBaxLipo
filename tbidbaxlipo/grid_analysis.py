@@ -16,14 +16,17 @@ from util.fitting import Parameter, fit, fit_initial, mse
 from util.numsort import sorted_copy as sort_numeric
 from util.report import Report
 from pysb.integrate import odesolve
+from test_pandas import dt
 
 # Select the dataset ######################
+# FIXME make this a class that takes the data as an argument
 print("Using gridv2.")
 from data.gridv2 import time, data_tbidmaj
 
 colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
 
 # Assumes the grid is uniform/symmetric
+# FIXME handle all this with pandas
 lipo_concs_str = sort_numeric(data_tbidmaj.keys())
 tbid_concs_str = sort_numeric(data_tbidmaj[lipo_concs_str[0]].keys())
 bax_concs_str = sort_numeric(data_tbidmaj[lipo_concs_str[0]][tbid_concs_str[0]].keys())
@@ -47,7 +50,8 @@ def apply_func_to_grid(func, grid, **kw_args):
     apply the function, reconstructing a new data structure in which the
     timecourses have been processed by the function.
     """
-
+    # FIXME handle this with a hierarchical dataframe, in which you iterate over the rows
+    # and then apply the function to the column-based timecourse?
     out_data = {}
     x_keys = grid.keys()
     for x in x_keys:
@@ -62,10 +66,16 @@ def apply_func_to_grid(func, grid, **kw_args):
     return out_data
 
 def calc_k0(timecourse, grid, x, y, z, dt=900):
-    """ For the given pore formation (i.e., p(t)) timecourse, calculate
-        the initial pore formation rate by dividing the increase at
-        the first time point by the length of the time interval
-        (defaults to 900 seconds = 15 minutes). """
+    """Calculate the initial (k0) rate.
+
+    For the given pore formation (i.e., p(t)) timecourse, calculate the initial
+    pore formation rate by dividing the increase at the first time point by the
+    length of the time interval (defaults to 900 seconds = 15 minutes).
+    """
+    # FIXME do away with this and base it on fitted functions?
+    # FIXME function should take the grid and return a new dataframe,
+    # FIXME where the concentration conditions are the same but instead of
+    # FIXME a timecourse it returns ki, kf, and tau in the columns
     rate = (timecourse[1] - timecourse[0]) / float(dt)
     #lipo_only_timecourse = grid[x]['0']['0']
     #lipo_only_k0 = (lipo_only_timecourse[1] - lipo_only_timecourse[0]) / float(dt)
@@ -76,19 +86,24 @@ def calc_k0(timecourse, grid, x, y, z, dt=900):
     return rate
 
 def calc_ki(timecourse, grid, x, y, z, start_time_index=10):
-    """ For the given pore formation (i.e., p(t)) timecourse, calculate a
-        linear regression to the secondary kinetics, which is defined as the
-        pore formation rate running from start_time_index (defaults to 1
-        hour, which is index 4) to the end.
+    """Calculate the final (ki) rate.
 
-        Returns a list containing the slope and intercept, which can also
-        be used to calculate the error of the fit. """
+    For the given pore formation (i.e., p(t)) timecourse, calculate a linear
+    regression to the secondary kinetics, which is defined as the pore
+    formation rate running from start_time_index (defaults to 1 hour, which is
+    index 4) to the end.
+
+    Returns a list containing the slope and intercept, which can also be used
+    to calculate the error of the fit.
+    """
+    # FIXME This should go away
     tlin = time[start_time_index:len(time)]
     plin = timecourse[start_time_index:len(time)]
     (slope, intercept) = np.polyfit(tlin, plin, 1)
     return [slope, intercept]
 
 def calc_pores(timecourse, grid, x, y, z):
+    # FIXME A transformation on the data; should return another dataframe
     p_timecourse = []
     for val in timecourse:
         p  = (100 - val)/100
@@ -100,6 +115,7 @@ def calc_pores(timecourse, grid, x, y, z):
     return p_timecourse
 
 def calc_pores_bgsub(timecourse, grid, x, y, z):
+    # FIXME A transformation on the data; should return another dataframe
     p_timecourse = []
     for i, val in enumerate(timecourse):
         # Subtract liposome only timecourse, point-by-point
@@ -120,14 +136,17 @@ def calc_pores_bgsub(timecourse, grid, x, y, z):
     return p_timecourse
 
 def calc_bgsub(timecourse, grid, x, y, z):
+    # FIXME A transformation on the data; should return another dataframe
     bgsub_timecourse = []
     for i, val in enumerate(timecourse):
         val = val - grid[x]['0']['0'][i]     
         bgsub_timecourse.append(val)
     return bgsub_timecourse
 
+# FIXME Should be explicit from the setup of the dataframe
 tbid_concs = [float(conc_str) for conc_str in sort_numeric(data_tbidmaj[lipo_conc_str].keys())]
 bax_concs = [float(conc_str) for conc_str in sort_numeric(data_baxmaj[lipo_conc_str].keys())]
+
 #p = apply_func_to_grid(calc_pores, data_tbidmaj)    
 print("Using background (liposome-only) subtracted pore calculations.")
 p = apply_func_to_grid(calc_pores_bgsub, data_tbidmaj)    
@@ -136,6 +155,8 @@ ki = apply_func_to_grid(calc_ki, p)
 data_bgsub = apply_func_to_grid(calc_bgsub, data_tbidmaj)
 
 ## UTILITY FUNCTIONS FOR PLOTTING/ANALYSIS ###################################
+# FIXME These could all go away; the caller will get the right field from the
+# FIXME returned dataframe
 def get_timecourses_v_bax(lipo_conc_str, tbid_conc_str):
     bax_dict = p[lipo_conc_str][tbid_conc_str]
     return [bax_dict[key] for key in sort_numeric(bax_dict.keys())]
@@ -152,6 +173,8 @@ def get_ki_v_bax(lipo_conc_str, tbid_conc_str):
     bax_dict = ki[lipo_conc_str][tbid_conc_str]
     return [bax_dict[key][0] for key in sort_numeric(bax_dict.keys())]
 
+# FIXME This could be a good func, the timecourses could be
+# FIXME calced one by one and included in a plot
 def get_rate_regression(timecourse, fittype, tbid_conc=None, bax_conc=None):
     # FIXME Get rid of tbid_conc and bax_conc?
     # Initial parameter guesses
@@ -215,87 +238,153 @@ def get_rate_regression(timecourse, fittype, tbid_conc=None, bax_conc=None):
     return (fit_time, fit_vals, mse_val)
 
 ## PLOTTING FUNCTIONS ########################################################
-def plot_timecourses(lipo_conc_str, fixed_conc_str, data,
-                     fixed_axis='tBid', fittype='explin', model=None, report=None):
-    plt.ion()
-    plt.figure()
+# FIXME make display optional
 
-    col_index = 0
-    total_mse = 0
+class GridAnalysis(object):
+    """Functions for analyzing and plotting the ANTS/DPX datasets.
 
-    # Check which concentration axis we're varying
-    if (fixed_axis == 'tBid'):
-        var_concs_str = bax_concs_str
-        var_axis = 'Bax'
-    elif (fixed_axis == 'Bax'):
-        var_concs_str = tbid_concs_str
-        var_axis = 'tBid'
-    else:
-        raise Exception("Unknown axis: " + fixed_axis)
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        A dataset from tbidbaxlipo.data.gridv1 or gridv2, in the form
+        of a hierarchical dataframe. The index levels are named 'Liposomes'
+        'tBid', and 'Bax' and are indexed by the concentrations/amounts
+        of each, as floats. The columns of the dataframe are the timepoints,
+        in seconds, as integers.
+    """
+    def __init__(self, data):
+        self.data = data
+        """The dataset to plot or analyze."""
 
-    # Iterate over the concentrations for the axis that varies
-    for var_conc_str in var_concs_str:
-        col = colors[col_index % len(colors)]
-        col_index += 1
-        mse_val = 0
+    def plot_timecourses(self, axis_order=('tBid', 'Bax'),
+                         lipo_conc=10,
+                         fittype='explin', model=None,
+                         report=None, display=True):
+                         #major_axis=lipo_conc_str, fixed_conc_str,
+                         #fixed_axis='tBid',
 
-        # Get the timecourse to plot/fit
+        if display:
+            plt.ion()
+
+        # axis_order[0] determines the concentration that we hold fixed.
+        # Check what the axis is and what value we're fixing it at
+        # Check which concentration axis we're varying
+        # Take the cross section of the data for that concentration
+        data_for_lipo_conc = self.data[lipo_conc]
+
+        # Then get the indices for the next level
+        major_axis_name = axis_order[0]
+        major_axis_index = data_for_lipo_conc.columns.names.index( \
+                                                            major_axis_name)
+        # Iterate over the concentrations for the major axis
+        for major_conc in data_for_lipo_conc.columns.levels[major_axis_index]:
+            # Get a cross-section of the data for that concentration
+            data_for_major_conc = data_for_lipo_conc.xs(major_conc, axis=1,
+                                                        level=major_axis_name)
+            # Start building a figure
+            plt.figure()
+            # Plot all of the timecourses across the minor axis
+            color_index = 0
+            for minor_conc, timecourse in data_for_major_conc.iteritems():
+                plt.plot(timecourse.keys(), timecourse, 's'+colors[color_index],
+                         label='%s %s' % (axis_order[1], minor_conc))
+                color_index += 1
+            # Add a legend
+            plt.legend(loc='lower right')
+            plt.title("lipo %d, %s %d" % (lipo_conc, major_axis_name,
+                                          major_conc))
+            # Show and/or save the figure
+            if display:
+                plt.show()
+            if report:
+                report.add_current_figure()
+        # <end iteration over major-axis plots>
+        # Write the report
+        if report:
+            report.write_report()
+
+        """
+        col_index = 0
+        total_mse = 0
         if (fixed_axis == 'tBid'):
-            timecourse = data[lipo_conc_str][fixed_conc_str][var_conc_str]
+            var_concs_str = bax_concs_str
+            var_axis = 'Bax'
+        elif (fixed_axis == 'Bax'):
+            var_concs_str = tbid_concs_str
+            var_axis = 'tBid'
         else:
-            timecourse = data[lipo_conc_str][var_conc_str][fixed_conc_str]
-      
-        print(var_axis + ' conc ' + var_conc_str)
+            raise Exception("Unknown axis: " + fixed_axis)
 
-        # If no model object given as an argument, fit data to the specified function
-        if (model == None and not fittype == None):
-            (fit_time, fit_vals, mse_val) = get_rate_regression(timecourse, fittype,
-                                        tbid_conc=float(fixed_conc_str), bax_conc=float(var_conc_str))
-        # Otherwise, run the model with the given initial conditions
-        elif (not model == None):
-            fraction_dimerized = 0.02
+        # Iterate over the concentrations for the axis that varies
+        for var_conc_str in var_concs_str:
+            col = colors[col_index % len(colors)]
+            col_index += 1
+            mse_val = 0
+            # Get the timecourse to plot/fit
             if (fixed_axis == 'tBid'):
-                model.parameters['Bax_0'].value = float(var_conc_str)
-      #          model.parameters['Bax2_0'].value = 2 + float(fixed_conc_str)+0.001
-                model.parameters['tBid_0'].value = float(fixed_conc_str)
+                timecourse = data[lipo_conc_str][fixed_conc_str][var_conc_str]
             else:
-                model.parameters['Bax_0'].value = float(fixed_conc_str)
-      #          model.parameters['Bax2_0'].value = float(fixed_conc_str)*0 ## FIXME
-                model.parameters['tBid_0'].value = float(tBid_conc_str)
+                timecourse = data[lipo_conc_str][var_conc_str][fixed_conc_str]
+            print(var_axis + ' conc ' + var_conc_str)
 
-            # Run the model
-            fit_time = np.linspace(0, max(time), 100)
-            x = odesolve(model, fit_time)
-            #fit_vals = (x['eVes']/model.parameters['Vesicles_0'].value)*100
-            fit_vals = x['pores'] / 0.038
-            mse_val = 0 # FIXME
+            # If no model object given as an argument, fit data to the specified function
+            if (model == None and not fittype == None):
+                (fit_time, fit_vals, mse_val) = get_rate_regression(timecourse, fittype,
+                                            tbid_conc=float(fixed_conc_str),
+                                            bax_conc=float(var_conc_str))
+            # Otherwise, run the model with the given initial conditions
+            elif (not model == None):
+                fraction_dimerized = 0.02
+                if (fixed_axis == 'tBid'):
+                    model.parameters['Bax_0'].value = float(var_conc_str)
+          #          model.parameters['Bax2_0'].value = 2 + float(fixed_conc_str)+0.001
+                    model.parameters['tBid_0'].value = float(fixed_conc_str)
+                else:
+                    model.parameters['Bax_0'].value = float(fixed_conc_str)
+          #          model.parameters['Bax2_0'].value = float(fixed_conc_str)*0 ## FIXME
+                    model.parameters['tBid_0'].value = float(tBid_conc_str)
 
-        # Plot the data along with the fit/model trace
-        plt.plot(time, timecourse, 's'+col, label="_nolegend_")
+                # Run the model
+                fit_time = np.linspace(0, max(time), 100)
+                x = odesolve(model, fit_time)
+                #fit_vals = (x['eVes']/model.parameters['Vesicles_0'].value)*100
+                fit_vals = x['pores'] / 0.038
+                mse_val = 0 # FIXME
+            # Plot the data along with the fit/model trace
+            plt.plot(time, timecourse, 's'+col, label="_nolegend_")
+            if (not fittype==None):
+                plt.plot(fit_time, fit_vals, '-'+col, label=var_conc_str + " " + var_axis)
 
-        if (not fittype==None):
-            plt.plot(fit_time, fit_vals, '-'+col, label=var_conc_str + " " + var_axis)
+            #e = abs(randn(len(timecourse)))
+            #print e
+            #errorbar(time, timecourse, yerr=e, fmt='s'+col)
 
-        #e = abs(randn(len(timecourse)))
-        #print e
-        #errorbar(time, timecourse, yerr=e, fmt='s'+col)
+            total_mse += mse_val
 
-        total_mse += mse_val
+        plt.legend(loc='upper left')
+        plt.title('Fits for ' + lipo_conc_str + 'uL lipid, ' + fixed_conc_str + 'nM ' + fixed_axis)
+        #+ ', Fit: ' + (fittype if model == None else 'model'))
+        plt.ylabel('p(t) (avg pores per vesicle)')
+        plt.xlabel('Time (sec)')
 
-    plt.legend(loc='upper left')
-    plt.title('Fits for ' + lipo_conc_str + 'uL lipid, ' + fixed_conc_str + 'nM ' + fixed_axis)
-    #+ ', Fit: ' + (fittype if model == None else 'model'))
-    plt.ylabel('p(t) (avg pores per vesicle)')
-    plt.xlabel('Time (sec)')
-    if (fittype == None):
-        pass
-    elif (model == None): 
-        print('Fittype: ' + fittype + ', MSE: ' + str(total_mse))
-    else:
-        print('Fittype: model')
+        if (fittype == None):
+            pass
+        elif (model == None): 
+            print('Fittype: ' + fittype + ', MSE: ' + str(total_mse))
+        else:
+            print('Fittype: model')
 
-    if (report):
-        report.addCurrentFigure()
+        if (report):
+            report.addCurrentFigure()
+        if display:
+            plt.ioff()
+    """
+
+def test_plot_timecourses():
+    """Smoke test."""
+    ga = GridAnalysis(dt)
+    ga.plot_timecourses(display=False, report=Report())
+    assert True
 
 def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype='power',
                        model=None, axis='Bax', report=None):
@@ -327,7 +416,7 @@ def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype=
     report : :py:class:`tbidbaxlipo.util.Report`
         The Report object to add the dose response figures to. Default is None.
     """
-    
+
     plt.ion()
     plt.figure()
     col_index = 0
