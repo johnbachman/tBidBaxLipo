@@ -24,20 +24,6 @@ def fit(function, parameters, y, x = None, maxfev=100000):
     p = [param() for param in parameters]
     result = optimize.leastsq(f, p, ftol=1e-12, xtol=1e-12, maxfev=maxfev)
 
-def fit_initial(function, parameters, y, x = None, maxfev=10000):
-    def f(params):
-        i = 0
-        for p in parameters:
-            p.set(params[i])
-            i += 1
-        err = y - function(x)
-        err[1] = 5*err[1]
-        return err
-
-    if x is None: x = arange(y.shape[0])
-    p = [param() for param in parameters]
-    result = optimize.leastsq(f, p, ftol=1e-12, xtol=1e-12, maxfev=maxfev)
-
 def mse(function, y, x):
     err = y - function(x)
     n = err.shape[0]

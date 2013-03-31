@@ -18,30 +18,270 @@ from util.report import Report
 from pysb.integrate import odesolve
 from test_pandas import dt
 
-# Select the dataset ######################
-# FIXME make this a class that takes the data as an argument
-print("Using gridv2.")
-from data.gridv2 import time, data_tbidmaj
 
 colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
 
+class GridAnalysis(object):
+    """Functions for analyzing and plotting the ANTS/DPX datasets.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        A dataset from tbidbaxlipo.data.gridv1 or gridv2, in the form
+        of a hierarchical dataframe. The index levels are named 'Liposomes'
+        'tBid', and 'Bax' and are indexed by the concentrations/amounts
+        of each, as floats. The columns of the dataframe are the timepoints,
+        in seconds, as integers.
+    """
+    def __init__(self, data):
+        self.data = data
+        """The dataset to plot or analyze."""
+
+    def plot_timecourses(self, axis_order=('tBid', 'Bax'),
+                         lipo_conc=10,
+                         fittype='explin', model=None,
+                         report=None, display=True):
+        """Plot a cross-section of the ANTS/DPX timecourses.
+
+        In generating the plots, one axis (the "fixed" axis, is presumed
+        to be held constant, e.g., the amount of liposomes). The next
+        axis is the "major" axis: each value along the major axis, e.g.,
+        a concentration of tBid, is used to generate a figure. The values
+        along the "minor" axis (e.g., concentration of Bax) give rise to
+        curves in each figure.
+
+        Which concentration (liposomes, tBid, Bax) should serve as the
+        fixed, major, and minor axes can be specified by the arguments to the
+        function.
+
+        Parameters
+        ----------
+        axis_order : tuple of strings
+            The order of axes. axis_order[0] denotes the fixed axis,
+            axis_order[1] the major axis, and axis_order[2] the minor axis.
+        lipo_conc : number
+            An index into the liposome concentration axis.
+        fittype : string
+            A string (to be passed to :py:func:`get_rate_regression`)
+            specifying the curve fit type to be plot along with the data.
+        model : pysb.core.Model or None
+            If a mechanistic model is to be fit to the data, this can be set
+            here. If present it overrides the fittype argument.
+        report : tbidbaxlipo.util.Report
+            If not None, the report to save the figures to. Default is None.
+        display : boolean
+            Specifies whether the figures should be displayed interactively.
+            Default is True.
+        """
+
+        # If the plots should be displayed, turn on interactive mode
+        if display:
+            plt.ion()
+
+        # axis_order[0] determines the concentration that we hold fixed.
+        # Check what the axis is and what value we're fixing it at
+        # Check which concentration axis we're varying
+        # Take the cross section of the data for that concentration
+        data_for_lipo_conc = self.data[lipo_conc]
+
+        # Then get the indices for the next level
+        major_axis_name = axis_order[0]
+        major_axis_index = data_for_lipo_conc.columns.names.index( \
+                                                            major_axis_name)
+        # Iterate over the concentrations for the major axis
+        for major_conc in data_for_lipo_conc.columns.levels[major_axis_index]:
+            # Get a cross-section of the data for that concentration
+            data_for_major_conc = data_for_lipo_conc.xs(major_conc, axis=1,
+                                                        level=major_axis_name)
+
+            # -- Plot all of the timecourses across the minor axis --
+            plt.figure()
+            color_index = 0
+            for minor_conc, timecourse in data_for_major_conc.iteritems():
+                # Plot the data points
+                plt.plot(timecourse.keys().values, timecourse,
+                         's'+colors[color_index], label='__nolegend__')
+                # -- Fit data --
+                # If no model object given as an argument, fit data to the
+                # specified function
+                if (model == None and not fittype == None):
+                    (fit_time, fit_vals, mse_val) = \
+                                    get_rate_regression(timecourse, fittype)
+                    plt.plot(fit_time, fit_vals, '-'+colors[color_index],
+                             label="%s %s" % (axis_order[1], minor_conc))
+                color_index += 1
+            # Add a legend
+            plt.legend(loc='lower right')
+            plt.title("Fits for %d uL liposomes, %d nM %s " % \
+                        (lipo_conc, major_conc, major_axis_name))
+                    #+ ', Fit: ' + (fittype if model == None else 'model'))
+            #plt.ylabel('p(t) (avg pores per vesicle)') # FIXME
+            plt.xlabel('Time (sec)')
+            # Show and/or save the figure
+            if display:
+                plt.show()
+            if report:
+                report.add_current_figure()
+        # <end iteration over major-axis plots>
+        # Write the report
+        if report:
+            report.write_report()
+
+        """
+            # Otherwise, run the model with the given initial conditions
+            elif (not model == None):
+                fraction_dimerized = 0.02
+                if (fixed_axis == 'tBid'):
+                    model.parameters['Bax_0'].value = float(var_conc_str)
+          #          model.parameters['Bax2_0'].value = 2 + float(fixed_conc_str)+0.001
+                    model.parameters['tBid_0'].value = float(fixed_conc_str)
+                else:
+                    model.parameters['Bax_0'].value = float(fixed_conc_str)
+          #          model.parameters['Bax2_0'].value = float(fixed_conc_str)*0
+                    model.parameters['tBid_0'].value = float(tBid_conc_str)
+
+                # Run the model
+                fit_time = np.linspace(0, max(time), 100)
+                x = odesolve(model, fit_time)
+                #fit_vals = (x['eVes']/model.parameters['Vesicles_0'].value)*100
+                fit_vals = x['pores'] / 0.038
+                mse_val = 0 # FIXME
+
+            # Plot the data along with the fit/model trace
+            plt.plot(time, timecourse, 's'+col, label="_nolegend_")
+            if (not fittype==None):
+                plt.plot(fit_time, fit_vals, '-'+col, label=var_conc_str + " " + var_axis)
+
+            #e = abs(randn(len(timecourse)))
+            #print e
+            #errorbar(time, timecourse, yerr=e, fmt='s'+col)
+
+            total_mse += mse_val
+
+
+        if (fittype == None):
+            pass
+        elif (model == None): 
+            print('Fittype: ' + fittype + ', MSE: ' + str(total_mse))
+        else:
+            print('Fittype: model')
+
+        if (report):
+            report.addCurrentFigure()
+        if display:
+            plt.ioff()
+    """
+
+def get_rate_regression(timecourse, fittype):
+    """Get a fit curve for a timecourse.
+
+    Parameters
+    ----------
+    timecourse : pandas.Series
+        The timecourse to be fit.
+    fittype : string
+        One of the following:
+            * `singleexp`. Single exponential.
+            * `explin`. Exponential plus linear term.
+            * `doubleexp`. Sum of two exponentials
+            * `expexp`. Exponential raised to an exponential.
+
+    Returns
+    -------
+    tuple : (fit_time, fit_vals, mse_val)
+        * ``fit_time``: an array of timepoints for the fitted curve.
+        * ``fit_vals``: an array of values for the fitted curve.
+        * ``mse_val``: the mean squared error of the fit.
+    """
+
+    # Initial parameter guesses
+    k = Parameter(0.0025)
+    k2 = Parameter(0.00025)
+    fmax = Parameter(4)
+    fmax2 = Parameter(0.4)
+    m = Parameter(0.01)
+    #ki_parm = Parameter(0.0005)
+    #k0_parm = Parameter(0.0015)
+    #k0_parm = Parameter( (timecourse[1]-timecourse[0])/900)
+    # Based on a complete guess of 2500 sec for the half-life
+    #kt_parm = Parameter(2.8e-4)
+
+    # Define fitting function
+    #def biphasic(t): return (ki_parm()*t) + ( (k0_parm() - ki_parm()) *
+    #                                     ((1 - exp(-kt_parm()*t))/kt_parm()) )
+    def single_exp (t): return ((fmax()*(1 - np.exp(-k()*t))))
+    def exp_lin(t):     return ((fmax()*(1 - np.exp(-k()*t))) + (m()*t))
+    def double_exp(t):  return ((fmax()*(1 - np.exp(-k()*t)))  +
+                                (fmax2()*(1 - np.exp(-k2()*t))))
+    def exp_exp(t):     return ((fmax()*(1 - np.exp((1- np.exp(-k()*t))   ))))
+
+    # Run the fit
+    if (fittype == 'singleexp'):
+        fit(single_exp, [k, fmax], timecourse.values, timecourse.keys().values)
+        fitfunc = single_exp
+    elif (fittype == 'explin'):
+        fit(exp_lin, [k, fmax, m], timecourse.values, timecourse.keys().values)
+        fitfunc = exp_lin
+    elif (fittype == 'doubleexp'):
+        fit(double_exp, [k, fmax, k2, fmax2],
+            timecourse.values, timecourse.keys().values)
+        fitfunc = double_exp
+    elif (fittype == 'expexp'):
+        fit(exp_exp, [k, fmax], timecourse.values, timecourse.keys().values)
+        fitfunc = exp_exp
+    else:
+        raise Exception('unknown fit type')
+
+    # Calculate the mean squared error of the fit
+    mse_val = mse(fitfunc, timecourse.values, timecourse.keys().values)
+
+    # Return time/value pairs for fit curve, along with the error
+    fit_time = np.linspace(0, max(timecourse.keys().values), 200)
+    fit_vals = map(fitfunc, fit_time) 
+    return (fit_time, fit_vals, mse_val)
+
+
+def test_plot_timecourses():
+    """Smoke test."""
+    ga = GridAnalysis(dt) # FIXME setup
+    ga.plot_timecourses(display=False, report=Report())
+    assert True
+
+def test_get_rate_regression():
+    """Smoke test."""
+    get_rate_regression(dt[10][0][0], fittype='singleexp')
+    get_rate_regression(dt[10][0][0], fittype='explin')
+    get_rate_regression(dt[10][0][0], fittype='doubleexp')
+    get_rate_regression(dt[10][0][0], fittype='expexp')
+    assert True
+
+# TODO could add test for raising an exception for an unknown fit type
+
+# -- REFACTORING LINE --
+
+# Select the dataset ######################
+# FIXME make this a class that takes the data as an argument
+#print("Using gridv2.")
+#from data.gridv2 import time, data_tbidmaj
+
 # Assumes the grid is uniform/symmetric
 # FIXME handle all this with pandas
-lipo_concs_str = sort_numeric(data_tbidmaj.keys())
-tbid_concs_str = sort_numeric(data_tbidmaj[lipo_concs_str[0]].keys())
-bax_concs_str = sort_numeric(data_tbidmaj[lipo_concs_str[0]][tbid_concs_str[0]].keys())
+#lipo_concs_str = sort_numeric(data_tbidmaj.keys())
+#tbid_concs_str = sort_numeric(data_tbidmaj[lipo_concs_str[0]].keys())
+#bax_concs_str = sort_numeric(data_tbidmaj[lipo_concs_str[0]][tbid_concs_str[0]].keys())
 
 # Reconfigure data array into "Bax major" order
 # (i.e., indexing is lipo/Bax/tBid, rather than lipo/tBid/Bax
-data_baxmaj = {}
+#data_baxmaj = {}
+#
+#for lipo_conc_str in lipo_concs_str:
+#    data_baxmaj[lipo_conc_str] = {}
+#    for bax_conc_str in bax_concs_str:
+#        data_baxmaj[lipo_conc_str][bax_conc_str] = {}
+#        for tbid_conc_str in tbid_concs_str:
+#            data_baxmaj[lipo_conc_str][bax_conc_str][tbid_conc_str] = \
+#                        data_tbidmaj[lipo_conc_str][tbid_conc_str][bax_conc_str]
 
-for lipo_conc_str in lipo_concs_str:
-    data_baxmaj[lipo_conc_str] = {}
-    for bax_conc_str in bax_concs_str:
-        data_baxmaj[lipo_conc_str][bax_conc_str] = {}
-        for tbid_conc_str in tbid_concs_str:
-            data_baxmaj[lipo_conc_str][bax_conc_str][tbid_conc_str] = \
-                        data_tbidmaj[lipo_conc_str][tbid_conc_str][bax_conc_str]
 
 def apply_func_to_grid(func, grid, **kw_args):
     """Apply a function to the data grid.
@@ -144,15 +384,15 @@ def calc_bgsub(timecourse, grid, x, y, z):
     return bgsub_timecourse
 
 # FIXME Should be explicit from the setup of the dataframe
-tbid_concs = [float(conc_str) for conc_str in sort_numeric(data_tbidmaj[lipo_conc_str].keys())]
-bax_concs = [float(conc_str) for conc_str in sort_numeric(data_baxmaj[lipo_conc_str].keys())]
+#tbid_concs = [float(conc_str) for conc_str in sort_numeric(data_tbidmaj[lipo_conc_str].keys())]
+#bax_concs = [float(conc_str) for conc_str in sort_numeric(data_baxmaj[lipo_conc_str].keys())]
 
 #p = apply_func_to_grid(calc_pores, data_tbidmaj)    
-print("Using background (liposome-only) subtracted pore calculations.")
-p = apply_func_to_grid(calc_pores_bgsub, data_tbidmaj)    
-k0 = apply_func_to_grid(calc_k0, p, dt=time[1])
-ki = apply_func_to_grid(calc_ki, p)
-data_bgsub = apply_func_to_grid(calc_bgsub, data_tbidmaj)
+#print("Using background (liposome-only) subtracted pore calculations.")
+#p = apply_func_to_grid(calc_pores_bgsub, data_tbidmaj)    
+#k0 = apply_func_to_grid(calc_k0, p, dt=time[1])
+#ki = apply_func_to_grid(calc_ki, p)
+#data_bgsub = apply_func_to_grid(calc_bgsub, data_tbidmaj)
 
 ## UTILITY FUNCTIONS FOR PLOTTING/ANALYSIS ###################################
 # FIXME These could all go away; the caller will get the right field from the
@@ -173,220 +413,9 @@ def get_ki_v_bax(lipo_conc_str, tbid_conc_str):
     bax_dict = ki[lipo_conc_str][tbid_conc_str]
     return [bax_dict[key][0] for key in sort_numeric(bax_dict.keys())]
 
-# FIXME This could be a good func, the timecourses could be
-# FIXME calced one by one and included in a plot
-def get_rate_regression(timecourse, fittype, tbid_conc=None, bax_conc=None):
-    # FIXME Get rid of tbid_conc and bax_conc?
-    # Initial parameter guesses
-    #ki_parm = Parameter(0.0005)
-    #k0_parm = Parameter(0.0015)
-    #k0_parm = Parameter( (timecourse[1]-timecourse[0])/900)
-    #kt_parm = Parameter(2.8e-4) # Based on a complete guess of 2500 sec for the half-life
 
-    # Define fitting function
-    #def biphasic(t): return (ki_parm()*t) + ( (k0_parm() - ki_parm()) *
-    #                                          ((1 - exp(-kt_parm()*t))/kt_parm()) )
-    k = Parameter(0.0025)
-    k2 = Parameter(0.00025)
-    fmax = Parameter(4)
-    fmax2 = Parameter(0.4)
-    m = Parameter(0.01)
-
-    def single_exp (t): return ((fmax()*(1 - np.exp(-k()*t))))
-    def exp_lin(t):     return ((fmax()*(1 - np.exp(-k()*t))) + (m()*t))
-    def double_exp(t):  return ((fmax()*(1 - np.exp(-k()*t)))  +
-                                (fmax2()*(1 - np.exp(-k2()*t))))
-    def exp_exp(t):     return ((fmax()*(1 - np.exp((1- np.exp(-k()*t))   ))))
-
-    if (fittype == 'singleexp'):
-        fit(single_exp, [k, fmax], np.array(timecourse), np.array(time))
-        #fit_initial(single_exp, [k, fmax], array(timecourse), array(time))
-        fitfunc = single_exp
-    elif (fittype == 'explin'):
-        #k = Parameter(0.0033)
-        #if (not (tbid_conc == None and bax_conc == None)):
-        #    fmax = Parameter(0.021+(5.2e-5*(float(bax_conc)-30)))
-        #    print fmax()
-        fit(exp_lin, [k, fmax, m], np.array(timecourse), np.array(time))
-        #fit(exp_lin, [ m], array(timecourse), array(time))
-        print (fmax(), k(), m())
-        #fit_initial(exp_lin, [k, fmax, m], array(timecourse), array(time))
-        fitfunc = exp_lin
-    elif (fittype == 'doubleexp'):
-        fit(double_exp, [k, fmax, k2, fmax2], np.array(timecourse),
-            np.array(time))
-        #fit_initial(double_exp, [k, fmax, k2, fmax2], array(timecourse), array(time))
-        fitfunc = double_exp
-    elif (fittype == 'expexp'):
-        fit(exp_exp, [k, fmax], np.array(timecourse), np.array(time))
-        #fit_initial(exp_exp, [k, fmax], array(timecourse), array(time))
-        fitfunc = exp_exp
-    else:
-        raise Exception('unknown fit type')
-
-    mse_val = mse(fitfunc, np.array(timecourse), np.array(time))
-
-    # Perform the fit
-    #fit(biphasic, [ki_parm, k0_parm, kt_parm], array(timecourse), array(time))
-    #fit(biphasic, [ki_parm, kt_parm], array(timecourse), array(time))
-    #fit(biphasic, [ki_parm, k0_parm], array(timecourse), array(time))
-    #print("k0=" + str(k0_parm()) + ", ki=" + str(ki_parm()) + ", kt=" + str(kt_parm()) )
-
-    # Plot original values along with fitted values
-    fit_time = np.linspace(0, max(time), 200)
-    fit_vals = map(fitfunc, fit_time) 
-    return (fit_time, fit_vals, mse_val)
-
-## PLOTTING FUNCTIONS ########################################################
-# FIXME make display optional
-
-class GridAnalysis(object):
-    """Functions for analyzing and plotting the ANTS/DPX datasets.
-
-    Parameters
-    ----------
-    data : pandas.DataFrame
-        A dataset from tbidbaxlipo.data.gridv1 or gridv2, in the form
-        of a hierarchical dataframe. The index levels are named 'Liposomes'
-        'tBid', and 'Bax' and are indexed by the concentrations/amounts
-        of each, as floats. The columns of the dataframe are the timepoints,
-        in seconds, as integers.
-    """
-    def __init__(self, data):
-        self.data = data
-        """The dataset to plot or analyze."""
-
-    def plot_timecourses(self, axis_order=('tBid', 'Bax'),
-                         lipo_conc=10,
-                         fittype='explin', model=None,
-                         report=None, display=True):
-                         #major_axis=lipo_conc_str, fixed_conc_str,
-                         #fixed_axis='tBid',
-
-        if display:
-            plt.ion()
-
-        # axis_order[0] determines the concentration that we hold fixed.
-        # Check what the axis is and what value we're fixing it at
-        # Check which concentration axis we're varying
-        # Take the cross section of the data for that concentration
-        data_for_lipo_conc = self.data[lipo_conc]
-
-        # Then get the indices for the next level
-        major_axis_name = axis_order[0]
-        major_axis_index = data_for_lipo_conc.columns.names.index( \
-                                                            major_axis_name)
-        # Iterate over the concentrations for the major axis
-        for major_conc in data_for_lipo_conc.columns.levels[major_axis_index]:
-            # Get a cross-section of the data for that concentration
-            data_for_major_conc = data_for_lipo_conc.xs(major_conc, axis=1,
-                                                        level=major_axis_name)
-            # Start building a figure
-            plt.figure()
-            # Plot all of the timecourses across the minor axis
-            color_index = 0
-            for minor_conc, timecourse in data_for_major_conc.iteritems():
-                plt.plot(timecourse.keys(), timecourse, 's'+colors[color_index],
-                         label='%s %s' % (axis_order[1], minor_conc))
-                color_index += 1
-            # Add a legend
-            plt.legend(loc='lower right')
-            plt.title("lipo %d, %s %d" % (lipo_conc, major_axis_name,
-                                          major_conc))
-            # Show and/or save the figure
-            if display:
-                plt.show()
-            if report:
-                report.add_current_figure()
-        # <end iteration over major-axis plots>
-        # Write the report
-        if report:
-            report.write_report()
-
-        """
-        col_index = 0
-        total_mse = 0
-        if (fixed_axis == 'tBid'):
-            var_concs_str = bax_concs_str
-            var_axis = 'Bax'
-        elif (fixed_axis == 'Bax'):
-            var_concs_str = tbid_concs_str
-            var_axis = 'tBid'
-        else:
-            raise Exception("Unknown axis: " + fixed_axis)
-
-        # Iterate over the concentrations for the axis that varies
-        for var_conc_str in var_concs_str:
-            col = colors[col_index % len(colors)]
-            col_index += 1
-            mse_val = 0
-            # Get the timecourse to plot/fit
-            if (fixed_axis == 'tBid'):
-                timecourse = data[lipo_conc_str][fixed_conc_str][var_conc_str]
-            else:
-                timecourse = data[lipo_conc_str][var_conc_str][fixed_conc_str]
-            print(var_axis + ' conc ' + var_conc_str)
-
-            # If no model object given as an argument, fit data to the specified function
-            if (model == None and not fittype == None):
-                (fit_time, fit_vals, mse_val) = get_rate_regression(timecourse, fittype,
-                                            tbid_conc=float(fixed_conc_str),
-                                            bax_conc=float(var_conc_str))
-            # Otherwise, run the model with the given initial conditions
-            elif (not model == None):
-                fraction_dimerized = 0.02
-                if (fixed_axis == 'tBid'):
-                    model.parameters['Bax_0'].value = float(var_conc_str)
-          #          model.parameters['Bax2_0'].value = 2 + float(fixed_conc_str)+0.001
-                    model.parameters['tBid_0'].value = float(fixed_conc_str)
-                else:
-                    model.parameters['Bax_0'].value = float(fixed_conc_str)
-          #          model.parameters['Bax2_0'].value = float(fixed_conc_str)*0 ## FIXME
-                    model.parameters['tBid_0'].value = float(tBid_conc_str)
-
-                # Run the model
-                fit_time = np.linspace(0, max(time), 100)
-                x = odesolve(model, fit_time)
-                #fit_vals = (x['eVes']/model.parameters['Vesicles_0'].value)*100
-                fit_vals = x['pores'] / 0.038
-                mse_val = 0 # FIXME
-            # Plot the data along with the fit/model trace
-            plt.plot(time, timecourse, 's'+col, label="_nolegend_")
-            if (not fittype==None):
-                plt.plot(fit_time, fit_vals, '-'+col, label=var_conc_str + " " + var_axis)
-
-            #e = abs(randn(len(timecourse)))
-            #print e
-            #errorbar(time, timecourse, yerr=e, fmt='s'+col)
-
-            total_mse += mse_val
-
-        plt.legend(loc='upper left')
-        plt.title('Fits for ' + lipo_conc_str + 'uL lipid, ' + fixed_conc_str + 'nM ' + fixed_axis)
-        #+ ', Fit: ' + (fittype if model == None else 'model'))
-        plt.ylabel('p(t) (avg pores per vesicle)')
-        plt.xlabel('Time (sec)')
-
-        if (fittype == None):
-            pass
-        elif (model == None): 
-            print('Fittype: ' + fittype + ', MSE: ' + str(total_mse))
-        else:
-            print('Fittype: model')
-
-        if (report):
-            report.addCurrentFigure()
-        if display:
-            plt.ioff()
-    """
-
-def test_plot_timecourses():
-    """Smoke test."""
-    ga = GridAnalysis(dt)
-    ga.plot_timecourses(display=False, report=Report())
-    assert True
-
-def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False, fittype='power',
+def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False,
+                       fittype='power',
                        model=None, axis='Bax', report=None):
     """ Given a lipid concentration, plot the initial or final rate vs. Bax
     concentration dose response, with a separate curve for each tBid
