@@ -39,172 +39,6 @@ class GridAnalysis(object):
         """pandas.DataFrame: The average number of pores per liposome."""
         #self.pore_data_lipo_sub = self.calc_pores_lipo_sub()
 
-    def plot_timecourses(self,
-                         data_type='raw',
-                         axis_order=('Liposomes', 'tBid', 'Bax'),
-                         fixed_conc=10,
-                         fittype='explin', model=None,
-                         report=None, display=True):
-        """Plot a cross-section of the ANTS/DPX timecourses.
-
-        In generating the plots, one axis (the "fixed" axis, is presumed
-        to be held constant, e.g., the amount of liposomes). The next
-        axis is the "major" axis: each value along the major axis, e.g.,
-        a concentration of tBid, is used to generate a figure. The values
-        along the "minor" axis (e.g., concentration of Bax) give rise to
-        curves in each figure.
-
-        Which concentration (liposomes, tBid, Bax) should serve as the
-        fixed, major, and minor axes can be specified by the arguments to the
-        function.
-
-        Parameters
-        ----------
-        data_type : string
-            'raw' or 'pore'. 'raw' indicates that the original dye release
-            data should be plotted, whereas 'pore' indicates that the
-            data transformed to give the average number of pores per
-            liposome (as calculated by :py:func:`calc_pores`) should be
-            plotted. Default is 'raw'.
-        axis_order : 3-tuple of strings
-            The order of axes. axis_order[0] denotes the fixed axis,
-            axis_order[1] the major axis, and axis_order[2] the minor axis.
-        fixed_conc : number
-            The concentration index into the fixed axis (specified by
-            ``axis_order[0]``) for the value to use for all plots (e.g., 10,
-            for the 10 uL condition for the liposome axis).
-        fittype : string
-            A string (to be passed to :py:func:`get_rate_regression`)
-            specifying the curve fit type to be plot along with the data.
-        model : pysb.core.Model or None
-            If a mechanistic model is to be fit to the data, this can be set
-            here. If present it overrides the fittype argument.
-        report : tbidbaxlipo.util.Report
-            If not None, the report to save the figures to. Default is None.
-        display : boolean
-            Specifies whether the figures should be displayed interactively.
-            Default is True.
-
-        Raises
-        ------
-        ValueError
-            If the fixed_conc specified is not a valid key for the fixed
-            axis (i.e., axis_order[0]).
-        """
-
-        # If the plots should be displayed, turn on interactive mode
-        if display:
-            plt.ion()
-
-        # Get the appropriate data
-        if data_type == 'raw':
-            data = self.raw_data
-        elif data_type == 'pore':
-            data = self.pore_data
-        else:
-            raise ValueError('Received illegal value for data_type: %s' %
-                             data_type)
-
-        # Make sure the fixed_conc specified is a valid key for the fixed axis
-        fixed_axis_index = data.index.names.index(axis_order[0])
-        data.index.levels[fixed_axis_index]
-        if fixed_conc not in data.index.levels[fixed_axis_index]:
-            raise ValueError('fixed_conc %s is not a valid index into the '
-                             'axis level %s!' % (fixed_conc, axis_order[0]))
-
-
-        # axis_order[0] determines the concentration that we hold fixed.
-        # Take the cross section of the data for the fixed concentration:
-        data_for_fixed_conc = data.xs(fixed_conc, axis=0, level=axis_order[0])
-
-        # Then get the level index for the next level
-        major_axis_name = axis_order[1]
-        major_axis_index = data_for_fixed_conc.index.names.index( \
-                                                            major_axis_name)
-        # Iterate over the concentrations for the major axis
-        for major_conc in data_for_fixed_conc.index.levels[major_axis_index]:
-
-            # Get a cross-section of the data for the major concentration
-            data_for_major_conc = data_for_fixed_conc.xs(major_conc, axis=0,
-                                                         level=major_axis_name)
-
-            # -- Plot all of the timecourses across the minor axis --
-            plt.figure()
-            color_index = 0
-            for minor_conc, timecourse in data_for_major_conc.iterrows():
-                # Plot the data points
-                plt.plot(timecourse.keys().values, timecourse,
-                         's'+colors[color_index], label='__nolegend__')
-                # -- Fit data --
-                # If no model object given as an argument, fit data to the
-                # specified function
-                if (model == None and not fittype == None):
-                    (fit_time, fit_vals, mse_val) = \
-                                    get_rate_regression(timecourse, fittype)
-                    plt.plot(fit_time, fit_vals, '-'+colors[color_index],
-                             label="%s %s" % (axis_order[2], minor_conc))
-                color_index += 1
-            # Add a legend
-            plt.legend(loc='lower right')
-            plt.title("Fits for %d uL liposomes, %d nM %s " % \
-                        (fixed_conc, major_conc, major_axis_name))
-                    #+ ', Fit: ' + (fittype if model == None else 'model'))
-            #plt.ylabel('p(t) (avg pores per vesicle)') # FIXME
-            plt.xlabel('Time (sec)')
-            # Show and/or save the figure
-            if display:
-                plt.show()
-            if report:
-                report.add_current_figure()
-        # <end iteration over major-axis plots>
-        # Write the report
-        if report:
-            report.write_report()
-
-        """
-            # Otherwise, run the model with the given initial conditions
-            elif (not model == None):
-                fraction_dimerized = 0.02
-                if (fixed_axis == 'tBid'):
-                    model.parameters['Bax_0'].value = float(var_conc_str)
-          #          model.parameters['Bax2_0'].value = 2 + float(fixed_conc_str)+0.001
-                    model.parameters['tBid_0'].value = float(fixed_conc_str)
-                else:
-                    model.parameters['Bax_0'].value = float(fixed_conc_str)
-          #          model.parameters['Bax2_0'].value = float(fixed_conc_str)*0
-                    model.parameters['tBid_0'].value = float(tBid_conc_str)
-
-                # Run the model
-                fit_time = np.linspace(0, max(time), 100)
-                x = odesolve(model, fit_time)
-                #fit_vals = (x['eVes']/model.parameters['Vesicles_0'].value)*100
-                fit_vals = x['pores'] / 0.038
-                mse_val = 0 # FIXME
-
-            # Plot the data along with the fit/model trace
-            plt.plot(time, timecourse, 's'+col, label="_nolegend_")
-            if (not fittype==None):
-                plt.plot(fit_time, fit_vals, '-'+col, label=var_conc_str + " " + var_axis)
-
-            #e = abs(randn(len(timecourse)))
-            #print e
-            #errorbar(time, timecourse, yerr=e, fmt='s'+col)
-
-            total_mse += mse_val
-
-        if (fittype == None):
-            pass
-        elif (model == None): 
-            print('Fittype: ' + fittype + ', MSE: ' + str(total_mse))
-        else:
-            print('Fittype: model')
-
-        if (report):
-            report.addCurrentFigure()
-        if display:
-            plt.ioff()
-    """
-
     def calc_pores(self, warnings=True):
         """Calculate the average number of pores per liposome from the data.
 
@@ -253,6 +87,161 @@ class GridAnalysis(object):
             pore_df[concs] = pore_timecourse
         # Return the new dataframe
         return pore_df
+
+def plot_timecourses(data,
+                     axis_order=('Liposomes', 'tBid', 'Bax'),
+                     fixed_conc=10,
+                     fittype='explin', model=None,
+                     report=None, display=True):
+    """Plot a cross-section of the ANTS/DPX timecourses.
+
+    In generating the plots, one axis (the "fixed" axis, is presumed
+    to be held constant, e.g., the amount of liposomes). The next
+    axis is the "major" axis: each value along the major axis, e.g.,
+    a concentration of tBid, is used to generate a figure. The values
+    along the "minor" axis (e.g., concentration of Bax) give rise to
+    curves in each figure.
+
+    Which concentration (liposomes, tBid, Bax) should serve as the
+    fixed, major, and minor axes can be specified by the arguments to the
+    function.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        A dataframe with timecourses for each (Liposome, tBid, Bax) 
+        concentration combination. The data could be the raw data,
+        average pore per liposome data, background subtracted, etc.
+        The concentrations should be a hierarchical index on the rows,
+        with the time points as the columns.
+    axis_order : 3-tuple of strings
+        The order of axes. axis_order[0] denotes the fixed axis,
+        axis_order[1] the major axis, and axis_order[2] the minor axis.
+    fixed_conc : number
+        The concentration index into the fixed axis (specified by
+        ``axis_order[0]``) for the value to use for all plots (e.g., 10,
+        for the 10 uL condition for the liposome axis).
+    fittype : string
+        A string (to be passed to :py:func:`get_rate_regression`)
+        specifying the curve fit type to be plot along with the data.
+    model : pysb.core.Model or None
+        If a mechanistic model is to be fit to the data, this can be set
+        here. If present it overrides the fittype argument.
+    report : tbidbaxlipo.util.Report
+        If not None, the report to save the figures to. Default is None.
+    display : boolean
+        Specifies whether the figures should be displayed interactively.
+        Default is True.
+
+    Raises
+    ------
+    ValueError
+        If the fixed_conc specified is not a valid key for the fixed
+        axis (i.e., axis_order[0]).
+    """
+
+    # If the plots should be displayed, turn on interactive mode
+    if display:
+        plt.ion()
+
+    # Make sure the fixed_conc specified is a valid key for the fixed axis
+    fixed_axis_index = data.index.names.index(axis_order[0])
+    data.index.levels[fixed_axis_index]
+    if fixed_conc not in data.index.levels[fixed_axis_index]:
+        raise ValueError('fixed_conc %s is not a valid index into the '
+                         'axis level %s!' % (fixed_conc, axis_order[0]))
+
+    # axis_order[0] determines the concentration that we hold fixed.
+    # Take the cross section of the data for the fixed concentration:
+    data_for_fixed_conc = data.xs(fixed_conc, axis=0, level=axis_order[0])
+
+    # Then get the level index for the next level
+    major_axis_name = axis_order[1]
+    major_axis_index = data_for_fixed_conc.index.names.index( \
+                                                        major_axis_name)
+    # Iterate over the concentrations for the major axis
+    for major_conc in data_for_fixed_conc.index.levels[major_axis_index]:
+
+        # Get a cross-section of the data for the major concentration
+        data_for_major_conc = data_for_fixed_conc.xs(major_conc, axis=0,
+                                                     level=major_axis_name)
+
+        # -- Plot all of the timecourses across the minor axis --
+        plt.figure()
+        color_index = 0
+        for minor_conc, timecourse in data_for_major_conc.iterrows():
+            # Plot the data points
+            plt.plot(timecourse.keys().values, timecourse,
+                     's'+colors[color_index], label='__nolegend__')
+            # -- Fit data --
+            # If no model object given as an argument, fit data to the
+            # specified function
+            if (model == None and not fittype == None):
+                (fit_time, fit_vals, mse_val) = \
+                                get_rate_regression(timecourse, fittype)
+                plt.plot(fit_time, fit_vals, '-'+colors[color_index],
+                         label="%s %s" % (axis_order[2], minor_conc))
+            color_index += 1
+        # Add a legend
+        plt.legend(loc='lower right')
+        plt.title("Fits for %d uL liposomes, %d nM %s " % \
+                    (fixed_conc, major_conc, major_axis_name))
+                #+ ', Fit: ' + (fittype if model == None else 'model'))
+        #plt.ylabel('p(t) (avg pores per vesicle)') # FIXME
+        plt.xlabel('Time (sec)')
+        # Show and/or save the figure
+        if display:
+            plt.show()
+        if report:
+            report.add_current_figure()
+    # <end iteration over major-axis plots>
+    # Write the report
+    if report:
+        report.write_report()
+
+    """
+        # Otherwise, run the model with the given initial conditions
+        elif (not model == None):
+            fraction_dimerized = 0.02
+            if (fixed_axis == 'tBid'):
+                model.parameters['Bax_0'].value = float(var_conc_str)
+      #          model.parameters['Bax2_0'].value = 2 + float(fixed_conc_str)+0.001
+                model.parameters['tBid_0'].value = float(fixed_conc_str)
+            else:
+                model.parameters['Bax_0'].value = float(fixed_conc_str)
+      #          model.parameters['Bax2_0'].value = float(fixed_conc_str)*0
+                model.parameters['tBid_0'].value = float(tBid_conc_str)
+
+            # Run the model
+            fit_time = np.linspace(0, max(time), 100)
+            x = odesolve(model, fit_time)
+            #fit_vals = (x['eVes']/model.parameters['Vesicles_0'].value)*100
+            fit_vals = x['pores'] / 0.038
+            mse_val = 0 # FIXME
+
+        # Plot the data along with the fit/model trace
+        plt.plot(time, timecourse, 's'+col, label="_nolegend_")
+        if (not fittype==None):
+            plt.plot(fit_time, fit_vals, '-'+col, label=var_conc_str + " " + var_axis)
+
+        #e = abs(randn(len(timecourse)))
+        #print e
+        #errorbar(time, timecourse, yerr=e, fmt='s'+col)
+
+        total_mse += mse_val
+
+    if (fittype == None):
+        pass
+    elif (model == None): 
+        print('Fittype: ' + fittype + ', MSE: ' + str(total_mse))
+    else:
+        print('Fittype: model')
+
+    if (report):
+        report.addCurrentFigure()
+    if display:
+        plt.ioff()
+"""
 
 def get_rate_regression(timecourse, fittype):
     """Get a fit curve for a timecourse.
@@ -327,8 +316,8 @@ def get_rate_regression(timecourse, fittype):
 def test_plot_timecourses():
     """plot_timecourses should run without error."""
     ga = GridAnalysis(df)
-    ga.plot_timecourses(data_type='raw', display=False)
-    ga.plot_timecourses(data_type='pore', display=False)
+    plot_timecourses(ga.raw_data, display=False)
+    plot_timecourses(ga.pore_data, display=False)
     assert True
 
 @raises(ValueError)
@@ -336,17 +325,17 @@ def test_plot_timecourses_illegal_fixed_conc():
     """plot_timecourses should error if the fixed_conc is an invalid key
     for the fixed axis (i.e., for axis_order[0])."""
     ga = GridAnalysis(df)
-    ga.plot_timecourses(data_type='raw', display=False,
-                        axis_order=('tBid', 'Liposomes', 'Bax'))
+    plot_timecourses(ga.raw_data, display=False,
+                     axis_order=('tBid', 'Liposomes', 'Bax'))
 
 def test_calc_pores():
-    """Smoke test."""
+    """GridAnalysis.calc_pores should run without error."""
     ga = GridAnalysis(df)
     ga.calc_pores(warnings=False)
     assert True
 
 def test_get_rate_regression():
-    """Smoke test."""
+    """GridAnalysis.get_rate_regression should run without error."""
     get_rate_regression(df.loc[10,0,0], fittype='singleexp')
     get_rate_regression(df.loc[10,0,0], fittype='explin')
     get_rate_regression(df.loc[10,0,0], fittype='doubleexp')
