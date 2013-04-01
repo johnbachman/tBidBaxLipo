@@ -17,6 +17,7 @@ from util.numsort import sorted_copy as sort_numeric
 from util.report import Report
 from test_pandas import df
 from nose.tools import raises
+import pandas as pd
 
 colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
 
@@ -38,6 +39,9 @@ class GridAnalysis(object):
         self.pore_data = self.calc_pores(warnings=False)
         """pandas.DataFrame: The average number of pores per liposome."""
         #self.pore_data_lipo_sub = self.calc_pores_lipo_sub()
+        """pandas.DataFrame: pore data with background signal subtracted."""
+        self.explin_params = self.calc_explin_params()
+        """pandas.DataFrame: ki, kf, and tau for each set of concentrations."""
 
     def calc_pores(self, warnings=True):
         """Calculate the average number of pores per liposome from the data.
@@ -69,11 +73,11 @@ class GridAnalysis(object):
         # Make the pore timecourse dataframe a copy of the raw data
         pore_df = self.raw_data.copy()
         # Iterate over all (liposome, tbid, bax) combinations:
-        for concs in self.raw_data:
+        for concs, timecourse in self.raw_data.iterrows():
             pore_timecourse = []
             # For every value in the raw data, convert to the -log of the
             # efflux data and append to the pore_timecourse
-            for val in self.raw_data[concs]:
+            for val in timecourse:
                 p  = (100 - val)/100
                 if p < 0:
                     pore_timecourse.append(1)
@@ -84,9 +88,132 @@ class GridAnalysis(object):
                 else:
                     pore_timecourse.append(-math.log(float(p)))
             # Plug the calculated pore timecourse into the pore dataframe
-            pore_df[concs] = pore_timecourse
+            pore_df.loc[concs] = pore_timecourse
         # Return the new dataframe
         return pore_df
+
+    def calc_explin_params(self):
+        r"""Calculate an exponential-linear fit for each set of concentrations.
+
+        Fits the equation
+
+        .. math::
+
+            F_{max} \left(1 - e^{-kt}\right) + mt
+
+        to the pore data.
+
+        Returns
+        -------
+        pandas.DataFrame
+            Hierarchical DataFrame corresponding to the original data but with
+            the data for "k", "fmax", and "m" in the columns.
+        """
+
+        # Make the pore timecourse dataframe a copy of the raw data
+        explin_dict = {}
+        # Iterate over all (liposome, tbid, bax) combinations:
+        for concs, timecourse in self.pore_data.iterrows():
+            # Get an exponential linear fit and put the parameters
+            # in the dataframe
+            explin_fit_result = get_rate_regression(timecourse,
+                                                    fittype='explin')
+            explin_dict[concs] = pd.Series(explin_fit_result.parameters)
+        df = pd.DataFrame(explin_dict).T
+        df.index = self.pore_data.index
+        return df
+
+class FitResult(object):
+    """A class to store the results of fitting a model to a timecourse.
+
+    Parameters
+    ----------
+    fit_time : numpy.array
+        An array of timepoints for the fitted function.
+    fit_vals : numpy.array
+        The predicted values at each timepoint.
+    mse_val : number
+        Mean squared error of the fit.
+    parameters : dict
+        Parameters of the fit, as name/value pairs.
+    """
+    def __init__(self, fit_time, fit_vals, mse_val, parameters):
+        self.fit_time = fit_time
+        self.fit_vals = fit_vals
+        self.mse_val = mse_val
+        self.parameters = parameters
+
+def get_rate_regression(timecourse, fittype='explin'):
+    """Get a fit curve for a timecourse.
+
+    Parameters
+    ----------
+    timecourse : pandas.Series
+        The timecourse to be fit.
+    fittype : string
+        One of the following:
+            * `singleexp`. Single exponential.
+            * `explin`. Exponential plus linear term (default).
+            * `doubleexp`. Sum of two exponentials
+            * `expexp`. Exponential raised to an exponential.
+
+    Returns
+    -------
+    FitResult object
+        Contains the (time, val) coordinates for the fitted curve as well
+        as the mean squared error and parameter values.
+    """
+
+    # Initial parameter guesses
+    k = Parameter(0.0025)
+    k2 = Parameter(0.00025)
+    fmax = Parameter(4)
+    fmax2 = Parameter(0.4)
+    m = Parameter(0.01)
+    #ki_parm = Parameter(0.0005)
+    #k0_parm = Parameter(0.0015)
+    #k0_parm = Parameter( (timecourse[1]-timecourse[0])/900)
+    # Based on a complete guess of 2500 sec for the half-life
+    #kt_parm = Parameter(2.8e-4)
+
+    # Define fitting function
+    #def biphasic(t): return (ki_parm()*t) + ( (k0_parm() - ki_parm()) *
+    #                                     ((1 - exp(-kt_parm()*t))/kt_parm()) )
+    def single_exp (t): return ((fmax()*(1 - np.exp(-k()*t))))
+    def exp_lin(t):     return ((fmax()*(1 - np.exp(-k()*t))) + (m()*t))
+    def double_exp(t):  return ((fmax()*(1 - np.exp(-k()*t)))  +
+                                (fmax2()*(1 - np.exp(-k2()*t))))
+    def exp_exp(t):     return ((fmax()*(1 - np.exp((1- np.exp(-k()*t))   ))))
+
+    parameters = None
+    # Run the fit
+    if (fittype == 'singleexp'):
+        fit(single_exp, [k, fmax], timecourse.values, timecourse.keys().values)
+        fitfunc = single_exp
+        parameters = {'k': k(), 'fmax':fmax()}
+    elif (fittype == 'explin'):
+        fit(exp_lin, [k, fmax, m], timecourse.values, timecourse.keys().values)
+        fitfunc = exp_lin
+        parameters = {'k': k(), 'fmax':fmax(), 'm':m()}
+    elif (fittype == 'doubleexp'):
+        fit(double_exp, [k, fmax, k2, fmax2],
+            timecourse.values, timecourse.keys().values)
+        fitfunc = double_exp
+        parameters = {'k': k(), 'fmax':fmax(), 'k2':k2(), 'fmax':fmax2()}
+    elif (fittype == 'expexp'):
+        fit(exp_exp, [k, fmax], timecourse.values, timecourse.keys().values)
+        fitfunc = exp_exp
+        parameters = {'k': k(), 'fmax':fmax()}
+    else:
+        raise Exception('unknown fit type')
+
+    # Calculate the mean squared error of the fit
+    mse_val = mse(fitfunc, timecourse.values, timecourse.keys().values)
+
+    # Return time/value pairs for fit curve, along with the error
+    fit_time = np.linspace(0, max(timecourse.keys().values), 200)
+    fit_vals = map(fitfunc, fit_time) 
+    return FitResult(fit_time, fit_vals, mse_val, parameters)
 
 def plot_timecourses(data,
                      axis_order=('Liposomes', 'tBid', 'Bax'),
@@ -95,10 +222,10 @@ def plot_timecourses(data,
                      report=None, display=True):
     """Plot a cross-section of the ANTS/DPX timecourses.
 
-    In generating the plots, one axis (the "fixed" axis, is presumed
-    to be held constant, e.g., the amount of liposomes). The next
-    axis is the "major" axis: each value along the major axis, e.g.,
-    a concentration of tBid, is used to generate a figure. The values
+    In generating the plots, one axis (the "fixed" axis), is presumed
+    to be held constant, (e.g., the amount of liposomes). The next
+    axis is the "major" axis: each value along the major axis (e.g.,
+    a concentration of tBid) is used to generate a figure. The values
     along the "minor" axis (e.g., concentration of Bax) give rise to
     curves in each figure.
 
@@ -177,9 +304,9 @@ def plot_timecourses(data,
             # If no model object given as an argument, fit data to the
             # specified function
             if (model == None and not fittype == None):
-                (fit_time, fit_vals, mse_val) = \
-                                get_rate_regression(timecourse, fittype)
-                plt.plot(fit_time, fit_vals, '-'+colors[color_index],
+                fit_result = get_rate_regression(timecourse, fittype)
+                plt.plot(fit_result.fit_time, fit_result.fit_vals,
+                         '-'+colors[color_index],
                          label="%s %s" % (axis_order[2], minor_conc))
             color_index += 1
         # Add a legend
@@ -242,74 +369,6 @@ def plot_timecourses(data,
     if display:
         plt.ioff()
 """
-
-def get_rate_regression(timecourse, fittype):
-    """Get a fit curve for a timecourse.
-
-    Parameters
-    ----------
-    timecourse : pandas.Series
-        The timecourse to be fit.
-    fittype : string
-        One of the following:
-            * `singleexp`. Single exponential.
-            * `explin`. Exponential plus linear term.
-            * `doubleexp`. Sum of two exponentials
-            * `expexp`. Exponential raised to an exponential.
-
-    Returns
-    -------
-    tuple : (fit_time, fit_vals, mse_val)
-        * ``fit_time``: an array of timepoints for the fitted curve.
-        * ``fit_vals``: an array of values for the fitted curve.
-        * ``mse_val``: the mean squared error of the fit.
-    """
-
-    # Initial parameter guesses
-    k = Parameter(0.0025)
-    k2 = Parameter(0.00025)
-    fmax = Parameter(4)
-    fmax2 = Parameter(0.4)
-    m = Parameter(0.01)
-    #ki_parm = Parameter(0.0005)
-    #k0_parm = Parameter(0.0015)
-    #k0_parm = Parameter( (timecourse[1]-timecourse[0])/900)
-    # Based on a complete guess of 2500 sec for the half-life
-    #kt_parm = Parameter(2.8e-4)
-
-    # Define fitting function
-    #def biphasic(t): return (ki_parm()*t) + ( (k0_parm() - ki_parm()) *
-    #                                     ((1 - exp(-kt_parm()*t))/kt_parm()) )
-    def single_exp (t): return ((fmax()*(1 - np.exp(-k()*t))))
-    def exp_lin(t):     return ((fmax()*(1 - np.exp(-k()*t))) + (m()*t))
-    def double_exp(t):  return ((fmax()*(1 - np.exp(-k()*t)))  +
-                                (fmax2()*(1 - np.exp(-k2()*t))))
-    def exp_exp(t):     return ((fmax()*(1 - np.exp((1- np.exp(-k()*t))   ))))
-
-    # Run the fit
-    if (fittype == 'singleexp'):
-        fit(single_exp, [k, fmax], timecourse.values, timecourse.keys().values)
-        fitfunc = single_exp
-    elif (fittype == 'explin'):
-        fit(exp_lin, [k, fmax, m], timecourse.values, timecourse.keys().values)
-        fitfunc = exp_lin
-    elif (fittype == 'doubleexp'):
-        fit(double_exp, [k, fmax, k2, fmax2],
-            timecourse.values, timecourse.keys().values)
-        fitfunc = double_exp
-    elif (fittype == 'expexp'):
-        fit(exp_exp, [k, fmax], timecourse.values, timecourse.keys().values)
-        fitfunc = exp_exp
-    else:
-        raise Exception('unknown fit type')
-
-    # Calculate the mean squared error of the fit
-    mse_val = mse(fitfunc, timecourse.values, timecourse.keys().values)
-
-    # Return time/value pairs for fit curve, along with the error
-    fit_time = np.linspace(0, max(timecourse.keys().values), 200)
-    fit_vals = map(fitfunc, fit_time) 
-    return (fit_time, fit_vals, mse_val)
 
 ## TESTS ###########
 
