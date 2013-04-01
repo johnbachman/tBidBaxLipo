@@ -12,7 +12,7 @@ Example usage::
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-from util.fitting import Parameter, fit, fit_initial, mse
+from util.fitting import Parameter, fit, mse
 from util.numsort import sorted_copy as sort_numeric
 from util.report import Report
 from pysb.integrate import odesolve
@@ -34,10 +34,11 @@ class GridAnalysis(object):
         in seconds, as integers.
     """
     def __init__(self, data):
-        self.data = data
-        """The dataset to plot or analyze."""
+        self.raw_data = data
+        """pandas.DataFrame: The dataset to plot or analyze."""
+        self.pore_data = self.calc_pores()
 
-    def plot_timecourses(self, axis_order=('tBid', 'Bax'),
+    def plot_timecourses(self, data_type='raw', axis_order=('tBid', 'Bax'),
                          lipo_conc=10,
                          fittype='explin', model=None,
                          report=None, display=True):
@@ -56,6 +57,12 @@ class GridAnalysis(object):
 
         Parameters
         ----------
+        data_type : string
+            'raw' or 'pore'. 'raw' indicates that the original dye release
+            data should be plotted, whereas 'pore' indicates that the
+            data transformed to give the average number of pores per
+            liposome (as calculated by :py:func:`calc_pores`) should be
+            plotted. Default is 'raw'.
         axis_order : tuple of strings
             The order of axes. axis_order[0] denotes the fixed axis,
             axis_order[1] the major axis, and axis_order[2] the minor axis.
@@ -78,11 +85,20 @@ class GridAnalysis(object):
         if display:
             plt.ion()
 
+        # Get the appropriate data
+        if data_type == 'raw':
+            data = self.raw_data
+        elif data_type == 'pore':
+            data = self.pore_data
+        else:
+            raise ValueError('Received illegal value for data_type: %s' %
+                             data_type)
+
         # axis_order[0] determines the concentration that we hold fixed.
         # Check what the axis is and what value we're fixing it at
         # Check which concentration axis we're varying
         # Take the cross section of the data for that concentration
-        data_for_lipo_conc = self.data[lipo_conc]
+        data_for_lipo_conc = data[lipo_conc]
 
         # Then get the indices for the next level
         major_axis_name = axis_order[0]
@@ -158,7 +174,6 @@ class GridAnalysis(object):
 
             total_mse += mse_val
 
-
         if (fittype == None):
             pass
         elif (model == None): 
@@ -171,6 +186,48 @@ class GridAnalysis(object):
         if display:
             plt.ioff()
     """
+
+    def calc_pores(self):
+        """Calculate the average number of pores per liposome from the data.
+
+        This calculation, which is based on the assumption of a Poisson
+        distribution of pores per liposome, can be used to calculate the
+        average number of pores per liposome from the efflux signal (which
+        gives the fraction of unpermeabilized liposomes). This is described
+        further in the work of Gerhard Schwartz.
+
+        Operates on the raw dye release data in ``self.raw_data`` and returns a
+        new dataframe containing the corresponding timecourses for average pore
+        numbers.
+
+        Returns
+        -------
+        pandas.DataFrame
+            Hierarchical DataFrame corresponding to the original data but with
+            the values in the timecourses transformed according to the formula
+
+            pore_val = -log((100 - raw_val)/100)
+        """
+        # Make the pore timecourse dataframe a copy of the raw data
+        pore_df = self.raw_data.copy()
+        # Iterate over all (liposome, tbid, bax) combinations:
+        for concs in self.raw_data:
+            pore_timecourse = []
+            # For every value in the raw data, convert to the -log of the
+            # efflux data and append to the pore_timecourse
+            for val in self.raw_data[concs]:
+                p  = (100 - val)/100
+                if p < 0:
+                    pore_timecourse.append(1)
+                    # If p < 0, then dye release is greater than 100%, so
+                    # print a warning
+                    print("Concs: %s: E(t) > 100%%!" % str(concs))
+                else:
+                    pore_timecourse.append(-math.log(float(p)))
+            # Plug the calculated pore timecourse into the pore dataframe
+            pore_df[concs] = pore_timecourse
+        # Return the new dataframe
+        return pore_df
 
 def get_rate_regression(timecourse, fittype):
     """Get a fit curve for a timecourse.
@@ -240,11 +297,19 @@ def get_rate_regression(timecourse, fittype):
     fit_vals = map(fitfunc, fit_time) 
     return (fit_time, fit_vals, mse_val)
 
+## TESTS ###########
 
 def test_plot_timecourses():
     """Smoke test."""
-    ga = GridAnalysis(dt) # FIXME setup
-    ga.plot_timecourses(display=False, report=Report())
+    ga = GridAnalysis(dt)
+    ga.plot_timecourses(data_type='raw', display=False, report=Report())
+    ga.plot_timecourses(data_type='pore', display=False, report=Report())
+    assert True
+
+def test_calc_pores():
+    """Smoke test."""
+    ga = GridAnalysis(dt)
+    ga.calc_pores()
     assert True
 
 def test_get_rate_regression():
@@ -341,18 +406,6 @@ def calc_ki(timecourse, grid, x, y, z, start_time_index=10):
     plin = timecourse[start_time_index:len(time)]
     (slope, intercept) = np.polyfit(tlin, plin, 1)
     return [slope, intercept]
-
-def calc_pores(timecourse, grid, x, y, z):
-    # FIXME A transformation on the data; should return another dataframe
-    p_timecourse = []
-    for val in timecourse:
-        p  = (100 - val)/100
-        if p < 0:
-            p_timecourse.append(1)
-            #print("E(t) > 100%!!")
-        else: 
-            p_timecourse.append(-math.log(float(p)))
-    return p_timecourse
 
 def calc_pores_bgsub(timecourse, grid, x, y, z):
     # FIXME A transformation on the data; should return another dataframe
