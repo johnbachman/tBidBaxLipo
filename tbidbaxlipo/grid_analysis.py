@@ -15,9 +15,8 @@ import matplotlib.pyplot as plt
 from util.fitting import Parameter, fit, mse
 from util.numsort import sorted_copy as sort_numeric
 from util.report import Report
-from pysb.integrate import odesolve
-from test_pandas import dt
-
+from test_pandas import df
+from nose.tools import raises
 
 colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
 
@@ -35,11 +34,15 @@ class GridAnalysis(object):
     """
     def __init__(self, data):
         self.raw_data = data
-        """pandas.DataFrame: The dataset to plot or analyze."""
-        self.pore_data = self.calc_pores()
+        """pandas.DataFrame: The original dye release data."""
+        self.pore_data = self.calc_pores(warnings=False)
+        """pandas.DataFrame: The average number of pores per liposome."""
+        #self.pore_data_lipo_sub = self.calc_pores_lipo_sub()
 
-    def plot_timecourses(self, data_type='raw', axis_order=('tBid', 'Bax'),
-                         lipo_conc=10,
+    def plot_timecourses(self,
+                         data_type='raw',
+                         axis_order=('Liposomes', 'tBid', 'Bax'),
+                         fixed_conc=10,
                          fittype='explin', model=None,
                          report=None, display=True):
         """Plot a cross-section of the ANTS/DPX timecourses.
@@ -63,11 +66,13 @@ class GridAnalysis(object):
             data transformed to give the average number of pores per
             liposome (as calculated by :py:func:`calc_pores`) should be
             plotted. Default is 'raw'.
-        axis_order : tuple of strings
+        axis_order : 3-tuple of strings
             The order of axes. axis_order[0] denotes the fixed axis,
             axis_order[1] the major axis, and axis_order[2] the minor axis.
-        lipo_conc : number
-            An index into the liposome concentration axis.
+        fixed_conc : number
+            The concentration index into the fixed axis (specified by
+            ``axis_order[0]``) for the value to use for all plots (e.g., 10,
+            for the 10 uL condition for the liposome axis).
         fittype : string
             A string (to be passed to :py:func:`get_rate_regression`)
             specifying the curve fit type to be plot along with the data.
@@ -79,6 +84,12 @@ class GridAnalysis(object):
         display : boolean
             Specifies whether the figures should be displayed interactively.
             Default is True.
+
+        Raises
+        ------
+        ValueError
+            If the fixed_conc specified is not a valid key for the fixed
+            axis (i.e., axis_order[0]).
         """
 
         # If the plots should be displayed, turn on interactive mode
@@ -94,26 +105,33 @@ class GridAnalysis(object):
             raise ValueError('Received illegal value for data_type: %s' %
                              data_type)
 
-        # axis_order[0] determines the concentration that we hold fixed.
-        # Check what the axis is and what value we're fixing it at
-        # Check which concentration axis we're varying
-        # Take the cross section of the data for that concentration
-        data_for_lipo_conc = data[lipo_conc]
+        # Make sure the fixed_conc specified is a valid key for the fixed axis
+        fixed_axis_index = data.index.names.index(axis_order[0])
+        data.index.levels[fixed_axis_index]
+        if fixed_conc not in data.index.levels[fixed_axis_index]:
+            raise ValueError('fixed_conc %s is not a valid index into the '
+                             'axis level %s!' % (fixed_conc, axis_order[0]))
 
-        # Then get the indices for the next level
-        major_axis_name = axis_order[0]
-        major_axis_index = data_for_lipo_conc.columns.names.index( \
+
+        # axis_order[0] determines the concentration that we hold fixed.
+        # Take the cross section of the data for the fixed concentration:
+        data_for_fixed_conc = data.xs(fixed_conc, axis=0, level=axis_order[0])
+
+        # Then get the level index for the next level
+        major_axis_name = axis_order[1]
+        major_axis_index = data_for_fixed_conc.index.names.index( \
                                                             major_axis_name)
         # Iterate over the concentrations for the major axis
-        for major_conc in data_for_lipo_conc.columns.levels[major_axis_index]:
-            # Get a cross-section of the data for that concentration
-            data_for_major_conc = data_for_lipo_conc.xs(major_conc, axis=1,
-                                                        level=major_axis_name)
+        for major_conc in data_for_fixed_conc.index.levels[major_axis_index]:
+
+            # Get a cross-section of the data for the major concentration
+            data_for_major_conc = data_for_fixed_conc.xs(major_conc, axis=0,
+                                                         level=major_axis_name)
 
             # -- Plot all of the timecourses across the minor axis --
             plt.figure()
             color_index = 0
-            for minor_conc, timecourse in data_for_major_conc.iteritems():
+            for minor_conc, timecourse in data_for_major_conc.iterrows():
                 # Plot the data points
                 plt.plot(timecourse.keys().values, timecourse,
                          's'+colors[color_index], label='__nolegend__')
@@ -124,12 +142,12 @@ class GridAnalysis(object):
                     (fit_time, fit_vals, mse_val) = \
                                     get_rate_regression(timecourse, fittype)
                     plt.plot(fit_time, fit_vals, '-'+colors[color_index],
-                             label="%s %s" % (axis_order[1], minor_conc))
+                             label="%s %s" % (axis_order[2], minor_conc))
                 color_index += 1
             # Add a legend
             plt.legend(loc='lower right')
             plt.title("Fits for %d uL liposomes, %d nM %s " % \
-                        (lipo_conc, major_conc, major_axis_name))
+                        (fixed_conc, major_conc, major_axis_name))
                     #+ ', Fit: ' + (fittype if model == None else 'model'))
             #plt.ylabel('p(t) (avg pores per vesicle)') # FIXME
             plt.xlabel('Time (sec)')
@@ -187,7 +205,7 @@ class GridAnalysis(object):
             plt.ioff()
     """
 
-    def calc_pores(self):
+    def calc_pores(self, warnings=True):
         """Calculate the average number of pores per liposome from the data.
 
         This calculation, which is based on the assumption of a Poisson
@@ -199,6 +217,12 @@ class GridAnalysis(object):
         Operates on the raw dye release data in ``self.raw_data`` and returns a
         new dataframe containing the corresponding timecourses for average pore
         numbers.
+
+        Parameters
+        ----------
+        warnings : boolean
+            If True (default), warnings are printed to standard out if the
+            calculated efflux value is greater than 100%.
 
         Returns
         -------
@@ -221,7 +245,8 @@ class GridAnalysis(object):
                     pore_timecourse.append(1)
                     # If p < 0, then dye release is greater than 100%, so
                     # print a warning
-                    print("Concs: %s: E(t) > 100%%!" % str(concs))
+                    if warnings:
+                        print("Concs: %s: E(t) > 100%%!" % str(concs))
                 else:
                     pore_timecourse.append(-math.log(float(p)))
             # Plug the calculated pore timecourse into the pore dataframe
@@ -300,24 +325,32 @@ def get_rate_regression(timecourse, fittype):
 ## TESTS ###########
 
 def test_plot_timecourses():
-    """Smoke test."""
-    ga = GridAnalysis(dt)
-    ga.plot_timecourses(data_type='raw', display=False, report=Report())
-    ga.plot_timecourses(data_type='pore', display=False, report=Report())
+    """plot_timecourses should run without error."""
+    ga = GridAnalysis(df)
+    ga.plot_timecourses(data_type='raw', display=False)
+    ga.plot_timecourses(data_type='pore', display=False)
     assert True
+
+@raises(ValueError)
+def test_plot_timecourses_illegal_fixed_conc():
+    """plot_timecourses should error if the fixed_conc is an invalid key
+    for the fixed axis (i.e., for axis_order[0])."""
+    ga = GridAnalysis(df)
+    ga.plot_timecourses(data_type='raw', display=False,
+                        axis_order=('tBid', 'Liposomes', 'Bax'))
 
 def test_calc_pores():
     """Smoke test."""
-    ga = GridAnalysis(dt)
-    ga.calc_pores()
+    ga = GridAnalysis(df)
+    ga.calc_pores(warnings=False)
     assert True
 
 def test_get_rate_regression():
     """Smoke test."""
-    get_rate_regression(dt[10][0][0], fittype='singleexp')
-    get_rate_regression(dt[10][0][0], fittype='explin')
-    get_rate_regression(dt[10][0][0], fittype='doubleexp')
-    get_rate_regression(dt[10][0][0], fittype='expexp')
+    get_rate_regression(df.loc[10,0,0], fittype='singleexp')
+    get_rate_regression(df.loc[10,0,0], fittype='explin')
+    get_rate_regression(df.loc[10,0,0], fittype='doubleexp')
+    get_rate_regression(df.loc[10,0,0], fittype='expexp')
     assert True
 
 # TODO could add test for raising an exception for an unknown fit type
@@ -407,7 +440,12 @@ def calc_ki(timecourse, grid, x, y, z, start_time_index=10):
     (slope, intercept) = np.polyfit(tlin, plin, 1)
     return [slope, intercept]
 
-def calc_pores_bgsub(timecourse, grid, x, y, z):
+"""
+def calc_pores_bgsub(self, timecourse, grid, x, y, z):
+    pore_lipo_sub_df = self.raw_data.copy()
+    # Get keys for liposome concentrations
+
+    for lipo_conc in 
     # FIXME A transformation on the data; should return another dataframe
     p_timecourse = []
     for i, val in enumerate(timecourse):
@@ -427,7 +465,7 @@ def calc_pores_bgsub(timecourse, grid, x, y, z):
             p_timecourse.append(p)
             #p_timecourse.append((float(p)))
     return p_timecourse
-
+"""
 def calc_bgsub(timecourse, grid, x, y, z):
     # FIXME A transformation on the data; should return another dataframe
     bgsub_timecourse = []
