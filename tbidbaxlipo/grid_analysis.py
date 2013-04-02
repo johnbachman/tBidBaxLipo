@@ -19,7 +19,7 @@ from test_pandas import df
 from nose.tools import raises
 import pandas as pd
 
-colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
+colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k', 'r', 'g', 'b', 'c', 'm']
 
 class GridAnalysis(object):
     """Functions for analyzing and plotting the ANTS/DPX datasets.
@@ -41,7 +41,7 @@ class GridAnalysis(object):
         #self.pore_data_lipo_sub = self.calc_pores_lipo_sub()
         """pandas.DataFrame: pore data with background signal subtracted."""
         self.explin_params = self.calc_explin_params()
-        """pandas.DataFrame: ki, kf, and tau for each set of concentrations."""
+        """pandas.DataFrame: fmax, k, and m for each set of concentrations."""
 
     def calc_pores(self, warnings=True):
         """Calculate the average number of pores per liposome from the data.
@@ -263,13 +263,11 @@ def plot_timecourses(data,
     Raises
     ------
     ValueError
-        If the fixed_conc specified is not a valid key for the fixed
-        axis (i.e., axis_order[0]).
+        * if the fixed_conc specified is not a valid key for the fixed
+          axis (i.e., axis_order[0])
+        * if one of the axis names in axis_order is not found in the
+          levels of the row index.
     """
-
-    # If the plots should be displayed, turn on interactive mode
-    if display:
-        plt.ion()
 
     # Make sure the fixed_conc specified is a valid key for the fixed axis
     fixed_axis_index = data.index.names.index(axis_order[0])
@@ -277,6 +275,15 @@ def plot_timecourses(data,
     if fixed_conc not in data.index.levels[fixed_axis_index]:
         raise ValueError('fixed_conc %s is not a valid index into the '
                          'axis level %s!' % (fixed_conc, axis_order[0]))
+    # Make sure all of the axes are legitimate
+    for axis_name in axis_order:
+        if axis_name not in data.index.names:
+            raise ValueError('axis %s not in the index of the levels of the '
+                             'data.' % axis_name)
+
+    # If the plots should be displayed, turn on interactive mode
+    if display:
+        plt.ion()
 
     # axis_order[0] determines the concentration that we hold fixed.
     # Take the cross section of the data for the fixed concentration:
@@ -370,7 +377,269 @@ def plot_timecourses(data,
         plt.ioff()
 """
 
+def plot_titration(data, param_name, axis_order=('Liposomes', 'tBid', 'Bax'),
+                   display=True, report=None):
+    """Plot kinetic parameters vs. concentration of tBid, Bax, or liposomes.
+
+    Plots the value of a kinetic parameter as a function of concentration.
+    Takes a DataFrame with parameter names (from a fit) as the columns,
+    and the concentrations as hierarchical indices on the rows. For each
+    concentration in the major axis, (e.g., liposomes), makes a figure; for
+    each concentration in the minor axis (e.g. tBid), adds a curve to the
+    figure; the value of the parameter is then plotted with the innermost
+    axis (e.g., Bax) as the x-coordinate.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        The parameter data derived from a fit to the timecourse data.
+    param_name : string
+        The name of the parameter to plot vs. concentration.
+    axis_order : 3-tuple of strings
+        The order of axes. axis_order[0] denotes the major axis,
+        axis_order[1] the minor axis, and axis_order[2] the innermost
+        (x-coordinate) axis.
+    report : tbidbaxlipo.util.Report
+        If not None, the report to save the figures to. Default is None.
+    display : boolean
+        Specifies whether the figures should be displayed interactively.
+        Default is True.
+
+    loglogplot : boolean
+        Whether to plot the dose response on a log scale or not.
+        Default is False.
+    fittype : None or string: 'linear', 'power', 'hill', or 'hillexp'
+        The function to fit to the dose response data. If None, no fitting
+        is performed. Note that fitting of this type is only done if the
+        model argument is None (see below).
+    model : pysb.core.Model
+        The model to simulate and compare to the dose response data.
+        Default is None.
+
+    Raises
+    ------
+    ValueError
+        * if the param_name specified is not a valid column name for the
+          given parameter data.
+        * if one of the axis names in axis_order is not found in the
+          levels of the row index.
+    """
+
+    # Make sure the named parameter is a valid column in the data table
+    if param_name not in data.columns:
+        raise ValueError('Parameter named %s is not a valid column in '
+                         'the data table.' % param_name)
+    # Make sure all of the axes are legitimate
+    for axis_name in axis_order:
+        if axis_name not in data.index.names:
+            raise ValueError('axis %s not in the index of the levels of the '
+                             'data.' % axis_name)
+    # If the plots should be displayed, turn on interactive mode
+    if display:
+        plt.ion()
+
+    # Get the major axis
+    major_axis_name = axis_order[0]
+    major_axis_index = data.index.names.index(major_axis_name)
+    major_axis_concs = data.index.levels[major_axis_index]
+    # Get the minor axis
+    minor_axis_name = axis_order[1]
+    minor_axis_index = data.index.names.index(minor_axis_name)
+    minor_axis_concs = data.index.levels[minor_axis_index]
+
+    total_mse = 0
+
+    # Iterate over the concentrations for the major axis
+    for major_conc in major_axis_concs:
+        plt.figure()
+        color_index = 0
+        # Iterate over the concentrations for the minor axis
+        for minor_conc in minor_axis_concs:
+            # Get the double cross section for the major/minor combination
+            titration_params = data.xs((major_conc, minor_conc), axis=0,
+                                   level=(major_axis_name, minor_axis_name))
+            titration = titration_params[param_name]
+
+            # Plot the data points
+            plt.plot(titration.keys().values, titration,
+                     's-'+colors[color_index])
+
+            # -- Fit titration --
+            # If no model object given as an argument, fit data to the
+            # specified function
+            """
+            if (model == None and not fittype == None):
+                fit_result = get_rate_regression(timecourse, fittype)
+                plt.plot(fit_result.fit_time, fit_result.fit_vals,
+                         '-'+colors[color_index],
+                         label="%s %s" % (axis_order[2], minor_conc))
+            """
+            color_index += 1
+        # Add a legend to the figure
+        #plt.legend(loc='lower right')
+        plt.title("Titrations for %f %s " % (major_conc, major_axis_name))
+                #+ ', Fit: ' + (fittype if model == None else 'model'))
+        #plt.ylabel('p(t) (avg pores per vesicle)') # FIXME
+        #plt.xlabel('Time (sec)')
+        #plt.title(rate + ' vs. ' + axis + ', ' + lipo_conc_str + 'uL Lipid' +
+        #      ('' if fittype==None else ('; Fit: ' + fittype +
+        #      ', MSE: ' + str(total_mse))))
+        #legend([conc + ' cBid' for conc in tbid_concs_str], loc='upper left')
+        #plt.legend(loc='upper left')
+        #plt.xlabel(axis + ' (nM)')
+        #plt.ylabel('rate (d(pores/ves)/dt, in seconds)')
+        #print("Total MSE: " + str(total_mse))
+
+        # Show and/or save the figure
+        if display:
+            plt.show()
+        if report:
+            report.add_current_figure()
+    # <end iteration over major-axis plots>
+    # Write the report
+    if report:
+        report.write_report()
+
+def get_titration_fit():
+    model_y_vals = []
+    model_x_vals = np.linspace(0, 1.01*max(concs), 50)
+    fitfunc = None
+
+    if (not model == None):
+        if (axis == 'Bax'):
+            for conc in model_x_vals:
+                model.parameters['tBid_0'].value = float(outer_conc_str)
+                model.parameters['Bax_0'].value = conc
+                model_y_vals.append(get_model_k0(model)) 
+    # Only do fitting if there is model object passed
+    else:
+        # Fitting
+        if (fittype == 'linear'):
+            # define fitting function
+            m = Parameter(1)
+            b = Parameter(0)
+            def linear(x): return ((m()*x) + b())
+            fit(linear, [m, b], np.array(data_arr), np.array(concs))
+            #print(bid_conc_str + "nm cBid: k=" + str(k()) + ", n=" + str(n())) 
+            fitfunc = linear
+            #(slope, intercept) = np.polyfit(log_concs, log_k0, 1)
+            #k0_fit = np.polyval([slope, intercept], log_concs)
+            #print "slope: ", slope, ", intercept: ", intercept
+            #plot(log_concs, k0_fit, '-')
+        elif (fittype == 'power'):
+            # define fitting function
+            k = Parameter(1)
+            n = Parameter(0.4)
+            def powerlaw(x): return (k()*(x**n()))
+            fit(powerlaw, [k, n], np.array(data_arr), np.array(concs))
+            #print(bid_conc_str + "nm cBid: k=" + str(k()) + ", n=" + str(n())) 
+            fitfunc = powerlaw
+            #(slope, intercept) = np.polyfit(log_concs, log_k0, 1)
+            #k0_fit = np.polyval([slope, intercept], log_concs)
+            print("exponent: %d" % n())
+            #plot(log_concs, k0_fit, '-')
+            if (axis == 'Bax'):
+                print(outer_conc_str + "nm cBid: exponent=" + str(n()))
+        elif (fittype == 'hill' or fittype == 'hillexp'):
+            # define fitting function
+            km = Parameter(85)
+            vmax = Parameter(0.0005)
+            nh = Parameter(1)
+            b = data_arr[0]
+            def michaelis_menten(x): return \
+                    ((vmax()*(x**nh()))/((km()**nh()) + (x**nh())) + b)
+            #def line(x): return (m()*x)+b()
+
+            # Perform the fit
+            if (fittype == 'hillexp'):
+                fit(michaelis_menten, [km, vmax, nh], np.array(data_arr),
+                    np.array(concs))
+            else:
+                fit(michaelis_menten, [km, vmax], np.array(data_arr),
+                    np.array(concs))
+
+            if (axis == 'Bax'):
+                kcat = vmax() / float(tbid_conc_str)
+                print('%s nm cBid: Km=%f, Vmax=%f, kcat=%f, nh=%f' %
+                      (outer_conc_str, km(), vmax(), kcat(), nh()))
+            fitfunc = michaelis_menten
+        elif (fittype == None):
+            pass
+        else:
+            raise Exception("Fitting function must be 'hill', "
+                            "'hillexp', 'power', or None")
+
+        # Plot data
+        data_marker = 's-' if fittype==None else 's'
+        data_legend = outer_conc_str + " " + outer_axis if fittype==None \
+                                                        else '_nolegend_'
+
+        if (loglogplot):
+            plt.loglog(concs, data_arr, data_marker + col, label=data_legend)
+            rise1 = np.log(data_arr[2]) - np.log(data_arr[1])
+            run1 = np.log(concs[2]) - np.log(concs[1])
+            slope1 = rise1 / run1
+            #print "riserise
+            #print "run = " + str(run)
+            rise2 = np.log(data_arr[3]) - np.log(data_arr[2])
+            run2 = np.log(concs[3]) - np.log(concs[2])
+            slope2 = rise2 / run2
+            print(outer_conc_str + 'nm ' + outer_axis +
+                    ': Slope1,2=' + str(slope1) + ', ' + str(slope2)) # TODO
+        else:
+            plt.plot(concs, data_arr, data_marker + col, label=data_legend)
+
+        # Plot fit
+        if (not model == None):
+            plt.plot(model_x_vals, model_y_vals, '-'+col,
+                    label=outer_conc_str + " " + outer_axis)
+
+        if (fitfunc):
+            # Show fit error
+            mse_val = mse(fitfunc, np.array(data_arr), np.array(concs))
+            #print ("mse_val = " + str(mse_val))
+            total_mse += mse_val
+            # TODO: Magic numbers 0 and 300
+            fit_x_vals = np.linspace(0, 1.01*max(concs), 50)
+            fit_y_vals = map(fitfunc, fit_x_vals)
+            if (loglogplot):
+                plt.loglog(fit_x_vals, fit_y_vals, '-'+col,
+                        label=outer_conc_str + " " + outer_axis)
+            else:
+                plt.plot(fit_x_vals, fit_y_vals, '-'+col,
+                            label=outer_conc_str + " " + outer_axis) 
+
+        #if (not loglogplot):
+        #    plot(concs, data_arr, '-s'+col, label=tbid_conc_str + " cBid")
+        # If doing log-log, ignore 0 Bax condition
+        #else:
+        #    log_concs = log(concs[1:len(concs)])
+        #    log_data = log(data_arr[1:len(concs)])
+        #    plot(log_concs, log_data, 's-'+col, label=tbid_conc_str + " cBid")
+
 ## TESTS ###########
+
+def test_plot_titration():
+    """plot_titration should run without error."""
+    ga = GridAnalysis(df)
+    plot_titration(ga.explin_params, 'k', display=False, report=Report())
+    assert True
+
+@raises(ValueError)
+def test_plot_titration_illegal_param_name():
+    """plot_titration should error if the param_name is an invalid column
+    name in the fit_params DataFrame."""
+    ga = GridAnalysis(df)
+    plot_titration(ga.explin_params, 'bad_name', display=False,
+                   axis_order=('tBid', 'Liposomes', 'Bax'))
+
+@raises(ValueError)
+def test_plot_titration_illegal_level_name():
+    """plot_titration should error if one of the level names in axis_order
+    is not present in the DataFrame."""
+    ga = GridAnalysis(df)
+    plot_titration(ga.explin_params, 'k', display=False,
+                   axis_order=('tBid', 'Liposomes', 'bad axis name'))
 
 def test_plot_timecourses():
     """plot_timecourses should run without error."""
@@ -385,7 +654,16 @@ def test_plot_timecourses_illegal_fixed_conc():
     for the fixed axis (i.e., for axis_order[0])."""
     ga = GridAnalysis(df)
     plot_timecourses(ga.raw_data, display=False,
-                     axis_order=('tBid', 'Liposomes', 'Bax'))
+                     axis_order=('tBid', 'Liposomes', 'Bax'), fixed_conc=10)
+
+@raises(ValueError)
+def test_plot_timecourses_illegal_level_name():
+    """plot_timecourses should error if one of the level names in axis_order
+    is not present in the DataFrame."""
+    ga = GridAnalysis(df)
+    plot_timecourses(ga.raw_data, display=False,
+                     axis_order=('tBid', 'Liposomes', 'bad_axis_name'),
+                     fixed_conc=10)
 
 def test_calc_pores():
     """GridAnalysis.calc_pores should run without error."""
@@ -427,7 +705,6 @@ def test_get_rate_regression():
 #        for tbid_conc_str in tbid_concs_str:
 #            data_baxmaj[lipo_conc_str][bax_conc_str][tbid_conc_str] = \
 #                        data_tbidmaj[lipo_conc_str][tbid_conc_str][bax_conc_str]
-
 
 def apply_func_to_grid(func, grid, **kw_args):
     """Apply a function to the data grid.
@@ -552,195 +829,6 @@ def get_ki_v_bax(lipo_conc_str, tbid_conc_str):
     bax_dict = ki[lipo_conc_str][tbid_conc_str]
     return [bax_dict[key][0] for key in sort_numeric(bax_dict.keys())]
 
-
-def plot_dose_response(lipo_conc_str='10', rate='k0', loglogplot=False,
-                       fittype='power',
-                       model=None, axis='Bax', report=None):
-    """ Given a lipid concentration, plot the initial or final rate vs. Bax
-    concentration dose response, with a separate curve for each tBid
-    concentration.
-
-    Parameters
-    ----------
-    lipo_conc_str : string
-        The lipid concentration for the dose response. Default is '10'.
-    rate : string: 'k0' or 'ki'
-        The rate to plot as a function of concentration. Can be either
-        'k0' (the initial rate) or 'ki' (the "intermediate", or final, rate).
-        Default is 'k0'.
-    loglogplot : boolean
-        Whether to plot the dose response on a log scale or not.
-        Default is False.
-    fittype : None or string: 'linear', 'power', 'hill', or 'hillexp'
-        The function to fit to the dose response data. If None, no fitting
-        is performed. Note that fitting of this type is only done if the
-        model argument is None (see below).
-    model : pysb.core.Model
-        The model to simulate and compare to the dose response data.
-        Default is None.
-    axis : string: 'tBid' or 'Bax'
-        The axis over which to calculate the dose response (i.e., the y-axis).
-        Default is 'Bax'.
-    report : :py:class:`tbidbaxlipo.util.Report`
-        The Report object to add the dose response figures to. Default is None.
-    """
-
-    plt.ion()
-    plt.figure()
-    col_index = 0
-    total_mse = 0
-
-    if (axis == 'Bax'):
-        concs = bax_concs
-        outer_concs_str = tbid_concs_str
-        outer_axis = 'tBid'
-    elif (axis == 'tBid'):
-        concs = tbid_concs
-        outer_concs_str = bax_concs_str
-        outer_axis = 'Bax'
-    else:
-        raise Exception("Unknown axis: " + axis)
-
-    #for tbid_conc_str in tbid_concs_str: TODO
-    for outer_conc_str in outer_concs_str:
-        # Choose the color for plots of this tbid concentration
-        col = colors[col_index % len(colors)]
-        col_index += 1
-
-        # Check if we're plotting the initial or the secondary rate
-        if (rate == 'k0'):
-            if (axis == 'tBid'):
-                data_arr = get_k0_v_tbid(lipo_conc_str, outer_conc_str)
-            else:
-                data_arr = get_k0_v_bax(lipo_conc_str, outer_conc_str)
-        elif (rate == 'ki'): 
-            data_arr = get_ki_v_bax(lipo_conc_str, outer_conc_str) 
-        else:
-            raise Exception('The rate (\'k0\' or \'ki\') was not specified.')
-
-        model_y_vals = []
-        model_x_vals = np.linspace(0, 1.01*max(concs), 50)
-        fitfunc = None
-
-        if (not model == None):
-            if (axis == 'Bax'):
-                for conc in model_x_vals:
-                    model.parameters['tBid_0'].value = float(outer_conc_str)
-                    model.parameters['Bax_0'].value = conc
-                    model_y_vals.append(get_model_k0(model)) 
-        # Only do fitting if there is model object passed
-        else:
-            # Fitting 
-            if (fittype == 'linear'):
-                # define fitting function
-                m = Parameter(1)
-                b = Parameter(0)
-                def linear(x): return ((m()*x) + b())
-                fit(linear, [m, b], np.array(data_arr), np.array(concs))
-                #print(bid_conc_str + "nm cBid: k=" + str(k()) + ", n=" + str(n())) TODO
-                fitfunc = linear
-                #(slope, intercept) = np.polyfit(log_concs, log_k0, 1)
-                #k0_fit = np.polyval([slope, intercept], log_concs)
-                #print "slope: ", slope, ", intercept: ", intercept
-                #plot(log_concs, k0_fit, '-')
-            elif (fittype == 'power'):
-                # define fitting function
-                k = Parameter(1)
-                n = Parameter(0.4)
-                def powerlaw(x): return (k()*(x**n()))
-                fit(powerlaw, [k, n], np.array(data_arr), np.array(concs))
-                #print(bid_conc_str + "nm cBid: k=" + str(k()) + ", n=" + str(n())) TODO
-                fitfunc = powerlaw
-                #(slope, intercept) = np.polyfit(log_concs, log_k0, 1)
-                #k0_fit = np.polyval([slope, intercept], log_concs)
-                print("exponent: %d" % n())
-                #plot(log_concs, k0_fit, '-')
-                if (axis == 'Bax'):
-                    print(outer_conc_str + "nm cBid: exponent=" + str(n()))
-            elif (fittype == 'hill' or fittype == 'hillexp'):
-                # define fitting function
-                km = Parameter(85)
-                vmax = Parameter(0.0005)
-                nh = Parameter(1)
-                b = data_arr[0]
-                def michaelis_menten(x): return \
-                        ((vmax()*(x**nh()))/((km()**nh()) + (x**nh())) + b)
-                #def line(x): return (m()*x)+b()
-
-                # Perform the fit
-                if (fittype == 'hillexp'):
-                    fit(michaelis_menten, [km, vmax, nh], np.array(data_arr),
-                        np.array(concs))
-                else:
-                    fit(michaelis_menten, [km, vmax], np.array(data_arr),
-                        np.array(concs))
-
-                if (axis == 'Bax'):
-                    kcat = vmax() / float(tbid_conc_str)
-                    print('%s nm cBid: Km=%f, Vmax=%f, kcat=%f, nh=%f' %
-                          (outer_conc_str, km(), vmax(), kcat(), nh()))
-                fitfunc = michaelis_menten
-            elif (fittype == None):
-                pass
-            else:
-                raise Exception("Fitting function must be 'hill', "
-                                "'hillexp', 'power', or None")
-
-        # Plot data
-        data_marker = 's-' if fittype==None else 's'
-        data_legend = outer_conc_str + " " + outer_axis if fittype==None \
-                                                        else '_nolegend_'
-
-        if (loglogplot):
-            plt.loglog(concs, data_arr, data_marker + col, label=data_legend)
-            rise1 = np.log(data_arr[2]) - np.log(data_arr[1])
-            run1 = np.log(concs[2]) - np.log(concs[1])
-            slope1 = rise1 / run1
-            #print "riserise
-            #print "run = " + str(run)
-            rise2 = np.log(data_arr[3]) - np.log(data_arr[2])
-            run2 = np.log(concs[3]) - np.log(concs[2])
-            slope2 = rise2 / run2
-            print(outer_conc_str + 'nm ' + outer_axis + ': Slope1,2=' + str(slope1) + ', '
-                            + str(slope2)) # TODO
-        else:
-            plt.plot(concs, data_arr, data_marker + col, label=data_legend)
-
-        # Plot fit
-        if (not model == None):
-            plt.plot(model_x_vals, model_y_vals, '-'+col, label=outer_conc_str + " " + outer_axis)
-
-        if (fitfunc):
-            # Show fit error
-            mse_val = mse(fitfunc, np.array(data_arr), np.array(concs))
-            #print ("mse_val = " + str(mse_val))
-            total_mse += mse_val
-            fit_x_vals = np.linspace(0, 1.01*max(concs), 50) # TODO: Magic numbers 0 and 300
-            fit_y_vals = map(fitfunc, fit_x_vals)
-            if (loglogplot):
-                plt.loglog(fit_x_vals, fit_y_vals, '-'+col, label=outer_conc_str + " " + outer_axis)
-            else:
-                plt.plot(fit_x_vals, fit_y_vals, '-'+col, label=outer_conc_str + " " + outer_axis) 
-
-        #if (not loglogplot):
-        #    plot(concs, data_arr, '-s'+col, label=tbid_conc_str + " cBid")
-        # If doing log-log, ignore 0 Bax condition
-        #else:
-        #    log_concs = log(concs[1:len(concs)])
-        #    log_data = log(data_arr[1:len(concs)])
-        #    plot(log_concs, log_data, 's-'+col, label=tbid_conc_str + " cBid")
-
-    plt.title(rate + ' vs. ' + axis + ', ' + lipo_conc_str + 'uL Lipid' +
-          ('' if fittype==None else ('; Fit: ' + fittype + ', MSE: ' + str(total_mse))))
-    #legend([conc + ' cBid' for conc in tbid_concs_str], loc='upper left')
-    plt.legend(loc='upper left')
-
-    plt.xlabel(axis + ' (nM)')
-    plt.ylabel('rate (d(pores/ves)/dt, in seconds)')
-    print("Total MSE: " + str(total_mse))
-
-    if (report):
-        report.addCurrentFigure()
 
 def get_model_k0(model, k0_time=900):
     t = np.linspace(0, k0_time, 100)
