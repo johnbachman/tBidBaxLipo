@@ -36,181 +36,72 @@ class GridAnalysis(object):
     def __init__(self, data):
         self.raw_data = data
         """pandas.DataFrame: The original dye release data."""
-        self.pore_data = self.calc_pores(warnings=False)
+        self.bgsub_raw_data = calc_bgsub(self.raw_data)
+        """pandas.DataFrame: background-subtracted raw data."""
+        self.pore_data = calc_pores(self.raw_data, warnings=False)
         """pandas.DataFrame: The average number of pores per liposome."""
-        #self.pore_data_lipo_sub = self.calc_pores_lipo_sub()
-        """pandas.DataFrame: pore data with background signal subtracted."""
-        self.explin_params = self.calc_explin_params()
+        self.bgsub_pore_data = calc_pores(calc_bgsub(self.raw_data))
+        """pandas.DataFrame: pores calculated from bg-subtracted data."""
+
+        self.explin_params = calc_explin_params(self.pore_data)
         """pandas.DataFrame: fmax, k, and m for each set of concentrations."""
-        #self.initial_slope = self.calc_initial_slope()
+        self.initial_slope = calc_initial_slope(self.pore_data)
         """pandas.DataFrame: initial slope for each set of concentrations."""
-        #self.final_slope = self.calc_final_slope()
+        self.final_slope = calc_final_slope(self.pore_data)
+        """pandas.DataFrame: final slope for each set of concentrations."""
 
-    def calc_pores(self, warnings=True):
-        """Calculate the average number of pores per liposome from the data.
+def calc_pores(data, warnings=True):
+    """Calculate the average number of pores per liposome from the data.
 
-        This calculation, which is based on the assumption of a Poisson
-        distribution of pores per liposome, can be used to calculate the
-        average number of pores per liposome from the efflux signal (which
-        gives the fraction of unpermeabilized liposomes). This is described
-        further in the work of Gerhard Schwartz.
+    This calculation, which is based on the assumption of a Poisson
+    distribution of pores per liposome, can be used to calculate the
+    average number of pores per liposome from the efflux signal (which
+    gives the fraction of unpermeabilized liposomes). This is described
+    further in the work of Gerhard Schwartz.
 
-        Operates on the raw dye release data in ``self.raw_data`` and returns a
-        new dataframe containing the corresponding timecourses for average pore
-        numbers.
+    Operates on the data passed in (for example, the raw data or the
+    background-subtracted raw data) and returns a new dataframe containing the
+    corresponding timecourses for average pore numbers.
 
-        Parameters
-        ----------
-        warnings : boolean
-            If True (default), warnings are printed to standard out if the
-            calculated efflux value is greater than 100%.
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        A dataframe containing a timecourse for each concentration, with
+        the concentrations a hierarchical index on the rows and the timepoints
+        as columns.
+    warnings : boolean
+        If True (default), warnings are printed to standard out if the
+        calculated efflux value is greater than 100%.
 
-        Returns
-        -------
-        pandas.DataFrame
-            Hierarchical DataFrame corresponding to the original data but with
-            the values in the timecourses transformed according to the formula
+    Returns
+    -------
+    pandas.DataFrame
+        Hierarchical DataFrame corresponding to the original data but with
+        the values in the timecourses transformed according to the formula
 
-            pore_val = -log((100 - raw_val)/100)
-        """
-        # Make the pore timecourse dataframe a copy of the raw data
-        pore_df = self.raw_data.copy()
-        # Iterate over all (liposome, tbid, bax) combinations:
-        for concs, timecourse in self.raw_data.iterrows():
-            pore_timecourse = []
-            # For every value in the raw data, convert to the -log of the
-            # efflux data and append to the pore_timecourse
-            for val in timecourse:
-                p  = (100 - val)/100
-                if p < 0:
-                    pore_timecourse.append(1)
-                    # If p < 0, then dye release is greater than 100%, so
-                    # print a warning
-                    if warnings:
-                        print("Concs: %s: E(t) > 100%%!" % str(concs))
-                else:
-                    pore_timecourse.append(-math.log(float(p)))
-            # Plug the calculated pore timecourse into the pore dataframe
-            pore_df.loc[concs] = pore_timecourse
-        # Return the new dataframe
-        return pore_df
-
-    def calc_explin_params(self):
-        r"""Calculate an exponential-linear fit for each set of concentrations.
-
-        Fits the equation
-
-        .. math::
-
-            F_{max} \left(1 - e^{-kt}\right) + mt
-
-        to the pore data.
-
-        Returns
-        -------
-        pandas.DataFrame
-            Hierarchical DataFrame corresponding to the original data but with
-            the data for "k", "fmax", and "m" in the columns.
-        """
-        # A dict to hold the parameters
-        explin_dict = {}
-        # Iterate over all (liposome, tbid, bax) combinations:
-        for concs, timecourse in self.pore_data.iterrows():
-            # Get an exponential linear fit and put the parameters
-            # in the dict
-            explin_fit_result = get_timecourse_fit(timecourse,
-                                                   fittype='explin')
-            explin_dict[concs] = pd.Series(explin_fit_result.parameters)
-        # Initialize a DataFrame from the dict
-        df = pd.DataFrame(explin_dict).T
-        df.index = self.pore_data.index
-        return df
-
-    def calc_initial_slope(self):
-        """Calculate the initial (vi) rate.
-
-        For the given pore formation (i.e., p(t)) timecourse, calculate the
-        initial pore formation rate by dividing the increase at the first time
-        point by the length of the time interval.
-
-        Returns
-        -------
-        pandas.DataFrame
-            A dataframe containing an initial slope value for each concentration
-            combination. The dataframe has the single column named 'vi',
-            while the concentrations are a hierarchical index on the rows.
-        """
-        # Initialize a dict to hold the values
-        initial_slope_dict = {}
-        # Iterate over all (liposome, tbid, bax) combinations:
-        for concs, timecourse in self.pore_data.iterrows():
-            # Calculate the initial slope and put it in the dict
-            timepoints = timecourse.keys().values
-            initial_rate = ((timecourse.values[1] - timecourse.values[0]) /
-                            float(timepoints[1] - timepoints[0]))
-            initial_slope_dict[concs] = pd.Series({'vi': initial_rate})
-        df = pd.DataFrame(initial_slope_dict).T
-        df.index = self.pore_data.index
-        return df
-
-    def calc_final_slope(self, start_time_index=10):
-        """Calculate the final (vf) rate.
-
-        For the given pore formation (i.e., p(t)) timecourse, calculate a linear
-        regression to the secondary kinetics, which is defined as the pore
-        formation rate running from start_time_index (defaults to 10,
-        which regresses over the last four timepoints).
-
-        Returns
-        -------
-        pandas.DataFrame
-            A dataframe containing a final slope value and intercept for each
-            concentration combination. The dataframe has two columns named 'vf'
-            and 'intercept', while the concentrations are a hierarchical index
-            on the rows.
-        """
-        # Initialize a dict to hold the values
-        final_slope_dict = {}
-        # Iterate over all (liposome, tbid, bax) combinations:
-        for concs, timecourse in self.pore_data.iterrows():
-            # Calculate the final slope and put it in the dict
-            timepoints = timecourse.keys().values
-            # Run a linear regression
-            tlin = timepoints[start_time_index:len(timepoints)]
-            plin = timecourse.values[start_time_index:len(timecourse.values)]
-            (slope, intercept) = np.polyfit(tlin, plin, 1)
-            final_slope_dict[concs] = pd.Series({'vf': slope,
-                                                 'intercept': intercept})
-        df = pd.DataFrame(final_slope_dict).T
-        df.index = self.pore_data.index
-        return df
-
-'''
-def calc_pores_bgsub(self, timecourse, grid, x, y, z):
-    pore_lipo_sub_df = self.raw_data.copy()
-    # Get keys for liposome concentrations
-
-    for lipo_conc in 
-    # FIXME A transformation on the data; should return another dataframe
-    p_timecourse = []
-    for i, val in enumerate(timecourse):
-        # Subtract liposome only timecourse, point-by-point
-        val = val - grid[x]['0']['0'][i]
-        p  = (100 - val)/100
-        if p < 0:
-            p_timecourse.append(1)
-            #p_timecourse.append(0)
-            print("E(t) > 100%!!: x, y, z, i: " + x + ", " + y + ", " + z + ", " + str(i))
-        elif p > 1:
-            p_timecourse.append(0)
-            print("E(t) < 0%!!: x, y, z, i: " + x + ", " + y + ", " + z + ", " + str(i))
-        else: 
-            p = -math.log(float(p))
-            if (p == 0): p = 0
-            p_timecourse.append(p)
-            #p_timecourse.append((float(p)))
-    return p_timecourse
-'''
+        pore_val = -log((100 - raw_val)/100)
+    """
+    # Make the pore timecourse dataframe a copy of the raw data
+    pore_df = data.copy()
+    # Iterate over all (liposome, tbid, bax) combinations:
+    for concs, timecourse in data.iterrows():
+        pore_timecourse = []
+        # For every value in the raw data, convert to the -log of the
+        # efflux data and append to the pore_timecourse
+        for val in timecourse:
+            p  = (100 - val)/100
+            if p < 0:
+                pore_timecourse.append(1)
+                # If p < 0, then dye release is greater than 100%, so
+                # print a warning
+                if warnings:
+                    print("Concs: %s: E(t) > 100%%!" % str(concs))
+            else:
+                pore_timecourse.append(-math.log(float(p)))
+        # Plug the calculated pore timecourse into the pore dataframe
+        pore_df.loc[concs] = pore_timecourse
+    # Return the new dataframe
+    return pore_df
 
 def calc_bgsub(data):
     """Subtract the liposome-only (background) fluorescence from the data.
@@ -256,6 +147,117 @@ def calc_bgsub(data):
             bgsub_data.loc[concs_tuple] = bgsub_timecourse
 
     return bgsub_data
+
+def calc_initial_slope(data):
+    """Calculate the initial (vi) rate.
+
+    For the given pore formation (i.e., p(t)) timecourse, calculate the
+    initial pore formation rate by dividing the increase at the first time
+    point by the length of the time interval.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        A dataframe containing a timecourse for each concentration, with
+        the concentrations a hierarchical index on the rows and the timepoints
+        as columns.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A dataframe containing an initial slope value for each concentration
+        combination. The dataframe has the single column named 'vi',
+        while the concentrations are a hierarchical index on the rows.
+    """
+    # Initialize a dict to hold the values
+    initial_slope_dict = {}
+    # Iterate over all (liposome, tbid, bax) combinations:
+    for concs, timecourse in data.iterrows():
+        # Calculate the initial slope and put it in the dict
+        timepoints = timecourse.keys().values
+        initial_rate = ((timecourse.values[1] - timecourse.values[0]) /
+                        float(timepoints[1] - timepoints[0]))
+        initial_slope_dict[concs] = pd.Series({'vi': initial_rate})
+    df = pd.DataFrame(initial_slope_dict).T
+    df.index = data.index
+    return df
+
+def calc_final_slope(data, start_time_index=10):
+    """Calculate the final (vf) rate.
+
+    For the given pore formation (i.e., p(t)) timecourse, calculate a linear
+    regression to the secondary kinetics, which is defined as the pore
+    formation rate running from start_time_index (defaults to 10,
+    which regresses over the last four timepoints).
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        A dataframe containing a timecourse for each concentration, with
+        the concentrations a hierarchical index on the rows and the timepoints
+        as columns.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A dataframe containing a final slope value and intercept for each
+        concentration combination. The dataframe has two columns named 'vf'
+        and 'intercept', while the concentrations are a hierarchical index
+        on the rows.
+    """
+    # Initialize a dict to hold the values
+    final_slope_dict = {}
+    # Iterate over all (liposome, tbid, bax) combinations:
+    for concs, timecourse in data.iterrows():
+        # Calculate the final slope and put it in the dict
+        timepoints = timecourse.keys().values
+        # Run a linear regression
+        tlin = timepoints[start_time_index:len(timepoints)]
+        plin = timecourse.values[start_time_index:len(timecourse.values)]
+        (slope, intercept) = np.polyfit(tlin, plin, 1)
+        final_slope_dict[concs] = pd.Series({'vf': slope,
+                                             'intercept': intercept})
+    df = pd.DataFrame(final_slope_dict).T
+    df.index = data.index
+    return df
+
+def calc_explin_params(data):
+    r"""Calculate an exponential-linear fit for each set of concentrations.
+
+    Fits the equation
+
+    .. math::
+
+        F_{max} \left(1 - e^{-kt}\right) + mt
+
+    to the data.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        A dataframe containing a timecourse for each concentration, with
+        the concentrations a hierarchical index on the rows and the timepoints
+        as columns.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Hierarchical DataFrame corresponding to the original data but with
+        the data for "k", "fmax", and "m" in the columns.
+    """
+    # A dict to hold the parameters
+    explin_dict = {}
+    # Iterate over all (liposome, tbid, bax) combinations:
+    for concs, timecourse in data.iterrows():
+        # Get an exponential linear fit and put the parameters
+        # in the dict
+        explin_fit_result = get_timecourse_fit(timecourse,
+                                               fittype='explin')
+        explin_dict[concs] = pd.Series(explin_fit_result.parameters)
+    # Initialize a DataFrame from the dict
+    df = pd.DataFrame(explin_dict).T
+    df.index = data.index
+    return df
 
 class FitResult(object):
     """A class to store the results of fitting a model to a timecourse.
@@ -755,34 +757,32 @@ def get_titration_fit():
 
 def test_calc_pores():
     """GridAnalysis.calc_pores should run without error."""
-    ga = GridAnalysis(df)
-    ga.calc_pores(warnings=False)
+    calc_pores(df, warnings=False)
     assert True
 
 def test_calc_bgsub():
     """GridAnalysis.calc_bgsub should run without error."""
-    ga = GridAnalysis(df)
     calc_bgsub(df)
     assert True
 
 @raises(ValueError)
 def test_calc_bgsub_no_liposomes():
     """Should raise an error if the data does not have a level 'Liposomes'."""
-    ga = GridAnalysis(df)
     calc_bgsub(df.loc[10])
 
 def test_calc_initial_slope():
     """GridAnalysis.calc_initial_slope() should run without error."""
-    ga = GridAnalysis(df)
-    ga.calc_initial_slope()
+    calc_initial_slope(df)
     assert True
 
 def test_calc_final_slope():
     """GridAnalysis.calc_final_slope() should run without error."""
-    ga = GridAnalysis(df)
-    ga.calc_final_slope()
+    calc_final_slope(df)
     assert True
 
+def test_calc_explin_params():
+    """Should run without error."""
+    calc_explin_params(calc_pores(df))
 
 def test_get_timecourse_fit():
     """GridAnalysis.get_timecourse_fit should run without error."""
