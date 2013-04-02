@@ -132,6 +132,13 @@ class GridAnalysis(object):
         For the given pore formation (i.e., p(t)) timecourse, calculate the
         initial pore formation rate by dividing the increase at the first time
         point by the length of the time interval.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A dataframe containing an initial slope value for each concentration
+            combination. The dataframe has the single column named 'vi',
+            while the concentrations are a hierarchical index on the rows.
         """
         # Initialize a dict to hold the values
         initial_slope_dict = {}
@@ -146,8 +153,37 @@ class GridAnalysis(object):
         df.index = self.pore_data.index
         return df
 
-    def calc_final_slope(self):
-        pass
+    def calc_final_slope(self, start_time_index=10):
+        """Calculate the final (vf) rate.
+
+        For the given pore formation (i.e., p(t)) timecourse, calculate a linear
+        regression to the secondary kinetics, which is defined as the pore
+        formation rate running from start_time_index (defaults to 10,
+        which regresses over the last four timepoints).
+
+        Returns
+        -------
+        pandas.DataFrame
+            A dataframe containing a final slope value and intercept for each
+            concentration combination. The dataframe has two columns named 'vf'
+            and 'intercept', while the concentrations are a hierarchical index
+            on the rows.
+        """
+        # Initialize a dict to hold the values
+        final_slope_dict = {}
+        # Iterate over all (liposome, tbid, bax) combinations:
+        for concs, timecourse in self.pore_data.iterrows():
+            # Calculate the final slope and put it in the dict
+            timepoints = timecourse.keys().values
+            # Run a linear regression
+            tlin = timepoints[start_time_index:len(timepoints)]
+            plin = timecourse.values[start_time_index:len(timecourse.values)]
+            (slope, intercept) = np.polyfit(tlin, plin, 1)
+            final_slope_dict[concs] = pd.Series({'vf': slope,
+                                                 'intercept': intercept})
+        df = pd.DataFrame(final_slope_dict).T
+        df.index = self.pore_data.index
+        return df
 
 class FitResult(object):
     """A class to store the results of fitting a model to a timecourse.
@@ -645,6 +681,13 @@ def get_titration_fit():
 
 ## TESTS ###########
 
+def test_calc_pores():
+    """GridAnalysis.calc_pores should run without error."""
+    ga = GridAnalysis(df)
+    ga.calc_pores(warnings=False)
+    assert True
+
+
 def test_calc_initial_slope():
     """GridAnalysis.calc_initial_slope() should run without error."""
     ga = GridAnalysis(df)
@@ -657,11 +700,6 @@ def test_calc_final_slope():
     ga.calc_final_slope()
     assert True
 
-def test_calc_pores():
-    """GridAnalysis.calc_pores should run without error."""
-    ga = GridAnalysis(df)
-    ga.calc_pores(warnings=False)
-    assert True
 
 def test_get_timecourse_fit():
     """GridAnalysis.get_timecourse_fit should run without error."""
@@ -724,22 +762,6 @@ def test_plot_titration_illegal_level_name():
 # -- REFACTORING LINE --
 
 
-def calc_ki(timecourse, grid, x, y, z, start_time_index=10):
-    """Calculate the final (ki) rate.
-
-    For the given pore formation (i.e., p(t)) timecourse, calculate a linear
-    regression to the secondary kinetics, which is defined as the pore
-    formation rate running from start_time_index (defaults to 1 hour, which is
-    index 4) to the end.
-
-    Returns a list containing the slope and intercept, which can also be used
-    to calculate the error of the fit.
-    """
-    # FIXME This should go away
-    tlin = time[start_time_index:len(time)]
-    plin = timecourse[start_time_index:len(time)]
-    (slope, intercept) = np.polyfit(tlin, plin, 1)
-    return [slope, intercept]
 
 """
 def calc_pores_bgsub(self, timecourse, grid, x, y, z):
