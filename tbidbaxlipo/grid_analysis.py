@@ -42,6 +42,9 @@ class GridAnalysis(object):
         """pandas.DataFrame: pore data with background signal subtracted."""
         self.explin_params = self.calc_explin_params()
         """pandas.DataFrame: fmax, k, and m for each set of concentrations."""
+        #self.initial_slope = self.calc_initial_slope()
+        """pandas.DataFrame: initial slope for each set of concentrations."""
+        #self.final_slope = self.calc_final_slope()
 
     def calc_pores(self, warnings=True):
         """Calculate the average number of pores per liposome from the data.
@@ -109,19 +112,42 @@ class GridAnalysis(object):
             Hierarchical DataFrame corresponding to the original data but with
             the data for "k", "fmax", and "m" in the columns.
         """
-
-        # Make the pore timecourse dataframe a copy of the raw data
+        # A dict to hold the parameters
         explin_dict = {}
         # Iterate over all (liposome, tbid, bax) combinations:
         for concs, timecourse in self.pore_data.iterrows():
             # Get an exponential linear fit and put the parameters
-            # in the dataframe
-            explin_fit_result = get_rate_regression(timecourse,
-                                                    fittype='explin')
+            # in the dict
+            explin_fit_result = get_timecourse_fit(timecourse,
+                                                   fittype='explin')
             explin_dict[concs] = pd.Series(explin_fit_result.parameters)
+        # Initialize a DataFrame from the dict
         df = pd.DataFrame(explin_dict).T
         df.index = self.pore_data.index
         return df
+
+    def calc_initial_slope(self):
+        """Calculate the initial (vi) rate.
+
+        For the given pore formation (i.e., p(t)) timecourse, calculate the
+        initial pore formation rate by dividing the increase at the first time
+        point by the length of the time interval.
+        """
+        # Initialize a dict to hold the values
+        initial_slope_dict = {}
+        # Iterate over all (liposome, tbid, bax) combinations:
+        for concs, timecourse in self.pore_data.iterrows():
+            # Calculate the initial slope and put it in the dict
+            timepoints = timecourse.keys().values
+            initial_rate = ((timecourse.values[1] - timecourse.values[0]) /
+                            float(timepoints[1] - timepoints[0]))
+            initial_slope_dict[concs] = pd.Series({'vi': initial_rate})
+        df = pd.DataFrame(initial_slope_dict).T
+        df.index = self.pore_data.index
+        return df
+
+    def calc_final_slope(self):
+        pass
 
 class FitResult(object):
     """A class to store the results of fitting a model to a timecourse.
@@ -143,7 +169,7 @@ class FitResult(object):
         self.mse_val = mse_val
         self.parameters = parameters
 
-def get_rate_regression(timecourse, fittype='explin'):
+def get_timecourse_fit(timecourse, fittype='explin'):
     """Get a fit curve for a timecourse.
 
     Parameters
@@ -249,7 +275,7 @@ def plot_timecourses(data,
         ``axis_order[0]``) for the value to use for all plots (e.g., 10,
         for the 10 uL condition for the liposome axis).
     fittype : string
-        A string (to be passed to :py:func:`get_rate_regression`)
+        A string (to be passed to :py:func:`get_timecourse_fit`)
         specifying the curve fit type to be plot along with the data.
     model : pysb.core.Model or None
         If a mechanistic model is to be fit to the data, this can be set
@@ -311,7 +337,7 @@ def plot_timecourses(data,
             # If no model object given as an argument, fit data to the
             # specified function
             if (model == None and not fittype == None):
-                fit_result = get_rate_regression(timecourse, fittype)
+                fit_result = get_timecourse_fit(timecourse, fittype)
                 plt.plot(fit_result.fit_time, fit_result.fit_vals,
                          '-'+colors[color_index],
                          label="%s %s" % (axis_order[2], minor_conc))
@@ -469,7 +495,7 @@ def plot_titration(data, param_name, axis_order=('Liposomes', 'tBid', 'Bax'),
             # specified function
             """
             if (model == None and not fittype == None):
-                fit_result = get_rate_regression(timecourse, fittype)
+                fit_result = get_timecourse_fit(timecourse, fittype)
                 plt.plot(fit_result.fit_time, fit_result.fit_vals,
                          '-'+colors[color_index],
                          label="%s %s" % (axis_order[2], minor_conc))
@@ -619,27 +645,31 @@ def get_titration_fit():
 
 ## TESTS ###########
 
-def test_plot_titration():
-    """plot_titration should run without error."""
+def test_calc_initial_slope():
+    """GridAnalysis.calc_initial_slope() should run without error."""
     ga = GridAnalysis(df)
-    plot_titration(ga.explin_params, 'k', display=False, report=Report())
+    ga.calc_initial_slope()
     assert True
 
-@raises(ValueError)
-def test_plot_titration_illegal_param_name():
-    """plot_titration should error if the param_name is an invalid column
-    name in the fit_params DataFrame."""
+def test_calc_final_slope():
+    """GridAnalysis.calc_final_slope() should run without error."""
     ga = GridAnalysis(df)
-    plot_titration(ga.explin_params, 'bad_name', display=False,
-                   axis_order=('tBid', 'Liposomes', 'Bax'))
+    ga.calc_final_slope()
+    assert True
 
-@raises(ValueError)
-def test_plot_titration_illegal_level_name():
-    """plot_titration should error if one of the level names in axis_order
-    is not present in the DataFrame."""
+def test_calc_pores():
+    """GridAnalysis.calc_pores should run without error."""
     ga = GridAnalysis(df)
-    plot_titration(ga.explin_params, 'k', display=False,
-                   axis_order=('tBid', 'Liposomes', 'bad axis name'))
+    ga.calc_pores(warnings=False)
+    assert True
+
+def test_get_timecourse_fit():
+    """GridAnalysis.get_timecourse_fit should run without error."""
+    get_timecourse_fit(df.loc[10,0,0], fittype='singleexp')
+    get_timecourse_fit(df.loc[10,0,0], fittype='explin')
+    get_timecourse_fit(df.loc[10,0,0], fittype='doubleexp')
+    get_timecourse_fit(df.loc[10,0,0], fittype='expexp')
+    assert True
 
 def test_plot_timecourses():
     """plot_timecourses should run without error."""
@@ -665,43 +695,34 @@ def test_plot_timecourses_illegal_level_name():
                      axis_order=('tBid', 'Liposomes', 'bad_axis_name'),
                      fixed_conc=10)
 
-def test_calc_pores():
-    """GridAnalysis.calc_pores should run without error."""
+def test_plot_titration():
+    """plot_titration should run without error."""
     ga = GridAnalysis(df)
-    ga.calc_pores(warnings=False)
+    plot_titration(ga.explin_params, 'k', display=False, report=Report())
     assert True
 
-def test_get_rate_regression():
-    """GridAnalysis.get_rate_regression should run without error."""
-    get_rate_regression(df.loc[10,0,0], fittype='singleexp')
-    get_rate_regression(df.loc[10,0,0], fittype='explin')
-    get_rate_regression(df.loc[10,0,0], fittype='doubleexp')
-    get_rate_regression(df.loc[10,0,0], fittype='expexp')
-    assert True
+@raises(ValueError)
+def test_plot_titration_illegal_param_name():
+    """plot_titration should error if the param_name is an invalid column
+    name in the fit_params DataFrame."""
+    ga = GridAnalysis(df)
+    plot_titration(ga.explin_params, 'bad_name', display=False,
+                   axis_order=('tBid', 'Liposomes', 'Bax'))
+
+@raises(ValueError)
+def test_plot_titration_illegal_level_name():
+    """plot_titration should error if one of the level names in axis_order
+    is not present in the DataFrame."""
+    ga = GridAnalysis(df)
+    plot_titration(ga.explin_params, 'k', display=False,
+                   axis_order=('tBid', 'Liposomes', 'bad axis name'))
+
+
 
 # TODO could add test for raising an exception for an unknown fit type
 
 # -- REFACTORING LINE --
 
-def calc_k0(timecourse, grid, x, y, z, dt=900):
-    """Calculate the initial (k0) rate.
-
-    For the given pore formation (i.e., p(t)) timecourse, calculate the initial
-    pore formation rate by dividing the increase at the first time point by the
-    length of the time interval (defaults to 900 seconds = 15 minutes).
-    """
-    # FIXME do away with this and base it on fitted functions?
-    # FIXME function should take the grid and return a new dataframe,
-    # FIXME where the concentration conditions are the same but instead of
-    # FIXME a timecourse it returns ki, kf, and tau in the columns
-    rate = (timecourse[1] - timecourse[0]) / float(dt)
-    #lipo_only_timecourse = grid[x]['0']['0']
-    #lipo_only_k0 = (lipo_only_timecourse[1] - lipo_only_timecourse[0]) / float(dt)
-    #rate = rate - lipo_only_k0
-    #bax_only_timecourse = grid[x]['0'][z]
-    #bax_only_k0 = (bax_only_timecourse[1] - bax_only_timecourse[0]) / float(dt)
-    #rate = rate - bax_only_k0
-    return rate
 
 def calc_ki(timecourse, grid, x, y, z, start_time_index=10):
     """Calculate the final (ki) rate.
