@@ -185,6 +185,78 @@ class GridAnalysis(object):
         df.index = self.pore_data.index
         return df
 
+'''
+def calc_pores_bgsub(self, timecourse, grid, x, y, z):
+    pore_lipo_sub_df = self.raw_data.copy()
+    # Get keys for liposome concentrations
+
+    for lipo_conc in 
+    # FIXME A transformation on the data; should return another dataframe
+    p_timecourse = []
+    for i, val in enumerate(timecourse):
+        # Subtract liposome only timecourse, point-by-point
+        val = val - grid[x]['0']['0'][i]
+        p  = (100 - val)/100
+        if p < 0:
+            p_timecourse.append(1)
+            #p_timecourse.append(0)
+            print("E(t) > 100%!!: x, y, z, i: " + x + ", " + y + ", " + z + ", " + str(i))
+        elif p > 1:
+            p_timecourse.append(0)
+            print("E(t) < 0%!!: x, y, z, i: " + x + ", " + y + ", " + z + ", " + str(i))
+        else: 
+            p = -math.log(float(p))
+            if (p == 0): p = 0
+            p_timecourse.append(p)
+            #p_timecourse.append((float(p)))
+    return p_timecourse
+'''
+
+def calc_bgsub(data):
+    """Subtract the liposome-only (background) fluorescence from the data.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        A dataframe containing a timecourse for each concentration, with
+        the concentrations a hierarchical index on the rows and the timepoints
+        as columns.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A dataframe corresponding to ``data``, but with the liposome-only
+        timecourse subtracted from all timecourses with that liposome
+        concentration.
+
+    Raises
+    ------
+    ValueError
+        if ``data`` does not have a index level named 'Liposomes'.
+    """
+    # Initialize the background-subtracted data as a copy of the original
+    bgsub_data = data.copy()
+    # Make sure the data has a level "Liposomes"
+    if 'Liposomes' not in data.index.names:
+        raise ValueError('The data does not have a level "Liposomes".')
+    # Get the liposome concentrations
+    liposome_axis_index = data.index.names.index('Liposomes')
+    liposome_concs = data.index.levels[liposome_axis_index]
+
+    # Iterate over the liposome concentrations
+    for liposome_conc in liposome_concs:
+        # Get the liposome-only timecourse
+        background = data.loc[liposome_conc, 0, 0]
+        # Get the cross-section of the data for this liposome concentration
+        data_for_lipo_conc = data.xs(liposome_conc, axis=0, level='Liposomes')
+        # Iterate over the rows in the data and subtract background
+        for concs, timecourse in data_for_lipo_conc.iterrows():
+            bgsub_timecourse = timecourse - background
+            concs_tuple = tuple([liposome_conc] + list(concs))
+            bgsub_data.loc[concs_tuple] = bgsub_timecourse
+
+    return bgsub_data
+
 class FitResult(object):
     """A class to store the results of fitting a model to a timecourse.
 
@@ -687,6 +759,17 @@ def test_calc_pores():
     ga.calc_pores(warnings=False)
     assert True
 
+def test_calc_bgsub():
+    """GridAnalysis.calc_bgsub should run without error."""
+    ga = GridAnalysis(df)
+    calc_bgsub(df)
+    assert True
+
+@raises(ValueError)
+def test_calc_bgsub_no_liposomes():
+    """Should raise an error if the data does not have a level 'Liposomes'."""
+    ga = GridAnalysis(df)
+    calc_bgsub(df.loc[10])
 
 def test_calc_initial_slope():
     """GridAnalysis.calc_initial_slope() should run without error."""
@@ -756,46 +839,12 @@ def test_plot_titration_illegal_level_name():
                    axis_order=('tBid', 'Liposomes', 'bad axis name'))
 
 
-
 # TODO could add test for raising an exception for an unknown fit type
 
 # -- REFACTORING LINE --
 
 
 
-"""
-def calc_pores_bgsub(self, timecourse, grid, x, y, z):
-    pore_lipo_sub_df = self.raw_data.copy()
-    # Get keys for liposome concentrations
-
-    for lipo_conc in 
-    # FIXME A transformation on the data; should return another dataframe
-    p_timecourse = []
-    for i, val in enumerate(timecourse):
-        # Subtract liposome only timecourse, point-by-point
-        val = val - grid[x]['0']['0'][i]
-        p  = (100 - val)/100
-        if p < 0:
-            p_timecourse.append(1)
-            #p_timecourse.append(0)
-            print("E(t) > 100%!!: x, y, z, i: " + x + ", " + y + ", " + z + ", " + str(i))
-        elif p > 1:
-            p_timecourse.append(0)
-            print("E(t) < 0%!!: x, y, z, i: " + x + ", " + y + ", " + z + ", " + str(i))
-        else: 
-            p = -math.log(float(p))
-            if (p == 0): p = 0
-            p_timecourse.append(p)
-            #p_timecourse.append((float(p)))
-    return p_timecourse
-"""
-def calc_bgsub(timecourse, grid, x, y, z):
-    # FIXME A transformation on the data; should return another dataframe
-    bgsub_timecourse = []
-    for i, val in enumerate(timecourse):
-        val = val - grid[x]['0']['0'][i]     
-        bgsub_timecourse.append(val)
-    return bgsub_timecourse
 
 ## COMMENTS ##################################################################
 """
