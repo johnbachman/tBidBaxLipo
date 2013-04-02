@@ -683,51 +683,6 @@ def test_get_rate_regression():
 
 # -- REFACTORING LINE --
 
-# Select the dataset ######################
-# FIXME make this a class that takes the data as an argument
-#print("Using gridv2.")
-#from data.gridv2 import time, data_tbidmaj
-
-# Assumes the grid is uniform/symmetric
-# FIXME handle all this with pandas
-#lipo_concs_str = sort_numeric(data_tbidmaj.keys())
-#tbid_concs_str = sort_numeric(data_tbidmaj[lipo_concs_str[0]].keys())
-#bax_concs_str = sort_numeric(data_tbidmaj[lipo_concs_str[0]][tbid_concs_str[0]].keys())
-
-# Reconfigure data array into "Bax major" order
-# (i.e., indexing is lipo/Bax/tBid, rather than lipo/tBid/Bax
-#data_baxmaj = {}
-#
-#for lipo_conc_str in lipo_concs_str:
-#    data_baxmaj[lipo_conc_str] = {}
-#    for bax_conc_str in bax_concs_str:
-#        data_baxmaj[lipo_conc_str][bax_conc_str] = {}
-#        for tbid_conc_str in tbid_concs_str:
-#            data_baxmaj[lipo_conc_str][bax_conc_str][tbid_conc_str] = \
-#                        data_tbidmaj[lipo_conc_str][tbid_conc_str][bax_conc_str]
-
-def apply_func_to_grid(func, grid, **kw_args):
-    """Apply a function to the data grid.
-
-    Iterates through the grid structure to reach the underlying timecourse and
-    apply the function, reconstructing a new data structure in which the
-    timecourses have been processed by the function.
-    """
-    # FIXME handle this with a hierarchical dataframe, in which you iterate over the rows
-    # and then apply the function to the column-based timecourse?
-    out_data = {}
-    x_keys = grid.keys()
-    for x in x_keys:
-        out_data[x] = {}
-        y_keys = grid[x].keys()
-        for y in y_keys:
-            out_data[x][y] = {}
-            z_keys = grid[x][y].keys()
-            for z in z_keys:
-                out_data[x][y][z] = func(grid[x][y][z], grid, x, y, z, **kw_args)
-                #print out_data[x][y][z]
-    return out_data
-
 def calc_k0(timecourse, grid, x, y, z, dt=900):
     """Calculate the initial (k0) rate.
 
@@ -798,44 +753,6 @@ def calc_bgsub(timecourse, grid, x, y, z):
         val = val - grid[x]['0']['0'][i]     
         bgsub_timecourse.append(val)
     return bgsub_timecourse
-
-# FIXME Should be explicit from the setup of the dataframe
-#tbid_concs = [float(conc_str) for conc_str in sort_numeric(data_tbidmaj[lipo_conc_str].keys())]
-#bax_concs = [float(conc_str) for conc_str in sort_numeric(data_baxmaj[lipo_conc_str].keys())]
-
-#p = apply_func_to_grid(calc_pores, data_tbidmaj)    
-#print("Using background (liposome-only) subtracted pore calculations.")
-#p = apply_func_to_grid(calc_pores_bgsub, data_tbidmaj)    
-#k0 = apply_func_to_grid(calc_k0, p, dt=time[1])
-#ki = apply_func_to_grid(calc_ki, p)
-#data_bgsub = apply_func_to_grid(calc_bgsub, data_tbidmaj)
-
-## UTILITY FUNCTIONS FOR PLOTTING/ANALYSIS ###################################
-# FIXME These could all go away; the caller will get the right field from the
-# FIXME returned dataframe
-def get_timecourses_v_bax(lipo_conc_str, tbid_conc_str):
-    bax_dict = p[lipo_conc_str][tbid_conc_str]
-    return [bax_dict[key] for key in sort_numeric(bax_dict.keys())]
-
-def get_k0_v_bax(lipo_conc_str, tbid_conc_str):
-    bax_dict = k0[lipo_conc_str][tbid_conc_str]
-    return [bax_dict[key] for key in sort_numeric(bax_dict.keys())]
-
-def get_k0_v_tbid(lipo_conc_str, bax_conc_str):
-    bax_dict = k0[lipo_conc_str][tbid_conc_str]
-    return [k0[lipo_conc_str][key][bax_conc_str] for key in tbid_concs_str]
-
-def get_ki_v_bax(lipo_conc_str, tbid_conc_str):
-    bax_dict = ki[lipo_conc_str][tbid_conc_str]
-    return [bax_dict[key][0] for key in sort_numeric(bax_dict.keys())]
-
-
-def get_model_k0(model, k0_time=900):
-    t = np.linspace(0, k0_time, 100)
-    x = odesolve(model, t)
-    return (x['pores'][-1] / model.parameters['NUM_VESICLES'].value)/k0_time
-
-
 
 ## COMMENTS ##################################################################
 """
@@ -937,26 +854,3 @@ and for values (e.g. rates) derived from these values.
 However, the magnification of error is irrelevant when fits are being performed
 directly against the data.
 """
-
-##############################################################################
-### DEPRECATED/TRASH ########################################################
-##############################################################################
-def plot_ki_regression(lipo_conc_str, tbid_conc_str, bax_conc_str, start_time_index=4):
-    """ Plot the timecourse for the given concentrations along with a linear
-        regression to the latter kinetics, which is defined as the pore formation
-        rate running from start_time_index (defaults to 1 hour, which is index 4)
-        to the end.
-
-        Also prints the slope of the regression and the error. """
-    tlin = time[start_time_index:len(time)]
-    pfull = p[lipo_conc_str][tbid_conc_str][bax_conc_str]
-    plin = pfull[start_time_index:len(time)]
-    (slope, intercept) = np.polyfit(tlin, plin, 1)
-    pcalc = np.polyval([slope, intercept], tlin)
-    plt.plot(time, pfull, 's-')
-    plt.plot(tlin, pcalc)
-    err = np.sqrt(sum((pcalc-plin)**2)/(len(plin)))
-    print "slope: ", slope, " error: ", err
-    plt.title("p(t), with k_i regression line shown")
-    plt.xlabel("Time (sec)")
-    plt.ylabel("p(t)")
