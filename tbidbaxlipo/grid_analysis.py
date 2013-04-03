@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from util.fitting import Parameter, fit, mse
 from util.numsort import sorted_copy as sort_numeric
 from util.report import Report
-from test_pandas import df
+from tbidbaxlipo.data import gridv1, gridv2
 from nose.tools import raises
 import pandas as pd
 
@@ -757,44 +757,44 @@ def get_titration_fit():
 
 def test_calc_pores():
     """GridAnalysis.calc_pores should run without error."""
-    calc_pores(df, warnings=False)
+    calc_pores(gridv1.data, warnings=False)
     assert True
 
 def test_calc_bgsub():
     """GridAnalysis.calc_bgsub should run without error."""
-    calc_bgsub(df)
+    calc_bgsub(gridv1.data)
     assert True
 
 @raises(ValueError)
 def test_calc_bgsub_no_liposomes():
     """Should raise an error if the data does not have a level 'Liposomes'."""
-    calc_bgsub(df.loc[10])
+    calc_bgsub(gridv1.data.loc[10])
 
 def test_calc_initial_slope():
     """GridAnalysis.calc_initial_slope() should run without error."""
-    calc_initial_slope(df)
+    calc_initial_slope(gridv1.data)
     assert True
 
 def test_calc_final_slope():
     """GridAnalysis.calc_final_slope() should run without error."""
-    calc_final_slope(df)
+    calc_final_slope(gridv1.data)
     assert True
 
 def test_calc_explin_params():
     """Should run without error."""
-    calc_explin_params(calc_pores(df))
+    calc_explin_params(calc_pores(gridv1.data))
 
 def test_get_timecourse_fit():
     """GridAnalysis.get_timecourse_fit should run without error."""
-    get_timecourse_fit(df.loc[10,0,0], fittype='singleexp')
-    get_timecourse_fit(df.loc[10,0,0], fittype='explin')
-    get_timecourse_fit(df.loc[10,0,0], fittype='doubleexp')
-    get_timecourse_fit(df.loc[10,0,0], fittype='expexp')
+    get_timecourse_fit(gridv1.data.loc[10,0,0], fittype='singleexp')
+    get_timecourse_fit(gridv1.data.loc[10,0,0], fittype='explin')
+    get_timecourse_fit(gridv1.data.loc[10,0,0], fittype='doubleexp')
+    get_timecourse_fit(gridv1.data.loc[10,0,0], fittype='expexp')
     assert True
 
 def test_plot_timecourses():
     """plot_timecourses should run without error."""
-    ga = GridAnalysis(df)
+    ga = GridAnalysis(gridv1.data)
     plot_timecourses(ga.raw_data, display=False)
     plot_timecourses(ga.pore_data, display=False)
     assert True
@@ -803,7 +803,7 @@ def test_plot_timecourses():
 def test_plot_timecourses_illegal_fixed_conc():
     """plot_timecourses should error if the fixed_conc is an invalid key
     for the fixed axis (i.e., for axis_order[0])."""
-    ga = GridAnalysis(df)
+    ga = GridAnalysis(gridv1.data)
     plot_timecourses(ga.raw_data, display=False,
                      axis_order=('tBid', 'Liposomes', 'Bax'), fixed_conc=10)
 
@@ -811,14 +811,14 @@ def test_plot_timecourses_illegal_fixed_conc():
 def test_plot_timecourses_illegal_level_name():
     """plot_timecourses should error if one of the level names in axis_order
     is not present in the DataFrame."""
-    ga = GridAnalysis(df)
+    ga = GridAnalysis(gridv1.data)
     plot_timecourses(ga.raw_data, display=False,
                      axis_order=('tBid', 'Liposomes', 'bad_axis_name'),
                      fixed_conc=10)
 
 def test_plot_titration():
     """plot_titration should run without error."""
-    ga = GridAnalysis(df)
+    ga = GridAnalysis(gridv1.data)
     plot_titration(ga.explin_params, 'k', display=False, report=Report())
     assert True
 
@@ -826,7 +826,7 @@ def test_plot_titration():
 def test_plot_titration_illegal_param_name():
     """plot_titration should error if the param_name is an invalid column
     name in the fit_params DataFrame."""
-    ga = GridAnalysis(df)
+    ga = GridAnalysis(gridv1.data)
     plot_titration(ga.explin_params, 'bad_name', display=False,
                    axis_order=('tBid', 'Liposomes', 'Bax'))
 
@@ -834,7 +834,7 @@ def test_plot_titration_illegal_param_name():
 def test_plot_titration_illegal_level_name():
     """plot_titration should error if one of the level names in axis_order
     is not present in the DataFrame."""
-    ga = GridAnalysis(df)
+    ga = GridAnalysis(gridv1.data)
     plot_titration(ga.explin_params, 'k', display=False,
                    axis_order=('tBid', 'Liposomes', 'bad axis name'))
 

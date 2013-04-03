@@ -113,7 +113,7 @@ if __name__ == '__main__':
     opts.estimate_params = builder.estimate_params
     opts.initial_values = builder.random_initial_values()
     opts.nsteps = nsteps
-
+    # opts.norm_step_size = 1
     opts.sigma_step = 0.9
     opts.sigma_max = 50
     opts.sigma_min = 0.01

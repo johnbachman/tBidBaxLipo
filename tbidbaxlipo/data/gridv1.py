@@ -3,18 +3,30 @@ Data from the initial tBid/Bax/liposome 3-way titration experiment from
 David Andrews' lab. For details on the experimental protocol, see the
 Powerpoint slides he sent along with the second round of the experiment.
 
-The matrix of dye release data is stored as a dict of dicts of dicts of lists,
-in the package variable ``data_tBidmaj`` in "tBid major" order, that is,
-organized with the volume of liposomes added as the first indexed dimension,
-then tBid, then Bax, then time.
+The matrix of dye release data is stored in two ways:
 
-For example, the entry::
+- The data are stored in the variable ``data`` as a pandas.DataFrame, in which
+  the timepoints are the columns and the concentrations (as a hierarchical
+  index) are the rows. For the rows, the first level is "Liposomes", then
+  "tBid", then "Bax". The time coordinates in the columns are specified in
+  seconds.
 
-    data_tbidmaj['10']['21.5']['300']
+- The data are also stored in the variable ``data_tbidmaj`` as a dict of dicts
+  of dicts of lists in "tBid major" order, that is, organized with the volume
+  of liposomes added as the first indexed dimension, then tBid, then Bax, then
+  time.
 
-returns the timecourse of dye release values for 10 uL of liposomes, 21.5 nM tBid,
-and 300 nM Bax.
+  For example, the entry::
+
+      data_tbidmaj['10']['21.5']['300']
+
+  returns the timecourse of dye release values for 10 uL of liposomes, 21.5 nM
+  tBid, and 300 nM Bax.
 """
+
+import pandas as pd
+from tbidbaxlipo.util.numsort import sorted_copy as sort_numeric
+import numpy as np
 
 time_min = [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 195]
 """The timepoints of the measurements in minutes."""
@@ -1735,4 +1747,28 @@ u'165': [0, 10.247544598115855, 13.589897775105232, 16.245740629384645,
 50.002922780148481], u'97.5': [0, 18.635646226690827, 23.054889811188403,
 26.714210557081898, 29.496697258432221, 32.396095165721633, 33.997778687087155,
 36.745192026655758, 37.41158590050857, 40.077161395919802, 41.141053369965512,
-42.964868182615305, 43.561115332904663, 45.232945577833632]}}} 
+42.964868182615305, 43.561115332904663, 45.232945577833632]}}}
+
+lipo_concs_str = sort_numeric(data_tbidmaj.keys())
+"""The concentrations of liposomes, as strings in numerical order."""
+tbid_concs_str = sort_numeric(data_tbidmaj[lipo_concs_str[0]].keys())
+"""The concentrations of tBid, as strings in numerical order."""
+bax_concs_str = sort_numeric(data_tbidmaj[lipo_concs_str[0]]
+                                         [tbid_concs_str[0]].keys())
+"""The concentrations of Bax, as strings in numerical order."""
+
+_flattened = []
+_tuples = []
+
+for lipo_conc_str in lipo_concs_str:
+    for bax_conc_str in bax_concs_str:
+        for tbid_conc_str in tbid_concs_str:
+            _tuples.append(tuple([float(lipo_conc_str), float(tbid_conc_str),
+                                 float(bax_conc_str)]))
+            _flattened.append(data_tbidmaj[lipo_conc_str][tbid_conc_str]
+                                         [bax_conc_str])
+
+_np_flattened = np.array(_flattened)
+_index = pd.MultiIndex.from_tuples(_tuples, names=['Liposomes','tBid','Bax'])
+
+data = pd.DataFrame(_np_flattened, index=_index, columns=time)
