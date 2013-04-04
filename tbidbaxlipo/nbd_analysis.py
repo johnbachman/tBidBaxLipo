@@ -81,11 +81,6 @@ def plot_raw(display=True, report=None):
     if display:
         ioff()
 
-def test_plot_raw():
-    """Simple smoke test."""
-    plot_raw(display=False, report=None)
-    assert True
-
 def plot_normalized(display=True, report=None):
     """Plot experimental NBD data normalized from 0 to 1.
 
@@ -125,11 +120,6 @@ def plot_normalized(display=True, report=None):
         ioff()
     if (report):
         report.write_report()
-
-def test_plot_normalized():
-    """Simple smoke test."""
-    plot_normalized(display=False, report=None)
-    assert True
 
 def plot_avg(display=True, plot_std=False, report=None):
     """Plots the average trajectory for each mutant.
@@ -174,10 +164,6 @@ def plot_avg(display=True, plot_std=False, report=None):
         ioff()
     if (report):
         report.write_report()
-
-def test_plot_avg():
-    plot_avg(display=False, report=None)
-    assert True
 
 def plot_fit(display=True, report=None, fittype='double_exp'):
     """Fit the NBD data using the chosen fit function and plot.
@@ -347,27 +333,6 @@ def plot_fit(display=True, report=None, fittype='double_exp'):
     if display:
         ioff()
 
-def test_plot_fit():
-    plot_fit(display=False, report=None)
-    """
-    plot_fit(fittype='single_exp')
-    plot_fit(fittype='exp_lin')
-    plot_fit(fittype='double_exp')
-    plot_fit(fittype='triple_exp')
-    plot_fit(fittype='exp_hyperbola')
-    plot_fit(fittype='linked_eq')
-    plot_fit(fittype='linked_eq2')
-    plot_fit(fittype='exp_exp')
-        success = True
-    except:
-        pass
-    """
-    assert True
-
-@raises(Exception)
-def test_plot_fit_not_implemented():
-    plot_fit(display=False, fittype='not implemented')
-
 # Normalization Functions
 # =======================
 
@@ -401,16 +366,6 @@ def normalize_min_max(replicates):
         normalized_replicates.append(normalized_replicate)
 
     return normalized_replicates
-
-def test_normalize_min_max():
-    """Tests that all normalized replicates are on [0, 1]."""
-    for replicates in nbdall:
-        norm_replicates = normalize_min_max(replicates)
-        for norm_replicate in norm_replicates:
-            assert min(norm_replicate) == 0, \
-                   'Min of normalized timecourse is not 0!'
-            assert max(norm_replicate) == 1, \
-                   'Min of normalized timecourse is not 0!'
 
 def normalize_fit(replicates):
     """
@@ -460,16 +415,6 @@ def normalize_fit(replicates):
 
     return normalized_replicates
 
-def test_normalize_fit():
-    """Simply tests whether one of the normalized replicates is on [0, 1]."""
-    for replicates in nbdall:
-        norm_replicates = normalize_min_max(replicates)
-        for norm_replicate in norm_replicates:
-            assert min(norm_replicate) == 0, \
-                   'Min of normalized timecourse is not 0!'
-            assert max(norm_replicate) == 1, \
-                   'Min of normalized timecourse is not 0!'
-
 def calc_norm_avg_std():
     """Calculates an average (and SD) trajectory for each of the NBD mutants,
     once normalized.
@@ -494,7 +439,67 @@ def calc_norm_avg_std():
 
     return [norm_averages, norm_stds]
 
+# Tests
+# =====
+
+def test_plot_raw():
+    """Simple smoke test."""
+    plot_raw(display=False, report=None)
+    assert True
+
+def test_plot_normalized():
+    """Simple smoke test."""
+    plot_normalized(display=False, report=None)
+    assert True
+
+def test_plot_avg():
+    plot_avg(display=False, report=None)
+    assert True
+
+def test_plot_fit():
+    plot_fit(display=False, report=None)
+    """
+    plot_fit(fittype='single_exp')
+    plot_fit(fittype='exp_lin')
+    plot_fit(fittype='double_exp')
+    plot_fit(fittype='triple_exp')
+    plot_fit(fittype='exp_hyperbola')
+    plot_fit(fittype='linked_eq')
+    plot_fit(fittype='linked_eq2')
+    plot_fit(fittype='exp_exp')
+        success = True
+    except:
+        pass
+    """
+    assert True
+
+@raises(Exception)
+def test_plot_fit_not_implemented():
+    """plot_fit should error if asked for a fit that is not implemented."""
+    plot_fit(display=False, fittype='not implemented')
+
+def test_normalize_min_max():
+    """Tests that all normalized replicates are on [0, 1]."""
+    for replicates in nbdall:
+        norm_replicates = normalize_min_max(replicates)
+        for norm_replicate in norm_replicates:
+            assert min(norm_replicate) == 0, \
+                   'Min of normalized timecourse is not 0!'
+            assert max(norm_replicate) == 1, \
+                   'Min of normalized timecourse is not 0!'
+
+def test_normalize_fit():
+    """Simply tests whether one of the normalized replicates is on [0, 1]."""
+    for replicates in nbdall:
+        norm_replicates = normalize_min_max(replicates)
+        for norm_replicate in norm_replicates:
+            assert min(norm_replicate) == 0, \
+                   'Min of normalized timecourse is not 0!'
+            assert max(norm_replicate) == 1, \
+                   'Min of normalized timecourse is not 0!'
+
 def test_calc_norm_avg_std():
     """Smoke test."""
     calc_norm_avg_std()
     assert True
+
