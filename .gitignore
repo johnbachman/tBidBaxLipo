@@ -3,6 +3,7 @@
 doc/_build
 doc/_cache
 doc/_static
+doc/sphinxreport.log
 
 simdata/*
 *.tsv
