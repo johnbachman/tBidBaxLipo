@@ -13,14 +13,14 @@ translocate to membranes) have to be written in a compartmen-specific way,
 whereas others can be written in a generic way. To manage this degree of
 complexity, macros implementing tBid/Bax interactions are implemented here in a
 generic way (e.g.,
-:py:method:`tbidbaxlipo.models.core.Builder.tBid_activates_Bax`); if
+:py:meth:`tbidbaxlipo.models.core.Builder.tBid_activates_Bax`); if
 compartment-specific modifications are necessary, these functions are overriden
 in child classes (e.g.,
-:py:method:`tbidbaxlipo.models.site_cpt.Builder.tBid_activates_Bax`).
+:py:meth:`tbidbaxlipo.models.site_cpt.Builder.tBid_activates_Bax`).
 
 The model builder classes contained in this file and also in
-:py:module:`tbidbaxlipo.models.one_cpt`, :py:module:`tbidbaxlipo.models.n_cpt`,
-and :py:module:`tbidbaxlipo.models.site_cpt`, are used to manage the process of
+:py:mod:`tbidbaxlipo.models.one_cpt`, :py:mod:`tbidbaxlipo.models.n_cpt`,
+and :py:mod:`tbidbaxlipo.models.site_cpt`, are used to manage the process of
 building up alternative models. Each of these modules contains a class
 `Builder` that contains an instance of a PySB model. The classes also contain a
 series of methods implementing small sub-pieces of mechanism that can be termed
@@ -31,14 +31,14 @@ The pattern for model construction used here does not rely on the SelfExporter
 class of PySB. Instead, the ``Builder`` class contains an instance of a PySB
 model object. Monomers, Parameters, Rules, etc. are added to this model object
 by invoking the wrapper functions included in
-:py:module:`tbidbaxlipo.model.core`. These include
+:py:mod:`tbidbaxlipo.model.core`. These include
 
-- :py:method:`tbidbaxlipo.model.core.Builder.monomer`
-- :py:method:`tbidbaxlipo.model.core.Builder.parameter`
-- :py:method:`tbidbaxlipo.model.core.Builder.rule`
-- :py:method:`tbidbaxlipo.model.core.Builder.compartment`
-- :py:method:`tbidbaxlipo.model.core.Builder.initial`
-- :py:method:`tbidbaxlipo.model.core.Builder.observable`
+- :py:meth:`tbidbaxlipo.model.core.Builder.monomer`
+- :py:meth:`tbidbaxlipo.model.core.Builder.parameter`
+- :py:meth:`tbidbaxlipo.model.core.Builder.rule`
+- :py:meth:`tbidbaxlipo.model.core.Builder.compartment`
+- :py:meth:`tbidbaxlipo.model.core.Builder.initial`
+- :py:meth:`tbidbaxlipo.model.core.Builder.observable`
 
 Each of these functions invokes the appropriate PySB component constructor
 while setting the argument ``_export=False`` so that the SelfExporter is not
@@ -55,7 +55,7 @@ Individual mechanisms implemented
 tBid Binding to Bax
 -------------------
 
-- :py:method:`tbidbaxlipo.models.core.Builder.tBid_activates_Bax`
+- :py:meth:`tbidbaxlipo.models.core.Builder.tBid_activates_Bax`
 
 - tBid binds to Bax at the a6 (rear) site to trigger conformational change.
 
@@ -123,6 +123,7 @@ To-do list
 .. todo:: Think about how models could be built from rules or macros using tables.
 
 .. todo:: Make it so macros can be invoked from within the motifs in this
+
 paradigm.
 
 """
@@ -639,7 +640,7 @@ class Builder(object):
 
         Examines the params_dict attribute of the Builder instance (which is
         set in the constructor,
-        :py:method:`tbidbaxlipo.models.core.Builder.__init__`).  If the
+        :py:meth:`tbidbaxlipo.models.core.Builder.__init__`).  If the
         parameter with the given name is in the ``params_dict``, then the value
         in the ``params_dict`` is used to construct the parameter, and the
         argument ``value`` is ignored. If the parameter is not in

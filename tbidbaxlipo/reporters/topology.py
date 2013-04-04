@@ -34,9 +34,14 @@ def write_species(mcmc_set_name, model):
 
 class TopologyResult(Result):
     """Implements specific HTML formatting for reporters indicating model
-    topology."""
+    topology.
+    """
+
     def get_html(self):
-        # Color-code the presence/absence of topology elements
+        """Get the HTML for the result.
+
+        Color-codes the presence/absence of topology elements.
+        """
         if self.value == True:
             color = "red"
         else:

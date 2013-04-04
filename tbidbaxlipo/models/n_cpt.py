@@ -3,7 +3,7 @@ __author__ = 'johnbachman'
 from pysb import *
 from pysb.macros import *
 #from pylab import *
-from tbidbaxlipo.util.fitting import fit, fit_initial, mse
+from tbidbaxlipo.util.fitting import fit, mse
 from tbidbaxlipo.util import color_iter 
 from scipy.stats import poisson
 from pysb import kappa

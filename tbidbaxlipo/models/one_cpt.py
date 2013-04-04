@@ -3,22 +3,22 @@ Implementation of most basic membrane compartmentalization model, with a
 solution compartment and a single homogeneous membrane compartment.
 
 Requirements of the model (these should be incorporated into tests):
-- partitioning of tBid into membranes should occur rapidly and lead to nearly all
-  (> 90-95%) of tBid in the membrane at equilibrium
+
+- partitioning of tBid into membranes should occur rapidly and lead to nearly
+  all (> 90-95%) of tBid in the membrane at equilibrium
 
 Things that are unknown:
-- Does the partitioning of tBid and/or Bax to the membrane saturate,
-  or is the leveling off due to non-ideal partitioning or aggregation?
+
+- Does the partitioning of tBid and/or Bax to the membrane saturate, or is the
+  leveling off due to non-ideal partitioning or aggregation?
 
 The way this is written,
 
-- Bax equilibrates equally between the cytosolic and peripherally bound
-  state to both full and empty liposomes.
-
+- Bax equilibrates equally between the cytosolic and peripherally bound state
+  to both full and empty liposomes.
 - But, once in the "inserted" state, it can't dissociate from the vesicle!!
   (i.e., there's no reversal either to the cytosolic or peripherally bound
   states).
-
 - Further, there's no reversal from the porated back to the inserted
   state--instead Bax goes from porated to the peripherally bound state on
   an empty vesicle.
@@ -33,9 +33,10 @@ revert back to the peripherally bound state without first passing through the
 pore state. Also note that it cannot dissociate from the membrane unless it is
 in the 'm' (peripherally bound) state.
 
-There is a cycle in that Bax can go from m to m via
-mtBid + mBax <-> mtBid:mBax (<)-> mtBid + iBax (<)-> pBax
-              K1               K2                 K3
+There is a cycle in that Bax can go from m to m via::
+
+    mtBid + mBax <-> mtBid:mBax (<)-> mtBid + iBax (<)-> pBax
+                  K1               K2                 K3
 
 Therefore we need to have
 tBid_Bax_kf * tBid_Bax_kc * k_pore = tBid_Bax_kr * (tBid_iBax_kf) * k_pore_rev
@@ -74,7 +75,7 @@ __author__ = 'johnbachman'
 from pysb import *
 import numpy as np
 from matplotlib import pyplot as plt
-from tbidbaxlipo.util.fitting import fit, fit_initial, mse
+from tbidbaxlipo.util.fitting import fit, mse
 from tbidbaxlipo.util import color_iter
 from tbidbaxlipo.models import core
 

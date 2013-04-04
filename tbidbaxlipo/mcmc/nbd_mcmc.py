@@ -3,9 +3,11 @@ Functions for fitting the mechanistic NBD insertion models to the NBD-Bax mutant
 fluorescence data using MCMC.
 
 .. todo:: Likelihood should be scaled by number of timepoints, otherwise it
+
 overwhelms the prior for "no reason".
 
 .. todo:: Ideally, would have a way of pre-equilibrating the system for the
+
 just-Bax condition, and then perturb it with the addition of tBid.
 """
 
@@ -340,8 +342,8 @@ def import_mcmc_groups(filenames):
     With the suffix ``.xxx`` separated by a dot and the seed coming last in
     the underscore-separated arguments.
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     filenames : list of strings
         List of strings representing the chain filenames to be sorted into
         groups, e.g., of the type returned by ``glob.glob()``.
