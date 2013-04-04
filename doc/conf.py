@@ -30,6 +30,11 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphin
               'sphinx.ext.todo', 'sphinx.ext.coverage', 'sphinx.ext.pngmath',
               'sphinx.ext.viewcode', 'numpydoc']
 
+extensions.extend( ['SphinxReport.only_directives',
+                    'SphinxReport.roles',
+                    'SphinxReport.errors_directive',
+                    'SphinxReport.report_directive' ] )
+
 todo_include_todos=True
 
 # Add any paths that contain templates here, relative to this directory.
