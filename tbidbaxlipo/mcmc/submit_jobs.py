@@ -49,7 +49,7 @@ if __name__ == '__main__':
                 #for T_init in T_inits:
                 for thermo_temp in thermo_temps:
                     for i in range(0, num_chains):
-                        output_filename = '%s_%s_%s_%d_thermo%f_s%d.out' % \
+                        output_filename = '%s_%s_%s_%d_thermo%.1f_s%d.out' % \
                             (model, nbd_site_str, nbd_obs_str, nsteps, 
                                     thermo_temp, i)
 
