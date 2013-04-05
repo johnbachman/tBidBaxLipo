@@ -15,7 +15,7 @@ import numpy as np
 model_names = ['tardt']
 """The models to fit to the data."""
 
-nsteps = 50000
+nsteps = 100000
 """The number of steps in each chain."""
 
 num_chains = 10
@@ -36,6 +36,9 @@ corresponding combinations of NBD sites in the list ``nbd_site_combos``."""
 T_inits = 10 ** np.linspace(0,7,15)
 """The initial temperatures at which to run the chains."""
 
+thermo_temps = np.linspace(-7, 0, 15)
+"""The initial temperatures at which to run the chains."""
+
 if __name__ == '__main__':
     cmd_list = []
     for model in model_names:
@@ -43,11 +46,12 @@ if __name__ == '__main__':
             nbd_site_str = '-'.join(nbd_site_combo)
             for nbd_obs_combo in nbd_obs_combos:
                 nbd_obs_str = '-'.join(nbd_obs_combo)
-                for T_init in T_inits:
+                #for T_init in T_inits:
+                for thermo_temp in thermo_temps:
                     for i in range(0, num_chains):
-                        output_filename = '%s_%s_%s_%d_%d_s%d.out' % \
+                        output_filename = '%s_%s_%s_%d_thermo%f_s%d.out' % \
                             (model, nbd_site_str, nbd_obs_str, nsteps, 
-                                    T_init, i)
+                                    thermo_temp, i)
 
                         cmd_list = ['bsub', '-W', '12:00',
                                     '-q', queue,
@@ -58,7 +62,7 @@ if __name__ == '__main__':
                                     "nbd_sites=%s" % nbd_site_str,
                                     "nbd_observables=%s" % nbd_obs_str,
                                     "nsteps=%d" % nsteps,
-                                    "T_init=%f" % T_init]
+                                    "thermo_temp=%.1f" % thermo_temp]
                         print ' '.join(cmd_list)
                         subprocess.call(cmd_list)
 

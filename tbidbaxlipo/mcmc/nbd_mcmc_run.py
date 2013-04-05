@@ -14,7 +14,7 @@ if __name__ == '__main__':
     # ================
 
     tspan = nbd.time_other
-    nbd_avgs, nbd_stds = nbd.calc_avg_std()
+    nbd_avgs, nbd_stds = nbd.calc_avg_std(normalize=True)
 
     # The c62 data is on a slightly different timescale and has two extra
     # datapoints. For simplicity, we simply remove them.
@@ -99,9 +99,15 @@ if __name__ == '__main__':
 
     # Set the initial temperature
     if 'T_init' in kwargs:
-        T_init = kwargs['T_init']
+        T_init = float(kwargs['T_init'])
     else:
         T_init = 10
+
+    # Set the log(thermo_temperature)
+    if 'thermo_temp' in kwargs:
+        thermo_temp = float(kwargs['thermo_temp'])
+    else:
+        thermo_temp = 0
 
     # A sanity check to make sure everything worked:
     if None in [model, nbd_sites, random_seed, nsteps, nbd_observables]:
@@ -131,7 +137,8 @@ if __name__ == '__main__':
     opts.hessian_scale = 1
     opts.hessian_period = opts.nsteps / 10 #10
     opts.seed = random_seed
-    opts.T_init = float(T_init)
+    opts.T_init = T_init
+    opts.thermo_temp = 10 ** thermo_temp
     mcmc = NBD_MCMC(opts, nbd_avgs, nbd_stds,
                                 nbd_sites, nbd_observables, builder)
 
