@@ -21,7 +21,7 @@ import sys
 # ================
 
 tspan = nbd.time_other
-nbd_avgs, nbd_stds = nbd.calc_norm_avg_std()
+nbd_avgs, nbd_stds = nbd.calc_avg_std()
 
 # Cut off the last two timepoints from C62 so that it's the same length
 nbd_avgs[1] = nbd_avgs[1][0:-2]

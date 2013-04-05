@@ -14,7 +14,7 @@ if __name__ == '__main__':
     # ================
 
     tspan = nbd.time_other
-    nbd_avgs, nbd_stds = nbd.calc_norm_avg_std()
+    nbd_avgs, nbd_stds = nbd.calc_avg_std()
 
     # The c62 data is on a slightly different timescale and has two extra
     # datapoints. For simplicity, we simply remove them.

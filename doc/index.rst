@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 3
 
    intro
+   nbd_data
    notes
    modules/index
    references

@@ -6816,5 +6816,5 @@ meanall.append(mean120c)
 meanall.append(mean122c)
 meanall.append(mean126c)
 
-nbd_names = ['3c', '62c', '120c', '122c', '126c']
+nbd_names = ['c3', 'c62', 'c120', 'c122', 'c126']
 

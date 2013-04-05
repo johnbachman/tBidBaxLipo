@@ -33,16 +33,218 @@ from tbidbaxlipo.util.fitting import Parameter, fit, residuals
 from matplotlib.pyplot import legend, title, plot, xlabel, ylabel, figure, \
                               ion, ioff, show
 from numpy import array, mean, std, exp, min, max
+from collections import OrderedDict
 
 __all__ = ['plot_fit', 'plot_raw', 'plot_normalized', 'plot_avg',
-           'normalize_min_max', 'normalize_fit', 'calc_norm_avg_std']
+           'normalize_min_max', 'normalize_fit', 'calc_avg_std']
 
 rep = Report()
+
+# Tracker Functions
+# =================
+
+def raw_data():
+    """Get raw NBD data as a dict for plotting.
+
+    Returns the raw NBD data in an ordered dict serves as a tracker for
+    plotting with SphinxReport.
+    """
+    data_tracker = OrderedDict()
+    for i, nbd in enumerate(nbdall):
+        nbd_dict = OrderedDict()
+        if nbd_names[i] == 'c62':
+            nbd_dict['Time'] = time_c62
+        else:
+            nbd_dict['Time'] = time_other
+
+        for j, replicate in enumerate(nbd):
+            nbd_dict['r%d' % j] = replicate
+        data_tracker[nbd_names[i]] = nbd_dict
+    return data_tracker
+
+def normalized_data():
+    """Get NBD data normalized to [0, 1] as a dict for plotting.
+
+    Returns the normalized NBD data in an ordered dict that serves as a tracker
+    for plotting with SphinxReport.
+    """
+
+    data_tracker = OrderedDict()
+    for i, nbd in enumerate(nbdall):
+        if (nbd_names[i] == 'c62'):
+            time = time_c62
+        else:
+            time = time_other
+        nbd_dict = OrderedDict()
+        nbd_dict['Time'] = time
+        #norm_replicates = normalize_min_max(nbd)
+        norm_replicates = normalize_fit(nbd)
+        for j, replicate in enumerate(norm_replicates):
+            nbd_dict['r%d' % j] = replicate
+        data_tracker[nbd_names[i]] = nbd_dict
+    return data_tracker
+
+def avg_data():
+    """Gets the NBD data averaged across replicates as a dict for plotting.
+
+    Returns the averaged NBD data in an ordered dict that serves as a tracker
+    for plotting with SphinxReport.
+    """
+
+    norm_averages, norm_stds = calc_avg_std(normalize=False)
+    data_tracker = OrderedDict()
+    for i, nbd in enumerate(nbdall):
+        if (nbd_names[i] == 'c62'):
+            time = time_c62
+        else:
+            time = time_other
+        nbd_dict = OrderedDict()
+        nbd_dict['Time'] = time
+        # errorbar(time, norm_averages[i], yerr=norm_stds[i], label='')
+        nbd_dict['Value'] = norm_averages[i]
+        label = OrderedDict()
+        label['Average'] = nbd_dict
+        data_tracker[nbd_names[i]] = label
+    return data_tracker
+
+def avg_norm_data():
+    """Gets the NBD data normalized and then averaged across replicates.
+
+    Returns the averaged NBD data in an ordered dict that serves as a tracker
+    for plotting with SphinxReport.
+    """
+
+    norm_averages, norm_stds = calc_avg_std(normalize=True)
+    data_tracker = OrderedDict()
+    for i, nbd in enumerate(nbdall):
+        if (nbd_names[i] == 'c62'):
+            time = time_c62
+        else:
+            time = time_other
+        nbd_dict = OrderedDict()
+        nbd_dict['Time'] = time
+        # errorbar(time, norm_averages[i], yerr=norm_stds[i], label='')
+        nbd_dict['Value'] = norm_averages[i]
+        label = OrderedDict()
+        label['Average'] = nbd_dict
+        data_tracker[nbd_names[i]] = label
+    return data_tracker
+
+def fit_data(fittype='double_exp'):
+    """Gets the NBD data fit to one of several mathematical functions.
+
+    Returns the NBD data and fits in an ordered dict that serves as a tracker
+    for plotting with SphinxReport.
+    """
+    data_tracker = OrderedDict()
+    for i, nbd in enumerate(nbdall):
+        label_dict = OrderedDict()
+        if (nbd_names[i] == 'c62'):
+            time = time_c62
+        else:
+            time = time_other
+
+        k1s = []
+        k2s = []
+        k3s = []
+        fmaxs = []
+        fmax2s = []
+        reslist = []
+
+        for j, replicate in enumerate(nbd):
+
+            k1 = Parameter(0.01)
+            k2 = Parameter(0.0005)
+            f0 = Parameter(replicate[0])
+            fmax = Parameter(0.45)
+            fmax2 = Parameter(0.6)
+            m = Parameter(0.01)
+            k3 = Parameter(0.1)
+            fmax3 = Parameter(0.0025)
+
+            # Define fitting functions
+            def single_exp (t):    return (f0() + (fmax()*(1 - exp(-k1()*t))))
+            def exp_lin(t):        return (f0() + (fmax()*(1 - exp(-k1()*t)))+
+                                           (m()*t))
+            def double_exp(t):     return (f0() + (fmax()*(1 - exp(-k1()*t)))  +
+                                           (fmax2()*(1 - exp(-k2()*t))))
+            def triple_exp(t):     return (f0() + (fmax()*(1 - exp(-k1()*t)))  +
+                                           (fmax2()*(1 - exp(-k2()*t))) +
+                                           (fmax3()*(1 - exp(-k3()*t))))
+            def exp_hyperbola(t):  return (f0() + (fmax()*(1 - exp(-k1()*t))) +
+                                           (fmax2()*(1 - (1/(1 + (k2()*t) )) )))
+            def linked_eq(t):      return (f0() + (k1()*(1 - exp(-k2()*t)) -
+                                           k2()*(1 - exp(-k1()*t))) *
+                                           (fmax()/(k1() - k2())))
+            def linked_eq2(t):     return (f0() + (1/(k1() - k2())) *
+                                           (fmax()*k1()*(exp(-k2()*t) -
+                                           exp(-k1()*t)) + fmax2()*(k1()*(1 -
+                                           exp(-k2()*t)) - k2()*(1 -
+                                           exp(-k1()*t)))))
+            def exp_exp(t):        return (f0() + (fmax()*(1 -
+                                         exp(-fmax3()*(1-exp(-k3()*t))+k1()))) +
+                                         (fmax2()*(1 - exp(-k2()*t))))
+
+            if (fittype == 'single_exp'):
+                fit(single_exp, [k1, fmax], array(replicate), array(time))
+                fitfunc = single_exp
+            elif (fittype == 'exp_lin'):
+                fit(exp_lin, [k1, fmax, m], array(replicate), array(time))
+                fitfunc = exp_lin
+            elif (fittype == 'double_exp'):
+                fit(double_exp, [k1, fmax, k2, fmax2], array(replicate),
+                    array(time))
+                fitfunc = double_exp
+            elif (fittype == 'triple_exp'):
+                fit(triple_exp, [k1, fmax, k2, fmax2, k3, fmax3],
+                    array(replicate), array(time))
+                fitfunc = triple_exp
+            elif (fittype == 'exp_hyperbola'):
+                fit(exp_hyperbola, [k1, fmax, k2, fmax2], array(replicate),
+                    array(time))
+                fitfunc = exp_hyperbola
+            elif (fittype == 'linked_eq'):
+                fit(linked_eq, [k1, fmax, k2], array(replicate), array(time))
+                fitfunc = linked_eq
+            elif (fittype == 'linked_eq2'):
+                fitfunc = linked_eq2
+                fit(fitfunc, [k1, fmax, k2, fmax2], array(replicate),
+                    array(time))
+            elif (fittype == 'exp_exp'):
+                fit(exp_exp, [fmax, fmax3, k3, fmax2, k2], array(replicate),
+                    array(time))
+                fitfunc = exp_exp
+            else:
+                raise Exception('unknown fit type')
+
+            # Save the parameter values from the fit
+            k1s.append(k1())
+            fmaxs.append(fmax())
+            k2s.append(k2())
+            fmax2s.append(fmax2())
+            k3s.append(k3())
+
+            # Plot the data from the replicate along with the fit
+            model_vals = map(fitfunc, time)
+
+            nbd_data = OrderedDict()
+            nbd_data['Time'] = time
+            nbd_data['Data'] = replicate
+            nbd_data['Fit'] = model_vals
+            label_dict['r%d'% j] = nbd_data
+
+            # Plot residuals
+            #res = residuals(fitfunc, array(replicate), array(time))
+            #nbd_data['Residuals'] = res
+
+        data_tracker[nbd_names[i]] = label_dict
+
+    return data_tracker
 
 # Plotting Functions
 # ==================
 
-def plot_raw(display=True, report=None):
+def plot_raw(display=False, report=None):
     """Plot original (raw) experimental NBD data.
 
     Parameters
@@ -58,7 +260,7 @@ def plot_raw(display=True, report=None):
         ion()
 
     for i, nbd in enumerate(nbdall):
-        if (nbd_names[i] == '62c'):
+        if (nbd_names[i] == 'c62'):
             time = time_c62
         else:
             time = time_other
@@ -81,7 +283,7 @@ def plot_raw(display=True, report=None):
     if display:
         ioff()
 
-def plot_normalized(display=True, report=None):
+def plot_normalized(display=False, report=None):
     """Plot experimental NBD data normalized from 0 to 1.
 
     Parameters
@@ -97,7 +299,7 @@ def plot_normalized(display=True, report=None):
         ion()
 
     for i, nbd in enumerate(nbdall):
-        if (nbd_names[i] == '62c'):
+        if (nbd_names[i] == 'c62'):
             time = time_c62
         else:
             time = time_other
@@ -121,7 +323,7 @@ def plot_normalized(display=True, report=None):
     if (report):
         report.write_report()
 
-def plot_avg(display=True, plot_std=False, report=None):
+def plot_avg(display=False, plot_std=False, report=None):
     """Plots the average trajectory for each mutant.
 
     Parameters
@@ -136,13 +338,13 @@ def plot_avg(display=True, plot_std=False, report=None):
         If not None (default), writes the plots to the given Report object.
     """
 
-    norm_averages, norm_stds = calc_norm_avg_std()
+    norm_averages, norm_stds = calc_avg_std()
 
     if display:
         ion()
 
     for i, nbd in enumerate(nbdall):
-        if (nbd_names[i] == '62c'):
+        if (nbd_names[i] == 'c62'):
             time = time_c62
         else:
             time = time_other
@@ -165,7 +367,7 @@ def plot_avg(display=True, plot_std=False, report=None):
     if (report):
         report.write_report()
 
-def plot_fit(display=True, report=None, fittype='double_exp'):
+def plot_fit(display=False, report=None, fittype='double_exp'):
     """Fit the NBD data using the chosen fit function and plot.
 
     Plots residuals along with the fitted trajectories.
@@ -190,11 +392,11 @@ def plot_fit(display=True, report=None, fittype='double_exp'):
     for i, nbd in enumerate(nbdall):
         norm_replicates_list.append(array(normalize_fit(nbd)))
 
-    for i, nbd in enumerate(norm_replicates_list):
-    #for i, nbd in enumerate(nbdall):
+    #for i, nbd in enumerate(norm_replicates_list):
+    for i, nbd in enumerate(nbdall):
         #if (not nbd_names[i] == '3c'): continue
 
-        if (nbd_names[i] == '62c'):
+        if (nbd_names[i] == 'c62'):
             time = time_c62
         else:
             time = time_other
@@ -415,9 +617,14 @@ def normalize_fit(replicates):
 
     return normalized_replicates
 
-def calc_norm_avg_std():
-    """Calculates an average (and SD) trajectory for each of the NBD mutants,
-    once normalized.
+def calc_avg_std(normalize=True):
+    """Calculates an average (and SD) trajectory for each of the NBD mutants.
+
+    Parameters
+    ----------
+    normalize : boolean
+        If True (default) the data is normalized to [0, 1] before the average
+        is taken.
 
     Returns
     -------
@@ -428,16 +635,19 @@ def calc_norm_avg_std():
         of SD trajectories.
     """
 
-    norm_averages = []
-    norm_stds = []
+    averages = []
+    stds = []
 
     for i, nbd in enumerate(nbdall):
-        norm_replicates = array(normalize_fit(nbd))
+        if normalize:
+            replicates = array(normalize_fit(nbd))
+        else:
+            replicates = nbd
 
-        norm_averages.append(mean(norm_replicates, axis=0))
-        norm_stds.append(std(norm_replicates, axis=0))
+        averages.append(mean(replicates, axis=0))
+        stds.append(std(replicates, axis=0))
 
-    return [norm_averages, norm_stds]
+    return [averages, stds]
 
 # Tests
 # =====
@@ -498,8 +708,8 @@ def test_normalize_fit():
             assert max(norm_replicate) == 1, \
                    'Min of normalized timecourse is not 0!'
 
-def test_calc_norm_avg_std():
+def test_norm_avg_std():
     """Smoke test."""
-    calc_norm_avg_std()
+    calc_avg_std()
     assert True
 
