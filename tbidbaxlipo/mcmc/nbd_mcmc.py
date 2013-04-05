@@ -328,7 +328,6 @@ class NBD_MCMC(bayessb.MCMC):
                    mcmc.acceptance/(mcmc.iter+1.), mcmc.accept_likelihood,
                    mcmc.accept_prior, mcmc.accept_posterior)
 
-
 # Chain handling helper function
 # ==============================
 def import_mcmc_groups(filenames):

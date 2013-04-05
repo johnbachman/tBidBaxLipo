@@ -4,33 +4,29 @@ To-Do list
 Near-term todos
 ---------------
 
-* Fix package structure
-* Have model construction insert a stringable name into the builder obj
+* Plan trip to Toronto!
+* Problem with scaling factors and normalization by Bax_0 or tBid_0 when amount
+  of tBid0/Bax0 changes in an "experiment"
+* Tests to make sure that nbd_mcmc will run
+* Understand permeabilization in bulk model vs. in stochastic model
 
-* Run fits at different temperatures
+* Make colors of data and timecourses match in fit_plotting_function
+
+
+* Examine fits at different temperatures
 * Add a plot for how posterior changes for chains, and add legend to link to
   parameter traces as well
-
-* Sphinx report for adding plots to docs?
-* Would be cool if make the docs also ran the various fitting/plotting
-  functions in nbd_analysis and grid_analysis, and stuck them in .html files
-  and added them as a section of the docs
 
 * Add an overview page to the whole repo (intro.rst, and maybe a README.rst)
 * Add an overview page in /models/index.rst
 * Very brief overview page for analysis.rst
 
 * Write nbd_mcmc to work with linear/parallel as well as mechanistic models
-* Tests to make sure that nbd_mcmc will run
 
-* Make colors of data and timecourses match in fit_plotting_function
 * Sphinx plugin to show .evidence field of a function as a part of the
-  documentation?
-* Problem with scaling factors and normalization by Bax_0 or tBid_0 when amount
-  of tBid0/Bax0 changes in an "experiment"
+  documentation for the reporter code?
 * Formulate concrete plan for how to integrate residue sequence into
   mechanistic model--perhaps do simultaneous MOMP assay?
-* Understand permeabilization in bulk model vs. in stochastic model
 * Science priority--design an experiment to distinguish models for c62
 * Use data that has not been normalized
 * Need topology test for what the nbd_observable(s) are
