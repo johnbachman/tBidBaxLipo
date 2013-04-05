@@ -13,7 +13,6 @@ Contents:
 
    intro
    nbd_data
-   notes
    modules/index
    references
    todo

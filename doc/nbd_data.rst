@@ -4,8 +4,6 @@ Plots and analysis of NBD data
 Raw data
 --------
 
-The following plots were produced by the function :py:func:`tbidbaxlipo.nbd_analysis.plot_raw`.
-
 .. report:: tbidbaxlipo.nbd_analysis.raw_data
    :render: line-plot
    :as-lines:
