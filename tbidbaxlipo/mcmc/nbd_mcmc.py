@@ -299,14 +299,15 @@ class NBD_MCMC(bayessb.MCMC):
 
         return likelihood
 
-    def get_basename(self, model_name):
+    def get_basename(self):
         """A function for standardizing, in one place, the format for pickled
         NBD_MCMC objects.
         """
-        return '%s_%s_%s_%d_s%d' % (model_name,
+        return '%s_%s_%s_%d_%d_s%d' % (self.options.model.name,
                                     '-'.join(self.nbd_sites),
                                     '-'.join(self.nbd_observables),
                                     self.options.nsteps,
+                                    self.options.T_init,
                                     self.options.seed)
 
     @staticmethod

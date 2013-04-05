@@ -536,6 +536,7 @@ class Builder(object):
         print "core: Building model ta:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
+        self.model.name = 'ta'
 
     def build_model_tai(self):
         print "---------------------------"
@@ -543,6 +544,7 @@ class Builder(object):
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.iBax_binds_tBid_at_bh3()
+        self.model.name = 'tai'
 
     def build_model_taid(self):
         print "---------------------------"
@@ -551,6 +553,7 @@ class Builder(object):
         self.tBid_activates_Bax(bax_site='bh3')
         self.iBax_binds_tBid_at_bh3()
         self.Bax_dimerizes()
+        self.model.name = 'taid'
 
     def build_model_taidt(self):
         print "---------------------------"
@@ -560,6 +563,7 @@ class Builder(object):
         self.iBax_binds_tBid_at_bh3()
         self.Bax_dimerizes()
         self.Bax_tetramerizes()
+        self.model.name = 'taidt'
 
     def build_model_tair(self):
         print "---------------------------"
@@ -568,6 +572,7 @@ class Builder(object):
         self.tBid_activates_Bax(bax_site='bh3')
         self.iBax_binds_tBid_at_bh3()
         self.Bax_reverses()
+        self.model.name = 'tair'
 
     def build_model_taird(self):
         print "---------------------------"
@@ -576,7 +581,8 @@ class Builder(object):
         self.tBid_activates_Bax(bax_site='bh3')
         self.iBax_binds_tBid_at_bh3()
         self.Bax_reverses()
-        self.Bax_dimerizes()         
+        self.Bax_dimerizes()
+        self.model.name = 'taird'
 
     def build_model_tairdt(self):
         print "---------------------------"
@@ -587,6 +593,7 @@ class Builder(object):
         self.Bax_reverses()
         self.Bax_dimerizes()
         self.Bax_tetramerizes()
+        self.model.name = 'tairdt'
 
     def build_model_tad(self):
         print "---------------------------"
@@ -594,6 +601,7 @@ class Builder(object):
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.Bax_dimerizes()
+        self.model.name = 'tad'
 
     def build_model_tadt(self):
         print "---------------------------"
@@ -602,6 +610,7 @@ class Builder(object):
         self.tBid_activates_Bax(bax_site='bh3')
         self.Bax_dimerizes()
         self.Bax_tetramerizes()
+        self.model.name = 'tadt'
 
     def build_model_tar(self):
         print "---------------------------"
@@ -609,6 +618,7 @@ class Builder(object):
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.Bax_reverses()
+        self.model.name = 'tar'
 
     def build_model_tard(self):
         print "---------------------------"
@@ -617,6 +627,7 @@ class Builder(object):
         self.tBid_activates_Bax(bax_site='bh3')
         self.Bax_reverses()
         self.Bax_dimerizes()
+        self.model.name = 'tard'
 
     def build_model_tardt(self):
         print "---------------------------"
@@ -626,6 +637,7 @@ class Builder(object):
         self.Bax_reverses()
         self.Bax_dimerizes()
         self.Bax_tetramerizes()
+        self.model.name = 'tardt'
 
     # -- CONSTRUCTOR WRAPPER FUNCTIONS ---------------------------------------
     def monomer(self, *args, **kwargs):

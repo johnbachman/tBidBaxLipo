@@ -1,6 +1,6 @@
-import tbidbaxlipo.nbd_mcmc_pysb
-from nbd_mcmc_pysb import model_names, nbd_site_names
-import nbd_analysis as nbd
+from tbidbaxlipo.mcmc.nbd_mcmc import NBD_MCMC
+from tbidbaxlipo.mcmc.nbd_mcmc import model_names, nbd_site_names
+import tbidbaxlipo.nbd_analysis as nbd
 import sys
 import numpy as np
 import bayessb
@@ -97,6 +97,12 @@ if __name__ == '__main__':
     # Set the number of steps:
     nsteps = int(kwargs['nsteps'])
 
+    # Set the initial temperature
+    if 'T_init' in kwargs:
+        T_init = kwargs['T_init']
+    else:
+        T_init = 10
+
     # A sanity check to make sure everything worked:
     if None in [model, nbd_sites, random_seed, nsteps, nbd_observables]:
         raise Exception('Something went wrong! One of the arguments to ' \
@@ -113,30 +119,31 @@ if __name__ == '__main__':
     opts.estimate_params = builder.estimate_params
     opts.initial_values = builder.random_initial_values()
     opts.nsteps = nsteps
-    # opts.norm_step_size = 1
+    opts.norm_step_size = 1
     opts.sigma_step = 0.9
     opts.sigma_max = 50
     opts.sigma_min = 0.01
     opts.accept_rate_target = 0.23
     opts.accept_window = 200
     opts.sigma_adj_interval = 200
-    opts.anneal_length = nsteps / 2
+    opts.anneal_length = 0
     opts.use_hessian = False # TRUE
     opts.hessian_scale = 1
     opts.hessian_period = opts.nsteps / 10 #10
     opts.seed = random_seed
-    mcmc = tbidbaxlipo.nbd_mcmc_pysb.NBD_MCMC(opts, nbd_avgs, nbd_stds,
+    opts.T_init = float(T_init)
+    mcmc = NBD_MCMC(opts, nbd_avgs, nbd_stds,
                                 nbd_sites, nbd_observables, builder)
 
     mcmc.do_fit()
 
     # Pickle it
-    output_file = open('%s.mcmc' % mcmc.get_basename(kwargs['model']), 'w')
+    output_file = open('%s.mcmc' % mcmc.get_basename(), 'w')
     pickle.dump(mcmc, output_file)
     output_file.close()
 
     # When sampling is completed, make the figures:
-    mcmc.generate_figures(report_name=mcmc.get_basename(kwargs['model']),
-                          mixed_start=0)
+    #mcmc.generate_figures(report_name=mcmc.get_basename(),
+    #                      mixed_start=0)
 
     print "Done."
