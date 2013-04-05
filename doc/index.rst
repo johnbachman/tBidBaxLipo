@@ -6,6 +6,10 @@
 Welcome to tBid/Bax/Lipo's documentation!
 =========================================
 
+The tBidBaxLipo project is aimed at assembling data from `in vitro` experiments
+on the kinetics of Bcl-2 protein interactions and using mathematical models to
+unify observations about interaction mechanisms.
+
 Contents:
 
 .. toctree::
@@ -13,6 +17,7 @@ Contents:
 
    intro
    nbd_data
+   grid_data
    modules/index
    references
    todo

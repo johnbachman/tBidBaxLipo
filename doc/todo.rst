@@ -5,14 +5,29 @@ Near-term todos
 ---------------
 
 * Fix package structure
-* Would be cool if make the docs also ran the various fitting/plotting functions in
-  nbd_analysis and grid_analysis, and stuck them in .html files and added them as a
-  section of the docs
 * Have model construction insert a stringable name into the builder obj
+
+* Run fits at different temperatures
+* Add a plot for how posterior changes for chains, and add legend to link to
+  parameter traces as well
+
+* Sphinx report for adding plots to docs?
+* Would be cool if make the docs also ran the various fitting/plotting
+  functions in nbd_analysis and grid_analysis, and stuck them in .html files
+  and added them as a section of the docs
+
+* Add an overview page to the whole repo (intro.rst, and maybe a README.rst)
+* Add an overview page in /models/index.rst
+* Very brief overview page for analysis.rst
+
+* Write nbd_mcmc to work with linear/parallel as well as mechanistic models
+* Tests to make sure that nbd_mcmc will run
+
 * Make colors of data and timecourses match in fit_plotting_function
+* Sphinx plugin to show .evidence field of a function as a part of the
+  documentation?
 * Problem with scaling factors and normalization by Bax_0 or tBid_0 when amount
   of tBid0/Bax0 changes in an "experiment"
-* Need to do fit of more than one curve (c3/c62)
 * Formulate concrete plan for how to integrate residue sequence into
   mechanistic model--perhaps do simultaneous MOMP assay?
 * Understand permeabilization in bulk model vs. in stochastic model
@@ -106,8 +121,9 @@ Other todos
 .. todo:: Fix .rst file for nbd_mcmc (now nbd_linear_mcmc)
 
 .. todo:: Plot the nbd_parallel_model against the normalize_fit data to make
-sure that the parameters derived from the single_exp fit in nbd_analysis.py
-produce the same results!
+
+   sure that the parameters derived from the single_exp fit in nbd_analysis.py
+   produce the same results!
 
 .. todo:: Come up with a strategy for how to sample from starting distributions for NBD MCMC
 
