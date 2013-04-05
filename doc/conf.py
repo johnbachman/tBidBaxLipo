@@ -33,11 +33,6 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
 
 extensions.extend( ['matplotlib.sphinxext.plot_directive'])
 
-extensions.extend( ['SphinxReport.only_directives',
-                    'SphinxReport.roles',
-                    'SphinxReport.errors_directive',
-                    'SphinxReport.report_directive' ] )
-
 todo_include_todos=True
 
 # Add any paths that contain templates here, relative to this directory.

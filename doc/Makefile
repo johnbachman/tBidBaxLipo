@@ -6,7 +6,6 @@ SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
-CACHEDIR      = _cache
 STATICDIR      = _static
 
 # Internal variables.
@@ -42,7 +41,6 @@ help:
 
 clean:
 	-rm -rf $(BUILDDIR)/*
-	-rm -rf $(CACHEDIR)/*
 	-rm -rf $(STATICDIR)/*
 
 html:

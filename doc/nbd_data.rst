@@ -4,37 +4,40 @@ Plots and analysis of NBD data
 Raw data
 --------
 
-.. report:: tbidbaxlipo.nbd_analysis.raw_data
-   :render: line-plot
-   :as-lines:
+.. plot::
+
+    from tbidbaxlipo.nbd_analysis import *
+    plot_raw()
 
 Normalized to [0, 1]
 --------------------
 
-.. report:: tbidbaxlipo.nbd_analysis.normalized_data
-   :render: line-plot
-   :as-lines:
+.. plot::
+
+    from tbidbaxlipo.nbd_analysis import *
+    plot_normalized()
 
 Averaged across replicates
 --------------------------
 
-.. report:: tbidbaxlipo.nbd_analysis.avg_data
-    :render: line-plot
-    :as-lines:
-    :groupby: all
+.. plot::
+
+    from tbidbaxlipo.nbd_analysis import *
+    plot_avg(normalize=False)
 
 Normalized and averaged across replicates
 -----------------------------------------
 
-.. report:: tbidbaxlipo.nbd_analysis.avg_norm_data
-   :render: line-plot
-   :as-lines:
-   :groupby: all
+.. plot::
+
+    from tbidbaxlipo.nbd_analysis import *
+    plot_avg(normalize=True)
 
 Fits with mathematical functions
 --------------------------------
 
-.. report:: tbidbaxlipo.nbd_analysis.fit_data
-   :render: line-plot
-   :as-lines:
+.. plot::
+
+    from tbidbaxlipo.nbd_analysis import *
+    plot_fit()
 
