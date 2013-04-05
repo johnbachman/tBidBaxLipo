@@ -819,7 +819,7 @@ def test_plot_timecourses_illegal_level_name():
 def test_plot_titration():
     """plot_titration should run without error."""
     ga = GridAnalysis(gridv1.data)
-    plot_titration(ga.explin_params, 'k', display=False, report=Report())
+    plot_titration(ga.explin_params, 'k')
     assert True
 
 @raises(ValueError)
