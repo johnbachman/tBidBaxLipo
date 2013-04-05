@@ -130,10 +130,10 @@ if __name__ == '__main__':
     opts.sigma_max = 50
     opts.sigma_min = 0.01
     opts.accept_rate_target = 0.23
-    opts.accept_window = 200
+    opts.accept_window = 100
     opts.sigma_adj_interval = 200
-    opts.anneal_length = 0
-    opts.use_hessian = False # TRUE
+    opts.anneal_length = nsteps / 10
+    opts.use_hessian = True # TRUE
     opts.hessian_scale = 1
     opts.hessian_period = opts.nsteps / 10 #10
     opts.seed = random_seed
