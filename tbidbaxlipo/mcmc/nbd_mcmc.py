@@ -374,7 +374,7 @@ def import_mcmc_groups(filenames):
 
     for filename in filenames:
         # Split off the suffix from the filename
-        (prefix, suffix) = filename.split('.')
+        (prefix, suffix) = filename.rsplit('.', 1)
         # Separate the filename into the final argument identifying the
         # random seed, and everything that comes before it:
         (mcmc_args, seed) = prefix.rsplit('_', 1)

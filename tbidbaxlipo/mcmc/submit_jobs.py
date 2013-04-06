@@ -15,7 +15,7 @@ import numpy as np
 model_names = ['tardt']
 """The models to fit to the data."""
 
-nsteps = 100000
+nsteps = 150000
 """The number of steps in each chain."""
 
 num_chains = 10
