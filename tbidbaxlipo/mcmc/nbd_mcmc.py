@@ -14,7 +14,7 @@ just-Bax condition, and then perturb it with the addition of tBid.
 import bayessb
 import os
 from pysb.integrate import odesolve
-import numpy
+import numpy as np
 import matplotlib
 #matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -227,16 +227,28 @@ class NBD_MCMC(bayessb.MCMC):
         #         alpha=alpha)
 
     def get_observable_timecourses(self, position):
-        """Gets the timecourses associated with the experimental observables."""
+        """Gets the timecourses associated with the experimental observables.
+
+        Parameters
+        ----------
+        position : numpy.array
+            Values of parameters (in log10) at desired position.
+
+        Returns
+        -------
+        dict
+            Dict containing the a timecourse for every observable. Keys are
+            the observable names.
+        """
         # TODO Need to be able to get the indices for scaling parameters
         # from the model so that they're not hardcoded
 
         # Run the simulation and scale the simulated timecourses
         yout = self.simulate(position, observables=True)
         params = self.cur_params(position)
-        timecourses = []
+        timecourses = {}
         for obs in self.nbd_observables:
-            timecourses.append((yout[obs] /
+            timecourses[obs.name] = ((yout[obs] /
                            self.options.model.parameters['Bax_0'].value)
                           * params[3])
 
@@ -252,8 +264,8 @@ class NBD_MCMC(bayessb.MCMC):
         # Add the data to the plot
         self.plot_data(ax)
         # Add the simulations to the plot
-        for timecourse in timecourses:
-            ax.plot(self.options.tspan, timecourse)
+        for obs_name, timecourse in timecourses.iteritems():
+            ax.plot(self.options.tspan, timecourse, label=obs_name)
         # Label the plot
         ax.set_xlabel('Time')
         ax.set_ylabel('Concentration')
@@ -293,7 +305,7 @@ class NBD_MCMC(bayessb.MCMC):
                 timecourse = ((yout[obs_name] /
                                mcmc.options.model.parameters['Bax_0'].value)
                               * params[3])
-                err += numpy.sum((self.nbd_avgs[data_index] - timecourse)**2 /
+                err += np.sum((self.nbd_avgs[data_index] - timecourse)**2 /
                                  (2 * self.nbd_stds[data_index]**2))
             return err
 
@@ -318,7 +330,7 @@ class NBD_MCMC(bayessb.MCMC):
         """
         window = mcmc.options.accept_window
 
-        local_acc = numpy.sum(mcmc.accepts[(mcmc.iter - window):mcmc.iter]) / \
+        local_acc = np.sum(mcmc.accepts[(mcmc.iter - window):mcmc.iter]) / \
                               float(window)
 
         if mcmc.iter % 20 == 0:

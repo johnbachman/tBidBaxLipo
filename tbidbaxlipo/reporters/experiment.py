@@ -28,8 +28,8 @@ def change_tBid_concentration(mcmc_set, fold_change):
     plot_filename = '%s_tBid_%.1fx.png' % (mcmc_set.name, fold_change)
     thumbnail_filename = '%s_tBid_%.1fx_th.png' % (mcmc_set.name, fold_change)
 
-    # Make sure we can call the method 'get_observable_timecourse'
-    if not hasattr(mcmc_set.chains[0], 'get_observable_timecourse') or \
+    # Make sure we can call the method 'get_observable_timecourses'
+    if not hasattr(mcmc_set.chains[0], 'get_observable_timecourses') or \
        not hasattr(mcmc_set.chains[0], 'plot_data'):
         return Result('None', None)
 
@@ -39,8 +39,9 @@ def change_tBid_concentration(mcmc_set, fold_change):
     # Plot a sampling of trajectories from the original parameter set
     for i in range(num_samples):
         position = mcmc_set.get_sample_position()
-        x = mcmc_set.chains[0].get_observable_timecourse(position=position)
-        ax.plot(tspan, x, color='g', alpha=0.5)
+        timecourses = mcmc_set.chains[0].get_observable_timecourses(position=position)
+        for obs_name, timecourse in timecourses.iteritems():
+            ax.plot(tspan, timecourse, color='g', alpha=0.5, label=obs_name)
 
     # Now change tBid x-fold...
     model = mcmc_set.chains[0].options.model
@@ -50,8 +51,9 @@ def change_tBid_concentration(mcmc_set, fold_change):
     # ...and do the sampling again
     for i in range(num_samples):
         position = mcmc_set.get_sample_position()
-        x = mcmc_set.chains[0].get_observable_timecourse(position=position)
-        ax.plot(tspan, x, color='r', alpha=0.5)
+        timecourses = mcmc_set.chains[0].get_observable_timecourses(position=position)
+        for obs_name, timecourse in timecourses.iteritems():
+            ax.plot(tspan, timecourse, color='r', alpha=0.5, label=obs_name)
 
     canvas = FigureCanvasAgg(fig)
     fig.set_canvas(canvas)
@@ -72,8 +74,8 @@ def increase_Bax_5x(mcmc_set):
     plot_filename = '%s_Bax_5x.png' % mcmc_set.name
     thumbnail_filename = '%s_Bax_5x_th.png' % mcmc_set.name
 
-    # Make sure we can call the method 'get_observable_timecourse'
-    if not hasattr(mcmc_set.chains[0], 'get_observable_timecourse') or \
+    # Make sure we can call the method 'get_observable_timecourses'
+    if not hasattr(mcmc_set.chains[0], 'get_observable_timecourses') or \
        not hasattr(mcmc_set.chains[0], 'plot_data'):
         return Result('None', None)
 
@@ -83,8 +85,9 @@ def increase_Bax_5x(mcmc_set):
     # Plot a sampling of trajectories from the original parameter set
     for i in range(num_samples):
         position = mcmc_set.get_sample_position()
-        x = mcmc_set.chains[0].get_observable_timecourse(position=position)
-        ax.plot(tspan, x, color='g', alpha=0.5)
+        timecourses = mcmc_set.chains[0].get_observable_timecourses(position=position)
+        for obs_name, timecourse in timecourses.iteritems():
+            ax.plot(tspan, timecourse, color='g', alpha=0.5, label=obs_name)
 
     # Now increase Bax 5-fold...
     model = mcmc_set.chains[0].options.model
@@ -94,8 +97,9 @@ def increase_Bax_5x(mcmc_set):
     # ...and do the sampling again
     for i in range(num_samples):
         position = mcmc_set.get_sample_position()
-        x = mcmc_set.chains[0].get_observable_timecourse(position=position)
-        ax.plot(tspan, x, color='r', alpha=0.5)
+        timecourses = mcmc_set.chains[0].get_observable_timecourses(position=position)
+        for obs_name, timecourse in timecourses.iteritems():
+            ax.plot(tspan, timecourse, color='r', alpha=0.5, label=obs_name)
 
     canvas = FigureCanvasAgg(fig)
     fig.set_canvas(canvas)

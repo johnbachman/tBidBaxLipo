@@ -3,15 +3,14 @@ from bayessb.report import Report
 import bayessb.report.reporters
 import tbidbaxlipo.reporters
 from tbidbaxlipo.reporters import knowledge, topology, experiment
-from tbidbaxlipo.nbd_mcmc_pysb import import_mcmc_groups
+from tbidbaxlipo.mcmc.nbd_mcmc import import_mcmc_groups
 import sys
 import pickle
 
 #chain_file_list = glob.glob('/Volumes/data/computation/Bachman/'
 #                            'c62_Baxbh3_nlkl/taird*.mcmc')
 chain_file_list = glob.glob('/Volumes/data/computation/Bachman/'
-                            'c62_Baxbh3_nlkl/taird_c62_iBax_50000_s0.mcmc')
-#chain_file_list = glob.glob('ta*.mcmc')
+                            'multitemp/tardt_c62_iBax_50000_3_s*.mcmc')
 
 chain_dict = import_mcmc_groups(chain_file_list)
 
