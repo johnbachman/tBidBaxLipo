@@ -248,7 +248,7 @@ class NBD_MCMC(bayessb.MCMC):
         params = self.cur_params(position)
         timecourses = {}
         for obs in self.nbd_observables:
-            timecourses[obs.name] = ((yout[obs] /
+            timecourses[obs] = ((yout[obs] /
                            self.options.model.parameters['Bax_0'].value)
                           * params[3])
 
