@@ -4,6 +4,7 @@ To-Do list
 Near-term todos
 ---------------
 
+* Write tests for multichain and reporters?
 * Plan trip to Toronto!
 * Problem with scaling factors and normalization by Bax_0 or tBid_0 when amount
   of tBid0/Bax0 changes in an "experiment"

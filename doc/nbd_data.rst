@@ -36,8 +36,44 @@ Normalized and averaged across replicates
 Fits with mathematical functions
 --------------------------------
 
+Single exponential model
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Fits to the equation
+
+.. math::
+
+    F_0 + F_{max}\left(1 - e^{-kt}\right)
+
 .. plot::
 
     from tbidbaxlipo.nbd_analysis import *
-    plot_fit()
+    plot_fit(fittype='single_exp')
+
+
+Exponential-linear model
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. math::
+
+    F_0 + F_{max}\left(1 - e^{-kt}\right) + mt
+
+.. plot::
+
+    from tbidbaxlipo.nbd_analysis import *
+    plot_fit(fittype='exp_lin')
+
+Two-exponential model
+~~~~~~~~~~~~~~~~~~~~~
+
+.. math::
+
+    F_0 + F_{max_1}\left(1 - e^{-k_1 t}\right) +
+    F_{max_2}\left(1 - e^{-k_2 t}\right)
+
+.. plot::
+
+    from tbidbaxlipo.nbd_analysis import *
+    plot_fit(fittype='double_exp')
+
 
