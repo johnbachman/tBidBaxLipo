@@ -107,6 +107,31 @@ def tBidBax_kd(mcmc_set):
 
     return MeanSdResult(mean, sd, plot_filename)
 
+# tBid/liposomes binding curve
+# with appropriate apparent Kd
+# (how to do stoichiometry?)
+
+# Bax/liposomes binding curve (without tBid)
+# with appropriate apparent Kd
+
+# Bax S184E mutant can bind tBid, but not Bax; and
+# this mutant does not have a9 insertion or a5 insertion or dye release
+# Titrating in S184E inhibits Bax activation (presumably by tBid inhibition?)
+
+# Biphasic curves in the loop region (alpha 2-3, residues 40-50 or so)
+
+# Titration of Bax and kinetics for C126
+
+# Liposome titration for C126 indicates that recruitment drops quickly at low
+# liposome concentrations, possibly because Bid does not bind
+
+# Ability of Bax to be pre-activated to permeabilize liposomes
+# (in a metastable state? is it dimeric?)
+
+# With large amounts of liposomes, small fraction of ANTS permeabilization.
+# With small amount of liposomes, incomplete Bax recruitment (possibly because
+# of failure to bind/recruit Bid)
+
 # Helper functions
 # ================
 def monotonic_increasing(x):

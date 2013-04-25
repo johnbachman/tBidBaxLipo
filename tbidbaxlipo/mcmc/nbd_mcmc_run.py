@@ -101,13 +101,13 @@ if __name__ == '__main__':
     if 'T_init' in kwargs:
         T_init = float(kwargs['T_init'])
     else:
-        T_init = 10
+        T_init = 1
 
     # Set the log(thermo_temperature)
     if 'thermo_temp' in kwargs:
         thermo_temp = float(kwargs['thermo_temp'])
     else:
-        thermo_temp = 0
+        thermo_temp = 1
 
     # A sanity check to make sure everything worked:
     if None in [model, nbd_sites, random_seed, nsteps, nbd_observables]:
@@ -132,13 +132,13 @@ if __name__ == '__main__':
     opts.accept_rate_target = 0.23
     opts.accept_window = 100
     opts.sigma_adj_interval = 200
-    opts.anneal_length = nsteps / 10
-    opts.use_hessian = True # TRUE
+    opts.anneal_length = 0 #opts.nsteps / 10
+    opts.use_hessian = False #True # TRUE
     opts.hessian_scale = 1
-    opts.hessian_period = opts.nsteps / 10 #10
+    opts.hessian_period = opts.nsteps / 20 #10
     opts.seed = random_seed
-    opts.T_init = T_init
-    opts.thermo_temp = 10 ** thermo_temp
+    opts.T_init = 1 # T_init
+    opts.thermo_temp = 1
     mcmc = NBD_MCMC(opts, nbd_avgs, nbd_stds,
                                 nbd_sites, nbd_observables, builder)
 
