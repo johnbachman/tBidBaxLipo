@@ -17,7 +17,7 @@ chain_dict = import_mcmc_groups(chain_file_list)
 
 rep = Report(chain_dict, [topology, bayessb.report.reporters,
                           knowledge, experiment])
-rep.write_html_table_with_links('htmlreport.html')
+rep.write_html_table_with_links('index.html')
 
 with open('report.rep', 'w') as f:
     pickle.dump(rep, f)
