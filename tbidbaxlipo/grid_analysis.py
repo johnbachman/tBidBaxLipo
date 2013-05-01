@@ -454,7 +454,7 @@ def plot_timecourses(data,
             color_index += 1
         # Add a legend
         plt.legend(loc='lower right')
-        plt.title("Fits for %d uL liposomes, %d nM %s " % \
+        plt.title("Fits for %.2f uL liposomes, %d nM %s " % \
                     (fixed_conc, major_conc, major_axis_name))
                 #+ ', Fit: ' + (fittype if model == None else 'model'))
         #plt.ylabel('p(t) (avg pores per vesicle)') # FIXME
