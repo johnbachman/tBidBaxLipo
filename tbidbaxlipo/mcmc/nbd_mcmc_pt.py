@@ -66,27 +66,27 @@ class NBD_MCMC_PT(object):
         options.step_fn = self.step
 
         self.options = options
-        self.pt = PT_MCMC(options, 4, 1e6, swap_period=1)
+        self.pt = PT_MCMC(options, 10, max_temp=1e7, min_temp=1, swap_period=5)
 
     # Pickling functions for this class
-    def __getstate__(self):
-        self.pt = None
-        self.options.likelihood_fn = None
-        self.options.prior_fn = None
-        self.options.step_fn = None
+    #def __getstate__(self):
+        #self.pt = None
+        #self.options.likelihood_fn = None
+        #self.options.prior_fn = None
+        #self.options.step_fn = None
         #mcmc_state = bayessb.MCMC.__getstate__(self)
         #nbd_mcmc_state = self.__dict__.copy()
         #return (mcmc_state, nbd_mcmc_state)
         # May have to explicitly reset these in the chains of the PT
-        return self.__dict__.copy()
+    #    return self.__dict__.copy()
 
-    def __setstate__(self, state):
+    #def __setstate__(self, state):
         #(mcmc_state, nbd_mcmc_state) = state
         #bayessb.MCMC.__setstate__(self, state)
         #self.__dict__.update(nbd_mcmc_state)
-        self.options.likelihood_fn = self.get_likelihood_function()
-        self.options.prior_fn = self.builder.prior
-        self.options.step_fn = self.step
+        #self.options.likelihood_fn = self.get_likelihood_function()
+        #self.options.prior_fn = self.builder.prior
+        #self.options.step_fn = self.step
         # May have to explicitly reset these in the chains of the PT
 
     # MCMC Functions

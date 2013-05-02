@@ -126,13 +126,16 @@ if __name__ == '__main__':
     opts.estimate_params = builder.estimate_params
     opts.initial_values = builder.random_initial_values()
     opts.nsteps = nsteps
-    opts.norm_step_size = 1
+    opts.norm_step_size = np.array([0.01] + \
+                        ([0.1] * (len(opts.estimate_params)-1)))
+    # don't adjust sigma
+    opts.sigma_adj_interval = nsteps
     opts.sigma_step = 0.9
     opts.sigma_max = 50
     opts.sigma_min = 0.01
     opts.accept_rate_target = 0.23
     opts.accept_window = 100
-    opts.sigma_adj_interval = 200
+    # don't anneal or use hessian
     opts.anneal_length = 0
     opts.use_hessian = False # TRUE
     opts.hessian_scale = 1
@@ -144,12 +147,12 @@ if __name__ == '__main__':
                                 nbd_sites, nbd_observables, builder)
 
     mcmc.do_fit()
+    import ipdb; ipdb.set_trace()
 
     # Pickle it
-    #output_file = open('%s.mcmc' % mcmc.get_basename(), 'w')
-    #pickle.dump(mcmc, output_file)
-    #output_file.close()
-
+    output_file = open('%s.pt.mcmc' % mcmc.get_basename(), 'w')
+    pickle.dump(mcmc, output_file)
+    output_file.close()
     # When sampling is completed, make the figures:
     #mcmc.generate_figures(report_name=mcmc.get_basename(),
     #                      mixed_start=0)
