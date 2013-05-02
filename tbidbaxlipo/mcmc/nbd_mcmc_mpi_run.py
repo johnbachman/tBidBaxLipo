@@ -139,13 +139,16 @@ if __name__ == '__main__':
     opts.estimate_params = builder.estimate_params
     opts.initial_values = builder.random_initial_values()
     opts.nsteps = nsteps
-    opts.norm_step_size = 0.1
+    opts.norm_step_size = np.array([0.01] + \
+                        ([0.05] * (len(opts.estimate_params)-1)))
+
     opts.sigma_step = 0.9
     opts.sigma_max = 50
     opts.sigma_min = 0.01
     opts.accept_rate_target = 0.23
     opts.accept_window = 100
-    opts.sigma_adj_interval = 200
+    opts.sigma_adj_interval = nsteps # Don't adjust step size
+
     opts.anneal_length = 0 # necessary so cooling does not occur
     opts.use_hessian = False
     opts.hessian_scale = 1
