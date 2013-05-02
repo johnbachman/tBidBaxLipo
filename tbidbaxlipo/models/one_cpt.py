@@ -101,11 +101,13 @@ class Builder(core.Builder):
 
         tBid = self['tBid']
         Bax = self['Bax']
+        Vesicles = self['Vesicles']
 
         self.initial(tBid(loc='c', bh3=None) ** solution, self['tBid_0'])
         self.initial(Bax(loc='c', bh3=None, a6=None,
                      c3='s', c62='s', c120='s', c122='s', c126='s', c184='s')
                      ** solution, self['Bax_0'])
+        self.initial(Vesicles() ** solution, self['Vesicles_0'])
 
         # OBSERVABLES
         self.observable('ctBid', tBid(loc='c'))
@@ -129,6 +131,7 @@ class Builder(core.Builder):
     def translocate_tBid_Bax(self):
         print("one_cpt: translocate_tBid_Bax()")
 
+        """
         tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
                                           factor=self['Vesicles_0'].value,
                                           estimate=False)
@@ -138,20 +141,32 @@ class Builder(core.Builder):
                                           factor=self['Vesicles_0'].value,
                                           estimate=False)
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-2)
+        """
+        tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
+                                          estimate=False)
+        tBid_transloc_kr = self.parameter('tBid_transloc_kr', 1e-1)
+
+        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
+                                          estimate=False)
+        Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1)
 
         ves = self['ves']
         solution = self['solution']
         tBid = self['tBid']
         Bax = self['Bax']
+        Vesicles = self['Vesicles']
 
         self.rule('tBid_translocates_sol_to_%s' % ves.name,
-             tBid(loc='c') ** solution >> tBid(loc='m') ** ves,
+             tBid(loc='c') ** solution + Vesicles() ** solution >>
+             tBid(loc='m') ** ves + Vesicles() ** solution,
              tBid_transloc_kf)
-        #self.rule('tBid_translocates_%s_to_sol' % ves.name,
-        #     tBid(loc='m', bh3=None) ** ves >> tBid(loc='c', bh3=None) ** solution,
-        #     tBid_transloc_kr)
+        self.rule('tBid_translocates_%s_to_sol' % ves.name,
+             tBid(loc='m', bh3=None) ** ves >>
+             tBid(loc='c', bh3=None) ** solution,
+             tBid_transloc_kr)
         self.rule('Bax_translocates_sol_to_%s' % ves.name,
-             Bax(loc='c') ** solution >> Bax(loc='m') ** ves,
+             Bax(loc='c') ** solution + Vesicles() ** solution >>
+             Bax(loc='m') ** ves + Vesicles() ** solution,
              Bax_transloc_kf)
         self.rule('Bax_translocates_%s_to_sol' % ves.name,
              Bax(loc='m', bh3=None, a6=None) ** ves >>

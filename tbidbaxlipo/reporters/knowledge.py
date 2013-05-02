@@ -107,9 +107,11 @@ def tBidBax_kd(mcmc_set):
 
     return MeanSdResult(mean, sd, plot_filename)
 
-# tBid/liposomes binding curve
-# with appropriate apparent Kd
+# tBid/liposomes binding curve with appropriate apparent Kd
 # (how to do stoichiometry?)
+# Also, note that even when liposomes are in very high concentration, not all
+# tBid is bound to liposomes! (or is fraction of liposomes w/ or w/o tBid? This
+# would be a very different story.)
 
 # Bax/liposomes binding curve (without tBid)
 # with appropriate apparent Kd

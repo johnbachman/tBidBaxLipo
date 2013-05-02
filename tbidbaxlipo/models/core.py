@@ -188,6 +188,7 @@ class Builder(object):
                          'c122': ['s', 'm'],
                          'c126': ['s', 'm'],
                          'c184': ['s', 'm']})
+        self.monomer('Vesicles', [])
 
     # -- METHODS FOR FITTING/CALIBRATION -----------------------------------
     def declare_nbd_scaling_parameters(self, nbd_sites):
@@ -242,8 +243,13 @@ class Builder(object):
             raise Exception('Failed to set any NBD scaling parameters!')
 
     def prior(self, mcmc, position):
-        return np.sum((position - self.parameter_means)**2 / \
-                      (2 * self.parameter_variances))
+        if (position[0] < -0.1 or position[0] > 0.7):
+            return np.inf
+        if any(position[1:] > -1) or any(position[1:] < -5):
+            return np.inf
+        else:
+            return np.sum((position - self.parameter_means)**2 / \
+                          (2 * self.parameter_variances))
 
     def random_initial_values(self):
         """Return a set of random initial values for parameter estimation.
@@ -264,9 +270,15 @@ class Builder(object):
         distributions with the means given by self.parameter_means and the
         variances given by self.parameter_variances.
         """
-        return 10 ** (self.parameter_means + \
-               (np.random.randn(len(self.estimate_params)) * \
-                self.parameter_variances))
+        while (True):
+            test_vals = (self.parameter_means +
+                            (np.random.randn(len(self.estimate_params)) * \
+                             self.parameter_variances))
+
+            if any(test_vals[1:] > -1) or any(test_vals[1:] < -5):
+                continue
+            else:
+                return 10 ** test_vals
 
     # -- MECHANISTIC MOTIFS ------------------------------------------------
     def tBid_activates_Bax(self, bax_site='bh3'):
@@ -531,6 +543,12 @@ class Builder(object):
       (which can subsequently dissociate) - or dissociate immediately
       leading to
     """
+    def build_model_t(self):
+        print "---------------------------"
+        print "core: Building model t:"
+        self.translocate_tBid_Bax()
+        self.model.name = 't'
+
     def build_model_ta(self):
         print "---------------------------"
         print "core: Building model ta:"
