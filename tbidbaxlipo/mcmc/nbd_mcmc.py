@@ -315,12 +315,12 @@ class NBD_MCMC(bayessb.MCMC):
         """A function for standardizing, in one place, the format for pickled
         NBD_MCMC objects.
         """
-        return '%s_%s_%s_%d_thermo%.2f_s%d' % (self.options.model.name,
+        return '%s_%s_%s_%d_T%.2f_s%d' % (self.options.model.name,
                                     '-'.join(self.nbd_sites),
                                     '-'.join(self.nbd_observables),
                                     self.options.nsteps,
-                                    #self.options.T_init,
-                                    np.log10(self.options.thermo_temp),
+                                    self.options.T_init,
+                                    #np.log10(self.options.thermo_temp),
                                     self.options.seed)
 
     @staticmethod
