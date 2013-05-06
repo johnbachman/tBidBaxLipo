@@ -2,6 +2,7 @@ __author__ = 'johnbachman'
 
 from pysb import *
 from pysb.macros import *
+import numpy as np
 #from pylab import *
 from tbidbaxlipo.util.fitting import fit, mse
 from tbidbaxlipo.util import color_iter 
@@ -9,6 +10,7 @@ from scipy.stats import poisson
 from pysb import kappa
 from pysb import bng
 from tbidbaxlipo.models import core
+from matplotlib import pyplot as plt
 
 class Builder(core.Builder):
 
@@ -17,7 +19,7 @@ class Builder(core.Builder):
 
     def __init__(self, scaling_factor=10, params_dict=None):
         # Sets self.model = Model(), and self.params_dict
-        tBid_Bax.__init__(self, params_dict=params_dict)
+        core.Builder.__init__(self, params_dict=params_dict)
 
         # This is the only variable that needs to be set to rescale
         # the simulation according to the nominal initial concentrations
@@ -39,7 +41,9 @@ class Builder(core.Builder):
         Bax = self['Bax']
 
         self.initial(tBid(bh3=None, loc='c') ** solution, self['tBid_0'])
-        self.initial(Bax(bh3=None, a6=None, loc='c') ** solution, self['Bax_0'])
+        self.initial(Bax(loc='c', bh3=None, a6=None,
+                     c3='s', c62='s', c120='s', c122='s', c126='s', c184='s')
+                     ** solution, self['Bax_0'])
 
         # OBSERVABLES
         self.observable('ctBid', tBid(loc='c') ** solution)
@@ -63,15 +67,15 @@ class Builder(core.Builder):
 
     # MODEL MACROS
     def translocate_tBid_Bax(self):
-        print("tBid_Bax_nc: translocate_tBid_Bax()")
+        print("n_cpt: translocate_tBid_Bax()")
 
         # Translocation of proteins to vesicles (i.e., from c to m state)
         tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
-                                          factor=(1 / float(self.scaling_factor)))
+                                          factor=(1/float(self.scaling_factor)))
         tBid_transloc_kr = self.parameter('tBid_transloc_kr', 0)
 
         Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
-                                          factor=(1 / float(self.scaling_factor)))
+                                          factor=(1/float(self.scaling_factor)))
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-2)
 
         tBid = self['tBid']
@@ -135,38 +139,38 @@ class Builder(core.Builder):
             xrecs.append(ssa_result)
             #dr_all.append(get_dye_release(model, 'pores', ssa_result))
 
-        xall = array([x.tolist() for x in xrecs])
-        x_std = recarray(xrecs[0].shape, dtype=xrecs[0].dtype, buf=std(xall, 0))
-        x_avg = recarray(xrecs[0].shape, dtype=xrecs[0].dtype, buf=mean(xall, 0))
+        xall = np.array([x.tolist() for x in xrecs])
+        x_std = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype, buf=np.std(xall, 0))
+        x_avg = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype, buf=np.mean(xall, 0))
 
         ci = color_iter()
         marker = ','
         linestyle = ''
-        figure(1)
+        plt.figure(1)
 
         tBid_0 = self['tBid_0']
         Bax_0 = self['Bax_0']
 
         # Translocation
-        figure(figure_ids[0])
-        errorbar(x_avg['time'], x_avg['ctBid']/tBid_0.value,
+        plt.figure(figure_ids[0])
+        plt.errorbar(x_avg['time'], x_avg['ctBid']/tBid_0.value,
                  yerr=x_std['ctBid']/tBid_0.value,
                  color=ci.next(), marker=marker, linestyle=linestyle)
-        errorbar(x_avg['time'], x_avg['mtBid']/tBid_0.value,
+        plt.errorbar(x_avg['time'], x_avg['mtBid']/tBid_0.value,
                  yerr=x_std['mtBid']/tBid_0.value,
                  color=ci.next(), marker=marker, linestyle=linestyle)
-        errorbar(x_avg['time'], x_avg['cBax']/Bax_0.value,
+        plt.errorbar(x_avg['time'], x_avg['cBax']/Bax_0.value,
                  yerr=x_std['cBax']/Bax_0.value,
                  color=ci.next(), marker=marker, linestyle=linestyle)
-        errorbar(x_avg['time'], x_avg['mBax']/Bax_0.value,
+        plt.errorbar(x_avg['time'], x_avg['mBax']/Bax_0.value,
                  yerr=x_std['mBax']/Bax_0.value,
                  color=ci.next(), marker=marker, linestyle=linestyle)
 
         # Activation
-        errorbar(x_avg['time'], x_avg['iBax']/Bax_0.value,
+        plt.errorbar(x_avg['time'], x_avg['iBax']/Bax_0.value,
                  yerr=x_std['iBax']/Bax_0.value, label='iBax',
                  color=ci.next(), marker=marker, linestyle=linestyle)
-        errorbar(x_avg['time'], x_avg['tBidBax']/tBid_0.value,
+        plt.errorbar(x_avg['time'], x_avg['tBidBax']/tBid_0.value,
                  yerr=x_std['tBidBax']/tBid_0.value,
                  color=ci.next(), marker=marker, linestyle=linestyle)
 
@@ -216,8 +220,8 @@ def plot_compartment_mean(model, observable_name, output):
         if (not cpt.name == 'solution'):
             total += output['%s_%s' % (observable_name, cpt.name)]
     mean = total / len(model.compartments)
-    figure()
-    plot(output['time'], mean)
+    plt.figure()
+    plt.plot(output['time'], mean)
 
 def get_dye_release(model, pore_observable_name, output):
     num_timepoints = len(output['time'])
@@ -234,10 +238,10 @@ def get_dye_release(model, pore_observable_name, output):
     return dye_release
 
 def plot_compartment_all(model, observable_name, output):
-    figure()
+    plt.figure()
     for i, cpt in enumerate(model.compartments):
         if (not cpt.name == 'solution'):
-            plot(output['time'], output['%s_%s' % (observable_name, cpt.name)])
+            plt.plot(output['time'], output['%s_%s' % (observable_name, cpt.name)])
 
 def plot_predicted_p(model, observable_name, output):
     # Iterate through data, and at each time point, get the fraction
@@ -256,7 +260,7 @@ def get_compartment_dist(model, observable_name, output):
         for i, cpt in enumerate(model.compartments):
             if (not cpt.name == 'solution'):
                 end_counts.append(output['%s_%s' % (observable_name, cpt.name)][t])
-    return array(end_counts)
+    return np.array(end_counts)
 
 def combine_dists(model, observable_name, output_array):
     totals = []
@@ -272,7 +276,7 @@ def plot_combined_dist(model, observable_name, output_array):
     plot_dist(totals)
 
 def plot_dist(data):
-    figure()
+    plt.figure()
 
     #end_counts = get_compartment_dist(model, observable_name, output)
 
@@ -292,9 +296,9 @@ def plot_dist(data):
     print h
     print "sum h: %f" % sum(h)
     #bar(bins[0:len(bins)-1], h)
-    plot(bins[0:len(bins)-1], h)
+    plt.plot(bins[0:len(bins)-1], h)
 
-    mean_counts = mean(data)
+    mean_counts = np.mean(data)
     print "mean counts: "
     print mean_counts
 
@@ -302,7 +306,7 @@ def plot_dist(data):
     #poisson_counts = poisson.pmf(bins, ^)
     print "sum poisson:  %f" % sum(poisson_counts)
     print poisson_counts
-    plot(bins, poisson_counts)
+    plt.plot(bins, poisson_counts)
 
 
 # COMMENTS
@@ -414,18 +418,17 @@ def rate_calcs(nm_rate):
     print "stochastic scaling factor of %g" % actual_to_scaled
     scaled_molec_rate = molec_rate / actual_to_scaled
     print "scaled molec rate: %g" % scaled_molec_rate
-    
-    
+
 def run_model_ode(tmax=12000):
     from pysb.integrate import odesolve
-    t = linspace(0, tmax, 1000)
+    t = np.linspace(0, tmax, 1000)
     x = odesolve(model, t)
 
     ci = color_iter()
-    figure(1)
+    plt.figure(1)
     # Translocation
-    plot(t, (x['ctBid'])/tBid_0.value, label='ctBid', color=ci.next())
-    plot(t, (x['mtBid'])/tBid_0.value, label='mtBid', color=ci.next())
-    plot(t, (x['cBax'])/Bax_0.value, label='cBax', color=ci.next())
-    plot(t, (x['mBax'])/Bax_0.value, label='mBax', color=ci.next())
-    legend()
+    plt.plot(t, (x['ctBid'])/tBid_0.value, label='ctBid', color=ci.next())
+    plt.plot(t, (x['mtBid'])/tBid_0.value, label='mtBid', color=ci.next())
+    plt.plot(t, (x['cBax'])/Bax_0.value, label='cBax', color=ci.next())
+    plt.plot(t, (x['mBax'])/Bax_0.value, label='mBax', color=ci.next())
+    plt.legend()
