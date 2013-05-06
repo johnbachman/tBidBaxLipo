@@ -95,7 +95,7 @@ class Builder(core.Builder):
                 self.observable('tBid_%s' % cpt_name, tBid(cpt=cpt_name))
                 self.observable('Bax_%s' % cpt_name, Bax(cpt=cpt_name))
 
-    def tBid_activates_Bax(self, bax_site='a6'):
+    def tBid_activates_Bax(self, bax_site='bh3'):
         print("site_cpt: tBid_activates_Bax(bax_site=" + bax_site + ")")
 
         # Forward rate of tBid binding to Bax (E + S -> ES)
@@ -118,15 +118,15 @@ class Builder(core.Builder):
             if (not cpt_name == 'solution'):
                 self.rule('tBid_Bax_bind_%s' % cpt_name,
                      tBid(loc='m', bh3=None, cpt=cpt_name) +
-                     Bax(loc='m', bh3=None, cpt=cpt_name, **bax_site_unbound) >>
+                     Bax(loc='m', cpt=cpt_name, **bax_site_unbound) >>
                      tBid(loc='m', bh3=1, cpt=cpt_name) %
-                     Bax(loc='m', bh3=None, cpt=cpt_name, **bax_site_bound),
+                     Bax(loc='m', cpt=cpt_name, **bax_site_bound),
                      tBid_mBax_kf)
                 self.rule('tBid_Bax_unbind_%s' % cpt_name,
                      tBid(loc='m', bh3=1, cpt=cpt_name) %
-                     Bax(loc='m', bh3=None, cpt=cpt_name, **bax_site_bound) >>
+                     Bax(loc='m', cpt=cpt_name, **bax_site_bound) >>
                      tBid(loc='m', bh3=None, cpt=cpt_name) +
-                     Bax(loc='m', bh3=None, a6=None, cpt=cpt_name),
+                     Bax(loc='m', cpt=cpt_name, **bax_site_unbound),
                      tBid_mBax_kr)
 
         # tBid dissociates from iBax
@@ -138,7 +138,8 @@ class Builder(core.Builder):
         # Observables
         # -----------
         self.observable('iBax', Bax(loc='i'))
-        self.observable('tBidBax', tBid(loc='m', bh3=1) % Bax(loc='m', a6=1))
+        self.observable('tBidBax', tBid(loc='m', bh3=1) %
+                                   Bax(loc='m', **bax_site_bound))
 
         for cpt_name in self.cpt_list:
             if (not cpt_name == 'solution'):
@@ -146,7 +147,7 @@ class Builder(core.Builder):
                                 Bax(loc='i', cpt=cpt_name))
                 self.observable('tBidBax_%s' % cpt_name,
                                 tBid(loc='m', bh3=1, cpt=cpt_name) %
-                                Bax(loc='m', a6=1, cpt=cpt_name))
+                                Bax(loc='m', cpt=cpt_name, **bax_site_bound))
 
     # RUNNING THE MODEL
     def run_model(self, tmax=12000, num_sims=1, use_kappa=True,
