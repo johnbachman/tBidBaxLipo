@@ -11,7 +11,7 @@ from pysb import kappa
 from tbidbaxlipo.models import core
 
 class Builder(core.Builder):
-    
+
     def __init__(self, scaling_factor=50, params_dict=None):
         # Sets self.model = Model(), and self.params_dict
         core.Builder.__init__(self, params_dict=params_dict)
@@ -26,15 +26,18 @@ class Builder(core.Builder):
         self.parameter('Bax_0', 30, factor=self.scaling_factor)
 
         # The compartment list needs to be built before declaring monomers
-        self.cpt_list = ['c%d' % cpt_num for cpt_num in range(1, self['Vesicles_0'].value+1)]
+        self.cpt_list = ['c%d' % cpt_num
+                         for cpt_num in range(1, self['Vesicles_0'].value+1)]
         self.cpt_list.append('solution')
 
         # Now, monomers can be declared
         self.declare_monomers(self.cpt_list)
 
         # Declare initial conditions
-        self.initial(self['tBid'](bh3=None, loc='c', cpt='solution'), self['tBid_0'])
-        self.initial(self['Bax'](bh3=None, a6=None, loc='c', cpt='solution'), self['Bax_0'])
+        self.initial(self['tBid'](bh3=None, loc='c', cpt='solution'),
+                     self['tBid_0'])
+        self.initial(self['Bax'](bh3=None, a6=None, loc='c', cpt='solution'),
+                     self['Bax_0'])
 
     def declare_monomers(self, cpt_list):
         """The monomer declarations need to override the default from the base
@@ -52,10 +55,10 @@ class Builder(core.Builder):
         print("site_cpt: translocate_tBid_Bax()")
 
         tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
-                                          factor = (1 / float(self.scaling_factor)))
+                                         factor=(1/float(self.scaling_factor)))
         tBid_transloc_kr = self.parameter('tBid_transloc_kr', 0)
         Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
-                                          factor = (1 / float(self.scaling_factor)))
+                                         factor=(1/float(self.scaling_factor)))
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-2)
 
         tBid = self['tBid']
@@ -64,7 +67,8 @@ class Builder(core.Builder):
         for cpt_name in self.cpt_list:
             if (not cpt_name == 'solution'):
                 self.rule('tBid_translocates_sol_to_%s' % cpt_name,
-                     tBid(loc='c', cpt='solution') >> tBid(loc='m', cpt=cpt_name),
+                     tBid(loc='c', cpt='solution') >>
+                     tBid(loc='m', cpt=cpt_name),
                      tBid_transloc_kf)
                 self.rule('tBid_translocates_%s_to_sol' % cpt_name,
                      tBid(loc='m', bh3=None, cpt=cpt_name) >>
@@ -138,12 +142,15 @@ class Builder(core.Builder):
 
         for cpt_name in self.cpt_list:
             if (not cpt_name == 'solution'):
-                self.observable('iBax_%s' % cpt_name, Bax(loc='i', cpt=cpt_name))
+                self.observable('iBax_%s' % cpt_name,
+                                Bax(loc='i', cpt=cpt_name))
                 self.observable('tBidBax_%s' % cpt_name,
-                            tBid(loc='m', bh3=1, cpt=cpt_name) % Bax(loc='m', a6=1, cpt=cpt_name))
+                                tBid(loc='m', bh3=1, cpt=cpt_name) %
+                                Bax(loc='m', a6=1, cpt=cpt_name))
 
     # RUNNING THE MODEL
-    def run_model(self, tmax=12000, num_sims=1, use_kappa=True, figure_ids=[0, 1]):
+    def run_model(self, tmax=12000, num_sims=1, use_kappa=True,
+                  figure_ids=[0, 1]):
         xrecs = []   # The array to store the simulation data
         dr_all = []  # TODO: Delete this
 
@@ -151,12 +158,14 @@ class Builder(core.Builder):
         for i in range(0, num_sims):
             # Run simulation using Kappa:
             if use_kappa:
-                ssa_result = kappa.run_simulation(self.model, time=tmax, points=100,
-                                     output_dir='simdata')
+                ssa_result = kappa.run_simulation(self.model, time=tmax,
+                                                  points=100,
+                                                  output_dir='simdata')
                 xrecs.append(ssa_result)
             # Run simulation using BNG SSA implementation:
             else:
-                ssa_result = bng.run_ssa(self.model, t_end=tmax, n_steps=100, cleanup=True)
+                ssa_result = bng.run_ssa(self.model, t_end=tmax, n_steps=100,
+                                         cleanup=True)
                 xrecs.append(ssa_result)
                 #dr_all.append(get_dye_release(model, 'pores', ssa_result))
 
@@ -165,7 +174,8 @@ class Builder(core.Builder):
 
         # ...and calculate the Mean and SD across the simulations
         x_std = recarray(xrecs[0].shape, dtype=xrecs[0].dtype, buf=std(xall, 0))
-        x_avg = recarray(xrecs[0].shape, dtype=xrecs[0].dtype, buf=mean(xall, 0))
+        x_avg = recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
+                         buf=mean(xall, 0))
 
         # Plotting parameters, aliases
         ci = color_iter()
@@ -224,7 +234,8 @@ class Builder(core.Builder):
 
         #F_t = 1 - dr_avg
         #pores_poisson = -log(F_t)
-        #plot(x_avg['time'], pores_poisson, color=ci.next(), label='-ln F(t), stoch',
+        #plot(x_avg['time'], pores_poisson, color=ci.next(), label='-ln F(t),
+        #     stoch',
         #        marker=marker, linestyle=linestyle)
         #xlabel("Time (seconds)")
         #ylabel("Pores/vesicle")
@@ -239,7 +250,6 @@ class Builder(core.Builder):
 
 
 #---------------------------------------------------------------------
-
     # SSA data analysis functions
     def plot_compartment_mean(model, observable_name, output):
         total = 0
@@ -257,9 +267,10 @@ class Builder(core.Builder):
             permeabilized_count = 0.
             for i, cpt in enumerate(model.compartments):
                 if (not cpt.name == 'solution' and 
-                          output['%s_%s' % (pore_observable_name, cpt.name)][t] > 0):
+                    output['%s_%s' % (pore_observable_name, cpt.name)][t] > 0):
                     permeabilized_count += 1
-            frac_permeabilized = permeabilized_count / float(self['Vesicles_0'].value)
+            frac_permeabilized = permeabilized_count / \
+                                 float(self['Vesicles_0'].value)
             dye_release[t] = frac_permeabilized
 
         return dye_release
@@ -269,7 +280,8 @@ class Builder(core.Builder):
         plt.figure()
         for i, cpt in enumerate(model.compartments):
             if (not cpt.name == 'solution'):
-                plt.plot(output['time'], output['%s_%s' % (observable_name, cpt.name)])
+                plt.plot(output['time'],
+                         output['%s_%s' % (observable_name, cpt.name)])
 
     def plot_predicted_p(model, observable_name, output):
         # Iterate through data, and at each time point, get the fraction
@@ -280,17 +292,15 @@ class Builder(core.Builder):
             #f0_t
             #for i, cptgg
 
-                
     def get_compartment_dist(model, observable_name, output):
-
         end_counts = []
         num_timepoints = len(output['time']) 
         for t in range(num_timepoints-1, num_timepoints):
             for i, cpt in enumerate(model.compartments):
                 if (not cpt.name == 'solution'):
-                    end_counts.append(output['%s_%s' % (observable_name, cpt.name)][t])
+                    end_counts.append(output['%s_%s' % (observable_name,
+                                                        cpt.name)][t])
         return array(end_counts)
-
 
     def combine_dists(model, observable_name, output_array):
         totals = []
