@@ -209,8 +209,6 @@ class Builder(core.Builder):
 
         return xrecs[0]
 
-
-
 # SSA data analysis functions
 def plot_compartment_mean(model, observable_name, output):
     total = 0
@@ -250,7 +248,6 @@ def plot_predicted_p(model, observable_name, output):
         #f0_t
         #for i, cptgg
 
-            
 def get_compartment_dist(model, observable_name, output):
 
     end_counts = []
@@ -261,7 +258,6 @@ def get_compartment_dist(model, observable_name, output):
                 end_counts.append(output['%s_%s' % (observable_name, cpt.name)][t])
     return array(end_counts)
 
-
 def combine_dists(model, observable_name, output_array):
     totals = []
     for output in output_array:
@@ -271,11 +267,9 @@ def combine_dists(model, observable_name, output_array):
             totals += get_compartment_dist(model, observable_name, output)
     return totals
 
-
 def plot_combined_dist(model, observable_name, output_array):
     totals = combine_dists(model, observable_name, output_array)
     plot_dist(totals)
-
 
 def plot_dist(data):
     figure()
