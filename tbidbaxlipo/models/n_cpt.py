@@ -63,7 +63,8 @@ class Builder(core.Builder):
                 self.observable('iBax_%s' % cpt.name, Bax(loc='i') ** cpt)
                 self.observable('tBidBax_%s' % cpt.name,
                             tBid(loc='m', bh3=1) % Bax(loc='m', a6=1) ** cpt)
-                #self.observable('Bax2_%s' % cpt.name, MatchOnce(Bax(bh3=1) % Bax(bh3=1) ** cpt))
+                #self.observable('Bax2_%s' % cpt.name,
+                #                MatchOnce(Bax(bh3=1) % Bax(bh3=1) ** cpt))
 
     # MODEL MACROS
     def translocate_tBid_Bax(self):
@@ -122,26 +123,31 @@ class Builder(core.Builder):
         """Basically a way of counting the time-integrated amount of
            forward pore formation."""
 
-        Parameter('pore_formation_rate_k', 100) # This is going to be 
-        #Parameter('scaled_pore_formation_rate_k', 0.03) # This is going to be 
+        Parameter('pore_formation_rate_k', 100)
+        #Parameter('scaled_pore_formation_rate_k', 0.03)
         Parameter('pore_recycling_rate_k', 100)
 
         Rule('Pores_From_Bax_Dimers', 
-             MatchOnce(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None)) >>
-             MatchOnce(Bax(loc='p', bh3=1, a6=None) % Bax(loc='p', bh3=1, a6=None)) + Pores(),
+             MatchOnce(Bax(loc='i', bh3=1, a6=None) %
+                       Bax(loc='i', bh3=1, a6=None)) >>
+             MatchOnce(Bax(loc='p', bh3=1, a6=None) %
+                       Bax(loc='p', bh3=1, a6=None)) + Pores(),
              pore_formation_rate_k)
 
     def run_model(self, tmax=12000, num_sims=1, figure_ids=[0, 1]):
         xrecs = []
         dr_all = []
         for i in range(0, num_sims):
-            ssa_result = bng.run_ssa(self.model, t_end=tmax, n_steps=100, cleanup=True)
+            ssa_result = bng.run_ssa(self.model, t_end=tmax, n_steps=100,
+                                     cleanup=True)
             xrecs.append(ssa_result)
             #dr_all.append(get_dye_release(model, 'pores', ssa_result))
 
         xall = np.array([x.tolist() for x in xrecs])
-        x_std = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype, buf=np.std(xall, 0))
-        x_avg = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype, buf=np.mean(xall, 0))
+        x_std = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
+                            buf=np.std(xall, 0))
+        x_avg = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
+                            buf=np.mean(xall, 0))
 
         ci = color_iter()
         marker = ','
@@ -200,8 +206,8 @@ class Builder(core.Builder):
 
         #F_t = 1 - dr_avg
         #pores_poisson = -log(F_t)
-        #plot(x_avg['time'], pores_poisson, color=ci.next(), label='-ln F(t), stoch',
-        #        marker=marker, linestyle=linestyle)
+        #plot(x_avg['time'], pores_poisson, color=ci.next(), label='-ln F(t),
+        #     stoch', marker=marker, linestyle=linestyle)
         #xlabel("Time (seconds)")
         #ylabel("Pores/vesicle")
         #title("Pores/vesicle")
@@ -230,7 +236,7 @@ def get_dye_release(model, pore_observable_name, output):
         permeabilized_count = 0.
         for i, cpt in enumerate(model.compartments):
             if (not cpt.name == 'solution' and 
-                      output['%s_%s' % (pore_observable_name, cpt.name)][t] > 0):
+                output['%s_%s' % (pore_observable_name, cpt.name)][t] > 0):
                 permeabilized_count += 1
         frac_permeabilized = permeabilized_count / float(NUM_COMPARTMENTS)
         dye_release[t] = frac_permeabilized
@@ -241,7 +247,8 @@ def plot_compartment_all(model, observable_name, output):
     plt.figure()
     for i, cpt in enumerate(model.compartments):
         if (not cpt.name == 'solution'):
-            plt.plot(output['time'], output['%s_%s' % (observable_name, cpt.name)])
+            plt.plot(output['time'], output['%s_%s' %
+                                            (observable_name, cpt.name)])
 
 def plot_predicted_p(model, observable_name, output):
     # Iterate through data, and at each time point, get the fraction
@@ -259,7 +266,8 @@ def get_compartment_dist(model, observable_name, output):
     for t in range(num_timepoints-1, num_timepoints):
         for i, cpt in enumerate(model.compartments):
             if (not cpt.name == 'solution'):
-                end_counts.append(output['%s_%s' % (observable_name, cpt.name)][t])
+                end_counts.append(output['%s_%s' %
+                                         (observable_name, cpt.name)][t])
     return np.array(end_counts)
 
 def combine_dists(model, observable_name, output_array):
@@ -401,7 +409,8 @@ def rate_calcs(nm_rate):
 
     A = 6.022e23 # Avogadro's number
     total_n = molar_conc * vol * A
-    print "Total molecules at molar conc of %g in vol of %g: %g" % (molar_conc, vol, total_n)
+    print "Total molecules at molar conc of %g in vol of %g: %g" % \
+          (molar_conc, vol, total_n)
 
     # To convert nanomolar rate to molar rate, multiply the
     # nanomolar rate by 1e9
@@ -412,8 +421,8 @@ def rate_calcs(nm_rate):
     print "molecular (molec^-1 s^-1) rate: %g" % molec_rate
 
     scaled_n = 1000
-    print("scaled number of molecules meant to represent conc of %g Molar: %g " \
-            % (molar_conc, scaled_n))
+    print("scaled number of molecules meant to represent conc of %g Molar: %g "\
+          % (molar_conc, scaled_n))
     actual_to_scaled = scaled_n / float(total_n)
     print "stochastic scaling factor of %g" % actual_to_scaled
     scaled_molec_rate = molec_rate / actual_to_scaled

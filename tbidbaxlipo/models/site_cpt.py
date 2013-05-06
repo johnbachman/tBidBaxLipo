@@ -49,6 +49,7 @@ class Builder(core.Builder):
         self.monomer('Bax', ['bh3', 'a6', 'loc', 'cpt'],
                 {'loc': ['c','m', 'i', 'p'],
                  'cpt': cpt_list})
+        self.monomer('Pores', ['cpt'], {'cpt': cpt_list})
 
     # MODEL MACROS
     def translocate_tBid_Bax(self):
@@ -149,6 +150,66 @@ class Builder(core.Builder):
                                 tBid(loc='m', bh3=1, cpt=cpt_name) %
                                 Bax(loc='m', cpt=cpt_name, **bax_site_bound))
 
+    # OTHER
+    def pores_from_Bax_monomers():
+        print("pores_from_Bax_monomers()")
+
+        Parameter('pore_formation_rate_k', 1e-3)
+        #Parameter('pore_recycling_rate_k', 0)
+
+        Rule('Pores_From_Bax_Monomers', 
+             Bax(loc='i') >> Bax(loc='p') + Pores(),
+             pore_formation_rate_k)
+
+        # Pore observables
+        Observable('pBax', Bax(loc='p'))
+        Observable('pores', Pores())    
+        for i, cpt in enumerate(model.compartments):
+            if (not cpt.name == 'solution'):
+                Observable('pores_%s' % cpt.name, Pores() ** cpt)
+
+    def pores_from_Bax_dimers():
+        """Basically a way of counting the time-integrated amount of
+           forward pore formation."""
+
+        Parameter('pore_formation_rate_k', 100) # This is going to be 
+        #Parameter('scaled_pore_formation_rate_k', 0.03) # This is going to be 
+        Parameter('pore_recycling_rate_k', 100)
+
+        Rule('Pores_From_Bax_Dimers', 
+             MatchOnce(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None)) >>
+             MatchOnce(Bax(loc='p', bh3=1, a6=None) % Bax(loc='p', bh3=1, a6=None)) + Pores(),
+             pore_formation_rate_k)
+
+    def rate_calcs(nm_rate):
+
+        vol = 60e-6
+        print "Assumed volume: %g L" % vol
+
+        nm_conc = 100 # assume nM
+        molar_conc = nm_conc * 1e-9
+        print "Example concentration: %g Molar" % molar_conc
+
+        A = 6.022e23 # Avogadro's number
+        total_n = molar_conc * vol * A
+        print "Total molecules at molar conc of %g in vol of %g: %g" % (molar_conc, vol, total_n)
+
+        # To convert nanomolar rate to molar rate, multiply the
+        # nanomolar rate by 1e9
+        print "deterministic (nm-1 s-1) rate: %g" % nm_rate # assume nm^-1 s^-1
+        molar_rate = nm_rate * 1e9
+        print "deterministic (M-1 s-1) rate: %g" % molar_rate
+        molec_rate = molar_rate / (vol * A)
+        print "molecular (molec^-1 s^-1) rate: %g" % molec_rate
+
+        scaled_n = 1000
+        print("scaled number of molecules meant to represent conc of %g Molar: %g " \
+                % (molar_conc, scaled_n))
+        actual_to_scaled = scaled_n / float(total_n)
+        print "stochastic scaling factor of %g" % actual_to_scaled
+        scaled_molec_rate = molec_rate / actual_to_scaled
+        print "scaled molec rate: %g" % scaled_molec_rate
+
     # RUNNING THE MODEL
     def run_model(self, tmax=12000, num_sims=1, use_kappa=True,
                   figure_ids=[0, 1]):
@@ -194,12 +255,12 @@ class Builder(core.Builder):
         plt.errorbar(x_avg['time'], x_avg['mtBid']/tBid_0.value,
                  yerr=x_std['mtBid']/tBid_0.value,
                  color=ci.next(), marker=marker, linestyle=linestyle)
-        #plt.errorbar(x_avg['time'], x_avg['cBax']/Bax_0.value,
-        #         yerr=x_std['cBax']/Bax_0.value,
-        #         color=ci.next(), marker=marker, linestyle=linestyle)
-        #plt.errorbar(x_avg['time'], x_avg['mBax']/Bax_0.value,
-        #         yerr=x_std['mBax']/Bax_0.value,
-        #         color=ci.next(), marker=marker, linestyle=linestyle)
+        plt.errorbar(x_avg['time'], x_avg['cBax']/Bax_0.value,
+                 yerr=x_std['cBax']/Bax_0.value,
+                 color=ci.next(), marker=marker, linestyle=linestyle)
+        plt.errorbar(x_avg['time'], x_avg['mBax']/Bax_0.value,
+                 yerr=x_std['mBax']/Bax_0.value,
+                 color=ci.next(), marker=marker, linestyle=linestyle)
 
         # Activation: plot iBax and tBidBax
         plt.errorbar(x_avg['time'], x_avg['iBax']/Bax_0.value,
@@ -432,65 +493,6 @@ class Builder(core.Builder):
 
     """
 
-    # OTHER
-    def pores_from_Bax_monomers():
-        print("pores_from_Bax_monomers()")
-
-        Parameter('pore_formation_rate_k', 1e-3)
-        #Parameter('pore_recycling_rate_k', 0)
-
-        Rule('Pores_From_Bax_Monomers', 
-             Bax(loc='i') >> Bax(loc='p') + Pores(),
-             pore_formation_rate_k)
-
-        # Pore observables
-        Observable('pBax', Bax(loc='p'))
-        Observable('pores', Pores())    
-        for i, cpt in enumerate(model.compartments):
-            if (not cpt.name == 'solution'):
-                Observable('pores_%s' % cpt.name, Pores() ** cpt)
-
-    def pores_from_Bax_dimers():
-        """Basically a way of counting the time-integrated amount of
-           forward pore formation."""
-
-        Parameter('pore_formation_rate_k', 100) # This is going to be 
-        #Parameter('scaled_pore_formation_rate_k', 0.03) # This is going to be 
-        Parameter('pore_recycling_rate_k', 100)
-
-        Rule('Pores_From_Bax_Dimers', 
-             MatchOnce(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None)) >>
-             MatchOnce(Bax(loc='p', bh3=1, a6=None) % Bax(loc='p', bh3=1, a6=None)) + Pores(),
-             pore_formation_rate_k)
-
-    def rate_calcs(nm_rate):
-
-        vol = 60e-6
-        print "Assumed volume: %g L" % vol
-
-        nm_conc = 100 # assume nM
-        molar_conc = nm_conc * 1e-9
-        print "Example concentration: %g Molar" % molar_conc
-
-        A = 6.022e23 # Avogadro's number
-        total_n = molar_conc * vol * A
-        print "Total molecules at molar conc of %g in vol of %g: %g" % (molar_conc, vol, total_n)
-
-        # To convert nanomolar rate to molar rate, multiply the
-        # nanomolar rate by 1e9
-        print "deterministic (nm-1 s-1) rate: %g" % nm_rate # assume nm^-1 s^-1
-        molar_rate = nm_rate * 1e9
-        print "deterministic (M-1 s-1) rate: %g" % molar_rate
-        molec_rate = molar_rate / (vol * A)
-        print "molecular (molec^-1 s^-1) rate: %g" % molec_rate
-
-        scaled_n = 1000
-        print("scaled number of molecules meant to represent conc of %g Molar: %g " \
-                % (molar_conc, scaled_n))
-        actual_to_scaled = scaled_n / float(total_n)
-        print "stochastic scaling factor of %g" % actual_to_scaled
-        scaled_molec_rate = molec_rate / actual_to_scaled
-        print "scaled molec rate: %g" % scaled_molec_rate
         
         
     def run_model_ode(tmax=12000):
