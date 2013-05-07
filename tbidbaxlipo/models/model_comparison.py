@@ -1,5 +1,3 @@
-__author__ = "johnbachman"
-
 from pylab import figure, title, legend
 from tbidbaxlipo.models import one_cpt, site_cpt, n_cpt
 
