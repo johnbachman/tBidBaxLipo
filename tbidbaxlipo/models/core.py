@@ -245,7 +245,7 @@ class Builder(object):
     def prior(self, mcmc, position):
         if (position[0] < -0.1 or position[0] > 0.7):
             return np.inf
-        if any(position[1:] > -1) or any(position[1:] < -5):
+        if any(position[1:] > 0) or any(position[1:] < -5):
             return np.inf
         else:
             return np.sum((position - self.parameter_means)**2 / \
@@ -275,7 +275,9 @@ class Builder(object):
                             (np.random.randn(len(self.estimate_params)) * \
                              self.parameter_variances))
 
-            if any(test_vals[1:] > -1) or any(test_vals[1:] < -5):
+            if any(test_vals[1:] > 0) or any(test_vals[1:] < -5):
+                continue
+            elif test_vals[0] < -0.1 or test_vals[0] > 0.7:
                 continue
             else:
                 return 10 ** test_vals
