@@ -189,6 +189,7 @@ class Builder(object):
                          'c126': ['s', 'm'],
                          'c184': ['s', 'm']})
         self.monomer('Vesicles', [])
+        self.monomer('Pores', [])
 
     # -- METHODS FOR FITTING/CALIBRATION -----------------------------------
     def declare_nbd_scaling_parameters(self, nbd_sites):
@@ -396,7 +397,7 @@ class Builder(object):
         """
 
         print("core: Bax_dimerizes")
-     
+
         # Rate of dimerization formation/oligomerization of activated Bax (s^-1)
         Bax_dimerization_kf = self.parameter('Bax_dimerization_kf', 1e-2)# was 1
         Bax_dimerization_kr = self.parameter('Bax_dimerization_kr', 1e-2)
@@ -657,6 +658,14 @@ class Builder(object):
         self.Bax_dimerizes()
         self.Bax_tetramerizes()
         self.model.name = 'tardt'
+
+    # Models incorporating dye release
+    def build_model_tap1(self):
+        print "---------------------------"
+        print "core: Building model tap1:"
+        self.build_model_ta()
+        self.pores_from_Bax_monomers()
+        self.model.name = 'tap1'
 
     # -- CONSTRUCTOR WRAPPER FUNCTIONS ---------------------------------------
     def monomer(self, *args, **kwargs):

@@ -128,6 +128,13 @@ class Builder(core.Builder):
             self.declare_nbd_scaling_parameters(nbd_sites)
 
     # MODEL MACROS
+    def dye_release_one_step_catalytic(self):
+        """Activated Bax acts as an enzyme that converts liposomes F->E.
+
+        There is no binding assumed--it's a catalytic mechanism.
+        """
+        pass
+
     def translocate_tBid_Bax(self):
         print("one_cpt: translocate_tBid_Bax()")
 
@@ -173,23 +180,25 @@ class Builder(core.Builder):
              Bax(loc='c', bh3=None, a6=None) ** solution,
              Bax_transloc_kr)
 
-    def pores_from_Bax_monomers():
+    def pores_from_Bax_monomers(self):
         """Basically a way of counting the time-integrated amount of
            forward pore formation.
         """
-
         print("one_cpt: pores_from_Bax_monomers()")
 
-        Parameter('pore_formation_rate_k', 1e-3)
+        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3)
         #Parameter('pore_recycling_rate_k', 0)
 
-        Rule('Pores_From_Bax_Monomers', 
+        Bax = self['Bax']
+        Pores = self['Pores']
+
+        self.rule('Pores_From_Bax_Monomers', 
              Bax(loc='i') >> Bax(loc='p') + Pores(),
              pore_formation_rate_k)
 
         # Pore formation
-        Observable('pBax', Bax(loc='p'))
-        Observable('pores', Pores())
+        self.observable('pBax', Bax(loc='p'))
+        self.observable('pores', Pores())
 
         #Rule('Pores_Increment',
         #     Bax(loc='i') >> Bax(loc='i') + Pores(),
@@ -209,7 +218,8 @@ class Builder(core.Builder):
 
         Rule('Pores_From_Bax_Dimers', 
              Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None) >>
-             Bax(loc='p', bh3=1, a6=None) % Bax(loc='p', bh3=1, a6=None) + Pores(),
+             Bax(loc='p', bh3=1, a6=None) % Bax(loc='p', bh3=1, a6=None) +
+             Pores(),
              pore_formation_rate_k)
 
         Rule('Pores_Recycle',
@@ -248,6 +258,7 @@ class Builder(core.Builder):
 
         tBid_0 = self['tBid_0']
         Bax_0 = self['Bax_0']
+        Vesicles_0 = self['Vesicles_0']
 
         plt.ion()
 
@@ -259,31 +270,34 @@ class Builder(core.Builder):
         plt.plot(t, (x['mBax'])/Bax_0.value, label='mBax', color=ci.next())
 
         # Activation
-        plt.plot(t, ((x['Baxc62']/Bax_0.value) *
-                     self.model.parameters['c62_scaling'].value),
-                 label='Baxc62', color=ci.next())
+        #plt.plot(t, ((x['Baxc62']/Bax_0.value) *
+        #             self.model.parameters['c62_scaling'].value),
+        #         label='Baxc62', color=ci.next())
         plt.plot(t, x['iBax']/Bax_0.value, label='iBax', color=ci.next())
         plt.plot(t, x['tBidBax']/tBid_0.value, label='tBidBax', color=ci.next())
-        plt.legend(loc='right')
-        plt.show()
 
         # Pore formation
-        #plot(t, (x['pBax'])/Bax_0.value, label='pBax')
+        plt.plot(t, (x['pBax'])/Bax_0.value, label='pBax', color=ci.next())
+
+        ci = color_iter()
 
         # Dye release expected via poisson assumption ------
-        #pores_per_ves = x['pores']/Vesicles_0.value
-        #dye_release = (1 - exp(-pores_per_ves)) # Per Schwarz's analysis
-        #plot(t, dye_release, color=ci.next(), label='dye release')
+        pores_per_ves = x['pores']/Vesicles_0.value
+        dye_release = (1 - np.exp(-pores_per_ves)) # Per Schwarz's analysis
+        plt.plot(t, dye_release, color=ci.next(), label='dye release')
 
+        plt.legend(loc='right')
+        plt.show()
 
         #legend()
         #xlabel("Time (seconds)")
         #ylabel("Normalized Concentration")
 
         # Plot pores/vesicle in a new figure ------
-        #ci = color_iter()
-        #figure(2)
-        #plot(t, (x['pores']/Vesicles_0.value), label='pores/ves', color=ci.next())
+        ci = color_iter()
+        plt.figure(2)
+        plt.plot(t, (x['pores']/Vesicles_0.value), label='pores/ves',
+                 color=ci.next())
 
         #legend()
         #xlabel("Time (seconds)")
@@ -312,7 +326,8 @@ class Builder(core.Builder):
         #plot(t, x['eVes']/Vesicles_0.value, label='eVes')
 
         #figure()
-        #plot(t, (x['pores']/model.parameters['NUM_VESICLES'].value), label='pores')
+        #plot(t, (x['pores']/model.parameters['NUM_VESICLES'].value),
+        #label='pores')
         #xlabel("Time (seconds)")
         #ylabel("Pores per vesicle")
 

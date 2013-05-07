@@ -1,4 +1,20 @@
-__author__ = 'johnbachman'
+"""
+
+Should turn this into a report!
+* Interestingly, with pores from Bax monomers, the one_cpt and n_cpt models
+  agree fairly closely when there are more tBid molecules than vesicles, EVEN
+  when the off-rate is 0.
+* They don't agree when the concentration of tBid is equal to that of vesicles,
+  AND the off-rate is zero. In these cases the number of pores per vesicle
+  is actually equal, but the dye release calculation diverges substantially.
+  This is because a substantial number of pores are formed on vesicles that
+  already have pores (violation of the Poisson assumption).
+* Should compare to:
+    * Schwartz approach
+    * Almeida approach
+    * Newmeyer approach
+    * Schlesinger assumption about rate law
+"""
 
 from pysb import *
 from pysb.macros import *
@@ -53,7 +69,8 @@ class Builder(core.Builder):
 
         # Activation
         self.observable('iBax', Bax(loc='i'))
-        self.observable('tBidBax', tBid(loc='m', bh3=1) % Bax(loc='m', a6=1))
+        # FIXME this should be based on the Bax activation site!!!
+        self.observable('tBidBax', tBid(loc='m', bh3=1) % Bax(loc='m', bh3=1))
 
         # pore formation
         for cpt in self.model.compartments:
@@ -103,21 +120,24 @@ class Builder(core.Builder):
                      Bax_transloc_kr)
 
     def pores_from_Bax_monomers(self):
-        print("pores_from_Bax_monomers()")
+        print("n_cpt: pores_from_Bax_monomers()")
 
-        Parameter('pore_formation_rate_k', 1e-3)
-        #Parameter('pore_recycling_rate_k', 0)
+        Bax = self['Bax']
+        Pores = self['Pores']
 
-        Rule('Pores_From_Bax_Monomers', 
+        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e0)
+        #Parameter('pore_recycling_rate_k', 0) # The rate of pBax to m/sBax
+
+        self.rule('Pores_From_Bax_Monomers', 
              Bax(loc='i') >> Bax(loc='p') + Pores(),
              pore_formation_rate_k)
 
         # Pore observables
-        Observable('pBax', Bax(loc='p'))
-        Observable('pores', Pores())    
-        for i, cpt in enumerate(model.compartments):
+        self.observable('pBax', Bax(loc='p'))
+        self.observable('pores', Pores())
+        for i, cpt in enumerate(self.model.compartments):
             if (not cpt.name == 'solution'):
-                Observable('pores_%s' % cpt.name, Pores() ** cpt)
+                self.observable('pores_%s' % cpt.name, Pores() ** cpt)
 
     def pores_from_Bax_dimers(self):
         """Basically a way of counting the time-integrated amount of
@@ -138,10 +158,11 @@ class Builder(core.Builder):
         xrecs = []
         dr_all = []
         for i in range(0, num_sims):
+            print "Running SSA simulation %d of %d..." % (i+1, num_sims)
             ssa_result = bng.run_ssa(self.model, t_end=tmax, n_steps=100,
                                      cleanup=True)
             xrecs.append(ssa_result)
-            #dr_all.append(get_dye_release(model, 'pores', ssa_result))
+            dr_all.append(get_dye_release(self.model, 'pores', ssa_result))
 
         xall = np.array([x.tolist() for x in xrecs])
         x_std = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
@@ -156,53 +177,67 @@ class Builder(core.Builder):
 
         tBid_0 = self['tBid_0']
         Bax_0 = self['Bax_0']
+        Vesicles_0 = self['Vesicles_0']
 
         # Translocation
         plt.figure(figure_ids[0])
         plt.errorbar(x_avg['time'], x_avg['ctBid']/tBid_0.value,
-                 yerr=x_std['ctBid']/tBid_0.value,
+                 yerr=(x_std['ctBid']/tBid_0.value)/np.sqrt(num_sims),
+                 label='ctBid',
                  color=ci.next(), marker=marker, linestyle=linestyle)
         plt.errorbar(x_avg['time'], x_avg['mtBid']/tBid_0.value,
-                 yerr=x_std['mtBid']/tBid_0.value,
+                 yerr=(x_std['mtBid']/tBid_0.value)/np.sqrt(num_sims),
+                 label='mtBid',
                  color=ci.next(), marker=marker, linestyle=linestyle)
         plt.errorbar(x_avg['time'], x_avg['cBax']/Bax_0.value,
-                 yerr=x_std['cBax']/Bax_0.value,
+                 yerr=(x_std['cBax']/Bax_0.value)/np.sqrt(num_sims),
+                 label='cBax',
                  color=ci.next(), marker=marker, linestyle=linestyle)
         plt.errorbar(x_avg['time'], x_avg['mBax']/Bax_0.value,
-                 yerr=x_std['mBax']/Bax_0.value,
+                 yerr=(x_std['mBax']/Bax_0.value)/np.sqrt(num_sims),
+                 label='mBax',
                  color=ci.next(), marker=marker, linestyle=linestyle)
 
         # Activation
         plt.errorbar(x_avg['time'], x_avg['iBax']/Bax_0.value,
-                 yerr=x_std['iBax']/Bax_0.value, label='iBax',
-                 color=ci.next(), marker=marker, linestyle=linestyle)
+                     yerr=(x_std['iBax']/Bax_0.value)/np.sqrt(num_sims),
+                     label='iBax', color=ci.next(), marker=marker,
+                     linestyle=linestyle)
         plt.errorbar(x_avg['time'], x_avg['tBidBax']/tBid_0.value,
-                 yerr=x_std['tBidBax']/tBid_0.value,
-                 color=ci.next(), marker=marker, linestyle=linestyle)
-
-        # Dye release calculated exactly ----------
-        #dr_avg = mean(dr_all, 0)
-        #dr_std = std(dr_all, 0)
-        #errorbar(x_avg['time'], dr_avg,
-        #         yerr=dr_std, label='dye_release',
-        #         color=ci.next(), marker=marker, linestyle=linestyle)
-
+                     yerr=(x_std['tBidBax']/tBid_0.value)/np.sqrt(num_sims),
+                     label='tBidBax', color=ci.next(), marker=marker,
+                     linestyle=linestyle)
 
         # Pore Formation
-        #plot(x['time'], x['pBax']/Bax_0.value, label='pBax')
-        #leg = legend()
-        #ltext = leg.get_texts()
-        #setp(ltext, fontsize='small')
+        plt.errorbar(x_avg['time'], x_avg['pBax']/Bax_0.value,
+                     yerr=(x_std['pBax']/Bax_0.value)/np.sqrt(num_sims),
+                     color=ci.next(),
+                     label='pBax', marker=marker, linestyle=linestyle)
 
-        #xlabel("Time (seconds)")
-        #ylabel("Normalized Concentration")
+        ci = color_iter()
 
-        #ci = color_iter()
+        # Dye release calculated exactly ----------
+        dr_avg = np.mean(dr_all, 0)
+        dr_std = np.std(dr_all, 0)
+        plt.errorbar(x_avg['time'], dr_avg,
+                    yerr=dr_std/np.sqrt(num_sims), label='dye_release',
+                    color=ci.next(), marker=marker, linestyle=linestyle)
+
+        leg = plt.legend()
+        ltext = leg.get_texts()
+        plt.setp(ltext, fontsize='small')
+
+        plt.xlabel("Time (seconds)")
+        plt.ylabel("Normalized Concentration")
+        plt.show()
+
         # Plot pores/vesicle in a new figure ------
-        #figure(2)
-        #errorbar(x_avg['time'], x_avg['pores'] / float(NUM_COMPARTMENTS),
-        #         yerr=x_std['pores']/float(NUM_COMPARTMENTS), label='pores',
-        #         color=ci.next(), marker=marker, linestyle=linestyle)
+        ci = color_iter()
+        plt.figure(2)
+        plt.errorbar(x_avg['time'], x_avg['pores']/Vesicles_0.value,
+                     yerr=(x_std['pores']/Vesicles_0.value)/np.sqrt(num_sims),
+                     label='pores', color=ci.next(), marker=marker,
+                     linestyle=linestyle)
 
         #F_t = 1 - dr_avg
         #pores_poisson = -log(F_t)
@@ -231,14 +266,15 @@ def plot_compartment_mean(model, observable_name, output):
 
 def get_dye_release(model, pore_observable_name, output):
     num_timepoints = len(output['time'])
-    dye_release = zeros(num_timepoints)
+    dye_release = np.zeros(num_timepoints)
     for t in range(0, num_timepoints):
         permeabilized_count = 0.
         for i, cpt in enumerate(model.compartments):
             if (not cpt.name == 'solution' and 
                 output['%s_%s' % (pore_observable_name, cpt.name)][t] > 0):
                 permeabilized_count += 1
-        frac_permeabilized = permeabilized_count / float(NUM_COMPARTMENTS)
+        frac_permeabilized = permeabilized_count / \
+                             float(model.parameters['Vesicles_0'].value)
         dye_release[t] = frac_permeabilized
 
     return dye_release
