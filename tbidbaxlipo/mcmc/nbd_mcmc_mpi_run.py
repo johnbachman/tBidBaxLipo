@@ -135,6 +135,9 @@ if __name__ == '__main__':
     # Create temperature array based on number of workers (excluding master)
     temps = np.logspace(np.log10(min_temp), np.log10(max_temp), num_chains-1)
 
+    rate_step_sizes = np.logspace(np.log10(5e-4), np.log10(5e-2), num_chains-1)
+    scaling_step_sizes = np.logspace(np.log10(1e-4), np.log10(1e-2), num_chains-1)
+
     # Initialize the MCMC arguments
     opts = MCMCOpts()
     opts.model = model
@@ -142,10 +145,14 @@ if __name__ == '__main__':
     opts.estimate_params = builder.estimate_params
     opts.initial_values = builder.random_initial_values()
     opts.nsteps = nsteps
-    opts.norm_step_size = np.array([0.01] + \
-                        ([0.05] * (len(opts.estimate_params)-1)))
 
-    opts.sigma_step = 0.9
+    #opts.norm_step_size = np.array([0.01] + \
+    #                    ([0.05] * (len(opts.estimate_params)-1)))
+    opts.norm_step_size = np.array([scaling_step_sizes[rank-1]] + \
+                        ([rate_step_sizes[rank-1]] * (len(opts.estimate_params)-1)))
+    print "Step size: %g" % (opts.norm_step_size[1])
+
+    opts.sigma_step = 0 # Don't adjust step size
     opts.sigma_max = 50
     opts.sigma_min = 0.01
     opts.accept_rate_target = 0.23
