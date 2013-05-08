@@ -14,6 +14,7 @@ from bayessb import MCMCOpts
 from bayessb.mpi.pt_mpi import PT_MPI_Master, PT_MPI_Worker
 import tbidbaxlipo.nbd_analysis as nbd
 from tbidbaxlipo.mcmc.nbd_mcmc import model_names, nbd_site_names, NBD_MCMC
+from pysb.integrate import Solver
 
 if __name__ == '__main__':
     # Set the type of model to be built here
@@ -122,12 +123,14 @@ if __name__ == '__main__':
     num_chains = comm.Get_size()
     # The rank of this chain (0 is the master, others are workers)
     rank = comm.Get_rank()
+    # Forces the solver to use inline without testing first
+    Solver._use_inline = True
 
     # Frequency for proposing swaps
-    swap_period = 20
+    swap_period = 5
     # Temperature range
     min_temp = 1
-    max_temp = 1e7
+    max_temp = 1e5
 
     # Create temperature array based on number of workers (excluding master)
     temps = np.logspace(np.log10(min_temp), np.log10(max_temp), num_chains-1)

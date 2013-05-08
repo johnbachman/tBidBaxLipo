@@ -9,9 +9,11 @@ import pickle
 
 #chain_file_list = glob.glob('/Volumes/data/computation/Bachman/'
 #                            'multitemp/tardt_c62_iBax_50000_3_s*.mcmc')
-#chain_file_list = glob.glob('/files/ImStor/sorger/data/computation/Bachman/'
-#                            'multitemp/tardt_c62_iBax_50000_3_s*.mcmc')
-chain_file_list = glob.glob('ta*.mcmc')
+chain_file_list = glob.glob('/files/ImStor/sorger/data/computation/Bachman/'
+                            'pt_taid_1e6/taid*.mcmc')
+#chain_file_list = glob.glob('ta*.mcmc')
+#chain_file_list = glob.glob('/home/jab69/projects/tBidBaxLipo/tbidbaxlipo/mcmc/mpi1e6/ta*.mcmc')
+print chain_file_list
 
 chain_dict = import_mcmc_groups(chain_file_list)
 
