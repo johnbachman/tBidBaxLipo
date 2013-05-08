@@ -660,12 +660,19 @@ class Builder(object):
         self.model.name = 'tardt'
 
     # Models incorporating dye release
+    def build_model_bax_schwarz(self):
+        self.translocate_Bax()
+        self.pores_from_Bax_monomers(bax_loc_state='m')
+        self.model.name = 'bax_schwarz'
+
     def build_model_tap1(self):
         print "---------------------------"
         print "core: Building model tap1:"
         self.build_model_ta()
         self.pores_from_Bax_monomers()
         self.model.name = 'tap1'
+
+
 
     # -- CONSTRUCTOR WRAPPER FUNCTIONS ---------------------------------------
     def monomer(self, *args, **kwargs):

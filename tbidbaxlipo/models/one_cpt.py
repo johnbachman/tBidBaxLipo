@@ -70,8 +70,6 @@ the CF (efflux) function would change by precisely 1%.
 
 """
 
-__author__ = 'johnbachman'
-
 from pysb import *
 import numpy as np
 from matplotlib import pyplot as plt
@@ -137,6 +135,32 @@ class Builder(core.Builder):
 
     def translocate_tBid_Bax(self):
         print("one_cpt: translocate_tBid_Bax()")
+        self.translocate_tBid()
+        self.translocate_Bax()
+
+    def translocate_tBid(self):
+        print("one_cpt: translocate_tBid()")
+
+        tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
+                                          estimate=False)
+        tBid_transloc_kr = self.parameter('tBid_transloc_kr', 1e-1)
+
+        ves = self['ves']
+        solution = self['solution']
+        Vesicles = self['Vesicles']
+        tBid = self['tBid']
+
+        self.rule('tBid_translocates_sol_to_%s' % ves.name,
+             tBid(loc='c') ** solution + Vesicles() ** solution >>
+             tBid(loc='m') ** ves + Vesicles() ** solution,
+             tBid_transloc_kf)
+        self.rule('tBid_translocates_%s_to_sol' % ves.name,
+             tBid(loc='m', bh3=None) ** ves >>
+             tBid(loc='c', bh3=None) ** solution,
+             tBid_transloc_kr)
+
+    def translocate_Bax(self):
+        print("one_cpt: translocate_tBid_Bax()")
 
         """
         tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
@@ -149,28 +173,15 @@ class Builder(core.Builder):
                                           estimate=False)
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-2)
         """
-        tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
-                                          estimate=False)
-        tBid_transloc_kr = self.parameter('tBid_transloc_kr', 1e-1)
-
         Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
                                           estimate=False)
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1)
 
         ves = self['ves']
         solution = self['solution']
-        tBid = self['tBid']
         Bax = self['Bax']
         Vesicles = self['Vesicles']
 
-        self.rule('tBid_translocates_sol_to_%s' % ves.name,
-             tBid(loc='c') ** solution + Vesicles() ** solution >>
-             tBid(loc='m') ** ves + Vesicles() ** solution,
-             tBid_transloc_kf)
-        self.rule('tBid_translocates_%s_to_sol' % ves.name,
-             tBid(loc='m', bh3=None) ** ves >>
-             tBid(loc='c', bh3=None) ** solution,
-             tBid_transloc_kr)
         self.rule('Bax_translocates_sol_to_%s' % ves.name,
              Bax(loc='c') ** solution + Vesicles() ** solution >>
              Bax(loc='m') ** ves + Vesicles() ** solution,
@@ -180,7 +191,7 @@ class Builder(core.Builder):
              Bax(loc='c', bh3=None, a6=None) ** solution,
              Bax_transloc_kr)
 
-    def pores_from_Bax_monomers(self):
+    def pores_from_Bax_monomers(self, bax_loc_site='i'):
         """Basically a way of counting the time-integrated amount of
            forward pore formation.
         """
@@ -193,7 +204,7 @@ class Builder(core.Builder):
         Pores = self['Pores']
 
         self.rule('Pores_From_Bax_Monomers', 
-             Bax(loc='i') >> Bax(loc='p') + Pores(),
+             Bax(loc=bax_loc_site) >> Bax(loc='p') + Pores(),
              pore_formation_rate_k)
 
         # Pore formation

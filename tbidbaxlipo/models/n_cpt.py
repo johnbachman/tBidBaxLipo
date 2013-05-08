@@ -1,5 +1,4 @@
 """
-
 Should turn this into a report!
 * Interestingly, with pores from Bax monomers, the one_cpt and n_cpt models
   agree fairly closely when there are more tBid molecules than vesicles, EVEN
@@ -14,6 +13,12 @@ Should turn this into a report!
     * Almeida approach
     * Newmeyer approach
     * Schlesinger assumption about rate law
+
+Schwarz approach:
+* Do analysis for trimeric vs. dimeric pores, see if they give 3/2 rate laws
+** Do with cooperative assembly
+** Do with stepwise assembly
+
 """
 
 from pysb import *
@@ -84,20 +89,36 @@ class Builder(core.Builder):
                 #                MatchOnce(Bax(bh3=1) % Bax(bh3=1) ** cpt))
 
     # MODEL MACROS
-    def translocate_tBid_Bax(self):
-        print("n_cpt: translocate_tBid_Bax()")
+    def translocate_Bax(self):
+        print("n_cpt: translocate_Bax()")
+
+        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
+                                          factor=(1/float(self.scaling_factor)))
+        Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-2)
+
+        Bax = self['Bax']
+        solution = self['solution']
+
+        for cpt in self.model.compartments:
+            if (not cpt.name == 'solution'):
+                self.rule('Bax_translocates_sol_to_%s' % cpt.name,
+                     Bax(loc='c', bh3=None, a6=None) ** solution >>
+                     Bax(loc='m', bh3=None, a6=None) ** cpt,
+                     Bax_transloc_kf)
+                self.rule('Bax_translocates_%s_to_sol' % cpt.name,
+                     Bax(loc='m', bh3=None, a6=None) ** cpt >>
+                     Bax(loc='c', bh3=None, a6=None) ** solution,
+                     Bax_transloc_kr)
+
+    def translocate_tBid(self):
+        print("n_cpt: translocate_tBid()")
 
         # Translocation of proteins to vesicles (i.e., from c to m state)
         tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
                                           factor=(1/float(self.scaling_factor)))
         tBid_transloc_kr = self.parameter('tBid_transloc_kr', 0)
 
-        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
-                                          factor=(1/float(self.scaling_factor)))
-        Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-2)
-
         tBid = self['tBid']
-        Bax = self['Bax']
         solution = self['solution']
 
         for cpt in self.model.compartments:
@@ -110,16 +131,13 @@ class Builder(core.Builder):
                      tBid(loc='m', bh3=None) ** cpt >>
                      tBid(loc='c', bh3=None) ** solution,
                      tBid_transloc_kr)
-                self.rule('Bax_translocates_sol_to_%s' % cpt.name,
-                     Bax(loc='c', bh3=None, a6=None) ** solution >>
-                     Bax(loc='m', bh3=None, a6=None) ** cpt,
-                     Bax_transloc_kf)
-                self.rule('Bax_translocates_%s_to_sol' % cpt.name,
-                     Bax(loc='m', bh3=None, a6=None) ** cpt >>
-                     Bax(loc='c', bh3=None, a6=None) ** solution,
-                     Bax_transloc_kr)
 
-    def pores_from_Bax_monomers(self):
+    def translocate_tBid_Bax(self):
+        print("n_cpt: translocate_tBid_Bax()")
+        self.translocate_tBid()
+        self.translocate_Bax()
+
+    def pores_from_Bax_monomers(self, bax_loc_state='i'):
         print("n_cpt: pores_from_Bax_monomers()")
 
         Bax = self['Bax']
@@ -129,7 +147,7 @@ class Builder(core.Builder):
         #Parameter('pore_recycling_rate_k', 0) # The rate of pBax to m/sBax
 
         self.rule('Pores_From_Bax_Monomers', 
-             Bax(loc='i') >> Bax(loc='p') + Pores(),
+             Bax(loc=bax_loc_state) >> Bax(loc='p') + Pores(),
              pore_formation_rate_k)
 
         # Pore observables
