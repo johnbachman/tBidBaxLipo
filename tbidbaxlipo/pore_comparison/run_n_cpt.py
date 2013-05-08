@@ -2,7 +2,8 @@ from pylab import figure, title, legend
 from tbidbaxlipo.models import one_cpt, site_cpt, n_cpt
 from pysb import bng
 
-tmax = 500
+tmax = 3600
+
 params_dict = {
     #'c62_scaling': 1.4022073763353842,
     'Vesicles_0': 5,
@@ -23,14 +24,13 @@ params_dict = {
     #'Bax_dimerization_kr': 0.0012875415792703037,
 }
 
-sc = 10
-
+num_sims = 5
+sc = 30
 bnc = n_cpt.Builder(scaling_factor=sc, params_dict=params_dict)
 bnc.build_model_tap1()
-bng.run_ssa(bnc.model, t_end=tmax, n_steps=100, cleanup=False, output_dir='.')
+model = bnc.model
 
-#fid = 1
-#bnc.run_model(tmax=tmax, num_sims=12, figure_ids=[fid])
-
-
+if __name__ == '__main__':
+    for i in range(num_sims):
+        bng.run_ssa(bnc.model, t_end=tmax, n_steps=100, cleanup=False, output_dir='.')
 

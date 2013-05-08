@@ -154,7 +154,7 @@ class Builder(core.Builder):
                        Bax(loc='p', bh3=1, a6=None)) + Pores(),
              pore_formation_rate_k)
 
-    def run_model(self, tmax=12000, num_sims=1, figure_ids=[0, 1]):
+    def run_model(self, tmax=12000, num_sims=1):
         xrecs = []
         dr_all = []
         for i in range(0, num_sims):
@@ -170,89 +170,92 @@ class Builder(core.Builder):
         x_avg = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
                             buf=np.mean(xall, 0))
 
-        ci = color_iter()
-        marker = ','
-        linestyle = ''
-        plt.figure(1)
+        plot_simulation(x_avg, x_std, dr_all, model, num_sims)
 
-        tBid_0 = self['tBid_0']
-        Bax_0 = self['Bax_0']
-        Vesicles_0 = self['Vesicles_0']
 
-        # Translocation
-        plt.figure(figure_ids[0])
-        plt.errorbar(x_avg['time'], x_avg['ctBid']/tBid_0.value,
-                 yerr=(x_std['ctBid']/tBid_0.value)/np.sqrt(num_sims),
-                 label='ctBid',
-                 color=ci.next(), marker=marker, linestyle=linestyle)
-        plt.errorbar(x_avg['time'], x_avg['mtBid']/tBid_0.value,
-                 yerr=(x_std['mtBid']/tBid_0.value)/np.sqrt(num_sims),
-                 label='mtBid',
-                 color=ci.next(), marker=marker, linestyle=linestyle)
-        plt.errorbar(x_avg['time'], x_avg['cBax']/Bax_0.value,
-                 yerr=(x_std['cBax']/Bax_0.value)/np.sqrt(num_sims),
-                 label='cBax',
-                 color=ci.next(), marker=marker, linestyle=linestyle)
-        plt.errorbar(x_avg['time'], x_avg['mBax']/Bax_0.value,
-                 yerr=(x_std['mBax']/Bax_0.value)/np.sqrt(num_sims),
-                 label='mBax',
-                 color=ci.next(), marker=marker, linestyle=linestyle)
+def plot_simulation(x_avg, x_std, dr_all, model, num_sims, figure_ids=[0, 1]):
+    ci = color_iter()
+    marker = ','
+    linestyle = ''
 
-        # Activation
-        plt.errorbar(x_avg['time'], x_avg['iBax']/Bax_0.value,
-                     yerr=(x_std['iBax']/Bax_0.value)/np.sqrt(num_sims),
-                     label='iBax', color=ci.next(), marker=marker,
-                     linestyle=linestyle)
-        plt.errorbar(x_avg['time'], x_avg['tBidBax']/tBid_0.value,
-                     yerr=(x_std['tBidBax']/tBid_0.value)/np.sqrt(num_sims),
-                     label='tBidBax', color=ci.next(), marker=marker,
-                     linestyle=linestyle)
+    tBid_0 = model.parameters['tBid_0'].value
+    Bax_0 = model.parameters['Bax_0'].value
+    Vesicles_0 = model.parameters['Vesicles_0'].value
 
-        # Pore Formation
-        plt.errorbar(x_avg['time'], x_avg['pBax']/Bax_0.value,
-                     yerr=(x_std['pBax']/Bax_0.value)/np.sqrt(num_sims),
-                     color=ci.next(),
-                     label='pBax', marker=marker, linestyle=linestyle)
+    # Translocation
+    plt.figure(figure_ids[0])
+    plt.errorbar(x_avg['time'], x_avg['ctBid']/tBid_0,
+             yerr=(x_std['ctBid']/tBid_0)/np.sqrt(num_sims),
+             label='ctBid',
+             color=ci.next(), marker=marker, linestyle=linestyle)
+    plt.errorbar(x_avg['time'], x_avg['mtBid']/tBid_0,
+             yerr=(x_std['mtBid']/tBid_0)/np.sqrt(num_sims),
+             label='mtBid',
+             color=ci.next(), marker=marker, linestyle=linestyle)
+    plt.errorbar(x_avg['time'], x_avg['cBax']/Bax_0,
+             yerr=(x_std['cBax']/Bax_0)/np.sqrt(num_sims),
+             label='cBax',
+             color=ci.next(), marker=marker, linestyle=linestyle)
+    plt.errorbar(x_avg['time'], x_avg['mBax']/Bax_0,
+             yerr=(x_std['mBax']/Bax_0)/np.sqrt(num_sims),
+             label='mBax',
+             color=ci.next(), marker=marker, linestyle=linestyle)
 
-        ci = color_iter()
+    # Activation
+    plt.errorbar(x_avg['time'], x_avg['iBax']/Bax_0,
+                 yerr=(x_std['iBax']/Bax_0)/np.sqrt(num_sims),
+                 label='iBax', color=ci.next(), marker=marker,
+                 linestyle=linestyle)
+    plt.errorbar(x_avg['time'], x_avg['tBidBax']/tBid_0,
+                 yerr=(x_std['tBidBax']/tBid_0)/np.sqrt(num_sims),
+                 label='tBidBax', color=ci.next(), marker=marker,
+                 linestyle=linestyle)
 
-        # Dye release calculated exactly ----------
-        dr_avg = np.mean(dr_all, 0)
-        dr_std = np.std(dr_all, 0)
-        plt.errorbar(x_avg['time'], dr_avg,
-                    yerr=dr_std/np.sqrt(num_sims), label='dye_release',
-                    color=ci.next(), marker=marker, linestyle=linestyle)
+    # Pore Formation
+    plt.errorbar(x_avg['time'], x_avg['pBax']/Bax_0,
+                 yerr=(x_std['pBax']/Bax_0)/np.sqrt(num_sims),
+                 color=ci.next(),
+                 label='pBax', marker=marker, linestyle=linestyle)
 
-        leg = plt.legend()
-        ltext = leg.get_texts()
-        plt.setp(ltext, fontsize='small')
+    ci = color_iter()
 
-        plt.xlabel("Time (seconds)")
-        plt.ylabel("Normalized Concentration")
-        plt.show()
+    # Dye release calculated exactly ----------
+    dr_avg = np.mean(dr_all, 0)
+    dr_std = np.std(dr_all, 0)
+    plt.errorbar(x_avg['time'], dr_avg,
+                yerr=dr_std/np.sqrt(num_sims), label='dye_release',
+                color=ci.next(), marker=marker, linestyle=linestyle)
 
-        # Plot pores/vesicle in a new figure ------
-        ci = color_iter()
-        plt.figure(2)
-        plt.errorbar(x_avg['time'], x_avg['pores']/Vesicles_0.value,
-                     yerr=(x_std['pores']/Vesicles_0.value)/np.sqrt(num_sims),
-                     label='pores', color=ci.next(), marker=marker,
-                     linestyle=linestyle)
+    leg = plt.legend()
+    ltext = leg.get_texts()
+    plt.setp(ltext, fontsize='small')
 
-        #F_t = 1 - dr_avg
-        #pores_poisson = -log(F_t)
-        #plot(x_avg['time'], pores_poisson, color=ci.next(), label='-ln F(t),
-        #     stoch', marker=marker, linestyle=linestyle)
-        #xlabel("Time (seconds)")
-        #ylabel("Pores/vesicle")
-        #title("Pores/vesicle")
-        #legend()
+    plt.xlabel("Time (seconds)")
+    plt.ylabel("Normalized Concentration")
+    plt.show()
 
-        #xlabel("Time (seconds)")
-        #ylabel("Dye Release")
-        #title("Dye release calculated via compartmental model")
+    # Plot pores/vesicle in a new figure ------
+    ci = color_iter()
+    plt.figure(figure_ids[1])
+    plt.errorbar(x_avg['time'], x_avg['pores']/Vesicles_0,
+                 yerr=(x_std['pores']/Vesicles_0)/np.sqrt(num_sims),
+                 label='pores', color=ci.next(), marker=marker,
+                 linestyle=linestyle)
 
-        return xrecs[0]
+    #F_t = 1 - dr_avg
+    #pores_poisson = -log(F_t)
+    #plot(x_avg['time'], pores_poisson, color=ci.next(), label='-ln F(t),
+    #     stoch', marker=marker, linestyle=linestyle)
+    #xlabel("Time (seconds)")
+    #ylabel("Pores/vesicle")
+    #title("Pores/vesicle")
+    #legend()
+
+    #xlabel("Time (seconds)")
+    #ylabel("Dye Release")
+    #title("Dye release calculated via compartmental model")
+
+    return
 
 # SSA data analysis functions
 def plot_compartment_mean(model, observable_name, output):

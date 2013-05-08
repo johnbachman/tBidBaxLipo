@@ -295,7 +295,7 @@ class Builder(core.Builder):
 
         # Plot pores/vesicle in a new figure ------
         ci = color_iter()
-        plt.figure(2)
+        plt.figure(figure_ids[1])
         plt.plot(t, (x['pores']/Vesicles_0.value), label='pores/ves',
                  color=ci.next())
 
