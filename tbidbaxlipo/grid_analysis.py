@@ -43,8 +43,8 @@ class GridAnalysis(object):
         self.bgsub_pore_data = calc_pores(calc_bgsub(self.raw_data))
         """pandas.DataFrame: pores calculated from bg-subtracted data."""
 
-        self.explin_params = calc_explin_params(self.pore_data)
-        """pandas.DataFrame: fmax, k, and m for each set of concentrations."""
+        self.biphasic_params = calc_biphasic_params(self.pore_data)
+        """pandas.DataFrame: vi, vf, and tau for each set of concentrations."""
         self.initial_slope = calc_initial_slope(self.pore_data)
         """pandas.DataFrame: initial slope for each set of concentrations."""
         self.final_slope = calc_final_slope(self.pore_data)
@@ -221,14 +221,18 @@ def calc_final_slope(data, start_time_index=10):
     df.index = data.index
     return df
 
-def calc_explin_params(data):
-    r"""Calculate an exponential-linear fit for each set of concentrations.
+def calc_biphasic_params(data):
+    r"""Calculate a two-phase exponential fit for each set of concentrations.
+
+    See Schwarz et al., "Kinetics of melittin induced pore formation in the
+    membranes of lipid vesicles," Biochimica et Biophysica Acta, 1110 (1992)
+    97-104.
 
     Fits the equation
 
     .. math::
 
-        F_{max} \left(1 - e^{-kt}\right) + mt
+        v_f t + (v_i - v_f) \left(\frac{1 - e^{-\tau t}}{\tau} \right)
 
     to the data.
 
@@ -243,19 +247,19 @@ def calc_explin_params(data):
     -------
     pandas.DataFrame
         Hierarchical DataFrame corresponding to the original data but with
-        the data for "k", "fmax", and "m" in the columns.
+        the data for "vi", "vf", and "tau" in the columns.
     """
     # A dict to hold the parameters
-    explin_dict = {}
+    biphasic_dict = {}
     # Iterate over all (liposome, tbid, bax) combinations:
     for concs, timecourse in data.iterrows():
         # Get an exponential linear fit and put the parameters
         # in the dict
-        explin_fit_result = get_timecourse_fit(timecourse,
-                                               fittype='explin')
-        explin_dict[concs] = pd.Series(explin_fit_result.parameters)
+        biphasic_fit_result = get_timecourse_fit(timecourse,
+                                                 fittype='biphasic')
+        biphasic_dict[concs] = pd.Series(biphasic_fit_result.parameters)
     # Initialize a DataFrame from the dict
-    df = pd.DataFrame(explin_dict).T
+    df = pd.DataFrame(biphasic_dict).T
     df.index = data.index
     return df
 
@@ -279,7 +283,7 @@ class FitResult(object):
         self.mse_val = mse_val
         self.parameters = parameters
 
-def get_timecourse_fit(timecourse, fittype='explin'):
+def get_timecourse_fit(timecourse, fittype='biphasic'):
     """Get a fit curve for a timecourse.
 
     Parameters
@@ -289,6 +293,7 @@ def get_timecourse_fit(timecourse, fittype='explin'):
     fittype : string
         One of the following:
             * `singleexp`. Single exponential.
+            * `biphasic`. Two-phase exponential (see Schwarz).
             * `explin`. Exponential plus linear term (default).
             * `doubleexp`. Sum of two exponentials
             * `expexp`. Exponential raised to an exponential.
@@ -306,16 +311,17 @@ def get_timecourse_fit(timecourse, fittype='explin'):
     fmax = Parameter(4)
     fmax2 = Parameter(0.4)
     m = Parameter(0.01)
-    #ki_parm = Parameter(0.0005)
-    #k0_parm = Parameter(0.0015)
-    #k0_parm = Parameter( (timecourse[1]-timecourse[0])/900)
+
+    #vi = Parameter( (timecourse.values[1]-timecourse.values[0])/900)
+    vi = Parameter(0.0005)
+    vf = Parameter(0.0005)
     # Based on a complete guess of 2500 sec for the half-life
-    #kt_parm = Parameter(2.8e-4)
+    tau = Parameter(2.8e-4)
 
     # Define fitting function
-    #def biphasic(t): return (ki_parm()*t) + ( (k0_parm() - ki_parm()) *
-    #                                     ((1 - exp(-kt_parm()*t))/kt_parm()) )
-    def single_exp (t): return ((fmax()*(1 - np.exp(-k()*t))))
+    def biphasic(t):    return (vf()*t) + ( (vi() - vf()) *
+                                            ((1 - np.exp(-tau()*t))/tau()) )
+    def single_exp(t):  return ((fmax()*(1 - np.exp(-k()*t))))
     def exp_lin(t):     return ((fmax()*(1 - np.exp(-k()*t))) + (m()*t))
     def double_exp(t):  return ((fmax()*(1 - np.exp(-k()*t)))  +
                                 (fmax2()*(1 - np.exp(-k2()*t))))
@@ -323,7 +329,12 @@ def get_timecourse_fit(timecourse, fittype='explin'):
 
     parameters = None
     # Run the fit
-    if (fittype == 'singleexp'):
+    if (fittype == 'biphasic'):
+        fit(biphasic, [vi, vf, tau], timecourse.values,
+            timecourse.keys().values)
+        fitfunc = biphasic
+        parameters = {'vi': vi(), 'vf': vf(), 'tau': tau()}
+    elif (fittype == 'singleexp'):
         fit(single_exp, [k, fmax], timecourse.values, timecourse.keys().values)
         fitfunc = single_exp
         parameters = {'k': k(), 'fmax':fmax()}
@@ -354,7 +365,7 @@ def get_timecourse_fit(timecourse, fittype='explin'):
 def plot_timecourses(data,
                      axis_order=('Liposomes', 'tBid', 'Bax'),
                      fixed_conc=10,
-                     fittype='explin', model=None,
+                     fittype='biphasic', model=None,
                      report=None, display=True):
     """Plot a cross-section of the ANTS/DPX timecourses.
 
@@ -782,7 +793,7 @@ def test_calc_final_slope():
 
 def test_calc_explin_params():
     """Should run without error."""
-    calc_explin_params(calc_pores(gridv1.data))
+    calc_biphasic_params(calc_pores(gridv1.data))
 
 def test_get_timecourse_fit():
     """GridAnalysis.get_timecourse_fit should run without error."""
@@ -819,7 +830,7 @@ def test_plot_timecourses_illegal_level_name():
 def test_plot_titration():
     """plot_titration should run without error."""
     ga = GridAnalysis(gridv1.data)
-    plot_titration(ga.explin_params, 'k')
+    plot_titration(ga.biphasic_params, 'vi')
     assert True
 
 @raises(ValueError)
@@ -827,7 +838,7 @@ def test_plot_titration_illegal_param_name():
     """plot_titration should error if the param_name is an invalid column
     name in the fit_params DataFrame."""
     ga = GridAnalysis(gridv1.data)
-    plot_titration(ga.explin_params, 'bad_name', display=False,
+    plot_titration(ga.biphasic_params, 'bad_name', display=False,
                    axis_order=('tBid', 'Liposomes', 'Bax'))
 
 @raises(ValueError)
@@ -835,7 +846,7 @@ def test_plot_titration_illegal_level_name():
     """plot_titration should error if one of the level names in axis_order
     is not present in the DataFrame."""
     ga = GridAnalysis(gridv1.data)
-    plot_titration(ga.explin_params, 'k', display=False,
+    plot_titration(ga.biphasic_params, 'vi', display=False,
                    axis_order=('tBid', 'Liposomes', 'bad axis name'))
 
 
