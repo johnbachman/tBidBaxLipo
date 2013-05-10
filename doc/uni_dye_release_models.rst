@@ -15,7 +15,7 @@ Schwarz found that the kinetics at each concentration followed a two-phase
 process which can be fit with a three-parameter equation.
 
 Moreover, he noted that the log-log plot showed a straight-line fit indicating
-a third-order dependence, while that of the finel rate had a second-order
+a third-order dependence, while that of the final rate had a second-order
 dependence (I should check these numbers TODO).
 
 He modeled this using a simple model involving the partitioning of the
@@ -74,10 +74,11 @@ liposome.  That is, it is: ``E + S <-> ES --> ES*``. As such, the reaction
 must, by necessity always stop (or rather, asymptotically decelerate); it stops
 in the limit when all ``E`` is consumed and all possible pores have been
 formed. If the P/L ratio is high (>> 1) then dye release may become
-indistinguishable from 100% well before the reaction is completed. When P/L is
-high, the kinetic curve for the pores/ves velocity appears as a straight line
-for the course of the experiment. When P/L is low, the protein is rapidly
-consumed and both dye release and pores/ves plateau quickly.
+experimentally indistinguishable from 100% well before the reaction is
+completed. When P/L is high, the kinetic curve for the pores/ves velocity
+appears as a straight line for the course of the experiment. When P/L is low,
+the protein is rapidly consumed and both dye release and pores/ves plateau
+quickly.
 
 Fourth, there can be no linear, constant phase in the pores/ves plot for this
 model. This would require a way to form pores which did not continue to

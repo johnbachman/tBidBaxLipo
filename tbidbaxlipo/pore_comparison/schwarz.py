@@ -1,16 +1,18 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from tbidbaxlipo.models.one_cpt import Builder
+from pysb.integrate import odesolve
 
 bax_concs = np.logspace(-1, 3, 10)
 b = Builder()
 b.build_model_bax_schwarz()
 
 def plot_Bax_titration():
+    t = np.linspace(0, 12000, 1000)
     initial_rates = []
     for bax_conc in bax_concs:
         b.model.parameters['Bax_0'].value = bax_conc
-        [t, x] = b.run_model()
+        x = odesolve(b.model, t)
         avg_pores = x['pores']/b.model.parameters['Vesicles_0'].value
         initial_rate = avg_pores[50] / t[50]
         initial_rates.append(initial_rate)

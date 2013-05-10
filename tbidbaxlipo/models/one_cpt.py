@@ -77,6 +77,9 @@ from tbidbaxlipo.util.fitting import fit, mse
 from tbidbaxlipo.util import color_iter
 from tbidbaxlipo.models import core
 from matplotlib.font_manager import FontProperties
+from pysb.integrate import odesolve, Solver
+
+Solver._use_inline = True
 
 class Builder(core.Builder):
 
@@ -261,7 +264,6 @@ class Builder(core.Builder):
 
     # RUNNING THE MODEL
     def run_model(self, tmax=12000, figure_ids=[0,1]):
-        from pysb.integrate import odesolve # Postpone integrator test msg
 
         t = np.linspace(0, tmax, 1000)
         x = odesolve(self.model, t)
