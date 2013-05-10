@@ -1,37 +1,15 @@
-"""
-Should turn this into a report!
-* Interestingly, with pores from Bax monomers, the one_cpt and n_cpt models
-  agree fairly closely when there are more tBid molecules than vesicles, EVEN
-  when the off-rate is 0.
-* They don't agree when the concentration of tBid is equal to that of vesicles,
-  AND the off-rate is zero. In these cases the number of pores per vesicle
-  is actually equal, but the dye release calculation diverges substantially.
-  This is because a substantial number of pores are formed on vesicles that
-  already have pores (violation of the Poisson assumption).
-* Should compare to:
-    * Schwartz approach
-    * Almeida approach
-    * Newmeyer approach
-    * Schlesinger assumption about rate law
-
-Schwarz approach:
-* Do analysis for trimeric vs. dimeric pores, see if they give 3/2 rate laws
-** Do with cooperative assembly
-** Do with stepwise assembly
-
-"""
-
 from pysb import *
 from pysb.macros import *
 import numpy as np
 #from pylab import *
 from tbidbaxlipo.util.fitting import fit, mse
-from tbidbaxlipo.util import color_iter 
+from tbidbaxlipo.util import color_iter
 from scipy.stats import poisson
 from pysb import kappa
 from pysb import bng
 from tbidbaxlipo.models import core
 from matplotlib import pyplot as plt
+from matplotlib.font_manager import FontProperties
 
 class Builder(core.Builder):
 
@@ -188,7 +166,7 @@ class Builder(core.Builder):
         x_avg = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
                             buf=np.mean(xall, 0))
 
-        plot_simulation(x_avg, x_std, dr_all, model, num_sims)
+        plot_simulation(x_avg, x_std, dr_all, self.model, num_sims)
 
 
 def plot_simulation(x_avg, x_std, dr_all, model, num_sims, figure_ids=[0, 1]):
@@ -244,10 +222,10 @@ def plot_simulation(x_avg, x_std, dr_all, model, num_sims, figure_ids=[0, 1]):
                 yerr=dr_std/np.sqrt(num_sims), label='dye_release',
                 color=ci.next(), marker=marker, linestyle=linestyle)
 
-    leg = plt.legend()
-    ltext = leg.get_texts()
-    plt.setp(ltext, fontsize='small')
-
+    fontP = FontProperties()
+    fontP.set_size = ('small')
+    plt.legend(loc='upper center', prop=fontP, ncol=5,
+               bbox_to_anchor=(0.5, 1.1), fancybox=True, shadow=True)
     plt.xlabel("Time (seconds)")
     plt.ylabel("Normalized Concentration")
     plt.show()
@@ -257,9 +235,11 @@ def plot_simulation(x_avg, x_std, dr_all, model, num_sims, figure_ids=[0, 1]):
     plt.figure(figure_ids[1])
     plt.errorbar(x_avg['time'], x_avg['pores']/Vesicles_0,
                  yerr=(x_std['pores']/Vesicles_0)/np.sqrt(num_sims),
-                 label='pores', color=ci.next(), marker=marker,
+                 label='pores/ves', color=ci.next(), marker=marker,
                  linestyle=linestyle)
-
+    plt.legend(loc='upper center', prop=fontP, ncol=1,
+               bbox_to_anchor=(0.5, 1.1), fancybox=True, shadow=True)
+    plt.show()
     #F_t = 1 - dr_avg
     #pores_poisson = -log(F_t)
     #plot(x_avg['time'], pores_poisson, color=ci.next(), label='-ln F(t),

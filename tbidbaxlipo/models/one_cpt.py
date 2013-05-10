@@ -76,6 +76,7 @@ from matplotlib import pyplot as plt
 from tbidbaxlipo.util.fitting import fit, mse
 from tbidbaxlipo.util import color_iter
 from tbidbaxlipo.models import core
+from matplotlib.font_manager import FontProperties
 
 class Builder(core.Builder):
 
@@ -160,7 +161,7 @@ class Builder(core.Builder):
              tBid_transloc_kr)
 
     def translocate_Bax(self):
-        print("one_cpt: translocate_tBid_Bax()")
+        print("one_cpt: translocate_Bax()")
 
         """
         tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
@@ -191,7 +192,7 @@ class Builder(core.Builder):
              Bax(loc='c', bh3=None, a6=None) ** solution,
              Bax_transloc_kr)
 
-    def pores_from_Bax_monomers(self, bax_loc_site='i'):
+    def pores_from_Bax_monomers(self, bax_loc_state='i'):
         """Basically a way of counting the time-integrated amount of
            forward pore formation.
         """
@@ -204,7 +205,7 @@ class Builder(core.Builder):
         Pores = self['Pores']
 
         self.rule('Pores_From_Bax_Monomers', 
-             Bax(loc=bax_loc_site) >> Bax(loc='p') + Pores(),
+             Bax(loc=bax_loc_state) >> Bax(loc='p') + Pores(),
              pore_formation_rate_k)
 
         # Pore formation
@@ -297,7 +298,11 @@ class Builder(core.Builder):
         dye_release = (1 - np.exp(-pores_per_ves)) # Per Schwarz's analysis
         plt.plot(t, dye_release, color=ci.next(), label='dye release')
 
-        plt.legend(loc='right')
+        fontP = FontProperties()
+        fontP.set_size = ('small')
+        plt.legend(loc='upper center', prop=fontP, ncol=5,
+                   bbox_to_anchor=(0.5, 1.1), fancybox=True, shadow=True)
+
         plt.show()
 
         #legend()
@@ -309,7 +314,9 @@ class Builder(core.Builder):
         plt.figure(figure_ids[1])
         plt.plot(t, (x['pores']/Vesicles_0.value), label='pores/ves',
                  color=ci.next())
-
+        plt.legend(loc='upper center', prop=fontP, ncol=1,
+                   bbox_to_anchor=(0.5, 1.1), fancybox=True, shadow=True)
+        plt.show()
         #legend()
         #xlabel("Time (seconds)")
         #ylabel("Pores/vesicle")
@@ -342,6 +349,6 @@ class Builder(core.Builder):
         #xlabel("Time (seconds)")
         #ylabel("Pores per vesicle")
 
-        return x
+        return [t, x]
 
     #  COMMENTS
