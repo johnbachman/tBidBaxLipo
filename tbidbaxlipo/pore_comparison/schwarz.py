@@ -40,27 +40,32 @@ def plot_Bax_titration():
 def plot_liposome_titration():
     b = Builder()
     b.translocate_Bax()
+    b.model.parameters['Bax_0'].value = 10000
     t = np.linspace(0, 3000, 1000)
-    lipo_concs = np.logspace(-2, 2, 20)
+    lipo_concs = np.logspace(-2, 2, 40)
     ss_mBax_values = []
 
     # Plot timecourses
     plt.ion()
-    plt.figure()
+    #plt.figure()
 
     for lipo_conc in lipo_concs:
         b.model.parameters['Vesicles_0'].value = lipo_conc
         x = odesolve(b.model, t)
         mBax_frac = x['mBax'] / b.model.parameters['Bax_0'].value
-        plt.plot(t, mBax_frac)
+        #plt.plot(t, mBax_frac)
         ss_mBax_value = mBax_frac[-1]
         ss_mBax_values.append(ss_mBax_value)
-    plt.show()
+    #plt.show()
     ss_mBax_values = np.array(ss_mBax_values)
 
     # Plot liposome titration
     plt.figure()
     plt.plot(lipo_concs, ss_mBax_values)
+    plt.xlabel('Liposome concentration (nM)')
+    plt.ylabel('Pct. Bax at liposomes (Bax_0 = %d nM)' %
+               b.model.parameters['Bax_0'].value)
+    plt.title('Bax/Liposome binding curve')
     plt.show()
 
 if __name__ == '__main__':

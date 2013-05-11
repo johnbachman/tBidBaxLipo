@@ -1,8 +1,8 @@
 Unimolecular Dye Release Models
 ===============================
 
-Schwarz
--------
+General considerations: Schwarz
+-------------------------------
 
 Schwarz's analysis indicated that when pore formation is independent, then
 pores by definition have a Poisson distribution across liposomes, which allows
@@ -27,8 +27,16 @@ are some notable features of his model and analysis:
   thermodynamic interaction parameter which is meant to take into account
   possible unfavorable interactions between proteins as they accumulate in
   the membrane (e.g., repulsion of charges), multiplied by the amount of
-  lipid. I am curious to see what a "binding curve" looks like in this
-  model.
+  lipid. This is described by the equation:
+
+.. math::
+
+    r_1 = \frac{\Gamma_1 \cdot c_1}{\alpha_1}
+
+where :math:`r_1` denotes the protein to lipid molar ratio, :math:`\Gamma_1`
+is the dimensionless partition coefficient, :math:`\alpha_1` is the
+thermodynamic interaction coefficient, and :math:`c_1` is the concentration
+of free (aqueous) monomeric peptide.
 
 * Second, he notes that in all cases his assumption is that the amount of
   protein involved in oligomerization or pore formation is very small relative
@@ -46,10 +54,37 @@ are some notable features of his model and analysis:
 The simplest model: monomeric Bax pores
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In any case, the simplest model, with partitioning to membranes followed by
-pore formation from monomers, already demonstrates a few important principles.
+To illustrate the application of our modeling approach we begin by examining
+thesimple unimolecular pore formation models described by Schwarz.  The
+simplest possible model, implemented in the function
+:py:meth:`tbidbaxlipo.models.core.Builder.build_model_bax_schwarz`, consists of
+Bax partitioning to membranes followed by pore formation from monomers::
 
-First, even if the amount of protein and vesicles is equal, and it only takes
+    Bax(loc='c') ** solution + Vesicles() ** solution >>
+    Bax(loc='m') ** ves + Vesicles() ** solution
+
+    Bax(bh3=None, a6=None, loc='m') ** ves >>
+    Bax(bh3=None, a6=None, loc='c') ** solution
+
+    Bax(loc='m') >> Bax(loc='p') + Pores()]
+
+This simple model demonstrates a number of important principles. First, even
+though in this simple model the binding capacity of the vesicles is unlimited,
+if the amount of vesicles is too small (smaller than the K_d of Bax for
+vesicles), then very little Bax will be bound. This can be seen in this
+liposome titration plot:
+
+.. plot::
+
+    from tbidbaxlipo.pore_comparison.schwarz import plot_liposome_titration
+    plot_liposome_titration()
+
+This model should be identical to the Schwarz model with the exception that
+it does not incorporate the possibility of unfavorable interactions between
+Bax monomers that would hinder translocation and limit the vesicles' binding
+capacity.
+
+Second, even if the amount of protein and vesicles is equal, and it only takes
 one protein to form a pore, you won't get 100% dye release. You will, however,
 reach 1 pore ver vesicle (on average) at completion. This is due to the uneven
 (Poisson) distribution of the pores among liposomes. The ``one_cpt`` model
@@ -58,6 +93,29 @@ actually captures this quite nicely, and its results are validated by the
 excess, it is impossible to get 100% permeabilization. This is because in this
 model one can get a maximum of one pore per protein via an irreversible
 process.
+
+For example, if we set the concentration of both Bax and Vesicles to 50 nM,
+we see that dye release plateaus at around 60%, whereas the average
+number of pores per vesicle reaches completion at 1. This is because some
+vesicles have more than one pore, whereas others have none:
+
+.. plot::
+
+    from tbidbaxlipo.models.one_cpt import Builder
+    from pylab import *
+    from pysb.integrate import odesolve
+    params_dict = {'Bax_0': 50., 'Vesicles_0': 50.}
+    b = Builder(params_dict=params_dict)
+    b.build_model_bax_schwarz()
+    t = linspace(0, 5000, 500)
+    x = odesolve(b.model, t)
+    figure()
+    avg_pores = x['pores']/params_dict['Vesicles_0']
+    plot(t, avg_pores, 'r', label="Pores/Ves")
+    plot(t, 1 - exp(-avg_pores), 'b', label="Dye release")
+    legend(loc='lower right')
+    xlabel('Time (sec)')
+    title('Dye release vs. pores for equimolar Bax/vesicles')
 
 Second, this model does indeed reproduce a rate-law plot with a straight line
 in the log-log plot with slope 1:
