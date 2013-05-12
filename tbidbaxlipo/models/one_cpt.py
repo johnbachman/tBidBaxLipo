@@ -195,52 +195,65 @@ class Builder(core.Builder):
              Bax(loc='c', bh3=None, a6=None) ** solution,
              Bax_transloc_kr)
 
-    def pores_from_Bax_monomers(self, bax_loc_state='i'):
+    def pores_from_Bax_monomers(self, bax_loc_state='i', reversible=False):
         """Basically a way of counting the time-integrated amount of
            forward pore formation.
         """
         print("one_cpt: pores_from_Bax_monomers()")
 
         pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3)
-        #Parameter('pore_recycling_rate_k', 0)
 
         Bax = self['Bax']
         Pores = self['Pores']
+        ves = self['ves']
+        solution = self['solution']
 
         self.rule('Pores_From_Bax_Monomers', 
              Bax(loc=bax_loc_state) >> Bax(loc='p') + Pores(),
              pore_formation_rate_k)
 
+        if reversible:
+            pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-3)
+
+            self.rule('Pores_reverse',
+                 Bax(loc='p') ** ves >> Bax(loc='c') ** solution,
+                 pore_reverse_rate_k)
+
         # Pore formation
         self.observable('pBax', Bax(loc='p'))
         self.observable('pores', Pores())
 
-        #Rule('Pores_Increment',
-        #     Bax(loc='i') >> Bax(loc='i') + Pores(),
-        #     scaled_pore_formation_rate_k)
-
-        #Rule('Pores_Recycle',
-        #     Bax(loc='p') >> Bax(loc='c'),
-        #     pore_recycling_rate_k)
-
-    def pores_from_Bax_dimers():
+    def pores_from_Bax_dimers(self, bax_loc_state='i', reversible=False):
         """Basically a way of counting the time-integrated amount of
            forward pore formation."""
+        print("one_cpt: pores_from_Bax_dimers()")
 
-        Parameter('pore_formation_rate_k', 10) # This is going to be 
-        #Parameter('scaled_pore_formation_rate_k', 0.03) # This is going to be 
-        Parameter('pore_recycling_rate_k', 10)
+        Bax = self['Bax']
+        Pores = self['Pores']
+        ves = self['ves']
+        solution = self['solution']
 
-        Rule('Pores_From_Bax_Dimers', 
-             Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None) >>
+        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3)
+
+        self.rule('Pores_From_Bax_Dimers',
+             Bax(loc=bax_loc_state, bh3=1, a6=None) %
+             Bax(loc=bax_loc_state, bh3=1, a6=None) >>
              Bax(loc='p', bh3=1, a6=None) % Bax(loc='p', bh3=1, a6=None) +
              Pores(),
              pore_formation_rate_k)
 
-        Rule('Pores_Recycle',
-             Bax(loc='p', bh3=1, a6=None) % Bax(loc='p', bh3=1, a6=None) >>
-             Bax(loc='c', bh3=None, a6=None) + Bax(loc='c', bh3=None, a6=None),
-             pore_recycling_rate_k)
+        if reversible:
+            pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-2)
+            self.rule('Pores_Recycle',
+                 Bax(loc='p', bh3=1, a6=None) ** ves %
+                 Bax(loc='p', bh3=1, a6=None) ** ves >>
+                 Bax(loc='c', bh3=None, a6=None) ** solution +
+                 Bax(loc='c', bh3=None, a6=None) ** solution,
+                 pore_reverse_rate_k)
+
+        # Pore formation
+        self.observable('pBax', Bax(loc='p'))
+        self.observable('pores', Pores())
 
     def pores_from_Bax_tetramers():
         """Basically a way of counting the time-integrated amount of

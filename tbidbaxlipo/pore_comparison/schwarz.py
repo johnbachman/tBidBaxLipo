@@ -2,20 +2,18 @@ import numpy as np
 from matplotlib import pyplot as plt
 from tbidbaxlipo.models.one_cpt import Builder
 from pysb.integrate import odesolve
+from tbidbaxlipo.util import color_iter
 
-def plot_Bax_titration():
+def plot_bax_titration(model):
 
-    b = Builder()
-    b.build_model_bax_schwarz()
-
-    bax_concs = np.logspace(-1, 3, 10)
+    bax_concs = np.logspace(-5, 3, 40)
     t = np.linspace(0, 12000, 1000)
     initial_rates = []
 
     for bax_conc in bax_concs:
-        b.model.parameters['Bax_0'].value = bax_conc
-        x = odesolve(b.model, t)
-        avg_pores = x['pores']/b.model.parameters['Vesicles_0'].value
+        model.parameters['Bax_0'].value = bax_conc
+        x = odesolve(model, t)
+        avg_pores = x['pores']/model.parameters['Vesicles_0'].value
         initial_rate = avg_pores[50] / t[50]
         initial_rates.append(initial_rate)
     initial_rates = np.array(initial_rates)
@@ -30,7 +28,7 @@ def plot_Bax_titration():
     plt.figure()
     plt.figtext(0.2, 0.8, 'Slope: %.4f' % slope)
     plt.figtext(0.2, 0.75, 'Intercept: %.4f' % intercept)
-    plt.plot(log_concs, log_initial_rates, 'bx')
+    plt.plot(log_concs, log_initial_rates, 'b')
     plt.plot(log_concs, fitted_initial_rates, 'r')
     plt.xlabel('Log([Bax])')
     plt.ylabel('Log(V_i)')
@@ -68,6 +66,48 @@ def plot_liposome_titration():
     plt.title('Bax/Liposome binding curve')
     plt.show()
 
+def plot_pores_and_efflux(model):
+    t = np.linspace(0, 5000, 500)
+    x = odesolve(model, t)
+    plt.figure()
+    avg_pores = x['pores']/model.parameters['Vesicles_0'].value
+    plt.plot(t, avg_pores, 'r', label="Pores/Ves")
+    plt.plot(t, 1 - np.exp(-avg_pores), 'b', label="Dye release")
+    plt.legend(loc='lower right')
+    plt.xlabel('Time (sec)')
+    plt.show()
+
+def plot_effect_of_pore_reverse_rate():
+    ci = color_iter()
+
+    pore_reverse_rates = [1e-2, 1e-4, 1e-6]
+    t = np.linspace(0, 5000, 500)
+    plt.figure()
+
+    for pore_reverse_rate in pore_reverse_rates:
+        params_dict = {'Bax_0': 50., 'Vesicles_0': 50.,
+                        'pore_reverse_rate_k': pore_reverse_rate}
+        b = Builder(params_dict=params_dict)
+        b.build_model_bax_schwarz_reversible()
+        x = odesolve(b.model, t)
+        avg_pores = x['pores']/b.model.parameters['Vesicles_0'].value
+        col = ci.next()
+        plt.plot(t, avg_pores, color=col, linestyle='-',
+                 label="Pores, reverse rate %g" % pore_reverse_rate)
+        plt.plot(t, 1 - np.exp(-avg_pores), color=col, linestyle='--',
+                 label="Dye release, reverse rate %g" % pore_reverse_rate)
+
+    plt.legend(loc='upper left')
+    plt.xlabel('Time (sec)')
+    plt.show()
+
 if __name__ == '__main__':
-    #plot_Bax_titration()
-    plot_liposome_titration()
+    #plot_bax_titration()
+    #plot_liposome_titration()
+    params_dict = {'Bax_0':50., 'Vesicles_0': 50.,
+                   'Bax_dimerization_kf': 1e-9,
+                   'Bax_dimerization_kr':0.}
+    b = Builder(params_dict=params_dict)
+    b.build_model_bax_schwarz_dimer_reversible()
+    plot_pores_and_efflux(b.model)
+    plot_bax_titration(b.model)

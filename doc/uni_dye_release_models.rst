@@ -102,48 +102,119 @@ vesicles have more than one pore, whereas others have none:
 .. plot::
 
     from tbidbaxlipo.models.one_cpt import Builder
-    from pylab import *
-    from pysb.integrate import odesolve
+    from tbidbaxlipo.pore_comparison.schwarz import plot_pores_and_efflux
+    from matplotlib import pyplot as plt
     params_dict = {'Bax_0': 50., 'Vesicles_0': 50.}
     b = Builder(params_dict=params_dict)
     b.build_model_bax_schwarz()
-    t = linspace(0, 5000, 500)
-    x = odesolve(b.model, t)
-    figure()
-    avg_pores = x['pores']/params_dict['Vesicles_0']
-    plot(t, avg_pores, 'r', label="Pores/Ves")
-    plot(t, 1 - exp(-avg_pores), 'b', label="Dye release")
-    legend(loc='lower right')
-    xlabel('Time (sec)')
-    title('Dye release vs. pores for equimolar Bax/vesicles')
+    plot_pores_and_efflux(b.model)
+    plt.title('Dye release/pores for equimolar Bax and vesicles')
 
 Second, this model does indeed reproduce a rate-law plot with a straight line
 in the log-log plot with slope 1:
 
 .. plot::
 
-    from tbidbaxlipo.pore_comparison.schwarz import plot_Bax_titration
-    plot_Bax_titration()
+    from tbidbaxlipo.models.one_cpt import Builder
+    from tbidbaxlipo.pore_comparison.schwarz import plot_bax_titration
+    b = Builder()
+    b.build_model_bax_schwarz()
+    plot_bax_titration(b.model)
 
 Third, this reaction scheme can be thought of as simple enzyme-substrate
 catalysis where the enzyme, rather than the substrate is consumed. Bax is the
 enzyme, the liposome is the substrate, and the product is the permeabilized
-liposome.  That is, it is: ``E + S <-> ES --> ES*``. As such, the reaction
-must, by necessity always stop (or rather, asymptotically decelerate); it stops
-in the limit when all ``E`` is consumed and all possible pores have been
-formed. If the P/L ratio is high (>> 1) then dye release may become
-experimentally indistinguishable from 100% well before the reaction is
-completed. When P/L is high, the kinetic curve for the pores/ves velocity
-appears as a straight line for the course of the experiment. When P/L is low,
-the protein is rapidly consumed and both dye release and pores/ves plateau
-quickly.
+liposome.  That is, it is: ``E + S <-> ES --> EP``. As such, the reaction must,
+by necessity always stop (or rather, asymptotically decelerate); it stops in
+the limit when all ``E`` is consumed and all possible pores have been formed.
+If the P/L ratio is high (>> 1) then dye release may become experimentally
+indistinguishable from 100% well before the reaction is completed. When P/L is
+high, the kinetic curve for the pores/ves velocity appears as a straight line
+for the course of the experiment. When P/L is low, the protein is rapidly
+consumed and both dye release and pores/ves plateau quickly.
 
-Fourth, there can be no linear, constant phase in the pores/ves plot for this
-model. This would require a way to form pores which did not continue to
-consume protein.
+Ff the partitioning of protein to liposomes is fast (as it is expected to be),
+then :math:`ES` comes rapidly to steady-state. *In this model :math:`S`, the
+liposomes, can never be diminished because more pores can always form,* hence
+this aspect of the Michaelis-Menten assumption applies.
+
+Fourth, unlike in the reversible model (see below) there can be no linear,
+constant phase in the pores/ves plot for this model. This would require a way
+to form pores which did not continue to consume protein.
+
+Reversible pore formation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The next case to consider is where the proteins involved in pore formation can
+dissociate from a vesicle and return to solution. If this is the case then
+a single protein can permeabilize a (potentially large) number of vesicles.
+
+The reverse rate dramatically effects the shape of the kinetic curves.
+In the plot below a series of traces for pores per vesicle and percent dye
+release are shown (in each case, as above, both Bax and vesicles are set
+to concentrations of 50 nM as shown above for the irreversible case).
+
+.. plot::
+
+    # 50nM Vesicles and Bax, pore formation forward rate of 1e-3
+    from tbidbaxlipo.pore_comparison.schwarz import \
+         plot_effect_of_pore_reverse_rate
+    plot_effect_of_pore_reverse_rate()
+
+As the plot shows, if the reverse rate is slow (1e-6), the pore formation
+process is very similar to the irreversible case, in which the pores per
+vesicle curve plateaus at 1.
+
+When the pore reverse rate is fast (1e-2), the protein is returned to the
+solution essentially immediately after the pore is formed, allowing it to
+permeabilize other liposomes. In this case the conversion of liposomes
+follows the reaction scheme
+
+.. math::
+
+    E + S \rightleftharpoons ES \rightarrow EP \rightarrow E + P
+
+in which :math:`E` is Bax, :math:`S` is the unpermeabilized liposome, and
+:math:`P` is the permeabilized liposome. :math:`EP` is the state in which
+Bax remains bound to the liposome after permeabilizing it. However, if the
+rates of the pore formation and pore reversal processes are fast (to be defined
+formally later) the quantities of :math:`E` and :math:`ES` are relatively
+undiminished, and the conversion of :math:`S` to :math:`P` is approximately
+a first-order decay process with a rate proportional to :math:`E`:
+
+.. math::
+
+    S \rightarrow P
+
+In the third case, the reverse rate occupies an intermediate value, such that
+a significant, and constant, amount of protein :math:`E` is occupied on
+permeabilized liposomes.
 
 A dimeric Bax pore
 ~~~~~~~~~~~~~~~~~~
+
+Changing the model to use a dimeric pore has one obvious consequence--the
+average number of pores per vesicle, and hence the total number of pores goes
+down by half.
+
+But there is another interesting consequence--in the Bax
+titration, the slope of the log-log plot starts out at 2 for low concentrations
+of Bax, then shifts to 1 at high concentrations of Bax!
+
+Change the rate of dimerization changes this--the rate limiting step is
+dimerization only when dimerization is slow relatively to the other processes.
+Changing the dimerization rate to be fast makes the log-log slope approach 1.
+Notably, when Bax concentrations are low relative to the dimerization rate,
+the rate limiting step again becomes dimerization.
+
+Conversely, when the dimerization forward rate is made to be very low, the
+slope of the log-log plot is two.
+
+This is true even when the reverse rate for dimerization is 0, so the issue is
+not one of the Kd of dimerization, but rather the bimolecularity of the
+interaction. Ind
+
+NEED TO ADD PLOTS
 
 Other analyses to do
 ~~~~~~~~~~~~~~~~~~~~

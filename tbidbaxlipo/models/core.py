@@ -386,7 +386,7 @@ class Builder(object):
              Bax(loc='i', bh3=None, a6=None) >> Bax(loc='m', bh3=None, a6=None),
              krev)
 
-    def Bax_dimerizes(self):
+    def Bax_dimerizes(self, bax_loc_state='i'):
         """
         Notes
         -----
@@ -405,9 +405,10 @@ class Builder(object):
         Bax = self['Bax']
 
         self.rule('Bax_Forms_Dimers',
-             Bax(loc='i', bh3=None, a6=None) +
-             Bax(loc='i', bh3=None, a6=None) <>
-             Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None),
+             Bax(loc=bax_loc_state, bh3=None, a6=None) +
+             Bax(loc=bax_loc_state, bh3=None, a6=None) <>
+             Bax(loc=bax_loc_state, bh3=1, a6=None) %
+             Bax(loc=bax_loc_state, bh3=1, a6=None),
              Bax_dimerization_kf, Bax_dimerization_kr)
 
     def Bax_tetramerizes(self):
@@ -662,8 +663,25 @@ class Builder(object):
     # Models incorporating dye release
     def build_model_bax_schwarz(self):
         self.translocate_Bax()
-        self.pores_from_Bax_monomers(bax_loc_state='m')
+        self.pores_from_Bax_monomers(bax_loc_state='m', reversible=False)
         self.model.name = 'bax_schwarz'
+
+    def build_model_bax_schwarz_reversible(self):
+        self.translocate_Bax()
+        self.pores_from_Bax_monomers(bax_loc_state='m', reversible=True)
+        self.model.name = 'bax_schwarz_reversible'
+
+    def build_model_bax_schwarz_dimer(self):
+        self.translocate_Bax()
+        self.Bax_dimerizes(bax_loc_state='m')
+        self.pores_from_Bax_dimers(bax_loc_state='m', reversible=False)
+        self.model.name = 'bax_schwarz_dimer'
+
+    def build_model_bax_schwarz_dimer_reversible(self):
+        self.translocate_Bax()
+        self.Bax_dimerizes(bax_loc_state='m')
+        self.pores_from_Bax_dimers(bax_loc_state='m', reversible=True)
+        self.model.name = 'bax_schwarz_dimer_reversible'
 
     def build_model_tap1(self):
         print "---------------------------"
