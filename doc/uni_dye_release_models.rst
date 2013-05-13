@@ -193,6 +193,9 @@ permeabilized liposomes.
 A dimeric Bax pore
 ~~~~~~~~~~~~~~~~~~
 
+I NEED TO REVISIT ALL OF THIS ANALYTICALLY TO MAKE SURE IT IS NOT THE
+RESULT OF NUMERICAL ARTIFACTS.
+
 Changing the model to use a dimeric pore has one obvious consequence--the
 average number of pores per vesicle, and hence the total number of pores goes
 down by half.
@@ -212,9 +215,36 @@ slope of the log-log plot is two.
 
 This is true even when the reverse rate for dimerization is 0, so the issue is
 not one of the Kd of dimerization, but rather the bimolecularity of the
-interaction. Ind
+interaction.
 
-NEED TO ADD PLOTS
+It's not totally clear to me how when the dimerization rate is fast the order
+of the rate law is still 1, even though twice the amount of Bax is still
+required to permeabilize the same amount of liposomes. I suppose that that
+aspect is irrelevant--that is a constant factor of a change (2-fold), but
+doesn't speak to the exponent of the rate law. The exponent of the rate law
+refers to the order of the rate-limiting reaction, i.e., how the rate scales
+with concentration. So if the rate is linear in a dimer of :math:`E`, that is
+still a log-log slope of 1 for the rate, even though it scales with the dimer,
+not the monomer.
+
+Presumably the bend in the curve comes at around the point where the average
+Bax per liposome is around 1?
+
+A tetrameric Bax pore
+~~~~~~~~~~~~~~~~~~~~~
+
+Interestingly, using a scheme in which Bax pores consist of tetramers that
+assemble by dimerization of dimers, the log-log rate law plot (for the
+initial rate) has a slope of 4 four low concentrations of Bax, but this
+then bends down to 1 at high concentrations of Bax.
+
+You can get some funny results switching the log-log slope between 2 and 4
+depending on the parameters you choose, but to some extent this depends
+on the numerical sampling done to get the initial slope. Ideally, it would
+be done with the same fitting equation as used for the real data.
+
+This is all very confusing. Ideally I would do this analytically using
+perturbation theory.
 
 Other analyses to do
 ~~~~~~~~~~~~~~~~~~~~

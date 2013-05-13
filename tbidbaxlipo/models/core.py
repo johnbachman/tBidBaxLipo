@@ -411,14 +411,14 @@ class Builder(object):
              Bax(loc=bax_loc_state, bh3=1, a6=None),
              Bax_dimerization_kf, Bax_dimerization_kr)
 
-    def Bax_tetramerizes(self):
+    def Bax_tetramerizes(self, bax_loc_state='i'):
         """
         This function depends on Bax_dimerization to be called as well.
 
         Notes
         -----
         In Lovell Fig S1, about 80% of the Bax is at membranes (inserted,
-        non-extractable, resistant to gel filtration etc.) after       
+        non-extractable, resistant to gel filtration etc.) after
         """
 
         print("core: Bax_tetramerizes()")
@@ -430,12 +430,14 @@ class Builder(object):
         Bax = self['Bax']
 
         self.rule('Bax_Forms_Tetramers',
-             MatchOnce(Bax(loc='i', bh3=1, a6=None) %
-                       Bax(loc='i', bh3=1, a6=None)) +
-             MatchOnce(Bax(loc='i', bh3=2, a6=None) %
-                       Bax(loc='i', bh3=2, a6=None)) <>
-             Bax(loc='i', bh3=1, a6=3) % Bax(loc='i', bh3=1, a6=4) % 
-             Bax(loc='i', bh3=2, a6=3) % Bax(loc='i', bh3=2, a6=4), 
+             MatchOnce(Bax(loc=bax_loc_state, bh3=1, a6=None) %
+                       Bax(loc=bax_loc_state, bh3=1, a6=None)) +
+             MatchOnce(Bax(loc=bax_loc_state, bh3=2, a6=None) %
+                       Bax(loc=bax_loc_state, bh3=2, a6=None)) <>
+             Bax(loc=bax_loc_state, bh3=1, a6=3) %
+             Bax(loc=bax_loc_state, bh3=1, a6=4) %
+             Bax(loc=bax_loc_state, bh3=2, a6=3) %
+             Bax(loc=bax_loc_state, bh3=2, a6=4), 
              Bax_tetramerization_kf, Bax_tetramerization_kr)
 
     def iBax_binds_tBid_at_bh3(self):
@@ -682,6 +684,13 @@ class Builder(object):
         self.Bax_dimerizes(bax_loc_state='m')
         self.pores_from_Bax_dimers(bax_loc_state='m', reversible=True)
         self.model.name = 'bax_schwarz_dimer_reversible'
+
+    def build_model_bax_schwarz_tetramer_reversible(self):
+        self.translocate_Bax()
+        self.Bax_dimerizes(bax_loc_state='m')
+        self.Bax_tetramerizes(bax_loc_state='m')
+        self.pores_from_Bax_tetramers(bax_loc_state='m', reversible=True)
+        self.model.name = 'bax_schwarz_tetramer_reversible'
 
     def build_model_tap1(self):
         print "---------------------------"

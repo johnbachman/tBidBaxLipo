@@ -244,7 +244,7 @@ class Builder(core.Builder):
 
         if reversible:
             pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-2)
-            self.rule('Pores_Recycle',
+            self.rule('Pores_reverse',
                  Bax(loc='p', bh3=1, a6=None) ** ves %
                  Bax(loc='p', bh3=1, a6=None) ** ves >>
                  Bax(loc='c', bh3=None, a6=None) ** solution +
@@ -255,25 +255,47 @@ class Builder(core.Builder):
         self.observable('pBax', Bax(loc='p'))
         self.observable('pores', Pores())
 
-    def pores_from_Bax_tetramers():
+    def pores_from_Bax_tetramers(self, bax_loc_state='m', reversible=False):
         """Basically a way of counting the time-integrated amount of
            forward pore formation."""
+        print("one_cpt: pores_from_Bax_tetramers()")
 
-        Parameter('pore_formation_rate_k', 100)
+        Bax = self['Bax']
+        Pores = self['Pores']
+        ves = self['ves']
+        solution = self['solution']
 
-        Rule('Pores_From_Bax_Tetramers', 
-             MatchOnce(Bax(loc='i', bh3=1, a6=3) % Bax(loc='i', bh3=1, a6=4) % 
-             Bax(loc='i', bh3=2, a6=3) % Bax(loc='i', bh3=2, a6=4)) >>
-             MatchOnce(Bax(loc='p', bh3=1, a6=3) % Bax(loc='p', bh3=1, a6=4) % 
-             Bax(loc='p', bh3=2, a6=3) % Bax(loc='p', bh3=2, a6=4)) + Pores(), 
+        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3)
+
+        self.rule('Pores_From_Bax_Tetramers', 
+             MatchOnce(Bax(loc=bax_loc_state, bh3=1, a6=3) %
+             Bax(loc=bax_loc_state, bh3=1, a6=4) %
+             Bax(loc=bax_loc_state, bh3=2, a6=3) %
+             Bax(loc=bax_loc_state, bh3=2, a6=4)) >>
+             MatchOnce(Bax(loc='p', bh3=1, a6=3) %
+             Bax(loc='p', bh3=1, a6=4) %
+             Bax(loc='p', bh3=2, a6=3) %
+             Bax(loc='p', bh3=2, a6=4)) +
+             Pores(),
              pore_formation_rate_k)
 
-        #Rule('Pores_Recycle',
-        #     MatchOnce(Bax(loc='p', bh3=1, a6=3) % Bax(loc='p', bh3=1, a6=4) % 
-        #     Bax(loc='p', bh3=2, a6=3) % Bax(loc='p', bh3=2, a6=4)) >>
-        #     Bax(loc='c', bh3=1, a6=3) + Bax(loc='c', bh3=1, a6=4) +
-        #     Bax(loc='c', bh3=2, a6=3) + Bax(loc='c', bh3=2, a6=4),
-        #     pore_recycling_rate_k)
+        if reversible:
+            pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-2)
+
+            self.rule('Pores_reverse',
+                MatchOnce(Bax(loc='p', bh3=1, a6=3) ** ves %
+                Bax(loc='p', bh3=1, a6=4) ** ves %
+                Bax(loc='p', bh3=2, a6=3) ** ves %
+                Bax(loc='p', bh3=2, a6=4) ** ves) >>
+                MatchOnce(Bax(loc='c', bh3=1, a6=3) ** solution %
+                Bax(loc='c', bh3=1, a6=4) ** solution %
+                Bax(loc='c', bh3=2, a6=3) ** solution %
+                Bax(loc='c', bh3=2, a6=4) ** solution),
+                pore_reverse_rate_k)
+
+        # Pore formation
+        self.observable('pBax', Bax(loc='p'))
+        self.observable('pores', Pores())
 
     # RUNNING THE MODEL
     def run_model(self, tmax=12000, figure_ids=[0,1]):

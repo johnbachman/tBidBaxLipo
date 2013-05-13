@@ -6,17 +6,20 @@ from tbidbaxlipo.util import color_iter
 
 def plot_bax_titration(model):
 
-    bax_concs = np.logspace(-5, 3, 40)
-    t = np.linspace(0, 12000, 1000)
+    bax_concs = np.logspace(-1, 2, 40)
+    t = np.linspace(0, 3000, 1000)
     initial_rates = []
 
+    plt.figure()
     for bax_conc in bax_concs:
         model.parameters['Bax_0'].value = bax_conc
         x = odesolve(model, t)
         avg_pores = x['pores']/model.parameters['Vesicles_0'].value
-        initial_rate = avg_pores[50] / t[50]
+        plt.plot(t, avg_pores)
+        initial_rate = avg_pores[10] / t[10]
         initial_rates.append(initial_rate)
     initial_rates = np.array(initial_rates)
+    plt.show()
 
     # Run a regression against the points and calculate the initial_rate
     log_concs = np.log(bax_concs)
@@ -104,10 +107,18 @@ def plot_effect_of_pore_reverse_rate():
 if __name__ == '__main__':
     #plot_bax_titration()
     #plot_liposome_titration()
-    params_dict = {'Bax_0':50., 'Vesicles_0': 50.,
-                   'Bax_dimerization_kf': 1e-9,
-                   'Bax_dimerization_kr':0.}
+    params_dict = {'Bax_0':100., 'Vesicles_0': 5.,
+                   #'Bax_transloc_kf': 0.01,
+                   #'Bax_transloc_kf': 0.1,
+                   'Bax_dimerization_kf': 1e-2,
+                   'Bax_dimerization_kr': 0,
+                   'Bax_tetramerization_kf': 1e-2,
+                   'Bax_tetramerization_kr': 0,
+                   'pore_formation_rate_k': 1e5,
+                   'pore_reverse_rate_k': 0
+                  }
+
     b = Builder(params_dict=params_dict)
-    b.build_model_bax_schwarz_dimer_reversible()
+    b.build_model_bax_schwarz_tetramer_reversible()
     plot_pores_and_efflux(b.model)
     plot_bax_titration(b.model)
