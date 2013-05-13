@@ -34,6 +34,7 @@ import datetime as dt
 #from pylab import *
 from matplotlib.pyplot import *
 from matplotlib.font_manager import FontProperties
+import numpy as np
 
 # Indices of the exported CSV
 WELL_COL = 2
@@ -151,7 +152,7 @@ def plot_subset(wells, well_name_list):
     legend(loc='upper center', prop=fontP, ncol=5, bbox_to_anchor=(0.5, 1.1),
          fancybox=True, shadow=True)
 
-def plot_condition(wells, layoujt, condition_name):
+def plot_condition(wells, layout, condition_name):
     """Plot the replicates associated with a single experimental condition.
 
     Parameters
@@ -259,6 +260,16 @@ def get_normalized_well_timecourses(wells, initial_vals, final_vals):
         values = wells[well_name][VALUE]
         normalized_values = (values - initial_vals[well_name]) / range
         normalized_wells[well_name] = [times, normalized_values]
-    
+
     return normalized_wells
 
+def get_average_pore_timecourses(normalized_wells):
+    average_pores = {}
+
+    for well_name in normalized_wells.keys():
+        times = normalized_wells[well_name][TIME]
+        values = normalized_wells[well_name][VALUE]
+        average_pore_values = -np.log(1 - values)
+        average_pores[well_name] = [times, average_pore_values]
+
+    return average_pores
