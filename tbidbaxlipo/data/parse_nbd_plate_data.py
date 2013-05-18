@@ -61,5 +61,13 @@ output_file.write('nbd175c = ' + np.array(data[73:77]).__repr__() + '\n\n')
 output_file.write('nbd179c = ' + np.array(data[79:83]).__repr__() + '\n\n')
 output_file.write('nbd188c = ' + np.array(data[85:89]).__repr__() + '\n\n')
 
+output_file.write('nbdall = [nbd5c, nbd15c, nbd36c, nbd40c, nbd47c, nbd54c,\n')
+output_file.write('          nbd62c, nbd68c, nbd79c, nbd120c, nbd122c, nbd126c,\n')
+output_file.write('          nbd175c, nbd179c, nbd188c]\n\n')
+
+output_file.write('nbd_names = ["c5", "c15", "c36", "c40", "c47", "c54",\n')
+output_file.write('             "c62", "c68", "c79", "c120", "c122", "c126",\n')
+output_file.write('             "c175", "c179", "c188"]\n')
+
 output_file.close()
 

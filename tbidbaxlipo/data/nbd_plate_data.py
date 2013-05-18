@@ -2370,3 +2370,10 @@ nbd188c = array([[  878.        ,   983.        ,  1115.        ,  1214.        
          4470.        ,  4448.        ,  4429.        ,  4376.        ,
          4338.        ,  4470.        ]])
 
+nbdall = [nbd5c, nbd15c, nbd36c, nbd40c, nbd47c, nbd54c,
+          nbd62c, nbd68c, nbd79c, nbd120c, nbd122c, nbd126c,
+          nbd175c, nbd179c, nbd188c]
+
+nbd_names = ["c5", "c15", "c36", "c40", "c47", "c54",
+             "c62", "c68", "c79", "c120", "c122", "c126",
+             "c175", "c179", "c188"]
