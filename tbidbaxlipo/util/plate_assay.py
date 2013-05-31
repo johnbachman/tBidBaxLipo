@@ -49,10 +49,10 @@ VALUE = 1
 
 def read_wallac(csv_file):
     """Parses the plate reader data from a CSV file.
-  
+
     NOTE: The data must be sorted by well before exporting to CSV. See the
     instructions in the module docstring for more details.
-  
+
     Parameters
     ----------
     csv_file : string
@@ -61,10 +61,9 @@ def read_wallac(csv_file):
     Returns
     -------
     A dict mapping the name of the well to a list of lists. For each dict
-    entry, the first 
-    element in the outer list is a list of the time coordinates associated
-    with each timepoint; the second element in the outer list is the list of
-    assay values for each timepoint.
+    entry, the first element in the outer list is a list of the time
+    coordinates associated with each timepoint; the second element in the outer
+    list is the list of assay values for each timepoint.
 
     For example, wells['A01'] returns
 
@@ -77,7 +76,7 @@ def read_wallac(csv_file):
     # we update the value of cur_well, make a new entry in the dict,
     # and continue.
     csv_reader = csv.reader(open(csv_file, 'r'))
-  
+
     # Initialize the empty dict
     wells = {}
     # We're not currently on any well!
