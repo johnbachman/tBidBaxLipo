@@ -35,6 +35,7 @@ import datetime as dt
 from matplotlib.pyplot import *
 from matplotlib.font_manager import FontProperties
 import numpy as np
+import collections
 
 # Indices of the exported CSV
 WELL_COL = 2
@@ -78,7 +79,7 @@ def read_wallac(csv_file):
     csv_reader = csv.reader(open(csv_file, 'r'))
 
     # Initialize the empty dict
-    wells = {}
+    wells = collections.OrderedDict([])
     # We're not currently on any well!
     cur_well = ""
     # Iterate over the rows:
@@ -104,15 +105,14 @@ def read_wallac(csv_file):
 
     return wells
 
-def plot_all(wells, errors=None):
+def plot_all(wells, errors=None, do_legend=True):
     """Plots all of the timecourses in the dict.
 
     Parameters
     ----------
     wells : dict of timecourse data of the type returned by read_wallac.
     """
-
-    for wellname, wellval in iter(sorted(wells.iteritems())):
+    for wellname, wellval in wells.iteritems():
         if errors is None:
             plot(wellval[TIME], wellval[VALUE], label=wellname)
         else:
@@ -122,10 +122,15 @@ def plot_all(wells, errors=None):
     # Label the axes and add a legend
     xlabel('Time') # TODO: automatically determine seconds or minutes, etc.
     ylabel('Value')
-    fontP = FontProperties()
-    fontP.set_size('small')
-    legend(loc='upper center', prop=fontP, ncol=5, bbox_to_anchor=(0.5, 1.1),
-         fancybox=True, shadow=True)
+
+    if do_legend:
+        fontP = FontProperties()
+        fontP.set_size('small')
+        ax = gca()
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+        legend(loc='upper left', prop=fontP, ncol=1, bbox_to_anchor=(1, 1),
+             fancybox=True, shadow=True)
 
 
 def plot_subset(wells, well_name_list):
@@ -205,9 +210,9 @@ def averages(wells, layout):
 
 def averages(wells, layout):
     # For every experimental condition...
-    well_averages = {}
-    well_stds = {}
-    
+    well_averages = collections.OrderedDict([])
+    well_stds = collections.OrderedDict([])
+
     for condition_name, condition_list in layout.iteritems():
         num_conditions = len(condition_list)
         num_timepoints = len(wells[condition_list[0]][TIME])
@@ -240,7 +245,7 @@ def get_repeat_averages_by_well(wells):
     returns a dict mapping the well name to the value for that well,
     averaged over the serial replicates.
     """
-    well_averages = {}
+    well_averages = collections.OrderedDict([])
 
     for well_name in wells.keys():
         repeat_measurements = wells[well_name][VALUE]
@@ -248,10 +253,39 @@ def get_repeat_averages_by_well(wells):
 
     return well_averages
 
+def get_first_points_by_well(wells):
+    """From a timecourse, get the first timepoint (e.g., for use in
+    normalization)."""
+    first_points = collections.OrderedDict([])
+
+    for well_name in wells.keys():
+        repeat_measurements = wells[well_name][VALUE]
+        first_points[well_name] = repeat_measurements[0]
+
+    return first_points
+
+def reset_first_timepoint_to_zero(wells):
+    """From a timecourse, get the earliest timepoint and use that to subtract
+    from all other timepoints."""
+    min_time = np.inf
+    for well_name in wells.keys():
+        cur_min_time = np.min(wells[well_name][TIME])
+        if cur_min_time < min_time:
+            min_time = cur_min_time
+
+    reset_wells = collections.OrderedDict([])
+    for well_name in wells.keys():
+        old_times = wells[well_name][TIME]
+        new_times = [(old_time - min_time) for old_time in old_times]
+
+        reset_wells[well_name] = [new_times, wells[well_name][VALUE]]
+
+    return reset_wells
+
 def get_normalized_well_timecourses(wells, initial_vals, final_vals):
     """For every well, normalizes to a percentage between the initial value and
     the final value."""
-    normalized_wells = {}
+    normalized_wells = collections.OrderedDict([])
 
     for well_name in wells.keys():
         range = final_vals[well_name] - initial_vals[well_name]
@@ -263,7 +297,7 @@ def get_normalized_well_timecourses(wells, initial_vals, final_vals):
     return normalized_wells
 
 def get_average_pore_timecourses(normalized_wells):
-    average_pores = {}
+    average_pores = collections.OrderedDict([])
 
     for well_name in normalized_wells.keys():
         times = normalized_wells[well_name][TIME]
