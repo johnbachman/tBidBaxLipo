@@ -19,6 +19,9 @@ def plot_bax_titration(model):
         initial_rate = avg_pores[10] / t[10]
         initial_rates.append(initial_rate)
     initial_rates = np.array(initial_rates)
+    plt.title('Avg. pores with Bax from 0.1 to 100')
+    plt.xlabel('Time')
+    plt.ylabel('Avg. pores per liposome')
     plt.show()
 
     # Run a regression against the points and calculate the initial_rate
@@ -102,6 +105,8 @@ def plot_effect_of_pore_reverse_rate():
 
     plt.legend(loc='upper left')
     plt.xlabel('Time (sec)')
+    plt.ylabel('Dye release/Avg. pores')
+    plt.title('Dye release/pore formation with varying reverse rates')
     plt.show()
 
 if __name__ == '__main__':

@@ -399,7 +399,8 @@ class Builder(object):
         print("core: Bax_dimerizes")
 
         # Rate of dimerization formation/oligomerization of activated Bax (s^-1)
-        Bax_dimerization_kf = self.parameter('Bax_dimerization_kf', 1e-2)# was 1
+        Bax_dimerization_kf = self.parameter('Bax_dimerization_kf', 1e-2,
+               factor=self.within_compartment_rsf())
         Bax_dimerization_kr = self.parameter('Bax_dimerization_kr', 1e-2)
 
         Bax = self['Bax']
@@ -424,8 +425,9 @@ class Builder(object):
         print("core: Bax_tetramerizes()")
 
         # Rate of dimerization formation/oligomerization of activated Bax (s^-1)
-        Bax_tetramerization_kf = self.parameter('Bax_tetramerization_kf', 1e-2)
-        Bax_tetramerization_kr = self.parameter('Bax_tetramerization_kr', 1e-2) 
+        Bax_tetramerization_kf = self.parameter('Bax_tetramerization_kf', 1e-2,
+               factor=self.within_compartment_rsf())
+        Bax_tetramerization_kr = self.parameter('Bax_tetramerization_kr', 1e-2)
 
         Bax = self['Bax']
 
@@ -482,10 +484,10 @@ class Builder(object):
     def Bax_auto_activates(target_bax_site='a6'):
         # Andrews suggests that tBid/Bax Kd should work out to 25nM
         # Forward rate of iBax binding to Bax (E + S -> ES)
-        Parameter('iBax_mBax_kf', 1e-4)
+        self.parameter('iBax_mBax_kf', 1e-4)
         # Reverse rate of iBax binding to Bax (ES -> E + S)
-        Parameter('iBax_mBax_kr', 1e-2)
-        Parameter('mBaxiBax_to_iBaxiBax_k', 1) 
+        self.parameter('iBax_mBax_kr', 1e-2)
+        self.parameter('mBaxiBax_to_iBaxiBax_k', 1) 
         # Dissociation of iBax from iBax (EP -> E + P)
         #Parameter('iBax_iBax_kr', 2.5e-3)
 
@@ -505,8 +507,8 @@ class Builder(object):
              mBaxiBax_to_iBaxiBax_k)
 
     def Bax_aggregates_at_pores():
-        Parameter('aggregation_rate_k', 1e-4)
-        Rule('Bax_aggregates_at_pores',
+        aggregation_rate_k = self.parameter('aggregation_rate_k', 1e-4)
+        self.rule('Bax_aggregates_at_pores',
              Bax(loc='p') + Bax(loc='m') >> Bax(loc='p') + Bax(loc='p'),
              aggregation_rate_k)
 
@@ -520,17 +522,18 @@ class Builder(object):
              tBid(loc='m', bh3=1) % Bax(loc='m', bh3=1),
              iBaxtBid_to_mBaxtBid_k)
 
-    def basal_Bax_activation():
+    def basal_Bax_activation(self):
         # Spontaneous rate of transition of Bax from the mitochondrial to the
         # inserted state
         # Implies average time is 10000 seconds???
-        Parameter('basal_Bax_kf', 1e-3)
-        Parameter('basal_Bax_kr', 10)
+        basal_Bax_kf = self.parameter('basal_Bax_kf', 1e-2)
+        #basal_Bax_kr = self.parameter('basal_Bax_kr', 10)
 
-        two_state_equilibrium(Bax(bh3=None, dye='f'), 'm', 'i',
-                [basal_Bax_kf, basal_Bax_kr], sitename='loc')
-        two_state_equilibrium(Bax(bh3=None, dye='e'), 'm', 'i',
-                [basal_Bax_kf, basal_Bax_kr], sitename='loc')
+        Bax = self['Bax']
+
+        self.rule('basal_Bax_activation',
+                  Bax(bh3=None, loc='m') >> Bax(bh3=None, loc='i'),
+                  basal_Bax_kf)
 
     ## -- MODEL BUILDING FUNCTIONS -------------------------------------------
     """
@@ -661,6 +664,13 @@ class Builder(object):
         self.Bax_dimerizes()
         self.Bax_tetramerizes()
         self.model.name = 'tardt'
+
+    # Models incorporating dye release
+    def build_model_bax_heat(self):
+        self.translocate_Bax()
+        self.basal_Bax_activation()
+        self.pores_from_Bax_monomers(bax_loc_state='i', reversible=False)
+        self.model.name = 'bax_heat'
 
     # Models incorporating dye release
     def build_model_bax_schwarz(self):

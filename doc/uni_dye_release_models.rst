@@ -55,10 +55,11 @@ The simplest model: monomeric Bax pores
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To illustrate the application of our modeling approach we begin by examining
-thesimple unimolecular pore formation models described by Schwarz.  The
+the simple unimolecular pore formation models described by Schwarz.  The
 simplest possible model, implemented in the function
 :py:meth:`tbidbaxlipo.models.core.Builder.build_model_bax_schwarz`, consists of
-Bax partitioning to membranes followed by pore formation from monomers::
+Bax partitioning to membranes (as described above) followed by pore formation
+from monomers::
 
     Bax(loc='c') ** solution + Vesicles() ** solution >>
     Bax(loc='m') ** ves + Vesicles() ** solution
@@ -68,31 +69,68 @@ Bax partitioning to membranes followed by pore formation from monomers::
 
     Bax(loc='m') >> Bax(loc='p') + Pores()]
 
-This simple model demonstrates a number of important principles. First, even
-though in this simple model the binding capacity of the vesicles is unlimited,
-if the amount of vesicles is too small (smaller than the K_d of Bax for
-vesicles), then very little Bax will be bound. This can be seen in this
-liposome titration plot:
+First we examine how Bax binds or partitions to liposomes in this model and
+others of its type. Here the assumption, as in Schwarz's model, is that Bax
+simply partitions between the lipid and aqueous phases. This approach to
+modeling the binding of Bax to liposomes has three important features.
+
+First, even though in this simple model the binding capacity of the
+vesicles is unlimited, if the amount of vesicles is too small (smaller than the
+K_d of Bax for vesicles), then very little Bax will be bound. This can be seen
+in this liposome titration plot:
 
 .. plot::
 
     from tbidbaxlipo.pore_comparison.schwarz import plot_liposome_titration
     plot_liposome_titration()
 
-This model should be identical to the Schwarz model with the exception that
-it does not incorporate the possibility of unfavorable interactions between
-Bax monomers that would hinder translocation and limit the vesicles' binding
-capacity.
+That is, **the fraction of Bax bound is dependent on the amount of liposomes in
+this system and the affinity of Bax and liposomes for each other.** This model
+should be identical to the Schwarz model with the exception that it does not
+incorporate the possibility of unfavorable interactions between Bax monomers
+that would hinder translocation and limit the vesicles' binding capacity.
 
-Second, even if the amount of protein and vesicles is equal, and it only takes
-one protein to form a pore, you won't get 100% dye release. You will, however,
-reach 1 pore ver vesicle (on average) at completion. This is due to the uneven
-(Poisson) distribution of the pores among liposomes. The ``one_cpt`` model
-actually captures this quite nicely, and its results are validated by the
-``n_cpt`` model. Of course, this also means that whenever liposomes are in
-excess, it is impossible to get 100% permeabilization. This is because in this
-model one can get a maximum of one pore per protein via an irreversible
-process.
+This brings us to the second point: in this model the fraction of Bax bound is
+determined only by the amount of liposomes in the system. In terms of the
+familiar binding isotherm, the fraction of bound Bax is given by:
+
+.. math::
+
+    \frac{Bax_{bound}}{Bax_{total}} = \frac{Lipos}{K_D + Lipos}
+
+Now, in a typical protein-protein binding context, we would note that the
+variable :math:`Lipos` in the above expression refers to the amount of free
+(unbound) liposomes at equilibrium, not to total liposomes. However, since
+this model assumes that liposomes have unlimited binding capacity, this is
+a moot point--the amount of liposomes free to bind Bax is identical to the
+total amount of liposomes. **Thus for any amount of liposomes, the fraction of
+Bax bound is determined only by the amount of liposomes, not by the amount
+of Bax.**
+
+This has an important consequence, namely that as Bax concentration is
+increased, this will result in a proportional increase in the amount of Bax
+per liposome. By manipulating the above expression we see that:
+
+.. math::
+
+    Bax_{bound} = Bax_{total} \frac{Lipos}{K_D + Lipos}
+
+And so the amount of bound Bax increases linearly with total Bax, with a slope
+determined by the :math:`K_D` and the amount of liposomes.
+
+This raises the final point, **that the amount of Bax per liposome is given by a
+Poisson distribution with an average given by the amount of Bax bound divided
+by the amount of liposomes (I haven't checked this numerically).**
+
+**Next we discuss dye release.** In this model **even if the amount of protein
+and vesicles is equal, and it only takes one protein to form a pore, you won't
+get 100% dye release. You will, however, reach 1 pore ver vesicle (on average)
+at completion.** This is due to the uneven (Poisson) distribution of the pores
+among liposomes. The ``one_cpt`` model actually captures this quite nicely, and
+its results are validated by the ``n_cpt`` model. Of course, this also means
+that whenever liposomes are in excess on a molar basis, it is impossible to get
+100% permeabilization. This is because in this model one can get a maximum of
+one pore per protein via an irreversible process.
 
 For example, if we set the concentration of both Bax and Vesicles to 50 nM,
 we see that dye release plateaus at around 60%, whereas the average
@@ -110,8 +148,11 @@ vesicles have more than one pore, whereas others have none:
     plot_pores_and_efflux(b.model)
     plt.title('Dye release/pores for equimolar Bax and vesicles')
 
-Second, this model does indeed reproduce a rate-law plot with a straight line
-in the log-log plot with slope 1:
+Now we look at the scaling of the **pore formation rate (not dye release rate)
+as a function of Bax concentration.** In these plots the concentration of
+liposomes is 5 nM, so at the maximum Bax concentration of 100 nM the maximum
+achievable number of avg. pores is 20. This model produces a rate-law plot with
+a straight line in the log-log plot with slope 1:**
 
 .. plot::
 
@@ -121,33 +162,38 @@ in the log-log plot with slope 1:
     b.build_model_bax_schwarz()
     plot_bax_titration(b.model)
 
-Third, this reaction scheme can be thought of as simple enzyme-substrate
-catalysis where the enzyme, rather than the substrate is consumed. Bax is the
+Put in words, this means that the **velocity of pore formation increases
+linearly with the amount of Bax, never reaching saturation.**
+
+Third, **this reaction scheme can be thought of as simple enzyme-substrate
+catalysis where the enzyme, rather than the substrate is consumed.** Bax is the
 enzyme, the liposome is the substrate, and the product is the permeabilized
 liposome.  That is, it is: ``E + S <-> ES --> EP``. As such, the reaction must,
-by necessity always stop (or rather, asymptotically decelerate); it stops in
+by necessity, always stop (or rather, asymptotically decelerate); it stops in
 the limit when all ``E`` is consumed and all possible pores have been formed.
 If the P/L ratio is high (>> 1) then dye release may become experimentally
-indistinguishable from 100% well before the reaction is completed. When P/L is
-high, the kinetic curve for the pores/ves velocity appears as a straight line
-for the course of the experiment. When P/L is low, the protein is rapidly
-consumed and both dye release and pores/ves plateau quickly.
+indistinguishable from 100% well before the reaction is completed in terms of
+pore formation. When P/L is high, the kinetic curve for the pores/ves velocity
+appears as a straight line for the course of the experiment. When P/L is low,
+the protein is rapidly consumed and both dye release and pores/ves plateau
+quickly.
 
-Ff the partitioning of protein to liposomes is fast (as it is expected to be),
-then :math:`ES` comes rapidly to steady-state. *In this model :math:`S`, the
-liposomes, can never be diminished because more pores can always form,* hence
+If the partitioning of protein to liposomes is fast (as it is expected to be),
+then :math:`ES` comes rapidly to steady-state. In this model :math:`S`, the
+liposomes, can never be diminished because more pores can always form, hence
 this aspect of the Michaelis-Menten assumption applies.
 
-Fourth, unlike in the reversible model (see below) there can be no linear,
-constant phase in the pores/ves plot for this model. This would require a way
+**Fourth, unlike in the reversible model (see below) there can be no linear,
+constant phase in the pores/ves plot for this model.** This would require a way
 to form pores which did not continue to consume protein.
 
 Reversible pore formation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The next case to consider is where the proteins involved in pore formation can
-dissociate from a vesicle and return to solution. If this is the case then
-a single protein can permeabilize a (potentially large) number of vesicles.
+The next case to consider is the same simple model as above but with the
+modification that the proteins involved in pore formation can dissociate from a
+vesicle and return to solution. If this is the case then a single protein can
+permeabilize a (potentially large) number of vesicles.
 
 The reverse rate dramatically effects the shape of the kinetic curves.
 In the plot below a series of traces for pores per vesicle and percent dye
@@ -180,15 +226,28 @@ Bax remains bound to the liposome after permeabilizing it. However, if the
 rates of the pore formation and pore reversal processes are fast (to be defined
 formally later) the quantities of :math:`E` and :math:`ES` are relatively
 undiminished, and the conversion of :math:`S` to :math:`P` is approximately
-a first-order decay process with a rate proportional to :math:`E`:
+a first-order process with a rate proportional to :math:`E`:
 
 .. math::
 
     S \rightarrow P
 
+However, since in this case the "substrate" :math:`S`, the liposomes, is not
+consumed by pore formation, the formation of the product :math:`P` is actually
+linear (zero order). This can be seen in the plot as a straight-line velocity
+of pore formation for the fast reverse rate.
+
 In the third case, the reverse rate occupies an intermediate value, such that
 a significant, and constant, amount of protein :math:`E` is occupied on
 permeabilized liposomes.
+
+Saturable Bax Binding
+~~~~~~~~~~~~~~~~~~~~~
+
+Next we examine the case where the binding of Bax to liposomes is saturable,
+that is, there is a limited number of binding sites on liposomes for Bax.
+
+
 
 A dimeric Bax pore
 ~~~~~~~~~~~~~~~~~~
@@ -251,8 +310,8 @@ Other analyses to do
 
 * Do analysis for trimeric vs. dimeric pores, see if they give 3/2 rate laws,
   respectively
-** Do with cooperative assembly
-** Do with stepwise assembly
+* Do with cooperative assembly
+* Do with stepwise assembly
 
 Almeida
 -------

@@ -9,7 +9,7 @@ All of the following plots are for 10uL liposomes.
 .. plot::
 
     from tbidbaxlipo.data.gridv1 import data
-    from tbidbaxlipo.grid_analysis as g
+    import tbidbaxlipo.grid_analysis as g
     g.plot_timecourses(data, fittype='biphasic')
 
 Pore data from the first experiment, exponential-linear fit (10uL lipid)
@@ -46,7 +46,7 @@ All of the following plots are for 3.8uL liposomes.
     g.plot_timecourses(g.calc_pores(g.calc_bgsub(data)), fixed_conc=3.8, fittype='biphasic')
 
 Pore data from the second experiment, exponential-linear fit (4uL lipid)
------------------------------------------------------------------------
+------------------------------------------------------------------------
 
 All of the following plots are for 4uL liposomes.
 
