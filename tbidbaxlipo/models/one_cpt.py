@@ -106,10 +106,10 @@ class Builder(core.Builder):
         Vesicles = self['Vesicles']
 
         self.initial(tBid(loc='c', bh3=None) ** solution, self['tBid_0'])
-        self.initial(Bax(loc='c', bh3=None, a6=None,
+        self.initial(Bax(loc='c', bh3=None, a6=None, lipo=None,
                      c3='s', c62='s', c120='s', c122='s', c126='s', c184='s')
                      ** solution, self['Bax_0'])
-        self.initial(Vesicles() ** solution, self['Vesicles_0'])
+        self.initial(Vesicles(bax=None) ** solution, self['Vesicles_0'])
 
         # OBSERVABLES
         self.observable('ctBid', tBid(loc='c'))
@@ -177,8 +177,7 @@ class Builder(core.Builder):
                                           estimate=False)
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-2)
         """
-        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
-                                          estimate=False)
+        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2)
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1)
 
         ves = self['ves']

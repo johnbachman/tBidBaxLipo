@@ -179,7 +179,7 @@ class Builder(object):
         self.monomer('tBid', ['bh3', 'loc'],
                 {'loc': ['c', 'm']})
         self.monomer('Bax',
-                        ['bh3', 'a6', 'loc',
+                        ['bh3', 'a6', 'loc', 'lipo',
                          'c3', 'c62', 'c120', 'c122', 'c126', 'c184'],
                         {'loc':  ['c', 'm', 'i', 'a', 'p'],
                          'c3':   ['s', 'm'],
@@ -188,7 +188,7 @@ class Builder(object):
                          'c122': ['s', 'm'],
                          'c126': ['s', 'm'],
                          'c184': ['s', 'm']})
-        self.monomer('Vesicles', [])
+        self.monomer('Vesicles', ['bax'])
         self.monomer('Pores', [])
 
     # -- METHODS FOR FITTING/CALIBRATION -----------------------------------
@@ -506,6 +506,23 @@ class Builder(object):
              Bax(loc='i', bh3=None) + Bax(loc='i', **target_bax_site_unbound),
              mBaxiBax_to_iBaxiBax_k)
 
+    def Bax_auto_activates_one_step(self):
+        print "core: Bax_auto_activates_one_step"
+        # Andrews suggests that tBid/Bax Kd should work out to 25nM
+        # Forward rate of iBax binding to Bax (E + S -> ES)
+        iBax_activates_mBax_k = self.parameter('iBax_activates_mBax_k', 1e-4)
+        # Reverse rate of iBax binding to Bax (ES -> E + S)
+        #self.parameter('iBax_mBax_kr', 1e-2)
+        #self.parameter('mBaxiBax_to_iBaxiBax_k', 1) 
+        # Dissociation of iBax from iBax (EP -> E + P)
+        #Parameter('iBax_iBax_kr', 2.5e-3)
+        Bax = self['Bax']
+
+        # Conformational change of Bax (ES -> EP)
+        self.rule('iBax_activates_mBax',
+            Bax(loc='i') + Bax(loc='m') >> Bax(loc='i') + Bax(loc='i'),
+            iBax_activates_mBax_k)
+
     def Bax_aggregates_at_pores():
         aggregation_rate_k = self.parameter('aggregation_rate_k', 1e-4)
         self.rule('Bax_aggregates_at_pores',
@@ -523,10 +540,11 @@ class Builder(object):
              iBaxtBid_to_mBaxtBid_k)
 
     def basal_Bax_activation(self):
+        print "core: basal_Bax_activation"
         # Spontaneous rate of transition of Bax from the mitochondrial to the
         # inserted state
         # Implies average time is 10000 seconds???
-        basal_Bax_kf = self.parameter('basal_Bax_kf', 1e-2)
+        basal_Bax_kf = self.parameter('basal_Bax_kf', 1e-4)
         #basal_Bax_kr = self.parameter('basal_Bax_kr', 10)
 
         Bax = self['Bax']
@@ -671,6 +689,57 @@ class Builder(object):
         self.basal_Bax_activation()
         self.pores_from_Bax_monomers(bax_loc_state='i', reversible=False)
         self.model.name = 'bax_heat'
+
+    def build_model_bax_heat_reversible(self):
+        self.translocate_Bax()
+        self.basal_Bax_activation()
+        self.pores_from_Bax_monomers(bax_loc_state='i', reversible=True)
+        self.model.name = 'bax_heat_reversible'
+
+    def build_model_bax_heat_dimer(self):
+        self.translocate_Bax()
+        self.basal_Bax_activation()
+        self.Bax_dimerizes(bax_loc_state='i')
+        self.pores_from_Bax_dimers(bax_loc_state='i', reversible=False)
+        self.model.name = 'bax_heat_dimer'
+
+    def build_model_bax_heat_dimer_reversible(self):
+        self.translocate_Bax()
+        self.basal_Bax_activation()
+        self.Bax_dimerizes(bax_loc_state='i')
+        self.pores_from_Bax_dimers(bax_loc_state='i', reversible=True)
+        self.model.name = 'bax_heat_reversible'
+
+    def build_model_bax_heat_auto(self):
+        self.translocate_Bax()
+        self.basal_Bax_activation()
+        self.Bax_auto_activates_one_step()
+        self.pores_from_Bax_monomers(bax_loc_state='i', reversible=False)
+        self.model.name = 'bax_heat_auto'
+
+    def build_model_bax_heat_auto_reversible(self):
+        self.translocate_Bax()
+        self.basal_Bax_activation()
+        self.Bax_auto_activates_one_step()
+        self.pores_from_Bax_monomers(bax_loc_state='i', reversible=True)
+        self.model.name = 'bax_heat_auto_reversible'
+
+    def build_model_bax_heat_auto_dimer(self):
+        self.translocate_Bax()
+        self.basal_Bax_activation()
+        self.Bax_auto_activates_one_step()
+        self.Bax_dimerizes()
+        self.pores_from_Bax_dimers(bax_loc_state='i', reversible=False)
+        self.model.name = 'bax_heat_auto_dimer'
+
+    def build_model_bax_heat_auto_dimer_reversible(self):
+        self.translocate_Bax()
+        self.basal_Bax_activation()
+        self.Bax_auto_activates_one_step()
+        self.Bax_dimerizes()
+        self.pores_from_Bax_dimers(bax_loc_state='i', reversible=True)
+        self.model.name = 'bax_heat_auto_dimer_reversible'
+
 
     # Models incorporating dye release
     def build_model_bax_schwarz(self):
