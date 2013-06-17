@@ -7,18 +7,12 @@ fluorescence data using MCMC.
 just-Bax condition, and then perturb it with the addition of tBid.
 """
 
-import bayessb
-from pysb.integrate import odesolve
 import numpy as np
 import matplotlib
 #matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import pickle
 import tbidbaxlipo.mcmc
 from tbidbaxlipo.util.report import Report
-from matplotlib.font_manager import FontProperties
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 model_names = ['ta', 'tai', 'taid', 'taidt', 'tair', 'taird', 'tairdt',
                'tad', 'tadt', 'tar', 'tard', 'tardt']
@@ -28,7 +22,7 @@ nbd_site_names = ['c3', 'c62']
 class NBD_MCMC(tbidbaxlipo.mcmc.MCMC):
     """Fit mechanistic tBid/Bax models to NBD data.
 
-    Initialize parent bayessb.MCMC and then set additional fields.
+    Initialize parent tbidbaxlipo.mcmc.MCMC and then set additional fields.
 
     Parameters
     ----------
