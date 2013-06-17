@@ -7,6 +7,7 @@ from tbidbaxlipo.models.one_cpt import Builder
 import bayessb
 import pickle
 import numpy as np
+from matplotlib import pyplot as plt
 
 class PoreMCMC(tbidbaxlipo.mcmc.MCMC):
     """Fit mechanistic tBid/Bax models to dye release titration data.
@@ -25,6 +26,9 @@ class PoreMCMC(tbidbaxlipo.mcmc.MCMC):
         # Call the superclass constructor
         tbidbaxlipo.mcmc.MCMC.__init__(self, options, builder)
 
+        # Store the data
+        self.data = data
+
         # Set the MCMC functions
         self.options.likelihood_fn = self.get_likelihood_function()
         self.options.prior_fn = self.builder.prior
@@ -35,7 +39,11 @@ class PoreMCMC(tbidbaxlipo.mcmc.MCMC):
         return None
 
     def plot_data(self, axis):
-        raise NotImplementedError()
+        # Plot the titration of Bax timecourses
+        for bax_conc in self.data.columns:
+            tc = self.data[bax_conc]
+            axis.plot(tc[:,'TIME'], tc[:,'MEAN'], # error=tc[:,'SD'],
+                       color='gray', label='Bax %d nM')
 
     def get_observable_timecourses(self, position):
         raise NotImplementedError()
@@ -66,7 +74,18 @@ def get_PoreMCMC_instance():
     opts.seed = 1
 
     p = PoreMCMC(opts, data, b)
+    return p
 
 def test_PoreMCMC_init():
-    get_PoreMCMC_instance()
+    p = get_PoreMCMC_instance()
     assert True
+
+def test_plot_data():
+    p = get_PoreMCMC_instance()
+    fig = plt.figure()
+    axis = fig.gca()
+    p.plot_data(axis)
+    plt.show()
+    assert True
+
+
