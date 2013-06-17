@@ -3,7 +3,7 @@ from bayessb.report import Report
 import bayessb.report.reporters
 import tbidbaxlipo.reporters
 from tbidbaxlipo.reporters import knowledge, topology, experiment
-from tbidbaxlipo.mcmc.nbd_mcmc import import_mcmc_groups
+from tbidbaxlipo.mcmc import import_mcmc_groups
 import sys
 import pickle
 
