@@ -2,6 +2,12 @@
 A class for fitting the mechanistic pore formation models to dye release data.
 """
 
+import tbidbaxlipo.mcmc
+from tbidbaxlipo.models.one_cpt import Builder
+import bayessb
+import pickle
+import numpy as np
+
 class PoreMCMC(tbidbaxlipo.mcmc.MCMC):
     """Fit mechanistic tBid/Bax models to dye release titration data.
 
@@ -40,4 +46,27 @@ class PoreMCMC(tbidbaxlipo.mcmc.MCMC):
                                  self.options.nsteps,
                                  self.options.seed)
 
+def get_PoreMCMC_instance():
+    b = Builder()
+    b.build_model_tar()
 
+    data = pickle.load(open('../data/130614_norm_timecourses_df.pck'))
+
+    opts = bayessb.MCMCOpts()
+    opts.model = b.model
+    opts.tspan = np.linspace(0, 6000, 196)
+    opts.estimate_params = [p for p in b.model.parameters]
+    opts.initial_values = [p.value for p in opts.estimate_params]
+    opts.nsteps = 10
+    opts.T_init = 1
+    opts.anneal_length = 0
+    opts.use_hessian = False
+    opts.sigma_step = 0
+    opts.norm_step_size = 0.1
+    opts.seed = 1
+
+    p = PoreMCMC(opts, data, b)
+
+def test_PoreMCMC_init():
+    get_PoreMCMC_instance()
+    assert True
