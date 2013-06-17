@@ -152,7 +152,14 @@ Now we look at the scaling of the **pore formation rate (not dye release rate)
 as a function of Bax concentration.** In these plots the concentration of
 liposomes is 5 nM, so at the maximum Bax concentration of 100 nM the maximum
 achievable number of avg. pores is 20. This model produces a rate-law plot with
-a straight line in the log-log plot with slope 1:**
+a straight line in the log-log plot with slope 1. Put in words, this means that
+the **velocity of pore formation increases linearly with the amount of Bax,
+never reaching saturation.** Moreover, this means that the total number of
+pores that can be produced is equal to the total amount of Bax divided by the
+number of Bax molecules required to form a pore. If pores are monomeric, then
+there can maximally be as many pores as Bax molecules--steady state in the pore
+timecourse will occur at this value. This means that if Bax concentration is
+doubled, the steady state number of pores (and the rate) will double as well.
 
 .. plot::
 
@@ -161,9 +168,6 @@ a straight line in the log-log plot with slope 1:**
     b = Builder()
     b.build_model_bax_schwarz()
     plot_bax_titration(b.model)
-
-Put in words, this means that the **velocity of pore formation increases
-linearly with the amount of Bax, never reaching saturation.**
 
 Third, **this reaction scheme can be thought of as simple enzyme-substrate
 catalysis where the enzyme, rather than the substrate is consumed.** Bax is the
@@ -247,7 +251,66 @@ Saturable Bax Binding
 Next we examine the case where the binding of Bax to liposomes is saturable,
 that is, there is a limited number of binding sites on liposomes for Bax.
 
+First we look at the fraction of Bax bound as a function of Bax for simple
+partitioning vs. a model in which the finite nature of liposome binding sites
+is explicitly accounted for. As discussed above, for the partitioning model,
+the fraction of Bax bound is determined only by the amount of liposomes,
+whereas in the binding site model, the fraction of Bax bound decreases once the
+liposomes become saturated and none of the additional Bax can bind. In the
+simulations shown below there is 30 nM of liposomes or liposome "binding
+sites".
 
+.. plot::
+
+    from matplotlib import pyplot as plt
+    from tbidbaxlipo.models import lipo_sites, one_cpt
+    from tbidbaxlipo.pore_comparison.schwarz import plot_fraction_bax_bound
+
+    plt.ion()
+    params_dict = {'Vesicles_0': 30}
+    b = lipo_sites.Builder(params_dict=params_dict)
+    b.translocate_Bax()
+    plot_fraction_bax_bound(b.model, figure_id=10)
+
+    b = one_cpt.Builder(params_dict=params_dict)
+    b.translocate_Bax()
+    plot_fraction_bax_bound(b.model, figure_id=10)
+    plt.legend(['Binding site', 'Partitioning'], loc='lower left')
+
+Next we examine the behavior of this model upon incorporating pore formation,
+simulating the pore formation timecourse for many Bax concentrations as above.
+What these plots show is that not only does the steady-state (maximal) value
+for the number of pores saturate with increasing Bax, but the initial velocity
+saturates as well. Rather than having a slope of 1 as in the partitioning model,
+the log-log plot starts out with a slope of 1 and then saturates.
+
+.. plot::
+
+    from tbidbaxlipo.models import lipo_sites
+    from tbidbaxlipo.pore_comparison.schwarz import plot_bax_titration
+    params_dict = {'Vesicles_0': 2, 'pore_formation_rate_k':5e-3}
+    b = lipo_sites.Builder(params_dict=params_dict)
+    b.build_model_bax_schwarz()
+    plot_bax_titration(b.model)
+
+The other thing that this plot shows is that at saturation, all curves reach
+a final value of 1 pore per "liposome" on average; however in this model the
+liposomes really represent liposome binding sites. The reason why the value of
+1 is always attained is because once a pore forms, the liposome binding site
+remains irreversibly "bound" to the Bax pore. Schematically, this is
+
+.. math::
+
+    E + S \rightleftharpoons ES \rightarrow EP
+
+Because the binding between Bax and liposome binding sites is 1 to 1, there can
+ever be as many pores as there are molecules of EP, and hence as many molecules
+of S. Thus the average number of pores per site (total pores divided by number
+of sites) is 1.
+
+The scheme above also shows that the reaction slows down at late times due not
+only to the consumption of S (unbound liposome binding sites) but also due to
+the consumption of E (free, non-pore Bax).
 
 A dimeric Bax pore
 ~~~~~~~~~~~~~~~~~~
