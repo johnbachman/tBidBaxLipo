@@ -36,6 +36,7 @@ from matplotlib.pyplot import *
 from matplotlib.font_manager import FontProperties
 import numpy as np
 import collections
+import pandas as pd
 
 # Indices of the exported CSV
 WELL_COL = 2
@@ -306,3 +307,44 @@ def get_average_pore_timecourses(normalized_wells):
         average_pores[well_name] = [times, average_pore_values]
 
     return average_pores
+
+def to_dataframe(mean_dict, sd_dict):
+
+    # Assume that all conditions have the same number of timepoints
+    data_arr = None
+    bax_concs = []
+    row_tuples = None
+
+    for conc_index, conc_string in enumerate(mean_dict.keys()):
+        # Add this Bax concentration to the column index
+        float_conc = float(conc_string.split(' ')[1])
+        bax_concs.append(float_conc)
+
+        # Get the values from the dicts
+        time = mean_dict[conc_string][TIME]
+        mean = mean_dict[conc_string][VALUE]
+        sd = sd_dict[conc_string][VALUE]
+
+        if data_arr is None:
+            # Initialize the size of the flattened data array
+            data_arr = np.zeros([len(time) * 3, len(mean_dict.keys())])
+        if row_tuples is None:
+            # Initialize row_tuples for timepoint index
+            row_tuples = []
+            for i in range(len(time)):
+                for row_tuple in zip([i]*3, ['TIME', 'MEAN', 'SD']):
+                    row_tuples.append(row_tuple)
+        # Fill in the data array
+        data_arr[0::3, conc_index] = time
+        data_arr[1::3, conc_index] = mean
+        data_arr[2::3, conc_index] = sd
+
+    bax_concs = np.array(bax_concs)
+
+    # Build indices and dataframe
+    row_index = pd.MultiIndex.from_tuples(row_tuples,
+                                          names=('Timepoint', 'Datatype'))
+    col_index = pd.Index(bax_concs, name='Bax')
+    df = pd.DataFrame(data_arr, index=row_index, columns=col_index)
+
+    return df
