@@ -2,10 +2,6 @@
 Functions for fitting the mechanistic NBD insertion models to the NBD-Bax mutant
 fluorescence data using MCMC.
 
-.. todo:: Likelihood should be scaled by number of timepoints, otherwise it
-
-overwhelms the prior for "no reason".
-
 .. todo:: Ideally, would have a way of pre-equilibrating the system for the
 
 just-Bax condition, and then perturb it with the addition of tBid.
