@@ -191,6 +191,9 @@ class Builder(object):
         self.monomer('Vesicles', ['bax'])
         self.monomer('Pores', [])
 
+    def get_module(self):
+        return self.__module__.split('.')[-1]
+
     # -- METHODS FOR FITTING/CALIBRATION -----------------------------------
     def declare_nbd_scaling_parameters(self, nbd_sites):
         """

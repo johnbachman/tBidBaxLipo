@@ -7,7 +7,10 @@ import pickle
 
 if __name__ == '__main__':
     # Set the type of model to be built here
-    from tbidbaxlipo.models.one_cpt import Builder
+    from tbidbaxlipo.models.lipo_sites import Builder
+
+    # Allowable compartmentalization type names:
+    cpt_types = ['one_cpt', 'lipo_sites']
 
     # Prepare the data
     # ================
@@ -35,14 +38,23 @@ if __name__ == '__main__':
     # Before we begin, we make sure we have all the keyword arguments that
     # we are going to need.
     if 'random_seed' not in kwargs or \
+       'cpt_type' not in kwargs or \
        'nsteps' not in kwargs or \
        'model' not in kwargs:
         raise Exception('One or more needed arguments was not specified! ' \
-                'Arguments must include random_seed, model, ' \
+                'Arguments must include random_seed, model, cpt_type, ' \
                 'and nsteps.')
 
-    # Instantiate the Builder:
-    builder = Builder()
+    # First we get the compartmentalization type:
+    if kwargs['cpt_type'] not in cpt_types:
+        raise Exception('Allowable values for cpt_type are: one_cpt, '
+                        'lipo_sites')
+
+    # Get the appropriate builder
+    if cpt_type == 'lipo_sites':
+        builder = lipo_sites.Builder()
+    elif cpt_type == 'one_cpt':
+        builder = one_cpt.Builder()
 
     # Now we get the model, which is specified as a string from the
     # set seen below.

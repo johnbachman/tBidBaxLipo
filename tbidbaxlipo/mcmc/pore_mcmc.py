@@ -102,7 +102,8 @@ class PoreMCMC(tbidbaxlipo.mcmc.MCMC):
         return timecourses
 
     def get_basename(self):
-        return '%s_%s_%d_s%d' % (self.dataset_name,
+        return '%s_%s_%s_%d_s%d' % (self.dataset_name,
+                                 self.builder.get_module(),
                                  self.options.model.name,
                                  self.options.nsteps,
                                  self.options.seed)
