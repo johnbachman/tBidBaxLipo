@@ -54,16 +54,22 @@ class MCMC(bayessb.MCMC):
         ax = fig.gca()
         # Add the data to the plot
         self.plot_data(ax)
+
         # Add the simulations to the plot
         for obs_name, timecourse in timecourses.iteritems():
-            ax.plot(self.options.tspan, timecourse, label=obs_name)
+            ax.plot(timecourse[0], timecourse[1], label=obs_name)
+
         # Label the plot
         ax.set_xlabel('Time')
         ax.set_ylabel('Concentration')
         fontP = FontProperties() 
         fontP.set_size('small')
-        ax.legend(loc='upper center', prop=fontP, ncol=5,
-                    bbox_to_anchor=(0.5, 1.1), fancybox=True, shadow=True)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+        ax.legend(loc='upper left', prop=fontP, ncol=1, bbox_to_anchor=(1, 1),
+             fancybox=True, shadow=True)
+        #ax.legend(loc='upper center', prop=fontP, ncol=5,
+        #            bbox_to_anchor=(0.5, 1.1), fancybox=True, shadow=True)
         canvas = FigureCanvasAgg(fig)
         fig.set_canvas(canvas)
         return fig
@@ -73,10 +79,9 @@ class MCMC(bayessb.MCMC):
         """The function to call at every iteration. Currently just prints
         out a few progress indicators.
         """
-        window = mcmc.options.accept_window
-
+        window = 200
         local_acc = np.sum(mcmc.accepts[(mcmc.iter - window):mcmc.iter]) / \
-                              float(window)
+                    float(window)
 
         if mcmc.iter % 20 == 0:
             print 'iter=%-5d  sigma=%-.3f  T=%-.3f  loc_acc=%-.3f  ' \

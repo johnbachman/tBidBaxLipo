@@ -194,10 +194,10 @@ class NBD_MCMC(tbidbaxlipo.mcmc.MCMC):
         params = self.cur_params(position)
         timecourses = {}
         for obs in self.nbd_observables:
-            timecourses[obs] = ((yout[obs] /
+            y_mod = ((yout[obs] /
                            self.options.model.parameters['Bax_0'].value)
                           * params[3])
-
+            timecourses[obs] = [self.options.tspan, y_mod]
         return timecourses
 
     # A function to generate the likelihood function

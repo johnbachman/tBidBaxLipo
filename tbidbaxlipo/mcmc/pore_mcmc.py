@@ -13,6 +13,16 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import collections
 
+model_names = ['bax_heat',
+               'bax_heat_reversible',
+               'bax_heat_dimer',
+               'bax_heat_dimer_reversible',
+               'bax_heat_auto',
+               'bax_heat_auto_reversible',
+               'bax_heat_auto_dimer',
+               'bax_heat_auto_dimer_reversible',
+              ]
+
 class PoreMCMC(tbidbaxlipo.mcmc.MCMC):
     """Fit mechanistic tBid/Bax models to dye release titration data.
 
@@ -26,39 +36,46 @@ class PoreMCMC(tbidbaxlipo.mcmc.MCMC):
         pandas data structure containing the timecourses for each Bax condition.
     builder : tbidbaxlipo.models.core.Builder
     """
-    def __init__(self, options, data, builder):
+    def __init__(self, options, data, dataset_name, builder):
         # Call the superclass constructor
         tbidbaxlipo.mcmc.MCMC.__init__(self, options, builder)
 
         # Store the data
         self.data = data
+        self.dataset_name = dataset_name
 
         # Set the MCMC functions
-        self.options.likelihood_fn = self.likelihood
+        self.options.likelihood_fn = self.get_likelihood_function()
         self.options.prior_fn = self.builder.prior
         self.options.step_fn = self.step
 
     # Implementations of necessary functions
-    def likelihood(self, position):
-        for bax_conc in self.data_columns:
-            # Get the data for this concentration
-            tc = self.data[bax_conc]
-            y_data  = np.array(tc[:,'MEAN'])
-            time = np.array(tc[:,'TIME'])
-            self.solver.tspan = time # set the time span
+    def get_likelihood_function(self):
 
-            # Get the simulated data for this concentration
-            self.options.model.parameters['Bax_0'].value = bax_conc
-            x = self.simulate(position=position, observables=True)
-            avg_pores = x['pores']/ \
-                        self.options.model.parameters['Vesicles_0'].value
-            y_mod = 1 - np.exp(-avg_pores)
+        def likelihood(mcmc, position):
+            err = 0
+            for bax_conc in mcmc.data.columns:
+                # Get the data for this concentration
+                tc = mcmc.data[bax_conc]
+                y_data  = np.array(tc[:,'MEAN'])
+                time = np.array(tc[:,'TIME'])
+                mcmc.solver.tspan = time # set the time span
 
-            # Calculate the error, accounting for the SD at this concentration
-            err += np.sum((y_data - y_mod)**2) / \
-                          (2 * (np.array(tc[:,'SD']) ** 2))
+                # Get the simulated data for this concentration
+                mcmc.options.model.parameters['Bax_0'].value = bax_conc
+                x = mcmc.simulate(position=position, observables=True)
+                avg_pores = x['pores']/ \
+                            mcmc.options.model.parameters['Vesicles_0'].value
+                y_mod = 1 - np.exp(-avg_pores)
 
-        return err
+                # Calculate the error, accounting for the SD at this
+                # concentration.
+                # Skip the first timepoint--the SD is 0 (due to normalization)
+                # and hence gives nan when calculating the error.
+                err += np.sum(((y_data[1:] - y_mod[1:])**2) / \
+                        (2 * (np.array(tc[:,'SD'][1:]) ** 2)))
+            return err
+        return likelihood
 
     def plot_data(self, axis):
         # Plot the titration of Bax timecourses
@@ -83,36 +100,6 @@ class PoreMCMC(tbidbaxlipo.mcmc.MCMC):
             y_mod = 1 - np.exp(-avg_pores)
             timecourses['Bax %d nM' % bax_conc] = [time, y_mod]
         return timecourses
-
-    def fit_plotting_function(self, position):
-        """Gets the observable timecourse and plots it against the data."""
-        # Run the simulation at the given position
-        timecourses = self.get_observable_timecourses(position)
-        # Make the plot
-        fig = Figure()
-        ax = fig.gca()
-        # Add the data to the plot
-        self.plot_data(ax)
-
-        # Add the simulations to the plot
-        for obs_name, timecourse in timecourses.iteritems():
-            ax.plot(timecourse[0], timecourse[1], label=obs_name)
-
-        # Label the plot
-        ax.set_xlabel('Time')
-        ax.set_ylabel('Concentration')
-        fontP = FontProperties() 
-        fontP.set_size('small')
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-        ax.legend(loc='upper left', prop=fontP, ncol=1, bbox_to_anchor=(1, 1),
-             fancybox=True, shadow=True)
-        #ax.legend(loc='upper center', prop=fontP, ncol=5,
-        #            bbox_to_anchor=(0.5, 1.1), fancybox=True, shadow=True)
-        canvas = FigureCanvasAgg(fig)
-        fig.set_canvas(canvas)
-        return fig
-
 
     def get_basename(self):
         return '%s_%s_%d_s%d' % (self.dataset_name,
@@ -140,7 +127,7 @@ def get_PoreMCMC_instance():
     opts.norm_step_size = 0.1
     opts.seed = 1
 
-    pm = PoreMCMC(opts, data, b)
+    pm = PoreMCMC(opts, data, dataset_name, b)
     return pm
 
 def test_PoreMCMC_init():

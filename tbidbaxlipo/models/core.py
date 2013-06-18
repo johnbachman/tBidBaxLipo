@@ -708,7 +708,7 @@ class Builder(object):
         self.basal_Bax_activation()
         self.Bax_dimerizes(bax_loc_state='i')
         self.pores_from_Bax_dimers(bax_loc_state='i', reversible=True)
-        self.model.name = 'bax_heat_reversible'
+        self.model.name = 'bax_heat_dimer_reversible'
 
     def build_model_bax_heat_auto(self):
         self.translocate_Bax()
