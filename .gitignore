@@ -4,8 +4,6 @@ doc/_build
 doc/_static
 doc/sphinxreport.log
 
-mpi_submit.sh
-
 simdata
 *.log
 *.tsv
