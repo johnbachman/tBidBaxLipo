@@ -1,11 +1,12 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from tbidbaxlipo.models.one_cpt import Builder
 from pysb.integrate import odesolve
 from tbidbaxlipo.util import color_iter
+from tbidbaxlipo.models import lipo_sites, one_cpt
+from tbidbaxlipo.util import fitting
 
 def plot_bax_titration(model):
-
+    plt.ion()
     bax_concs = np.logspace(-1, 2, 40)
     t = np.linspace(0, 3000, 1000)
     initial_rates = []
@@ -41,8 +42,80 @@ def plot_bax_titration(model):
     plt.title("Log-Log plot of initial rate vs. Bax conc")
     plt.show()
 
+def plot_bax_titration_two_exp(model):
+    plt.ion()
+    bax_concs = np.logspace(-1, 3, 40)
+    t = np.linspace(0, 6000, 1000)
+    initial_rates = []
+
+    fmax_list = []
+    k1_list = []
+    k2_list = []
+
+    plt.figure()
+    for bax_conc in bax_concs:
+        model.parameters['Bax_0'].value = bax_conc
+        x = odesolve(model, t)
+        avg_pores = x['pores']/model.parameters['Vesicles_0'].value
+        efflux = 1 - np.exp(-avg_pores)
+
+        plt.plot(t, efflux, 'r')
+
+        fmax = fitting.Parameter(0.9)
+        k1 = fitting.Parameter(0.01)
+        k2 = fitting.Parameter(0.1)
+
+        def two_part_exp(t):
+            return (fmax() * (1 - np.exp(-k1() * (1 - np.exp(-k2()*t)) * t)))
+
+        fitting.fit(two_part_exp, [fmax, k1, k2], efflux, t)
+        plt.plot(t, two_part_exp(t), 'b')
+
+        fmax_list.append(fmax())
+        k1_list.append(k1())
+        k2_list.append(k2())
+
+    fmax_list = np.array(fmax_list)
+    k1_list = np.array(k1_list)
+    k2_list = np.array(k2_list)
+
+    plt.title('Avg. pores with Bax from 0.1 to 100')
+    plt.xlabel('Time')
+    plt.ylabel('Avg. pores per liposome')
+    plt.show()
+
+    # Run a regression against the points and calculate the initial_rate
+    #log_concs = np.log(bax_concs)
+    #log_initial_rates = np.log(initial_rates)
+    #(slope, intercept) = np.polyfit(log_concs, log_initial_rates, 1)
+    #fitted_initial_rates = (slope * log_concs) + intercept
+
+    # k1
+    plt.figure()
+    plt.plot(bax_concs, k1_list, 'ro')
+    plt.xlabel('[Bax] (nM)')
+    plt.ylabel('$k_1$')
+    plt.title("$k_1$ vs. Bax conc")
+    plt.show()
+
+    # k2
+    plt.figure()
+    plt.plot(bax_concs, k2_list, 'ro')
+    plt.xlabel('[Bax] (nM)')
+    plt.ylabel('$k_2$')
+    plt.title("$k_2$ vs. Bax conc")
+    plt.show()
+
+    # Fmax 
+    plt.figure()
+    plt.plot(bax_concs, fmax_list, 'ro')
+    plt.xlabel('[Bax] (nM)')
+    plt.ylabel('$F_{max}$')
+    plt.title("$F_{max}$ vs. Bax conc")
+    plt.show()
+
 def plot_liposome_titration():
-    b = Builder()
+    b = one_cpt.Builder()
     b.translocate_Bax()
     b.model.parameters['Bax_0'].value = 10000
     t = np.linspace(0, 3000, 1000)
@@ -72,6 +145,35 @@ def plot_liposome_titration():
     plt.title('Bax/Liposome binding curve')
     plt.show()
 
+def plot_fraction_bax_bound(model, figure_id=None):
+    bax_concs = np.logspace(0, 4, 40)
+    t = np.linspace(0, 3000, 1000)
+
+    #plt.figure()
+    ss_mBax_values = []
+    for bax_conc in bax_concs:
+        model.parameters['Bax_0'].value = bax_conc
+        x = odesolve(model, t)
+        mBax_frac = x['mBax'] / model.parameters['Bax_0'].value
+        ss_mBax_value = mBax_frac[-1]
+        ss_mBax_values.append(ss_mBax_value)
+        #plt.plot(t, mBax_frac)
+    #plt.show()
+
+    ss_mBax_values = np.array(ss_mBax_values)
+
+    if figure_id is not None:
+        plt.figure(figure_id)
+    else:
+        plt.figure()
+
+    plt.semilogx(bax_concs, ss_mBax_values, linewidth=2)
+    plt.xlabel('Bax concentration (nM)')
+    plt.ylabel('Pct. Bax at liposomes')
+    plt.ylim([0, 1])
+    plt.title('Frac Bax bound vs. Bax conc')
+    plt.show()
+
 def plot_pores_and_efflux(model):
     t = np.linspace(0, 5000, 500)
     x = odesolve(model, t)
@@ -93,7 +195,7 @@ def plot_effect_of_pore_reverse_rate():
     for pore_reverse_rate in pore_reverse_rates:
         params_dict = {'Bax_0': 50., 'Vesicles_0': 50.,
                         'pore_reverse_rate_k': pore_reverse_rate}
-        b = Builder(params_dict=params_dict)
+        b = one_cpt.Builder(params_dict=params_dict)
         b.build_model_bax_schwarz_reversible()
         x = odesolve(b.model, t)
         avg_pores = x['pores']/b.model.parameters['Vesicles_0'].value
@@ -112,18 +214,21 @@ def plot_effect_of_pore_reverse_rate():
 if __name__ == '__main__':
     #plot_bax_titration()
     #plot_liposome_titration()
-    params_dict = {'Bax_0':100., 'Vesicles_0': 5.,
+    params_dict = {'Bax_0':100., 'Vesicles_0': 10.,
                    #'Bax_transloc_kf': 0.01,
                    #'Bax_transloc_kf': 0.1,
                    'Bax_dimerization_kf': 1e-2,
                    'Bax_dimerization_kr': 0,
-                   'Bax_tetramerization_kf': 1e-2,
-                   'Bax_tetramerization_kr': 0,
-                   'pore_formation_rate_k': 1e5,
-                   'pore_reverse_rate_k': 0
+                   #'Bax_tetramerization_kf': 1e-2,
+                   #'Bax_tetramerization_kr': 0,
+                   #'pore_formation_rate_k': 1e5,
+                   #'pore_reverse_rate_k': 0
                   }
 
-    b = Builder(params_dict=params_dict)
-    b.build_model_bax_schwarz_tetramer_reversible()
-    plot_pores_and_efflux(b.model)
-    plot_bax_titration(b.model)
+    #b = Builder()
+    b = one_cpt.Builder(params_dict=params_dict)
+    b.build_model_bax_heat()
+    #b.build_model_bax_schwarz_tetramer_reversible()
+    #plot_pores_and_efflux(b.model)
+    #plot_bax_titration(b.model)
+    plot_bax_titration_two_exp(b.model)
