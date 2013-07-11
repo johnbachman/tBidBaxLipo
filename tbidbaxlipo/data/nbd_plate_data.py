@@ -1,4 +1,6 @@
 from numpy import mean, nan, array
+import pandas as pd
+import numpy as np
 
 time = array([   0,   60,  120,  180,  240,  300,  360,  420,  480,  540,  600,
         660,  720,  780,  840,  900,  960, 1020, 1080, 1140, 1200, 1260,
@@ -2377,3 +2379,38 @@ nbdall = [nbd5c, nbd15c, nbd36c, nbd40c, nbd47c, nbd54c,
 nbd_names = ["c5", "c15", "c36", "c40", "c47", "c54",
              "c62", "c68", "c79", "c120", "c122", "c126",
              "c175", "c179", "c188"]
+
+# Cribbed this approach to dataframe construction from util/pandas_test.py
+num_timepoints = len(time)
+
+# Build the row index (TIME, VALUE)
+row_tuples = []
+for j in range(num_timepoints):
+    row_tuples.append((j, 'TIME'))
+    row_tuples.append((j, 'VALUE'))
+
+# Build the column index
+col_tuples = []
+for nbd_name in nbd_names:
+    for replicate in range(4):
+        col_tuples.append((nbd_name, replicate))
+
+# Build the dataset
+num_columns = len(col_tuples)
+data_matrix = np.zeros([2*num_timepoints, num_columns])
+
+col_index = 0
+for nbd in nbdall:
+    for replicate in nbd:
+        data_matrix[0::2, col_index] = time
+        data_matrix[1::2, col_index] = replicate
+        col_index += 1
+
+# Build indices and dataframe
+row_index = pd.MultiIndex.from_tuples(row_tuples,
+                                      names=('Timepoint', 'Value'))
+col_index = pd.MultiIndex.from_tuples(col_tuples,
+                                      names=('NBD', 'Replicate'))
+data = pd.DataFrame(data_matrix, index=row_index, columns=col_index)
+
+
