@@ -17,6 +17,7 @@ Contents:
 
    intro
    nbd_data
+   nbd_plate_data
    grid_data
    uni_dye_release_models
    modules/index
