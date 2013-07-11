@@ -1,4 +1,3 @@
-
 from pysb import *
 from pysb.integrate import Solver, odesolve
 import numpy as np
@@ -42,9 +41,37 @@ class Builder(core.Builder):
         plt.legend(loc='upper right')
         plt.show()
 
-        #plt.figure()
-        #obs = x['Bax_c0']*1 + x['Bax_c1']*0 + x['Bax_c2']*1 + x['Bax_c3']*0
-        #plt.plot(t, obs)
-        #plt.show()
+        plt.figure()
+        plt.plot(t, self.obs_func(x))
+        plt.show()
+
+    def build_2_conf_model(self):
+        self.build_model_multiconf(2)
+        def obs_func(sim_data):
+            return sim_data['Bax_c1']*self.model.parameters['c1_scaling'].value
+        self.obs_func = obs_func
+        self.model.name = '2_conf_model'
+
+    def build_3_conf_model(self):
+        self.build_model_multiconf(3)
+        def obs_func(sim_data):
+            return ((sim_data['Bax_c1'] *
+                     self.model.parameters['c1_scaling'].value) +
+                    (sim_data['Bax_c2'] *
+                     self.model.parameters['c2_scaling'].value))
+        self.obs_func = obs_func
+        self.model.name = '3_conf_model'
+
+    def build_4_conf_model(self):
+        self.build_model_multiconf(4)
+        def obs_func(sim_data):
+            return ((sim_data['Bax_c1'] *
+                     self.model.parameters['c1_scaling'].value) +
+                    (sim_data['Bax_c2'] *
+                     self.model.parameters['c2_scaling'].value) +
+                    (sim_data['Bax_c3'] *
+                     self.model.parameters['c3_scaling'].value))
+        self.obs_func = obs_func
+        self.model.name = '4_conf_model'
 
 
