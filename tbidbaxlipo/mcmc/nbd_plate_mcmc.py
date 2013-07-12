@@ -1,9 +1,12 @@
 from tbidbaxlipo.models.nbd_multiconf import Builder
-from tbidbaxlipo.data.nbd_plate_data import data
+from tbidbaxlipo.data.nbd_plate_data import data, nbd_names
 import bayessb
 import numpy as np
 import tbidbaxlipo.mcmc
 from matplotlib import pyplot as plt
+import pickle
+import sys
+import math
 
 class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
     """ Document me"""
@@ -17,7 +20,7 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
 
         # Set the MCMC functions
         self.options.likelihood_fn = self.get_likelihood_function()
-        self.options.prior_fn = self.builder.prior
+        #self.options.prior_fn = self.builder.prior
         self.options.step_fn = self.step
 
     def get_likelihood_function(self):
@@ -35,12 +38,17 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
             cur_position = mcmc.cur_params(position=position)
             for i, obs in enumerate(observables):
                 if i == 0:
-                    continue
-                scaling_parameter = cur_position[i*2]
-                aggregate_observable += x[obs.name] * scaling_parameter
-            err = ((self.data - aggregate_observable)**2 /
-                   (2 * ((0.1 * self.data)**2)))
+                    aggregate_observable += x[obs.name] * self.data[0]
+                else:
+                    scaling_parameter = cur_position[i*2]
+                    aggregate_observable += x[obs.name] * scaling_parameter
+            #import ipdb; ipdb.set_trace()
+            # Skip the first timepoint--the SD is 0 (due to normalization)
+            # and hence gives nan when calculating the error.
+            err = np.sum((self.data[1:] - aggregate_observable[1:])**2 /
+                         (2 * ((0.05 * self.data[1:])**2)))
             return err
+
         return likelihood
 
     def plot_data(self, axis):
@@ -54,9 +62,10 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
         cur_position = self.cur_params(position=position)
         for i, obs in enumerate(observables):
             if i == 0:
-                continue
-            scaling_parameter = cur_position[i*2]
-            aggregate_observable += x[obs.name] * scaling_parameter
+                aggregate_observable += x[obs.name] * self.data[0]
+            else:
+                scaling_parameter = cur_position[i*2]
+                aggregate_observable += x[obs.name] * scaling_parameter
         timecourses['Predicted NBD Signal'] = [self.options.tspan,
                                                aggregate_observable]
         return timecourses
@@ -125,3 +134,156 @@ def test_get_basename():
     npm = get_NBDPlateMCMC_instance()
     npm.get_basename()
     assert True
+
+
+from tbidbaxlipo.mcmc.pore_mcmc import PoreMCMC
+
+if __name__ == '__main__':
+    # Set the type of model to be built here
+    from tbidbaxlipo.models.nbd_multiconf import Builder
+
+    # Parse the args
+    # ==============
+    # Keyword args are set at the command line as e.g., key=val
+    # and subsequently split at the equals sign
+    kwargs = dict([arg.split('=') for arg in sys.argv[1:]])
+
+    # We set these all to None so later on we can make sure they were
+    # properly initialized.
+    random_seed = None
+    num_confs = None
+    nsteps = None
+    nbd_site = None
+    replicate = None
+
+    print "Keyword arguments: "
+    print kwargs
+
+    # Before we begin, we make sure we have all the keyword arguments that
+    # we are going to need.
+    if 'random_seed' not in kwargs or \
+       'nsteps' not in kwargs or \
+       'num_confs' not in kwargs or \
+       'nbd_site' not in kwargs or \
+       'replicate' not in kwargs:
+        raise Exception('One or more needed arguments was not specified! ' \
+                'Arguments must include random_seed, nsteps, num_confs, ' \
+                'nbd_site, and replicate.')
+
+    # Build the model with the appropriate number of conformations
+    num_confs = int(kwargs['num_confs'])
+    b = Builder()
+    b.build_model_multiconf(num_confs)
+
+    # Set the random seed:
+    random_seed = int(kwargs['random_seed'])
+
+    # Set the number of steps:
+    nsteps = int(kwargs['nsteps'])
+
+    # Get the NBD mutant for the data we want to fit
+    nbd_site = kwargs['nbd_site']
+    if nbd_site not in nbd_names:
+        raise Exception('%s not an allowable nbd_site.' % nbd_site)
+
+    # Get the replicate to fit
+    replicate = int(kwargs['replicate'])
+
+    # A sanity check to make sure everything worked:
+    if None in [random_seed, nsteps, num_confs, nbd_site, replicate]:
+        raise Exception('Something went wrong! One of the arguments to ' \
+                        'do_fit was not initialized properly.')
+
+    # Prepare the data
+    # ================
+    # Choose which data/replicate to fit
+    tc = data[(nbd_site, replicate)]
+    time = tc[:, 'TIME'].values
+    values = tc[:, 'VALUE'].values
+    # Normalize values by subtracting initial value
+    #values = values - values[0]
+
+    # Set initial estimates for scaling parameters
+    scaling_parameters = [p for p in b.model.parameters
+                          if p.name.endswith('_scaling')]
+    for p in scaling_parameters:
+        p.value = np.max(values)
+
+    # Build the MCMCOpts
+    # ==================
+    # We set the random_seed here because it affects our choice of initial
+    # values
+    np.random.seed(random_seed)
+
+    opts = bayessb.MCMCOpts()
+    opts.model = b.model
+    opts.tspan = time
+    opts.estimate_params = [p for p in b.model.parameters
+                            if not p.name.endswith('_0')]
+    opts.initial_values = [p.value for p in opts.estimate_params]
+    #opts.initial_values = b.random_initial_values()
+    opts.nsteps = nsteps
+    opts.norm_step_size = 0.01
+    opts.sigma_step = 0
+    #opts.sigma_max = 50
+    #opts.sigma_min = 0.01
+    #opts.accept_rate_target = 0.23
+    #opts.accept_window = 100
+    #opts.sigma_adj_interval = 200
+    opts.anneal_length = 0
+    opts.use_hessian = True # CHECK
+    opts.hessian_scale = 1
+    opts.hessian_period = opts.nsteps / 20 #10
+    opts.seed = random_seed
+    opts.T_init = 1
+    dataset_name = '%srep%d' % (nbd_site, replicate)
+
+    mcmc = NBDPlateMCMC(opts, values, dataset_name, b, num_confs)
+
+    mcmc.do_fit()
+
+    fig = mcmc.fit_plotting_function(position=mcmc.initial_position)
+    fig.savefig('initial.png')
+
+    # Plot best fit position
+    best_fit_position = mcmc.positions[np.nanargmin(mcmc.posteriors)]
+    fig = mcmc.fit_plotting_function(position=best_fit_position)
+    fig.savefig('final.png')
+
+    # Plot residuals
+    timecourse_dict = mcmc.get_observable_timecourses(best_fit_position)
+    timecourse = timecourse_dict['Predicted NBD Signal']
+    best_fit_time = timecourse[0]
+    best_fit_values = timecourse[1]
+    residuals = mcmc.data - best_fit_values
+
+    plt.ion()
+    plt.figure()
+    plt.plot(best_fit_time, residuals)
+    plt.title("Residuals")
+    plt.xlabel("Time (sec)")
+    plt.ylabel("Residual")
+    plt.show()
+
+    plt.figure()
+    plt.plot
+    # Autocorrelation
+    acf = np.correlate(residuals, residuals, mode='full')
+    plt.plot(acf)
+    plt.title("Autocorrelation")
+    plt.show()
+
+    # Calculate Durbin-Watson
+    e = residuals
+    d = float(np.sum([math.pow(e[i+1] - e[i], 2) for i in range(len(e)-1)])) / \
+        float(np.sum([math.pow(i, 2) for i in e]))
+    print "Durbin-Watson: %f\n" % d
+
+    # Pickle it
+    #output_file = open('%s.mcmc' % mcmc.get_basename(), 'w')
+    #pickle.dump(mcmc, output_file)
+    #output_file.close()
+
+    print "Done."
+
+

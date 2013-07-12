@@ -247,6 +247,12 @@ class Builder(object):
             raise Exception('Failed to set any NBD scaling parameters!')
 
     def prior(self, mcmc, position):
+        # FIXME FIXME FIXME
+        # This is terrible, doesn't generalize to cases when there are scaling
+        # parameters in positions other than the first one in the position array
+        # And also assumes that the scaling parameter will be around 1
+        # (Not the case for the NBD plate data)
+        # FIXME FIXME FIXME
         if (position[0] < -0.1 or position[0] > 0.7):
             return np.inf
         if any(position[1:] > 0) or any(position[1:] < -5):
