@@ -46,7 +46,7 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
             # Skip the first timepoint--the SD is 0 (due to normalization)
             # and hence gives nan when calculating the error.
             err = np.sum((self.data[1:] - aggregate_observable[1:])**2 /
-                         (2 * ((0.05 * self.data[1:])**2)))
+                         (2 * ((0.02 * self.data[1:])**2)))
             return err
 
         return likelihood
@@ -223,7 +223,7 @@ if __name__ == '__main__':
     opts.initial_values = [p.value for p in opts.estimate_params]
     #opts.initial_values = b.random_initial_values()
     opts.nsteps = nsteps
-    opts.norm_step_size = 0.01
+    opts.norm_step_size = 0.1
     opts.sigma_step = 0
     #opts.sigma_max = 50
     #opts.sigma_min = 0.01
@@ -238,10 +238,12 @@ if __name__ == '__main__':
     opts.T_init = 1
     dataset_name = '%srep%d' % (nbd_site, replicate)
 
+    from tbidbaxlipo.mcmc.nbd_plate_mcmc import NBDPlateMCMC
     mcmc = NBDPlateMCMC(opts, values, dataset_name, b, num_confs)
 
     mcmc.do_fit()
 
+    """
     fig = mcmc.fit_plotting_function(position=mcmc.initial_position)
     fig.savefig('initial.png')
 
@@ -278,11 +280,12 @@ if __name__ == '__main__':
     d = float(np.sum([math.pow(e[i+1] - e[i], 2) for i in range(len(e)-1)])) / \
         float(np.sum([math.pow(i, 2) for i in e]))
     print "Durbin-Watson: %f\n" % d
+    """
 
     # Pickle it
-    #output_file = open('%s.mcmc' % mcmc.get_basename(), 'w')
-    #pickle.dump(mcmc, output_file)
-    #output_file.close()
+    output_file = open('%s.mcmc' % mcmc.get_basename(), 'w')
+    pickle.dump(mcmc, output_file)
+    output_file.close()
 
     print "Done."
 
