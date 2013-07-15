@@ -70,6 +70,12 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
                                                aggregate_observable]
         return timecourses
 
+    def get_residuals(self, position):
+        """Return the residuals for the fit at the given position."""
+        timecourses = self.get_observable_timecourses(position)
+        (time, values) = timecourses['Predicted NBD Signal']
+        return [time, self.data - values]
+
     def get_basename(self):
         return '%s_%dconfs_%d_s%d' % (self.dataset_name,
                                self.num_confs,
@@ -242,45 +248,6 @@ if __name__ == '__main__':
     mcmc = NBDPlateMCMC(opts, values, dataset_name, b, num_confs)
 
     mcmc.do_fit()
-
-    """
-    fig = mcmc.fit_plotting_function(position=mcmc.initial_position)
-    fig.savefig('initial.png')
-
-    # Plot best fit position
-    best_fit_position = mcmc.positions[np.nanargmin(mcmc.posteriors)]
-    fig = mcmc.fit_plotting_function(position=best_fit_position)
-    fig.savefig('final.png')
-
-    # Plot residuals
-    timecourse_dict = mcmc.get_observable_timecourses(best_fit_position)
-    timecourse = timecourse_dict['Predicted NBD Signal']
-    best_fit_time = timecourse[0]
-    best_fit_values = timecourse[1]
-    residuals = mcmc.data - best_fit_values
-
-    plt.ion()
-    plt.figure()
-    plt.plot(best_fit_time, residuals)
-    plt.title("Residuals")
-    plt.xlabel("Time (sec)")
-    plt.ylabel("Residual")
-    plt.show()
-
-    plt.figure()
-    plt.plot
-    # Autocorrelation
-    acf = np.correlate(residuals, residuals, mode='full')
-    plt.plot(acf)
-    plt.title("Autocorrelation")
-    plt.show()
-
-    # Calculate Durbin-Watson
-    e = residuals
-    d = float(np.sum([math.pow(e[i+1] - e[i], 2) for i in range(len(e)-1)])) / \
-        float(np.sum([math.pow(i, 2) for i in e]))
-    print "Durbin-Watson: %f\n" % d
-    """
 
     # Pickle it
     output_file = open('%s.mcmc' % mcmc.get_basename(), 'w')
