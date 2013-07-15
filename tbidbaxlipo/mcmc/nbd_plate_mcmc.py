@@ -242,7 +242,7 @@ if __name__ == '__main__':
     opts.hessian_period = opts.nsteps / 20 #10
     opts.seed = random_seed
     opts.T_init = 1
-    dataset_name = '%srep%d' % (nbd_site, replicate)
+    dataset_name = '%s_rep%d' % (nbd_site, replicate)
 
     from tbidbaxlipo.mcmc.nbd_plate_mcmc import NBDPlateMCMC
     mcmc = NBDPlateMCMC(opts, values, dataset_name, b, num_confs)
