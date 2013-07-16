@@ -38,17 +38,18 @@ if __name__ == '__main__':
             for num_confs in num_confs_list:
                 for i in range(0, num_chains):
                     output_filename = '%s_rep%d_%dconfs_%d_s%d.out' % \
-                                      (nbd_site, replicate, num_confs, nsteps, i)
+                                     (nbd_site, replicate, num_confs, nsteps, i)
 
                     cmd_list = ['bsub', '-W', '12:00',
                                 '-q', queue,
                                 '-o', output_filename,
-                                'python', '-m', 'tbidbaxlipo.mcmc.nbd_plate_mcmc',
+                                'python', '-m',
+                                'tbidbaxlipo.mcmc.nbd_plate_mcmc',
                                 'random_seed=%d' % i,
                                 "num_confs=%d" % num_confs,
                                 "nbd_site=%s" % nbd_site,
                                 "replicate=%d" % replicate,
                                 "nsteps=%d" % nsteps]
                     print ' '.join(cmd_list)
-                    #subprocess.call(cmd_list)
+                    subprocess.call(cmd_list)
 
