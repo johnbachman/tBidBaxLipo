@@ -3,6 +3,7 @@ from pysb.integrate import Solver, odesolve
 import numpy as np
 from matplotlib import pyplot as plt
 from tbidbaxlipo.models import core
+from tbidbaxlipo.models.priors import Uniform
 
 class Builder(core.Builder):
 
@@ -18,13 +19,15 @@ class Builder(core.Builder):
         # Initialize monomers and observable
         Bax = self.monomer('Bax', ['conf'],
                            {'conf': ['c%d' % i for i in range(num_confs)]})
-        Bax_0 = self.parameter('Bax_0', 1)
+        Bax_0 = self.parameter('Bax_0', 1, estimate=False)
         self.initial(Bax(conf='c0'), Bax_0)
         self.observable('Bax_c0', Bax(conf='c0'))
 
         for i in range(num_confs-1):
-            rate = self.parameter('c%d_to_c%d_k' % (i, i+1), 1e-3)
-            scaling = self.parameter('c%d_scaling' % (i+1), 1)
+            rate = self.parameter('c%d_to_c%d_k' % (i, i+1), 1e-3,
+                                  prior=Uniform(-6, -1))
+            scaling = self.parameter('c%d_scaling' % (i+1), 1,
+                                     prior=Uniform(1, 5))
 
             self.rule('c%d_to_c%d' % (i, i+1),
                       Bax(conf='c%d' % i) >> Bax(conf='c%d' % (i+1)), rate)
@@ -45,6 +48,9 @@ class Builder(core.Builder):
         plt.plot(t, self.obs_func(x))
         plt.show()
 
+    # FIXME FIXME FIXME
+    # The following functions are useless except for testing since they can't
+    # be used to calculate the likelihood or plot parameters during fitting
     def build_2_conf_model(self):
         self.build_model_multiconf(2)
         def obs_func(sim_data):
@@ -73,5 +79,4 @@ class Builder(core.Builder):
                      self.model.parameters['c3_scaling'].value))
         self.obs_func = obs_func
         self.model.name = '4_conf_model'
-
-
+    # end FIXME FIXME FIXME

@@ -133,6 +133,7 @@ __author__ = 'johnbachman'
 from pysb import *
 from pysb.macros import *
 import numpy as np
+from tbidbaxlipo.models.priors import Normal
 
 class Builder(object):
 
@@ -170,9 +171,8 @@ class Builder(object):
 
         self.model = Model('tBid_Bax', _export=False)
         self.estimate_params = []
-        self.parameter_means = np.array([])
-        self.parameter_variances = np.array([])
         self.params_dict = params_dict
+        self.priors = []
 
     def declare_monomers(self):
         """Declares signatures for tBid and Bax."""
@@ -247,50 +247,42 @@ class Builder(object):
             raise Exception('Failed to set any NBD scaling parameters!')
 
     def prior(self, mcmc, position):
-        # FIXME FIXME FIXME
-        # This is terrible, doesn't generalize to cases when there are scaling
-        # parameters in positions other than the first one in the position array
-        # And also assumes that the scaling parameter will be around 1
-        # (Not the case for the NBD plate data)
-        # FIXME FIXME FIXME
-        if (position[0] < -0.1 or position[0] > 0.7):
-            return np.inf
-        if any(position[1:] > 0) or any(position[1:] < -5):
-            return np.inf
-        else:
-            return np.sum((position - self.parameter_means)**2 / \
-                          (2 * self.parameter_variances))
+        """Calculate the prior probability of the set of parameters.
+
+        The builder maintains a list of prior objects that corresponds in its
+        order to the list of parameters in the parameter list (it includes only
+        the parameters to be estimated).  To calculate the prior, the method
+        iterates over the objects in self.priors and for each one gets the
+        negative log probability of that position in parameter space. The
+        negative log probabilities are then summed (equivalent to the product
+        of the individual priors) and then returned by the function.
+        """
+        prior_prob = 0
+        for i, prior in enumerate(self.priors):
+            prior_prob += prior.pdf(position[i])
+        return prior_prob
 
     def random_initial_values(self):
         """Return a set of random initial values for parameter estimation.
 
-        Uses the lognormal prior distributions specified for the parameters to
-        be estimated. Currently it uses the specified variance, though it may
-        be worth considering using a larger variance to ensure that the
-        starting positions are "overdispersed."
+        Uses the prior distributions specified for the parameters to be
+        estimated.
 
         Note that this must be called after the model has been built using one
-        of the model building methods--otherwise the parameters won't have been
-        created!
+        of the model building methods--otherwise the parameters (and the set of
+        priors) won't have been created!
 
         Returns
         -------
         An array of initial parameter values in the same order as the
-        parameters in self.estimate_params, and drawn from lognormal (base 10)
-        distributions with the means given by self.parameter_means and the
-        variances given by self.parameter_variances.
+        parameters in self.estimate_params, and drawn from the prior
+        distributions specified in self.priors. Note that the initial values
+        are given in linear, rather than log, space.
         """
-        while (True):
-            test_vals = (self.parameter_means +
-                            (np.random.randn(len(self.estimate_params)) * \
-                             self.parameter_variances))
-
-            if any(test_vals[1:] > 0) or any(test_vals[1:] < -5):
-                continue
-            elif test_vals[0] < -0.1 or test_vals[0] > 0.7:
-                continue
-            else:
-                return 10 ** test_vals
+        initial_values_log = np.empty(len(self.priors))
+        for i, prior in enumerate(self.priors):
+            initial_values_log[i] = prior.random()
+        return 10 ** initial_values_log
 
     # -- MECHANISTIC MOTIFS ------------------------------------------------
     def tBid_activates_Bax(self, bax_site='bh3'):
@@ -797,7 +789,7 @@ class Builder(object):
         return m
 
     def parameter(self, name, value, factor=1, estimate=True,
-                  mean=-3.0, variance=2.0):
+                  prior=Normal(-3, 2)):
         """Adds a parameter to the Builder's model instance.
 
         Examines the params_dict attribute of the Builder instance (which is
@@ -826,12 +818,9 @@ class Builder(object):
             Specifies whether the parameter should be included among the
             parameters to estimate, contained in the set
             ``Builder.estimate_params``. Defaults to True.
-        mean : float
-            The mean value of the log10 of the parameter's prior (lognormal)
-            distribution. Defaults to -3. Ignored if ``estimate`` is False.
-        variance : float
-            The variance (in log10 space) of the parameter's prior (lognormal)
-            distribution. Defaults to 2.0. Ignored if ``estimate`` is False.
+        prior : instance of prior class from tbidbaxlipo.models.priors
+            The prior object determining the prior probability of different
+            values for this parameter. Ignored if ``estimate`` is False.
         """
 
         if self.params_dict is None:
@@ -847,9 +836,7 @@ class Builder(object):
 
         if estimate:
             self.estimate_params.append(p)
-            self.parameter_means = np.append(self.parameter_means, mean)
-            self.parameter_variances = np.append(self.parameter_variances,
-                                                 variance)
+            self.priors.append(prior)
 
         return p
 

@@ -20,7 +20,7 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
 
         # Set the MCMC functions
         self.options.likelihood_fn = self.get_likelihood_function()
-        #self.options.prior_fn = self.builder.prior
+        self.options.prior_fn = self.builder.prior
         self.options.step_fn = self.step
 
     def get_likelihood_function(self):
@@ -42,11 +42,12 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
                 else:
                     scaling_parameter = cur_position[i*2]
                     aggregate_observable += x[obs.name] * scaling_parameter
-            #import ipdb; ipdb.set_trace()
             # Skip the first timepoint--the SD is 0 (due to normalization)
             # and hence gives nan when calculating the error.
-            err = np.sum((self.data[1:] - aggregate_observable[1:])**2 /
-                         (2 * ((0.02 * self.data[1:])**2)))
+            #err = np.sum((self.data[1:] - aggregate_observable[1:])**2 /
+            #             (2 * ((0.02 * self.data[1:])**2)))
+            err = np.sum((self.data - aggregate_observable)**2 /
+                         (2 * ((0.02 * self.data)**2)))
             return err
 
         return likelihood
@@ -224,10 +225,11 @@ if __name__ == '__main__':
     opts = bayessb.MCMCOpts()
     opts.model = b.model
     opts.tspan = time
-    opts.estimate_params = [p for p in b.model.parameters
-                            if not p.name.endswith('_0')]
-    opts.initial_values = [p.value for p in opts.estimate_params]
-    #opts.initial_values = b.random_initial_values()
+    opts.estimate_params = [p for p in b.estimate_params]
+    #opts.estimate_params = [p for p in b.model.parameters
+    #                        if not p.name.endswith('_0')]
+    #opts.initial_values = [p.value for p in b.estimate_params]
+    opts.initial_values = b.random_initial_values()
     opts.nsteps = nsteps
     opts.norm_step_size = 0.1
     opts.sigma_step = 0
