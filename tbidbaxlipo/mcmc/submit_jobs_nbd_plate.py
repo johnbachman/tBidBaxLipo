@@ -22,10 +22,15 @@ nsteps = 50000
 num_chains = 10
 """The number of chains to run for each model."""
 
-queue = 'short'
+queue = 'mini'
 """The LSF queue to submit the jobs to."""
 
-nbd_sites = ['c122']
+time_limit = '00:10'
+"""The estimate runtime of the job."""
+
+nbd_sites = ['c120', 'c126', 'c15', 'c175', 'c179', 'c188', 'c36', 'c40',
+             'c47', 'c5', 'c54', 'c62', 'c68', 'c79']
+            # 'c122'
 """The NBD sites to attempt to fit."""
 
 num_replicates = 4
@@ -40,7 +45,7 @@ if __name__ == '__main__':
                     output_filename = '%s_rep%d_%dconfs_%d_s%d.out' % \
                                      (nbd_site, replicate, num_confs, nsteps, i)
 
-                    cmd_list = ['bsub', '-W', '12:00',
+                    cmd_list = ['bsub', '-W', time_limit,
                                 '-q', queue,
                                 '-o', output_filename,
                                 'python', '-m',
