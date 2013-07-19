@@ -142,9 +142,6 @@ def test_get_basename():
     npm.get_basename()
     assert True
 
-
-from tbidbaxlipo.mcmc.pore_mcmc import PoreMCMC
-
 if __name__ == '__main__':
     # Set the type of model to be built here
     from tbidbaxlipo.models.nbd_multiconf import Builder
@@ -225,7 +222,7 @@ if __name__ == '__main__':
     opts = bayessb.MCMCOpts()
     opts.model = b.model
     opts.tspan = time
-    opts.estimate_params = [p for p in b.estimate_params]
+    opts.estimate_params = b.estimate_params
     #opts.estimate_params = [p for p in b.model.parameters
     #                        if not p.name.endswith('_0')]
     #opts.initial_values = [p.value for p in b.estimate_params]
