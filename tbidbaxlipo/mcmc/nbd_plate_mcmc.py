@@ -78,9 +78,10 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
         return [time, self.data - values]
 
     def get_basename(self):
-        return '%s_%dconfs_%d_s%d' % (self.dataset_name,
+        return '%s_%dconfs_%d_T%.2f_s%d' % (self.dataset_name,
                                self.num_confs,
                                self.options.nsteps,
+                               self.options.T_init,
                                self.options.seed)
 
 def get_NBDPlateMCMC_instance():
