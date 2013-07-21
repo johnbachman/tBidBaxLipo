@@ -10,8 +10,8 @@ Raw data
     from tbidbaxlipo.nbd_plate_analysis import plot_raw
     plot_raw(data)
 
-Notes on Unimolecular Multi-Conformer Fits
-------------------------------------------
+Notes on Unimolecular Multi-Conformer Fits, 7/16/13
+---------------------------------------------------
 
 An index of the fits, performed on 7/16/13, can be found 
 on the `Sorger lab web site
@@ -161,3 +161,53 @@ As indicated by the Bax solution structure, PDBID 1F16:
 * c79: a3
 * c120, c122, c126: a5
 * c175, c179, c188: a9
+
+Notes on Unimolecular Multi-Conformer Fits by PT, 7/19/13
+---------------------------------------------------------
+
+In this case I ran much longer fits (500000 steps) by parallel tempering to
+ensure convergence, with the goal of being able to compare the parameter values
+between them. For all residues only one replicate was fit; obviously I'll need
+to fit the replicates to know the within-mutant vs. between mutant variability
+in the fitted kinetic constants.
+
+c5
+
+    Minimal value of the intermediate state. The time constant for the
+    C0 to C1 transition at ML was 5.03e-4 (with log10 of -3.29).
+
+c15
+
+    Bimodal, with C0 to C1 at -3.2 (estimated from marginals plot by eye)
+    or -2.6 (by eye). Bigger peak at -3.2. For C1 to C2, big peak at ~-2.6,
+    narrower but also big peak at -3.2.
+
+c175
+
+    ML fits has C0-C1 at 6.42e-4 (-3.2) (C1 scaling 25177, seemingly an
+    unrealistically high value), C1-C2 at 1.97e-2 (C2 scaling 11064). Marginals
+    are bimodal, but the dominant mode of C0-C1 is around -3.2. I wonder if
+    it's possible that a different change in prior knowledge would suggest that
+    the initial transition is what's faster? Perhaps the initial bump in the
+    curve is due to the displacement of alpha 9 by the attacking BH3, for
+    example.
+
+c179
+
+    Biphasic curve. There is a slight bump in the first few points that makes
+    me wonder if there's a signature from the initial displacement. However, in
+    general C0-C1 rate has a definitive peak at around -3.5 (0.00037), and
+    C1-C2 has a high peak around -2.8. It is interesting that the initial rates
+    are in many cases the slower ones; consistent with notion that Bax
+    insertion is the rate limiting step? Also interesting is that the C1
+    scaling value is totally non-identifiable--there is a lot of leeway in the
+    precise value of the C1 fluorescence to get the initial downward transient
+    to be fit. ML values: C0-C1 0.00037, C1-C2 0.0017.
+
+c188
+
+    Bimodal fits; interestingly there appear to be two modes, one in which the
+    C1 scaling is less then the C2 scaling, one in which it is more than the C2
+    scaling. The more robust one (the one that appears at higher temperatures)
+    is the one where C0-C1 is around -3.1, C1 scaling is 3.6 (lower than
+    final value of ~3.8), C1-C2 similar (3.1).
