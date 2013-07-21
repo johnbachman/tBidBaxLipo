@@ -12,9 +12,8 @@ from mpi4py import MPI
 
 from bayessb import MCMCOpts
 from bayessb.mpi.pt_mpi import PT_MPI_Master, PT_MPI_Worker
-#import tbidbaxlipo.nbd_analysis as nbd
-from tbidbaxlipo.mcmc.nbd_mcmc import model_names, nbd_site_names, NBD_MCMC
 from tbidbaxlipo.mcmc.nbd_plate_mcmc import NBDPlateMCMC
+from tbidbaxlipo.data.nbd_plate_data import data, nbd_names
 from pysb.integrate import Solver
 
 if __name__ == '__main__':
@@ -102,7 +101,7 @@ if __name__ == '__main__':
     swap_period = 5
     # Temperature range
     min_temp = 1
-    max_temp = 1e5
+    max_temp = 5e2
 
     # Create temperature array based on number of workers (excluding master)
     temps = np.logspace(np.log10(min_temp), np.log10(max_temp), num_chains-1)
@@ -140,6 +139,7 @@ if __name__ == '__main__':
     opts.hessian_period = opts.nsteps / 20 #10
     opts.seed = random_seed
     opts.T_init = temps[rank - 1] # Use the temperature for this worker
+    dataset_name = '%s_rep%d' % (nbd_site, replicate)
     #opts.thermo_temp = 1
 
     mcmc = NBDPlateMCMC(opts, values, dataset_name, b, num_confs)

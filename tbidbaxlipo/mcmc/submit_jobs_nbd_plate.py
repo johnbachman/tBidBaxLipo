@@ -26,11 +26,11 @@ queue = 'mini'
 """The LSF queue to submit the jobs to."""
 
 time_limit = '00:10'
-"""The estimate runtime of the job."""
+"""The estimated runtime of the job."""
 
-nbd_sites = ['c120', 'c126', 'c15', 'c175', 'c179', 'c188', 'c36', 'c40',
-             'c47', 'c5', 'c54', 'c62', 'c68', 'c79']
-            # 'c122'
+#nbd_sites = ['c120', 'c122', 'c126', 'c15', 'c175', 'c179', 'c188', 'c36',
+# 'c40', 'c47', 'c5', 'c54', 'c62', 'c68', 'c79']
+nbd_sites = ['c175', 'c179', 'c5', 'c15']
 """The NBD sites to attempt to fit."""
 
 num_replicates = 4
