@@ -38,6 +38,8 @@ additional variables:
 """
 
 from numpy import mean, nan
+import numpy as np
+import pandas as pd
 
 time_other = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32,
         34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68,
@@ -6818,3 +6820,39 @@ meanall.append(mean126c)
 
 nbd_names = ['c3', 'c62', 'c120', 'c122', 'c126']
 
+# Build the pandas dataframe
+num_timepoints = len(time_other)
+
+# Build the row index (TIME, VALUE)
+row_tuples = []
+for j in range(num_timepoints):
+    row_tuples.append((j, 'TIME'))
+    row_tuples.append((j, 'VALUE'))
+
+# Build the column index
+col_tuples = []
+for nbd_name in nbd_names:
+    if nbd_name == 'c62': # Skip c62 for now # FIXME
+        continue
+    for replicate in range(3):
+        col_tuples.append((nbd_name, replicate))
+
+# Build the dataset
+num_columns = len(col_tuples)
+data_matrix = np.zeros([2 * num_timepoints, num_columns])
+
+col_index = 0
+for i, nbd in enumerate(nbdall):
+    if i == 1: # Skip c62 for now # FIXME
+        continue
+    for replicate in nbd:
+        data_matrix[0::2, col_index] = time_other
+        data_matrix[1::2, col_index] = replicate
+        col_index += 1
+
+# Build indices and dataframe
+row_index = pd.MultiIndex.from_tuples(row_tuples,
+        names=('Timepoint', 'Value'))
+col_index = pd.MultiIndex.from_tuples(col_tuples,
+        names=('NBD', 'Replicate'))
+data = pd.DataFrame(data_matrix, index=row_index, columns=col_index)
