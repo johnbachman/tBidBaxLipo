@@ -19,31 +19,16 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
         self.num_confs = num_confs
 
         # Set the MCMC functions
-        self.options.likelihood_fn = self.get_likelihood_function()
+        self.options.likelihood_fn = self.likelihood
         self.options.prior_fn = self.builder.prior
         self.options.step_fn = self.step
 
-    def get_likelihood_function(self):
-        observables = self.options.model.observables
-
-        def likelihood(mcmc, position):
-            mcmc.simulate(position=position)
-            aggregate_observable = 0
-            cur_position = mcmc.cur_params(position=position)
-            x = mcmc.solver.yobs
-            for i, obs in enumerate(observables):
-                if i == 0:
-                    aggregate_observable += x[obs.name] * cur_position[1]
-                else:
-                    scaling_parameter = cur_position[(i*2) + 1] # FIXME
-                    aggregate_observable += x[obs.name] * scaling_parameter
-            expr_nbd = mcmc.solver.yexpr['NBD']
-            diff = aggregate_observable - expr_nbd
-            import ipdb; ipdb.set_trace()
-            err = np.sum((mcmc.data - aggregate_observable)**2 /
-                         (2 * ((0.02 * mcmc.data)**2)))
-            return err
-        return likelihood
+    @staticmethod
+    def likelihood(mcmc, position):
+        mcmc.simulate(position=position)
+        nbd = mcmc.solver.yexpr['NBD']
+        err = np.sum((mcmc.data - nbd)**2 / (2 * ((0.02 * mcmc.data)**2)))
+        return err
 
     def plot_data(self, axis):
         axis.plot(self.options.tspan, self.data)
@@ -225,7 +210,7 @@ if __name__ == '__main__':
     mcmc = NBDPlateMCMC(opts, values, dataset_name, b, num_confs)
 
     mcmc.do_fit()
-    import ipdb; ipdb.set_trace()
+
     # Pickle it
     output_file = open('%s.mcmc' % mcmc.get_basename(), 'w')
     pickle.dump(mcmc, output_file)

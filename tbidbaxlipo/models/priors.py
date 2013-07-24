@@ -4,7 +4,7 @@ Implementation of prior distributions for MCMC fitting.
 These classes provide the ability to calculate the probability of given values
 according the appropriate PDF, and also allow for sampling of random numbers
 from these distributions (which is useful for choosing randomized initial
-values for an MCMC walk, for example.
+values for an MCMC walk, for example).
 
 I chose to write these simple classes rather than use the distributions in
 scipy.stats because according to a few empirical tests using the %time command
