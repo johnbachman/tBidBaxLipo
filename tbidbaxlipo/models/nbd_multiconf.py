@@ -4,25 +4,31 @@ import numpy as np
 from matplotlib import pyplot as plt
 from tbidbaxlipo.models import core
 from tbidbaxlipo.models.priors import Uniform
+import sympy
 
 class Builder(core.Builder):
 
     def __init__(self, params_dict=None):
         core.Builder.__init__(self, params_dict=params_dict)
 
-    def build_model_multiconf(self, num_confs):
+    def build_model_multiconf(self, num_confs, c0_scaling):
         if num_confs < 2:
             raise ValueError('There must be a minimum of two conformations.')
 
         self.num_confs = num_confs
 
-        # Initialize monomers and observable
+        # Initialize monomer and initial condition
         Bax = self.monomer('Bax', ['conf'],
                            {'conf': ['c%d' % i for i in range(num_confs)]})
         Bax_0 = self.parameter('Bax_0', 1, estimate=False)
         self.initial(Bax(conf='c0'), Bax_0)
-        self.observable('Bax_c0', Bax(conf='c0'))
 
+        # Scaling for initial conformation
+        scaling = self.parameter('c0_scaling', c0_scaling, estimate=False)
+        obs = self.observable('Bax_c0', Bax(conf='c0'))
+        sympy_expr = (scaling * obs)
+
+        # Rules for transitions between other conformations
         for i in range(num_confs-1):
             rate = self.parameter('c%d_to_c%d_k' % (i, i+1), 1e-3,
                                   prior=Uniform(-6, -1))
@@ -31,52 +37,9 @@ class Builder(core.Builder):
 
             self.rule('c%d_to_c%d' % (i, i+1),
                       Bax(conf='c%d' % i) >> Bax(conf='c%d' % (i+1)), rate)
-            self.observable('Bax_c%d' % (i+1), Bax(conf='c%d' % (i+1)))
-        # observable should be a product of c0 and c1 and scaling factors
+            obs = self.observable('Bax_c%d' % (i+1), Bax(conf='c%d' % (i+1)))
 
-    def run(self, tmax=10):
-        t = np.linspace(0, tmax, 1000)
-        x = odesolve(self.model, t)
-        plt.ion()
-        plt.figure()
-        for i in range(self.num_confs):
-            plt.plot(t, x['Bax_c%d' % i], label='Bax_c%d' % i)
-        plt.legend(loc='upper right')
-        plt.show()
+            sympy_expr += (scaling * obs)
 
-        plt.figure()
-        plt.plot(t, self.obs_func(x))
-        plt.show()
-
-    # FIXME FIXME FIXME
-    # The following functions are useless except for testing since they can't
-    # be used to calculate the likelihood or plot parameters during fitting
-    def build_2_conf_model(self):
-        self.build_model_multiconf(2)
-        def obs_func(sim_data):
-            return sim_data['Bax_c1']*self.model.parameters['c1_scaling'].value
-        self.obs_func = obs_func
-        self.model.name = '2_conf_model'
-
-    def build_3_conf_model(self):
-        self.build_model_multiconf(3)
-        def obs_func(sim_data):
-            return ((sim_data['Bax_c1'] *
-                     self.model.parameters['c1_scaling'].value) +
-                    (sim_data['Bax_c2'] *
-                     self.model.parameters['c2_scaling'].value))
-        self.obs_func = obs_func
-        self.model.name = '3_conf_model'
-
-    def build_4_conf_model(self):
-        self.build_model_multiconf(4)
-        def obs_func(sim_data):
-            return ((sim_data['Bax_c1'] *
-                     self.model.parameters['c1_scaling'].value) +
-                    (sim_data['Bax_c2'] *
-                     self.model.parameters['c2_scaling'].value) +
-                    (sim_data['Bax_c3'] *
-                     self.model.parameters['c3_scaling'].value))
-        self.obs_func = obs_func
-        self.model.name = '4_conf_model'
-    # end FIXME FIXME FIXME
+        # The expression mapping to our experimental observable
+        self.expression('NBD', sympy_expr)
