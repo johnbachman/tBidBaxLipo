@@ -23,6 +23,15 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
         self.options.prior_fn = self.builder.prior
         self.options.step_fn = self.step
 
+    # Pickling function for this class
+    # Differs from superclass in that it assigns to self.likelihood
+    # rather then self.get_likelihood_function()
+    def __setstate__(self, state):
+        bayessb.MCMC.__setstate__(self, state)
+        self.options.likelihood_fn = self.likelihood
+        self.options.prior_fn = self.builder.prior
+        self.options.step_fn = self.step
+
     @staticmethod
     def likelihood(mcmc, position):
         mcmc.simulate(position=position)
@@ -47,6 +56,7 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
         (time, values) = timecourses['Predicted NBD Signal']
         return [time, self.data - values]
 
+# TESTS #####
     def get_basename(self):
         return '%s_%dconfs_%d_T%.2f_s%d' % (self.dataset_name,
                                self.num_confs,
@@ -111,6 +121,7 @@ def test_get_basename():
     npm.get_basename()
     assert True
 
+# MAIN ######
 if __name__ == '__main__':
     # Set the type of model to be built here
     from tbidbaxlipo.models.nbd_multiconf import Builder
