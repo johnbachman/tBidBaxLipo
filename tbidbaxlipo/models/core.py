@@ -858,6 +858,12 @@ class Builder(object):
         self.model.add_component(o)
         return o
 
+    def expression(self, *args, **kwargs):
+        """Adds an expression to the Builder's model instance."""
+        e = Expression(*args, _export=False, **kwargs)
+        self.model.add_component(e)
+        return e
+
     def initial(self, *args):
         """Adds an initial condition to the Builder's model instance."""
         self.model.initial(*args)
