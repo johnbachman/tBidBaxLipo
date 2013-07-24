@@ -1,4 +1,4 @@
-from tbidbaxlipo.models.nbd_multiconf import Builder
+from tbidbaxlipo.models.nbd.multiconf import Builder
 from tbidbaxlipo.data.nbd_plate_data import data, nbd_names
 import bayessb
 import numpy as np
@@ -124,7 +124,7 @@ def test_get_basename():
 # MAIN ######
 if __name__ == '__main__':
     # Set the type of model to be built here
-    from tbidbaxlipo.models.nbd_multiconf import Builder
+    from tbidbaxlipo.models.nbd.multiconf import Builder
 
     # Parse the args
     # ==============
