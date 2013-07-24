@@ -24,32 +24,25 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
         self.options.step_fn = self.step
 
     def get_likelihood_function(self):
-        # This is a shitty hack that relies on the known ordering of the
-        # parameters from the way the model is created by the builder.
-        # According to this order,
-        # the rate parameters will have indices 1, 3, ... 
-        # in the cur_params position array; the scaling parameters will have
-        # indices 2, 4, ....
         observables = self.options.model.observables
 
         def likelihood(mcmc, position):
-            x = mcmc.simulate(position=position, observables=True)
+            mcmc.simulate(position=position)
             aggregate_observable = 0
             cur_position = mcmc.cur_params(position=position)
+            x = mcmc.solver.yobs
             for i, obs in enumerate(observables):
                 if i == 0:
-                    aggregate_observable += x[obs.name] * self.data[0]
+                    aggregate_observable += x[obs.name] * cur_position[1]
                 else:
-                    scaling_parameter = cur_position[i*2]
+                    scaling_parameter = cur_position[(i*2) + 1] # FIXME
                     aggregate_observable += x[obs.name] * scaling_parameter
-            # Skip the first timepoint--the SD is 0 (due to normalization)
-            # and hence gives nan when calculating the error.
-            #err = np.sum((self.data[1:] - aggregate_observable[1:])**2 /
-            #             (2 * ((0.02 * self.data[1:])**2)))
-            err = np.sum((self.data - aggregate_observable)**2 /
-                         (2 * ((0.02 * self.data)**2)))
+            expr_nbd = mcmc.solver.yexpr['NBD']
+            diff = aggregate_observable - expr_nbd
+            import ipdb; ipdb.set_trace()
+            err = np.sum((mcmc.data - aggregate_observable)**2 /
+                         (2 * ((0.02 * mcmc.data)**2)))
             return err
-
         return likelihood
 
     def plot_data(self, axis):
@@ -57,18 +50,10 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
 
     def get_observable_timecourses(self, position):
         timecourses = {}
-        x = self.simulate(position=position, observables=True)
-        observables = self.options.model.observables
-        aggregate_observable = 0
-        cur_position = self.cur_params(position=position)
-        for i, obs in enumerate(observables):
-            if i == 0:
-                aggregate_observable += x[obs.name] * self.data[0]
-            else:
-                scaling_parameter = cur_position[i*2]
-                aggregate_observable += x[obs.name] * scaling_parameter
+        self.simulate(position=position)
+        predicted_nbd = self.solver.yexpr['NBD']
         timecourses['Predicted NBD Signal'] = [self.options.tspan,
-                                               aggregate_observable]
+                                               predicted_nbd]
         return timecourses
 
     def get_residuals(self, position):
@@ -89,13 +74,11 @@ def get_NBDPlateMCMC_instance():
     tc = data[('c68', 0)]
     time = tc[:, 'TIME'].values
     values = tc[:, 'VALUE'].values
-    # Normalize values by subtracting initial value
-    values = values - values[0]
 
     # Choose which model to build
     num_confs = 2
     b = Builder()
-    b.build_model_multiconf(num_confs)
+    b.build_model_multiconf(num_confs, values[0])
 
     # Set initial estimates for scaling parameters
     scaling_parameters = [p for p in b.model.parameters
@@ -175,11 +158,6 @@ if __name__ == '__main__':
                 'Arguments must include random_seed, nsteps, num_confs, ' \
                 'nbd_site, and replicate.')
 
-    # Build the model with the appropriate number of conformations
-    num_confs = int(kwargs['num_confs'])
-    b = Builder()
-    b.build_model_multiconf(num_confs)
-
     # Set the random seed:
     random_seed = int(kwargs['random_seed'])
 
@@ -194,25 +172,24 @@ if __name__ == '__main__':
     # Get the replicate to fit
     replicate = int(kwargs['replicate'])
 
+    # Get the number of conformations
+    num_confs = int(kwargs['num_confs'])
+
     # A sanity check to make sure everything worked:
     if None in [random_seed, nsteps, num_confs, nbd_site, replicate]:
         raise Exception('Something went wrong! One of the arguments to ' \
                         'do_fit was not initialized properly.')
 
-    # Prepare the data
-    # ================
+    # Prepare the data and model
+    # ==========================
     # Choose which data/replicate to fit
     tc = data[(nbd_site, replicate)]
     time = tc[:, 'TIME'].values
     values = tc[:, 'VALUE'].values
-    # Normalize values by subtracting initial value
-    #values = values - values[0]
 
-    # Set initial estimates for scaling parameters
-    scaling_parameters = [p for p in b.model.parameters
-                          if p.name.endswith('_scaling')]
-    for p in scaling_parameters:
-        p.value = np.max(values)
+    # Build the model
+    b = Builder()
+    b.build_model_multiconf(num_confs, values[0])
 
     # Build the MCMCOpts
     # ==================
@@ -248,7 +225,7 @@ if __name__ == '__main__':
     mcmc = NBDPlateMCMC(opts, values, dataset_name, b, num_confs)
 
     mcmc.do_fit()
-
+    import ipdb; ipdb.set_trace()
     # Pickle it
     output_file = open('%s.mcmc' % mcmc.get_basename(), 'w')
     pickle.dump(mcmc, output_file)
