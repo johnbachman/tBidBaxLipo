@@ -1,5 +1,5 @@
 from tbidbaxlipo.models.nbd import multiconf, exponential
-from tbidbaxlipo.data.nbd_plate_data import data, nbd_names
+from tbidbaxlipo.data import nbd_data, nbd_plate_data
 import bayessb
 import numpy as np
 import tbidbaxlipo.mcmc
@@ -65,7 +65,7 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
 
 def get_NBDPlateMCMC_instance():
     # Choose which data/replicate to fit
-    tc = data[('c68', 0)]
+    tc = nbd_plate_data.data[('c68', 0)]
     time = tc[:, 'TIME'].values
     values = tc[:, 'VALUE'].values
 
@@ -128,13 +128,6 @@ if __name__ == '__main__':
     # and subsequently split at the equals sign
     kwargs = dict([arg.split('=') for arg in sys.argv[1:]])
 
-    # We set these all to None so later on we can make sure they were
-    # properly initialized.
-    random_seed = None
-    nsteps = None
-    nbd_site = None
-    replicate = None
-
     print "Keyword arguments: "
     print kwargs
 
@@ -144,16 +137,30 @@ if __name__ == '__main__':
        'nsteps' not in kwargs or \
        'nbd_site' not in kwargs or \
        'replicate' not in kwargs or \
+       'dataset' not in kwargs or \
        'model' not in kwargs:
         raise Exception('One or more needed arguments was not specified! ' \
                 'Arguments must include random_seed, nsteps, model, ' \
-                'nbd_site, and replicate.')
+                'nbd_site, dataset and replicate.')
 
     # Set the random seed:
     random_seed = int(kwargs['random_seed'])
 
     # Set the number of steps:
     nsteps = int(kwargs['nsteps'])
+
+    # Prepare the data
+    # ================
+    # Figure out which dataset we're supposed to use
+    dataset = kwargs['dataset']
+    if dataset == 'plate':
+        data = nbd_plate_data.data
+        nbd_names = nbd_plate_data.nbd_names
+    elif dataset == 'fluorimeter':
+        data = nbd_data.data
+        nbd_names = nbd_data.nbd_names
+    else:
+        raise Exception('Allowable values for dataset: plate, fluorimeter.')
 
     # Get the NBD mutant for the data we want to fit
     nbd_site = kwargs['nbd_site']
@@ -163,14 +170,6 @@ if __name__ == '__main__':
     # Get the replicate to fit
     replicate = int(kwargs['replicate'])
 
-
-    # A sanity check to make sure everything worked:
-    if None in [random_seed, nsteps, nbd_site, replicate]:
-        raise Exception('Something went wrong! One of the arguments to ' \
-                        'do_fit was not initialized properly.')
-
-    # Prepare the data
-    # ================
     # Choose which data/replicate to fit
     tc = data[(nbd_site, replicate)]
     time = tc[:, 'TIME'].values
@@ -197,8 +196,9 @@ if __name__ == '__main__':
         num_exponentials = int(kwargs['num_exponentials'])
         b = exponential.Builder()
         b.build_model_exponential(num_exponentials, values[0])
+    # This should never happen
     else:
-        assert False # This should never happen
+        assert False
 
     # Build the MCMCOpts
     # ==================
