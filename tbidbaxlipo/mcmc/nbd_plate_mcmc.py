@@ -1,4 +1,4 @@
-from tbidbaxlipo.models.nbd.multiconf import Builder
+from tbidbaxlipo.models.nbd import multiconf, exponential
 from tbidbaxlipo.data.nbd_plate_data import data, nbd_names
 import bayessb
 import numpy as np
@@ -10,13 +10,12 @@ import math
 
 class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
     """ Document me"""
-    def __init__(self, options, data, dataset_name, builder, num_confs):
+    def __init__(self, options, data, dataset_name, builder):
         tbidbaxlipo.mcmc.MCMC.__init__(self, options, builder)
 
         # Store data/model info
         self.data = data
         self.dataset_name = dataset_name
-        self.num_confs = num_confs
 
         # Set the MCMC functions
         self.options.likelihood_fn = self.likelihood
@@ -58,8 +57,8 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
 
 # TESTS #####
     def get_basename(self):
-        return '%s_%dconfs_%d_T%.2f_s%d' % (self.dataset_name,
-                               self.num_confs,
+        return '%s_%s_%d_T%.2f_s%d' % (self.dataset_name,
+                               self.builder.model.name,
                                self.options.nsteps,
                                self.options.T_init,
                                self.options.seed)
@@ -72,7 +71,7 @@ def get_NBDPlateMCMC_instance():
 
     # Choose which model to build
     num_confs = 2
-    b = Builder()
+    b = multiconf.Builder()
     b.build_model_multiconf(num_confs, values[0])
 
     # Set initial estimates for scaling parameters
@@ -95,7 +94,7 @@ def get_NBDPlateMCMC_instance():
     opts.norm_step_size = 0.1
     opts.seed = 1
 
-    mcmc = NBDPlateMCMC(opts, values, 'c68rep0', b, num_confs)
+    mcmc = NBDPlateMCMC(opts, values, 'c68rep0', b)
     return mcmc
 
 def test_NBDPlateMCMC_init():
@@ -123,9 +122,6 @@ def test_get_basename():
 
 # MAIN ######
 if __name__ == '__main__':
-    # Set the type of model to be built here
-    from tbidbaxlipo.models.nbd.multiconf import Builder
-
     # Parse the args
     # ==============
     # Keyword args are set at the command line as e.g., key=val
@@ -135,7 +131,6 @@ if __name__ == '__main__':
     # We set these all to None so later on we can make sure they were
     # properly initialized.
     random_seed = None
-    num_confs = None
     nsteps = None
     nbd_site = None
     replicate = None
@@ -147,11 +142,11 @@ if __name__ == '__main__':
     # we are going to need.
     if 'random_seed' not in kwargs or \
        'nsteps' not in kwargs or \
-       'num_confs' not in kwargs or \
        'nbd_site' not in kwargs or \
-       'replicate' not in kwargs:
+       'replicate' not in kwargs or \
+       'model' not in kwargs:
         raise Exception('One or more needed arguments was not specified! ' \
-                'Arguments must include random_seed, nsteps, num_confs, ' \
+                'Arguments must include random_seed, nsteps, model, ' \
                 'nbd_site, and replicate.')
 
     # Set the random seed:
@@ -168,24 +163,42 @@ if __name__ == '__main__':
     # Get the replicate to fit
     replicate = int(kwargs['replicate'])
 
-    # Get the number of conformations
-    num_confs = int(kwargs['num_confs'])
 
     # A sanity check to make sure everything worked:
-    if None in [random_seed, nsteps, num_confs, nbd_site, replicate]:
+    if None in [random_seed, nsteps, nbd_site, replicate]:
         raise Exception('Something went wrong! One of the arguments to ' \
                         'do_fit was not initialized properly.')
 
-    # Prepare the data and model
-    # ==========================
+    # Prepare the data
+    # ================
     # Choose which data/replicate to fit
     tc = data[(nbd_site, replicate)]
     time = tc[:, 'TIME'].values
     values = tc[:, 'VALUE'].values
 
-    # Build the model
-    b = Builder()
-    b.build_model_multiconf(num_confs, values[0])
+    # Prepare the model
+    # =================
+    model = kwargs['model']
+    if model not in ['multiconf', 'exponential']:
+        raise Exception("Model must be one of: multiconf, exponential.")
+    # Multiconf models
+    if model == 'multiconf':
+        if 'num_confs' not in kwargs:
+            raise Exception("Argument num_confs must be specified for model"
+                            " of type multiconf.")
+        num_confs = int(kwargs['num_confs'])
+        b = multiconf.Builder()
+        b.build_model_multiconf(num_confs, values[0])
+    # Multi-exponential models
+    elif model == 'exponential':
+        if 'num_exponentials' not in kwargs:
+            raise Exception("Argument num_exponentials must be specified for "
+                            "model of type exponential.")
+        num_exponentials = int(kwargs['num_exponentials'])
+        b = exponential.Builder()
+        b.build_model_exponential(num_exponentials, values[0])
+    else:
+        assert False # This should never happen
 
     # Build the MCMCOpts
     # ==================
@@ -218,7 +231,7 @@ if __name__ == '__main__':
     dataset_name = '%s_rep%d' % (nbd_site, replicate)
 
     from tbidbaxlipo.mcmc.nbd_plate_mcmc import NBDPlateMCMC
-    mcmc = NBDPlateMCMC(opts, values, dataset_name, b, num_confs)
+    mcmc = NBDPlateMCMC(opts, values, dataset_name, b)
 
     mcmc.do_fit()
 

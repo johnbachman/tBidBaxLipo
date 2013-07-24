@@ -1,10 +1,5 @@
-from pysb import *
-from pysb.integrate import Solver, odesolve
-import numpy as np
-from matplotlib import pyplot as plt
 from tbidbaxlipo.models import core
 from bayessb.priors import Uniform
-import sympy
 
 class Builder(core.Builder):
 
@@ -43,3 +38,6 @@ class Builder(core.Builder):
 
         # The expression mapping to our experimental observable
         self.expression('NBD', sympy_expr)
+
+        # Set the model name
+        self.model.name = "%dconfs" % num_confs
