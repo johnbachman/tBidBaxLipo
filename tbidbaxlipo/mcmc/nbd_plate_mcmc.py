@@ -156,9 +156,11 @@ if __name__ == '__main__':
     if dataset == 'plate':
         data = nbd_plate_data.data
         nbd_names = nbd_plate_data.nbd_names
+        dataset_name = 'plate_%s_rep%d' % (nbd_site, replicate)
     elif dataset == 'fluorimeter':
         data = nbd_data.data
         nbd_names = nbd_data.nbd_names
+        dataset_name = 'fluorimeter_%s_rep%d' % (nbd_site, replicate)
     else:
         raise Exception('Allowable values for dataset: plate, fluorimeter.')
 
@@ -228,7 +230,6 @@ if __name__ == '__main__':
     opts.hessian_period = opts.nsteps / 20 #10
     opts.seed = random_seed
     opts.T_init = 1
-    dataset_name = '%s_rep%d' % (nbd_site, replicate)
 
     from tbidbaxlipo.mcmc.nbd_plate_mcmc import NBDPlateMCMC
     mcmc = NBDPlateMCMC(opts, values, dataset_name, b)
