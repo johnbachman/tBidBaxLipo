@@ -270,7 +270,7 @@ __author__ = 'johnbachman'
 from pysb import *
 from pysb.macros import *
 import numpy as np
-from tbidbaxlipo.models.priors import Normal
+from bayessb.priors import Normal
 
 class Builder(object):
 

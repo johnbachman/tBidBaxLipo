@@ -3,7 +3,7 @@ from pysb.integrate import Solver, odesolve
 import numpy as np
 from matplotlib import pyplot as plt
 from tbidbaxlipo.models import core
-from tbidbaxlipo.models.priors import Uniform
+from bayessb.priors import Uniform
 import sympy
 
 class Builder(core.Builder):
