@@ -40,7 +40,7 @@ num_replicates = 3
 replicate_arg_list = ['replicate=%d' % i for i in range(num_replicates)]
 
 # == Fitting ==
-nsteps = 500000
+nsteps = 5000
 """The number of steps in each chain."""
 
 num_temps = 8
@@ -99,7 +99,8 @@ def output_filename_from_args(args):
 # Iterate over the Cartesian product of the different argument lists
 for args in itertools.product(model_arg_list, random_seed_arg_list,
                               replicate_arg_list, nbd_site_arg_list):
-    cmd_list = base_cmd_list(output_filename_from_args(args)) + list(args)
+    fixed_args = ['dataset=%s' % dataset, 'nsteps=%d' % nsteps]
+    cmd_list = base_cmd_list(output_filename_from_args(args)) + \
+               list(args) + fixed_args
     print ' '.join(cmd_list)
     subprocess.call(cmd_list)
-
