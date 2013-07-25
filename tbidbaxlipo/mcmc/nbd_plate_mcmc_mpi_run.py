@@ -13,7 +13,8 @@ from mpi4py import MPI
 from bayessb import MCMCOpts
 from bayessb.mpi.pt_mpi import PT_MPI_Master, PT_MPI_Worker
 from tbidbaxlipo.mcmc.nbd_plate_mcmc import NBDPlateMCMC
-from tbidbaxlipo.data.nbd_plate_data import data, nbd_names
+from tbidbaxlipo.models.nbd import multiconf, exponential
+from tbidbaxlipo.data import nbd_data, nbd_plate_data
 from pysb.integrate import Solver
 
 if __name__ == '__main__':
@@ -51,21 +52,24 @@ if __name__ == '__main__':
     if dataset == 'plate':
         data = nbd_plate_data.data
         nbd_names = nbd_plate_data.nbd_names
-        dataset_name = 'plate_%s_rep%d' % (nbd_site, replicate)
     elif dataset == 'pti':
         data = nbd_data.data
         nbd_names = nbd_data.nbd_names
-        dataset_name = 'pti_%s_rep%d' % (nbd_site, replicate)
     else:
         raise Exception('Allowable values for dataset: plate, pti.')
 
-    # Get the NBD mutant for the data we want to fit
+    # Get name of the NBD mutant for the data we want to fit, and
+    # check that the specified mutant is in this dataset
     nbd_site = kwargs['nbd_site']
     if nbd_site not in nbd_names:
-        raise Exception('%s not an allowable nbd_site.' % nbd_site)
+        raise Exception('%s not an allowable nbd_site for dataset %s.' % \
+                        (nbd_site, dataset))
 
     # Get the replicate to fit
     replicate = int(kwargs['replicate'])
+
+    # Set the dataset name (for use in filenames, etc.)
+    dataset_name = '%s_%s_rep%d' % (dataset, nbd_site, replicate)
 
     # Choose which data/replicate to fit
     tc = data[(nbd_site, replicate)]
@@ -153,7 +157,7 @@ if __name__ == '__main__':
     opts.T_init = temps[rank - 1] # Use the temperature for this worker
     #opts.thermo_temp = 1
 
-    mcmc = NBDPlateMCMC(opts, values, dataset_name, b, num_confs)
+    mcmc = NBDPlateMCMC(opts, values, dataset_name, b)
 
     mcmc.initialize()
 
