@@ -156,21 +156,24 @@ if __name__ == '__main__':
     if dataset == 'plate':
         data = nbd_plate_data.data
         nbd_names = nbd_plate_data.nbd_names
-        dataset_name = 'plate_%s_rep%d' % (nbd_site, replicate)
     elif dataset == 'pti':
         data = nbd_data.data
         nbd_names = nbd_data.nbd_names
-        dataset_name = 'pti_%s_rep%d' % (nbd_site, replicate)
     else:
         raise Exception('Allowable values for dataset: plate, pti.')
 
-    # Get the NBD mutant for the data we want to fit
+    # Get the name of the NBD mutant for the data we want to fit, and
+    # check that the specified mutant is in this dataset
     nbd_site = kwargs['nbd_site']
     if nbd_site not in nbd_names:
-        raise Exception('%s not an allowable nbd_site.' % nbd_site)
+        raise Exception('%s not an allowable nbd_site for dataset %s.' % \
+                        (nbd_site, dataset))
 
     # Get the replicate to fit
     replicate = int(kwargs['replicate'])
+
+    # Set the dataset name (for use in filenames, etc.)
+    dataset_name = 'pti_%s_rep%d' % (nbd_site, replicate)
 
     # Choose which data/replicate to fit
     tc = data[(nbd_site, replicate)]
