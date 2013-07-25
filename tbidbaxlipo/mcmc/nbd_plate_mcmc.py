@@ -157,12 +157,12 @@ if __name__ == '__main__':
         data = nbd_plate_data.data
         nbd_names = nbd_plate_data.nbd_names
         dataset_name = 'plate_%s_rep%d' % (nbd_site, replicate)
-    elif dataset == 'fluorimeter':
+    elif dataset == 'pti':
         data = nbd_data.data
         nbd_names = nbd_data.nbd_names
-        dataset_name = 'fluorimeter_%s_rep%d' % (nbd_site, replicate)
+        dataset_name = 'pti_%s_rep%d' % (nbd_site, replicate)
     else:
-        raise Exception('Allowable values for dataset: plate, fluorimeter.')
+        raise Exception('Allowable values for dataset: plate, pti.')
 
     # Get the NBD mutant for the data we want to fit
     nbd_site = kwargs['nbd_site']
