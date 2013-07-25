@@ -6,7 +6,7 @@ class Builder(core.Builder):
     def __init__(self, params_dict=None):
         core.Builder.__init__(self, params_dict=params_dict)
 
-    def build_model_multiconf(self, num_confs, c0_scaling):
+    def build_model_multiconf(self, num_confs, c0_scaling, normalized_data=False):
         if num_confs < 2:
             raise ValueError('There must be a minimum of two conformations.')
 
@@ -23,12 +23,18 @@ class Builder(core.Builder):
         obs = self.observable('Bax_c0', Bax(conf='c0'))
         sympy_expr = (scaling * obs)
 
+        # Set the bounds for the scaling parameters
+        if normalized_data:
+            scaling_prior = Uniform(-2, 2)
+        else:
+            scaling_prior = Uniform(1, 5)
+
         # Rules for transitions between other conformations
         for i in range(num_confs-1):
             rate = self.parameter('c%d_to_c%d_k' % (i, i+1), 1e-3,
                                   prior=Uniform(-6, -1))
             scaling = self.parameter('c%d_scaling' % (i+1), 1,
-                                     prior=Uniform(1, 5))
+                                     prior=scaling_prior)
 
             self.rule('c%d_to_c%d' % (i, i+1),
                       Bax(conf='c%d' % i) >> Bax(conf='c%d' % (i+1)), rate)
