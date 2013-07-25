@@ -17,22 +17,11 @@ from tbidbaxlipo.data.nbd_plate_data import data, nbd_names
 from pysb.integrate import Solver
 
 if __name__ == '__main__':
-    # Set the type of model to be built here
-    from tbidbaxlipo.models.nbd_multiconf import Builder
-
     # Parse the args
     # ==============
     # Keyword args are set at the command line as e.g., key=val
     # and subsequently split at the equals sign
     kwargs = dict([arg.split('=') for arg in sys.argv[1:]])
-
-    # We set these all to None so later on we can make sure they were
-    # properly initialized.
-    random_seed = None
-    num_confs = None
-    nsteps = None
-    nbd_site = None
-    replicate = None
 
     print "Keyword arguments: "
     print kwargs
@@ -41,23 +30,34 @@ if __name__ == '__main__':
     # we are going to need.
     if 'random_seed' not in kwargs or \
        'nsteps' not in kwargs or \
-       'num_confs' not in kwargs or \
        'nbd_site' not in kwargs or \
-       'replicate' not in kwargs:
+       'replicate' not in kwargs or \
+       'dataset' not in kwargs or \
+       'model' not in kwargs:
         raise Exception('One or more needed arguments was not specified! ' \
-                'Arguments must include random_seed, nsteps, num_confs, ' \
-                'nbd_site, and replicate.')
-
-    # Build the model with the appropriate number of conformations
-    num_confs = int(kwargs['num_confs'])
-    b = Builder()
-    b.build_model_multiconf(num_confs)
+                'Arguments must include random_seed, nsteps, model, ' \
+                'nbd_site, dataset and replicate.')
 
     # Set the random seed:
     random_seed = int(kwargs['random_seed'])
 
     # Set the number of steps:
     nsteps = int(kwargs['nsteps'])
+
+    # Prepare the data
+    # ================
+    # Figure out which dataset we're supposed to use
+    dataset = kwargs['dataset']
+    if dataset == 'plate':
+        data = nbd_plate_data.data
+        nbd_names = nbd_plate_data.nbd_names
+        dataset_name = 'plate_%s_rep%d' % (nbd_site, replicate)
+    elif dataset == 'pti':
+        data = nbd_data.data
+        nbd_names = nbd_data.nbd_names
+        dataset_name = 'pti_%s_rep%d' % (nbd_site, replicate)
+    else:
+        raise Exception('Allowable values for dataset: plate, pti.')
 
     # Get the NBD mutant for the data we want to fit
     nbd_site = kwargs['nbd_site']
@@ -67,25 +67,35 @@ if __name__ == '__main__':
     # Get the replicate to fit
     replicate = int(kwargs['replicate'])
 
-    # A sanity check to make sure everything worked:
-    if None in [random_seed, nsteps, num_confs, nbd_site, replicate]:
-        raise Exception('Something went wrong! One of the arguments to ' \
-                        'do_fit was not initialized properly.')
-
-    # Prepare the data
-    # ================
     # Choose which data/replicate to fit
     tc = data[(nbd_site, replicate)]
     time = tc[:, 'TIME'].values
     values = tc[:, 'VALUE'].values
-    # Normalize values by subtracting initial value
-    #values = values - values[0]
 
-    # Set initial estimates for scaling parameters
-    scaling_parameters = [p for p in b.model.parameters
-                          if p.name.endswith('_scaling')]
-    for p in scaling_parameters:
-        p.value = np.max(values)
+    # Prepare the model
+    # =================
+    model = kwargs['model']
+    if model not in ['multiconf', 'exponential']:
+        raise Exception("Model must be one of: multiconf, exponential.")
+    # Multiconf models
+    if model == 'multiconf':
+        if 'num_confs' not in kwargs:
+            raise Exception("Argument num_confs must be specified for model"
+                            " of type multiconf.")
+        num_confs = int(kwargs['num_confs'])
+        b = multiconf.Builder()
+        b.build_model_multiconf(num_confs, values[0])
+    # Multi-exponential models
+    elif model == 'exponential':
+        if 'num_exponentials' not in kwargs:
+            raise Exception("Argument num_exponentials must be specified for "
+                            "model of type exponential.")
+        num_exponentials = int(kwargs['num_exponentials'])
+        b = exponential.Builder()
+        b.build_model_exponential(num_exponentials, values[0])
+    # This should never happen
+    else:
+        assert False
 
     # -----------------------------------------------------------------------
     # The communicator to use
@@ -101,13 +111,15 @@ if __name__ == '__main__':
     swap_period = 5
     # Temperature range
     min_temp = 1
-    max_temp = 5e2
+    max_temp = 1e5
 
     # Create temperature array based on number of workers (excluding master)
     temps = np.logspace(np.log10(min_temp), np.log10(max_temp), num_chains-1)
 
-    rate_step_sizes = np.logspace(np.log10(5e-4), np.log10(5e-2), num_chains-1)
-    scaling_step_sizes = np.logspace(np.log10(1e-4), np.log10(1e-2), num_chains-1)
+    rate_step_sizes = np.logspace(np.log10(5e-4), np.log10(5e-2),
+                                  num_chains-1)
+    scaling_step_sizes = np.logspace(np.log10(1e-4), np.log10(1e-2),
+                                     num_chains-1)
 
     # Initialize the MCMC arguments
     opts = MCMCOpts()
@@ -124,7 +136,7 @@ if __name__ == '__main__':
     #                    ([rate_step_sizes[rank-1]] *
     #                     (len(opts.estimate_params)-1)))
     #print "Step size: %g" % (opts.norm_step_size[1])
-    opts.norm_step_size = 0.1
+    opts.norm_step_size = 0.05
 
     opts.sigma_step = 0 # Don't adjust step size
     #opts.sigma_max = 50
@@ -139,7 +151,6 @@ if __name__ == '__main__':
     opts.hessian_period = opts.nsteps / 20 #10
     opts.seed = random_seed
     opts.T_init = temps[rank - 1] # Use the temperature for this worker
-    dataset_name = '%s_rep%d' % (nbd_site, replicate)
     #opts.thermo_temp = 1
 
     mcmc = NBDPlateMCMC(opts, values, dataset_name, b, num_confs)
