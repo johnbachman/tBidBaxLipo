@@ -120,13 +120,10 @@ def test_get_basename():
     npm.get_basename()
     assert True
 
-# MAIN ######
-if __name__ == '__main__':
-    # Parse the args
-    # ==============
+def parse_command_line_args(argv):
     # Keyword args are set at the command line as e.g., key=val
     # and subsequently split at the equals sign
-    kwargs = dict([arg.split('=') for arg in sys.argv[1:]])
+    kwargs = dict([arg.split('=') for arg in argv[1:]])
 
     print "Keyword arguments: "
     print kwargs
@@ -205,21 +202,31 @@ if __name__ == '__main__':
     else:
         assert False
 
+    return {'builder': b, 'random_seed': random_seed,
+            'time': time, 'values': values, 'nsteps': nsteps,
+            'dataset_name': dataset_name}
+
+# MAIN ######
+if __name__ == '__main__':
+    args = parse_command_line_args(sys.argv)
+
     # Build the MCMCOpts
     # ==================
+    b = args['builder']
+
     # We set the random_seed here because it affects our choice of initial
     # values
-    np.random.seed(random_seed)
+    np.random.seed(args['random_seed'])
 
     opts = bayessb.MCMCOpts()
     opts.model = b.model
-    opts.tspan = time
+    opts.tspan = args['time']
     opts.estimate_params = b.estimate_params
     #opts.estimate_params = [p for p in b.model.parameters
     #                        if not p.name.endswith('_0')]
     #opts.initial_values = [p.value for p in b.estimate_params]
     opts.initial_values = b.random_initial_values()
-    opts.nsteps = nsteps
+    opts.nsteps = args['nsteps']
     opts.norm_step_size = 0.1
     opts.sigma_step = 0
     #opts.sigma_max = 50
@@ -231,11 +238,11 @@ if __name__ == '__main__':
     opts.use_hessian = True # CHECK
     opts.hessian_scale = 1
     opts.hessian_period = opts.nsteps / 20 #10
-    opts.seed = random_seed
+    opts.seed = args['random_seed']
     opts.T_init = 1
 
     from tbidbaxlipo.mcmc.nbd_plate_mcmc import NBDPlateMCMC
-    mcmc = NBDPlateMCMC(opts, values, dataset_name, b)
+    mcmc = NBDPlateMCMC(opts, args['values'], args['dataset_name'], b)
 
     mcmc.do_fit()
 
@@ -245,5 +252,4 @@ if __name__ == '__main__':
     output_file.close()
 
     print "Done."
-
 

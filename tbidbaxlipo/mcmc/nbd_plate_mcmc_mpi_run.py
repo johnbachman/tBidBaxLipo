@@ -12,94 +12,14 @@ from mpi4py import MPI
 
 from bayessb import MCMCOpts
 from bayessb.mpi.pt_mpi import PT_MPI_Master, PT_MPI_Worker
-from tbidbaxlipo.mcmc.nbd_plate_mcmc import NBDPlateMCMC
+from tbidbaxlipo.mcmc.nbd_plate_mcmc import NBDPlateMCMC, \
+                                            parse_command_line_args
 from tbidbaxlipo.models.nbd import multiconf, exponential
 from tbidbaxlipo.data import nbd_data, nbd_plate_data
 from pysb.integrate import Solver
 
 if __name__ == '__main__':
-    # Parse the args
-    # ==============
-    # Keyword args are set at the command line as e.g., key=val
-    # and subsequently split at the equals sign
-    kwargs = dict([arg.split('=') for arg in sys.argv[1:]])
-
-    print "Keyword arguments: "
-    print kwargs
-
-    # Before we begin, we make sure we have all the keyword arguments that
-    # we are going to need.
-    if 'random_seed' not in kwargs or \
-       'nsteps' not in kwargs or \
-       'nbd_site' not in kwargs or \
-       'replicate' not in kwargs or \
-       'dataset' not in kwargs or \
-       'model' not in kwargs:
-        raise Exception('One or more needed arguments was not specified! ' \
-                'Arguments must include random_seed, nsteps, model, ' \
-                'nbd_site, dataset and replicate.')
-
-    # Set the random seed:
-    random_seed = int(kwargs['random_seed'])
-
-    # Set the number of steps:
-    nsteps = int(kwargs['nsteps'])
-
-    # Prepare the data
-    # ================
-    # Figure out which dataset we're supposed to use
-    dataset = kwargs['dataset']
-    if dataset == 'plate':
-        data = nbd_plate_data.data
-        nbd_names = nbd_plate_data.nbd_names
-    elif dataset == 'pti':
-        data = nbd_data.data
-        nbd_names = nbd_data.nbd_names
-    else:
-        raise Exception('Allowable values for dataset: plate, pti.')
-
-    # Get name of the NBD mutant for the data we want to fit, and
-    # check that the specified mutant is in this dataset
-    nbd_site = kwargs['nbd_site']
-    if nbd_site not in nbd_names:
-        raise Exception('%s not an allowable nbd_site for dataset %s.' % \
-                        (nbd_site, dataset))
-
-    # Get the replicate to fit
-    replicate = int(kwargs['replicate'])
-
-    # Set the dataset name (for use in filenames, etc.)
-    dataset_name = '%s_%s_rep%d' % (dataset, nbd_site, replicate)
-
-    # Choose which data/replicate to fit
-    tc = data[(nbd_site, replicate)]
-    time = tc[:, 'TIME'].values
-    values = tc[:, 'VALUE'].values
-
-    # Prepare the model
-    # =================
-    model = kwargs['model']
-    if model not in ['multiconf', 'exponential']:
-        raise Exception("Model must be one of: multiconf, exponential.")
-    # Multiconf models
-    if model == 'multiconf':
-        if 'num_confs' not in kwargs:
-            raise Exception("Argument num_confs must be specified for model"
-                            " of type multiconf.")
-        num_confs = int(kwargs['num_confs'])
-        b = multiconf.Builder()
-        b.build_model_multiconf(num_confs, values[0])
-    # Multi-exponential models
-    elif model == 'exponential':
-        if 'num_exponentials' not in kwargs:
-            raise Exception("Argument num_exponentials must be specified for "
-                            "model of type exponential.")
-        num_exponentials = int(kwargs['num_exponentials'])
-        b = exponential.Builder()
-        b.build_model_exponential(num_exponentials, values[0])
-    # This should never happen
-    else:
-        assert False
+    args = parse_command_line_args(sys.argv)
 
     # -----------------------------------------------------------------------
     # The communicator to use
@@ -126,12 +46,13 @@ if __name__ == '__main__':
                                      num_chains-1)
 
     # Initialize the MCMC arguments
+    b = args['builder']
     opts = MCMCOpts()
     opts.model = b.model
-    opts.tspan = time
+    opts.tspan = args['time']
     opts.estimate_params = b.estimate_params
     opts.initial_values = b.random_initial_values()
-    opts.nsteps = nsteps
+    opts.nsteps = args['nsteps']
 
     #opts.norm_step_size = np.array([0.01] + \
     #                    ([0.05] * (len(opts.estimate_params)-1)))
@@ -153,11 +74,11 @@ if __name__ == '__main__':
     opts.use_hessian = True
     opts.hessian_scale = 1
     opts.hessian_period = opts.nsteps / 20 #10
-    opts.seed = random_seed
+    opts.seed = args['random_seed']
     opts.T_init = temps[rank - 1] # Use the temperature for this worker
     #opts.thermo_temp = 1
 
-    mcmc = NBDPlateMCMC(opts, values, dataset_name, b)
+    mcmc = NBDPlateMCMC(opts, args['values'], args['dataset_name'], b)
 
     mcmc.initialize()
 
