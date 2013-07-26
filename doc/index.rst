@@ -13,15 +13,11 @@ unify observations about interaction mechanisms.
 Contents:
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    intro
-   nbd_data
-   nbd_plate_data
-   nbd_c126_titration_data
-   nbd_notes
-   grid_data
-   uni_dye_release_models
+   datasets/index
+   notes/index
    modules/index
    references
    todo

@@ -14,7 +14,8 @@ By Bax Concentration
     from matplotlib.font_manager import FontProperties
     import pickle
 
-    data = pickle.load(open('../tbidbaxlipo/data/nbd_c126_titration_data.pck'))
+    data = pickle.load(open('../../tbidbaxlipo/data/'
+                            'nbd_c126_titration_data.pck'))
 
     def do_legend():
         fontP = FontProperties()
@@ -95,7 +96,8 @@ Single-Exponential Fits
     from tbidbaxlipo.util import fitting
     import numpy as np
 
-    data = pickle.load(open('../tbidbaxlipo/data/nbd_c126_titration_data.pck'))
+    data = pickle.load(open('../../tbidbaxlipo/data/'
+                            'nbd_c126_titration_data.pck'))
 
     def plot_bg_sub_exp_fits(bax_conc):
         ks = []
