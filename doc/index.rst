@@ -18,6 +18,7 @@ Contents:
    intro
    nbd_data
    nbd_plate_data
+   nbd_c126_titration_data
    nbd_notes
    grid_data
    uni_dye_release_models
