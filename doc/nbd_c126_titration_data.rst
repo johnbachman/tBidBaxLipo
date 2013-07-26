@@ -84,3 +84,57 @@ Background-Subtracted
     for bax_conc in data.columns.levels[0]:
         plot_bg_sub_titration(bax_conc)
 
+Single-Exponential Fits
+-----------------------
+
+.. plot::
+
+    from matplotlib import pyplot as plt
+    from matplotlib.font_manager import FontProperties
+    import pickle
+    from tbidbaxlipo.util import fitting
+    import numpy as np
+
+    data = pickle.load(open('../tbidbaxlipo/data/nbd_c126_titration_data.pck'))
+
+    def plot_bg_sub_exp_fits(bax_conc):
+        ks = []
+        fmaxes = []
+        timecourses = data.xs(bax_conc, axis=1, level='Bax')
+        plt.figure()
+        bg = timecourses[0.]
+        time = np.array(bg.index.values, dtype='float')
+        lipo_concs = np.array(timecourses.columns.values, dtype='float')
+        for lipo_conc in lipo_concs:
+            tc = timecourses[lipo_conc] - bg
+            k = fitting.Parameter(np.log(2)/2300.)
+            fmax = fitting.Parameter(3.)
+            def single_exp(t):
+                return fmax()*(1 - np.exp(-k()*t))
+            fitting.fit(single_exp, [k, fmax], tc.values, time)
+            ks.append(k())
+            fmaxes.append(fmax())
+            plt.plot(time, tc.values)
+            plt.plot(time, np.array(map(single_exp, time)))
+        plt.title('Single Exponential Fits to c126 Titration, Bax %d nM' % \
+                  bax_conc)
+        # Fit ks with powerlaw
+        ks = np.array(ks)
+        b = fitting.Parameter(1e-5)
+        m = fitting.Parameter(1)
+        def power_law(x): return b() * (x ** m())
+        fitting.fit(power_law, [b, m], ks, lipo_concs)
+        plt.figure()
+        plt.loglog(lipo_concs, ks, marker='o', color='b')
+        plt.loglog(lipo_concs, map(power_law, lipo_concs), color='r')
+        plt.title('k vs. Liposome Concentration')
+        print "b: %f" % b()
+        print "m: %f" % m()
+        plt.figure()
+        plt.loglog(lipo_concs, np.array(fmaxes), marker='o')
+        plt.title('Fmax vs. Liposome Concentration')
+        plt.show()
+
+    plt.ion()
+    for bax_conc in data.columns.levels[0]:
+        plot_bg_sub_exp_fits(bax_conc)
