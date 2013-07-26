@@ -124,9 +124,18 @@ Single-Exponential Fits
         m = fitting.Parameter(1)
         def power_law(x): return b() * (x ** m())
         fitting.fit(power_law, [b, m], ks, lipo_concs)
+        # Fit ks with hill func
+        km = fitting.Parameter(1.)
+        vmax = fitting.Parameter(1e-3)
+        def hill_func(x): return (vmax() * x) / (km() + x)
+        fitting.fit(hill_func, [km, vmax], ks, lipo_concs)
+        # Plot data and fits
         plt.figure()
         plt.loglog(lipo_concs, ks, marker='o', color='b')
-        plt.loglog(lipo_concs, map(power_law, lipo_concs), color='r')
+        plt.loglog(lipo_concs, map(power_law, lipo_concs), color='r',
+                   label='Power')
+        plt.loglog(lipo_concs, map(hill_func, lipo_concs), color='g',
+                   label='Hill')
         plt.title('k vs. Liposome Concentration')
         print "b: %f" % b()
         print "m: %f" % m()
