@@ -1,7 +1,7 @@
 Datasets
 ========
 
-In vitro datasets, currently including results from Bax-NBD and ANTS release
+In vitro datasets, including results from Bax-NBD and ANTS release
 kinetic assays.
 
 Contents:
@@ -11,3 +11,4 @@ Contents:
 
    nbd_bax/index
    ants/index
+

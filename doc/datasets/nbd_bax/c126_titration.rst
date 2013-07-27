@@ -1,5 +1,7 @@
-Plots of Bax c126 NBD Titration Data
-====================================
+NBD-126-Bax Titration, Plate Reader
+===================================
+
+Data from Justin Kale, dated 9/26/2012.
 
 Raw data
 --------

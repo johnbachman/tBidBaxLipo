@@ -1,5 +1,15 @@
-Plots and Analysis of NBD Plate Data
-====================================
+NBD-Bax Kinetics, Plate Reader
+==============================
+
+A dataset from Justin Kale in which multiple mutants were assayed at the same
+time in a plate reader. The dataset includes 15 mutants, with four replicates
+for each. Replicates 0 and 1 were performed together on the same day;
+replicates 2 and 3 were performed together on a different day.
+
+Unlike the fluorimeter dataset, in these experiments the cBid was first
+equilibrated with the liposomes and then the Bax was added afterwards. The
+values given here are the raw fluorescence values (not normalized to
+fold-change over background).
 
 Raw data
 --------
@@ -29,8 +39,9 @@ Raw data
 Notes on Unimolecular Multi-Conformer Fits, 7/16/13
 ---------------------------------------------------
 
-An index of the fits, performed on 7/16/13, can be found 
-on the `Sorger lab web site
+Notes on fits to the data performed by MCMC using the "unimolecular
+multi-conformer" model. An index of the fits, performed on 7/16/13, can be
+found on the `Sorger lab web site
 <http://sorger.med.harvard.edu/data/bachman/130716_nbd_plate_fits/index.html>`_.
 
 c5_

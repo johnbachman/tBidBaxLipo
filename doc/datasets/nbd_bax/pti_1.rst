@@ -1,5 +1,5 @@
-NBD-Bax Kinetics Measured by Fluorimeter
-========================================
+NBD-Bax Kinetics, PTI
+=====================
 
 An NBD-Bax dataset provided by David Andrews in the fall of 2011.  Includes
 kinetics of several NBD-Bax mutants measured by the PTI fluorimeter, with high
