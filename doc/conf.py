@@ -29,7 +29,7 @@ sys.path.append(os.path.abspath('ext'))
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
               'sphinx.ext.intersphinx', 'sphinx.ext.todo',
               'sphinx.ext.coverage', 'sphinx.ext.pngmath',
-              'sphinx.ext.viewcode', 'numpydoc']
+              'sphinx.ext.viewcode', 'numpydoc', 'citations']
 
 extensions.extend( ['matplotlib.sphinxext.plot_directive'])
 
