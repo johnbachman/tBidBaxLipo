@@ -1,7 +1,18 @@
+"""
+A script for generating reports on MCMC fits of tBid/Bax/Lipo models
+to data.
+
+Usage::
+
+    python -m tbidbaxlipo.run_report *.mcmc
+
+The glob specifies which pickled MCMC files are to be included. To change the
+reports that are run, edit this script.
+"""
+
 import glob
 from bayessb.report import Report
 import bayessb.report.reporters
-import tbidbaxlipo.reporters
 from tbidbaxlipo.reporters import knowledge, topology, experiment, residuals
 from tbidbaxlipo.mcmc import import_mcmc_groups
 import sys
