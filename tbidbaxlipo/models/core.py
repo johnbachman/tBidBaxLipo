@@ -245,8 +245,7 @@ paradigm.
 
 __author__ = 'johnbachman'
 
-#from pysb import *
-#from pysb.macros import *
+from pysb import *
 import numpy as np
 import pysb.builder
 
