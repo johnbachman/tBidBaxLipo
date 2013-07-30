@@ -632,7 +632,7 @@ class Builder(pysb.builder.Builder):
         # Spontaneous rate of transition of Bax from the mitochondrial to the
         # inserted state
         # Implies average time is 10000 seconds???
-        basal_Bax_kf = self.parameter('basal_Bax_kf', 1e-4)
+        basal_Bax_kf = self.parameter('basal_Bax_kf', 2e-3)
         #basal_Bax_kr = self.parameter('basal_Bax_kr', 10)
 
         Bax = self['Bax']

@@ -1,6 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from pysb.integrate import odesolve
+from pysb.integrate import odesolve, Solver
 from tbidbaxlipo.util import color_iter
 from tbidbaxlipo.models import lipo_sites, one_cpt
 from tbidbaxlipo.util import fitting
@@ -114,12 +114,77 @@ def plot_bax_titration_two_exp(model):
     plt.title("$F_{max}$ vs. Bax conc")
     plt.show()
 
-def plot_liposome_titration():
-    b = one_cpt.Builder()
-    b.translocate_Bax()
-    b.model.parameters['Bax_0'].value = 10000
-    t = np.linspace(0, 3000, 1000)
+def plot_liposome_titration_insertion_kinetics(module):
+    """Plot the insertion kinetics of Bax over a liposome titration."""
     lipo_concs = np.logspace(-2, 2, 40)
+    t = np.linspace(0, 12000, 100)
+
+    #b_trans = module.Builder()
+    #b_trans.translocate_Bax()
+    b_ins = module.Builder()
+    b_ins.translocate_Bax()
+    b_ins.basal_Bax_activation()
+
+    fmax_list = []
+    k_list = []
+
+    for lipo_conc in lipo_concs:
+        b_ins.model.parameters['Vesicles_0'].value = lipo_conc
+
+        # Get the SS mBax value
+        #b_trans.model.parameters['Vesicles_0'].value = lipo_conc
+        #s = Solver(b_trans.model, t)
+        #s.run()
+        #max_mBax = s.yobs['mBax'][-1]
+
+        # Get the iBax curve
+        s = Solver(b_ins.model, t)
+        s.run()
+        iBax = s.yobs['iBax'] / b_ins.model.parameters['Bax_0'].value
+        plt.plot(t, iBax, 'r')
+
+        # Fit to single exponential
+        fmax = fitting.Parameter(0.9)
+        k = fitting.Parameter(0.01)
+        def single_exp(t):
+            return (fmax() * (1 - np.exp(-k()*t)))
+        fitting.fit(single_exp, [fmax, k], iBax, t)
+        plt.plot(t, single_exp(t), 'b')
+
+        fmax_list.append(fmax())
+        k_list.append(k())
+
+    plt.title('Inserted Bax with liposome titration')
+    plt.xlabel('Time')
+    plt.ylabel('Fraction of inserted Bax')
+    plt.show()
+
+    # Make plots of k and fmax as a function of lipo concentration
+    fmax_list = np.array(fmax_list)
+    k_list = np.array(k_list)
+
+    # k
+    plt.figure()
+    plt.plot(lipo_concs, k_list, 'ro')
+    plt.xlabel('Liposomes (nM)')
+    plt.ylabel('$k$')
+    plt.title("$k$ vs. Liposome conc")
+    plt.show()
+
+    # Fmax 
+    plt.figure()
+    plt.plot(lipo_concs, fmax_list, 'ro')
+    plt.xlabel('Liposomes (nM)')
+    plt.ylabel('$F_{max}$')
+    plt.title("$F_{max}$ vs. Liposome conc")
+    plt.show()
+
+def plot_liposome_titration(builder=one_cpt.Builder()):
+    b = builder
+    b.translocate_Bax()
+    b.model.parameters['Bax_0'].value = 100
+    t = np.linspace(0, 3000, 1000)
+    lipo_concs = np.logspace(-2, 4, 40)
     ss_mBax_values = []
 
     # Plot timecourses
@@ -130,10 +195,10 @@ def plot_liposome_titration():
         b.model.parameters['Vesicles_0'].value = lipo_conc
         x = odesolve(b.model, t)
         mBax_frac = x['mBax'] / b.model.parameters['Bax_0'].value
-        #plt.plot(t, mBax_frac)
+        plt.plot(t, mBax_frac)
         ss_mBax_value = mBax_frac[-1]
         ss_mBax_values.append(ss_mBax_value)
-    #plt.show()
+    plt.show()
     ss_mBax_values = np.array(ss_mBax_values)
 
     # Plot liposome titration

@@ -8,7 +8,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   uni_dye_release_models.rst
-   nbd_notes.rst
-   bi_dye_release_models.rst
+   lipo_titration
+   uni_dye_release_models
+   nbd_notes
+   bi_dye_release_models
 
