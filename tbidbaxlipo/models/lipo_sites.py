@@ -6,6 +6,7 @@ from tbidbaxlipo.util import color_iter
 from tbidbaxlipo.models import one_cpt, core
 from matplotlib.font_manager import FontProperties
 from pysb.integrate import odesolve, Solver
+from bayessb.priors import Normal
 
 Solver._use_inline = True
 
@@ -24,7 +25,7 @@ class Builder(one_cpt.Builder):
         self.compartment('ves', dimension=2, parent=solution)
 
         # INITIAL CONDITIONS
-        self.parameter('Vesicles_0', 5, estimate=True, mean=1., variance=2.)
+        self.parameter('Vesicles_0', 5, prior=Normal(1., 2.))
         self.parameter('tBid_0', 20, estimate=False)
         self.parameter('Bax_0', 100, estimate=False)
 

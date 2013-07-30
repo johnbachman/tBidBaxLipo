@@ -120,7 +120,7 @@ def tBidBax_kd(mcmc_set):
 # this mutant does not have a9 insertion or a5 insertion or dye release
 # Titrating in S184E inhibits Bax activation (presumably by tBid inhibition?)
 
-# Biphasic curves in the loop region (alpha 2-3, residues 40-50 or so)
+# Biphasic curves in the loop region (alpha 1-2, residues 40-50 or so)
 
 # Titration of Bax and kinetics for C126
 
