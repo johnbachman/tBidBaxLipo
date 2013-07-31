@@ -114,22 +114,69 @@ def plot_bax_titration_two_exp(model):
     plt.title("$F_{max}$ vs. Bax conc")
     plt.show()
 
-def plot_liposome_titration_insertion_kinetics(module):
+def plot_bax_titration_insertion_kinetics(model):
+    """Plot the insertion kinetics of Bax over a Bax titration."""
+    bax_concs = np.logspace(-1, 3, 40)
+    t = np.linspace(0, 12000, 100)
+
+    fmax_list = []
+    k_list = []
+
+    for bax_conc in bax_concs:
+        model.parameters['Bax_0'].value = bax_conc
+
+        # Get the iBax curve
+        s = Solver(model, t)
+        s.run()
+        iBax = s.yobs['iBax'] / model.parameters['Bax_0'].value
+        plt.plot(t, iBax, 'r')
+
+        # Fit to single exponential
+        fmax = fitting.Parameter(0.9)
+        k = fitting.Parameter(0.01)
+        def single_exp(t):
+            return (fmax() * (1 - np.exp(-k()*t)))
+        fitting.fit(single_exp, [fmax, k], iBax, t)
+        plt.plot(t, single_exp(t), 'b')
+
+        fmax_list.append(fmax())
+        k_list.append(k())
+
+    plt.title('Inserted Bax with Bax titration')
+    plt.xlabel('Time')
+    plt.ylabel('Fraction of inserted Bax')
+    plt.show()
+
+    # Make plots of k and fmax as a function of lipo concentration
+    fmax_list = np.array(fmax_list)
+    k_list = np.array(k_list)
+
+    # k
+    plt.figure()
+    plt.plot(bax_concs, k_list, 'ro')
+    plt.xlabel('Bax (nM)')
+    plt.ylabel('$k$')
+    plt.title("$k$ vs. Bax conc")
+    plt.show()
+
+    # Fmax 
+    plt.figure()
+    plt.plot(bax_concs, fmax_list, 'ro')
+    plt.xlabel('Bax (nM)')
+    plt.ylabel('$F_{max}$')
+    plt.title("$F_{max}$ vs. Bax conc")
+    plt.show()
+
+def plot_liposome_titration_insertion_kinetics(model):
     """Plot the insertion kinetics of Bax over a liposome titration."""
     lipo_concs = np.logspace(-2, 2, 40)
     t = np.linspace(0, 12000, 100)
-
-    #b_trans = module.Builder()
-    #b_trans.translocate_Bax()
-    b_ins = module.Builder()
-    b_ins.translocate_Bax()
-    b_ins.basal_Bax_activation()
 
     fmax_list = []
     k_list = []
 
     for lipo_conc in lipo_concs:
-        b_ins.model.parameters['Vesicles_0'].value = lipo_conc
+        model.parameters['Vesicles_0'].value = lipo_conc
 
         # Get the SS mBax value
         #b_trans.model.parameters['Vesicles_0'].value = lipo_conc
@@ -138,9 +185,9 @@ def plot_liposome_titration_insertion_kinetics(module):
         #max_mBax = s.yobs['mBax'][-1]
 
         # Get the iBax curve
-        s = Solver(b_ins.model, t)
+        s = Solver(model, t)
         s.run()
-        iBax = s.yobs['iBax'] / b_ins.model.parameters['Bax_0'].value
+        iBax = s.yobs['iBax'] / model.parameters['Bax_0'].value
         plt.plot(t, iBax, 'r')
 
         # Fit to single exponential
