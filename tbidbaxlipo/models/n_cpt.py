@@ -33,14 +33,13 @@ class Builder(core.Builder):
 
         # COMPARTMENTS
         solution = self.compartment('solution', dimension=3, parent=None)
-        for i in range(1, self['Vesicles_0'].value+1):
+        for i in range(1, int(self['Vesicles_0'].value)+1):
             self.compartment('c' + str(i), dimension=2, parent=solution)
 
         tBid = self['tBid']
         Bax = self['Bax']
-
         self.initial(tBid(bh3=None, loc='c') ** solution, self['tBid_0'])
-        self.initial(Bax(loc='c', bh3=None, a6=None,
+        self.initial(Bax(loc='c', bh3=None, a6=None, lipo=None,
                      c3='s', c62='s', c120='s', c122='s', c126='s', c184='s')
                      ** solution, self['Bax_0'])
 
@@ -115,18 +114,24 @@ class Builder(core.Builder):
         self.translocate_tBid()
         self.translocate_Bax()
 
-    def pores_from_Bax_monomers(self, bax_loc_state='i'):
+    def pores_from_Bax_monomers(self, bax_loc_state='i', reversible=False):
         print("n_cpt: pores_from_Bax_monomers()")
+
+        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3)
 
         Bax = self['Bax']
         Pores = self['Pores']
 
-        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e0)
-        #Parameter('pore_recycling_rate_k', 0) # The rate of pBax to m/sBax
-
         self.rule('Pores_From_Bax_Monomers', 
              Bax(loc=bax_loc_state) >> Bax(loc='p') + Pores(),
              pore_formation_rate_k)
+
+        if reversible:
+            pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-3)
+
+            self.rule('Pores_reverse',
+                 Bax(loc='p') >> Bax(loc='c') ** solution,
+                 pore_reverse_rate_k)
 
         # Pore observables
         self.observable('pBax', Bax(loc='p'))
