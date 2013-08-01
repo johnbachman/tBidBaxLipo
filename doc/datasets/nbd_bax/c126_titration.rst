@@ -47,6 +47,8 @@ By Liposome Concentration
     plt.close('all')
     k_matrix = plot_exponential_fits(bgsub_data)
 
+.. _bax-liposome-surface:
+
 By Bax and Liposome Concentration (3D Surface)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

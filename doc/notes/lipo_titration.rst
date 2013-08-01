@@ -10,6 +10,8 @@ but that increasing Bax can actually decrease these rates. It is these
 characteristics that we will examine for the following models of Bax-lipid
 interactions.
 
+.. _bax-insertion-partitioning-model:
+
 Partitioning model
 ------------------
 
@@ -80,6 +82,8 @@ smaller fraction of total Bax gets bound and activated.
     b.basal_Bax_activation()
     plot_bax_titration_insertion_kinetics(b.model)
 
+.. _bax-insertion-tbid-activation:
+
 tBid Activates Bax
 ------------------
 
@@ -87,6 +91,7 @@ tBid Activates Bax
 
 A model with tBid-activation of Bax has the right shape for the liposome
 titration:
+
 
 .. plot::
 

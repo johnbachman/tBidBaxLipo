@@ -8,6 +8,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   conclusions
    lipo_titration
    uni_dye_release_models
    nbd_notes
