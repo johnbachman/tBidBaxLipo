@@ -32,7 +32,7 @@ class Job(object):
             bng.run_ssa(self.model, t_end=self.tmax, n_steps=self.n_steps,
                         cleanup=False, output_dir='.')
 
-def output_mean_and_sd_from_files(gdat_files):
+def calculate_mean_and_std_from_files(gdat_files):
     """Calculates mean and SD for all observables from .gdat files.
 
     The results are saved as pickled output files.
@@ -41,6 +41,12 @@ def output_mean_and_sd_from_files(gdat_files):
     ----------
     gdat_files : list of strings
         The list of gdat files to load.
+
+    Returns
+    -------
+    list of numpy record arrays
+        The first entry is the record array of means; the second is
+        the record array of standard deviations.
     """
 
     print "Calculating mean and SD for observables from .gdat files..."
@@ -56,24 +62,20 @@ def output_mean_and_sd_from_files(gdat_files):
     xall = np.array([x.tolist() for x in xrecs])
     # Create new record arrays with the means and SDs for all of the the
     # observables as the entries
-    x_avg = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
+    means = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
                         buf=np.mean(xall, 0))
-    x_std = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
+    stds = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
                         buf=np.std(xall, 0))
-    # Pickle the output files
-    with open('x_avg.pck', 'w') as f:
-        pickle.dump(x_avg, f)
-    with open('x_std.pck', 'w') as f:
-        pickle.dump(x_std, f)
+    return [means, stds]
     #with open('dr.pck', 'w') as f:
     #    pickle.dump(dr_all, f)
 
 if __name__ == '__main__':
     usage_msg =  "Usage:\n"
     usage_msg += "    python ssa_job.py parse [files]\n"
-    usage_msg += "        Calculates the mean and SD for all observables from a\n"
-    usage_msg += "        list of .gdat files and saves the results in two\n"
-    usage_msg += "        pickle files, one for the mean and one for SD."
+    usage_msg += "        Calculates the mean and SD for all observables\n"
+    usage_msg += "        from a list of .gdat files and saves the results in\n"
+    usage_msg += "        two pickle files, one for the mean and one for SD."
 
     if len(sys.argv) < 2:
         print usage_msg
@@ -84,7 +86,12 @@ if __name__ == '__main__':
             print "Please provide a list of files to parse.\n"
             print usage_msg
             sys.exit()
-        output_mean_and_sd_from_files(gdat_files)
+        (means, stds) = calculate_mean_and_std_from_files(gdat_files)
+        # Pickle the output files
+        with open('means.pck', 'w') as f:
+            pickle.dump(means, f)
+        with open('stds.pck', 'w') as f:
+            pickle.dump(stds, f)
     else:
         print usage_msg
         sys.exit()
