@@ -16,16 +16,12 @@ class Job(object):
         The number of simulation data points to save and return.
     n_sims : int
         The number of simulations to run as part of this job.
-    scaling_factor : int
-        Scaling factor to set the number of agents used in the simulation.
-        For more information, see :py:class:`tbidbaxlipo.models.n_cpt.Builder`.
     """
-    def __init__(self, model, tmax, n_steps, n_sims, scaling_factor):
+    def __init__(self, model, tmax, n_steps, n_sims):
         self.model = model
         self.tmax = tmax
         self.n_steps = n_steps
         self.n_sims = n_sims
-        self.scaling_factor = scaling_factor
 
     def run(self):
         for i in range(self.n_sims):

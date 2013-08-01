@@ -1,9 +1,13 @@
-
 from ssa_job import Job
-from tbidbaxlipo.models.one_cpt import Builder
+from tbidbaxlipo.models.n_cpt import Builder
 
-b = Builder()
+scaling_factor = 10
+b = Builder(scaling_factor=scaling_factor)
+
 b.build_model_bax_heat()
 
-j = Job(b.model, 10000, 200, 10, 1)
+tmax = 10000
+n_steps = 200
+num_sims = 10
+j = Job(b.model, tmax, n_steps, num_sims)
 j.run()
