@@ -18,6 +18,7 @@ Contents:
    intro
    datasets/index
    notes/index
+   technotes/index
    modules/index
    references
    todo
