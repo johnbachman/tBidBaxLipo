@@ -4,7 +4,6 @@ doc/_build
 doc/_static
 doc/sphinxreport.log
 
-simdata
 *.log
 *.tsv
 *species.txt

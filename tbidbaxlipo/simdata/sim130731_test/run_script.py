@@ -1,4 +1,4 @@
-from ssa_job import Job
+from tbidbaxlipo.models.n_cpt_jobs import Job
 from tbidbaxlipo.models.n_cpt import Builder
 
 scaling_factor = 10
