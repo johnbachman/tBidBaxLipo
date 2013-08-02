@@ -68,10 +68,12 @@ def calculate_mean_and_std_from_files(gdat_files):
 
 if __name__ == '__main__':
     usage_msg =  "Usage:\n"
+    usage_msg += "\n"
     usage_msg += "    python ssa_job.py parse [files]\n"
     usage_msg += "        Calculates the mean and SD for all observables\n"
     usage_msg += "        from a list of .gdat files and saves the results in\n"
-    usage_msg += "        two pickle files, one for the mean and one for SD."
+    usage_msg += "        two pickle files, one for the mean and one for SD.\n"
+    usage_msg += "\n"
     usage_msg += "    python ssa_job.py submit [run_script.py] [num_jobs]\n"
     usage_msg += "        For use with LSF. Calls bsub to submit the desired\n"
     usage_msg += "        number of instances of run_script.py."
@@ -89,8 +91,10 @@ if __name__ == '__main__':
         (means, stds) = calculate_mean_and_std_from_files(gdat_files)
         # Pickle the output files
         with open('means.pck', 'w') as f:
+            print "Writing means..."
             pickle.dump(means, f)
         with open('stds.pck', 'w') as f:
+            print "Writing SDs..."
             pickle.dump(stds, f)
     # Submit jobs to LSF
     elif sys.argv[1] == 'submit':
