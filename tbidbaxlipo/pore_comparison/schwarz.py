@@ -5,10 +5,47 @@ from tbidbaxlipo.util import color_iter
 from tbidbaxlipo.models import lipo_sites, one_cpt
 from tbidbaxlipo.util import fitting
 
+def plot_tbid_titration(model):
+    plt.ion()
+    bid_concs = np.logspace(0, 4, 40)
+    t = np.linspace(0, 10000, 1000)
+    initial_rates = []
+
+    plt.figure()
+    for bid_conc in bid_concs:
+        model.parameters['tBid_0'].value = bid_conc
+        x = odesolve(model, t)
+        avg_pores = x['pores']/model.parameters['Vesicles_0'].value
+        plt.plot(t, avg_pores)
+        initial_rate = avg_pores[10] / t[10]
+        initial_rates.append(initial_rate)
+    initial_rates = np.array(initial_rates)
+    plt.title('Avg. pores with Bid titration')
+    plt.xlabel('Time')
+    plt.ylabel('Avg. pores per liposome')
+    plt.show()
+
+    # Run a regression against the points and calculate the initial_rate
+    log_concs = np.log(bid_concs)
+    log_initial_rates = np.log(initial_rates)
+    (slope, intercept) = np.polyfit(log_concs, log_initial_rates, 1)
+    fitted_initial_rates = (slope * log_concs) + intercept
+
+    # Figure with slope and intercept info
+    plt.figure()
+    plt.figtext(0.2, 0.8, 'Slope: %.4f' % slope)
+    plt.figtext(0.2, 0.75, 'Intercept: %.4f' % intercept)
+    plt.plot(log_concs, log_initial_rates, 'b')
+    plt.plot(log_concs, fitted_initial_rates, 'r')
+    plt.xlabel('Log([Bid])')
+    plt.ylabel('Log(V_i)')
+    plt.title("Log-Log plot of initial rate vs. Bid conc")
+    plt.show()
+
 def plot_bax_titration(model):
     plt.ion()
-    bax_concs = np.logspace(-1, 2, 40)
-    t = np.linspace(0, 3000, 1000)
+    bax_concs = np.logspace(0, 3, 40)
+    t = np.linspace(0, 10000, 1000)
     initial_rates = []
 
     plt.figure()
