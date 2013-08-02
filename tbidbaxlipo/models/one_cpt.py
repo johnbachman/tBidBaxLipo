@@ -86,7 +86,7 @@ class Builder(core.Builder):
     def within_compartment_rsf(self):
         return 1.0 / (self['Vesicles_0'].value)
 
-    def __init__(self, params_dict=None, nbd_sites=None):
+    def __init__(self, params_dict=None, nbd_sites=None, scaling_factor=None):
         # Sets self.model = Model(), and self.param_dict
         core.Builder.__init__(self, params_dict=params_dict)
 
