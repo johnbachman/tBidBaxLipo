@@ -14,7 +14,7 @@ Note that any parameter overrides to be specified via the ``params_dict``
 argument should be specified here, as well as the scaling factor to use
 for scaling agent numbers. For example::
 
-    from tbidbaxlipo.models.ssa_job import Job
+    from tbidbaxlipo.models.n_cpt_jobs import Job
     from tbidbaxlipo.models.n_cpt import Builder
 
     scaling_factor = 10
@@ -33,7 +33,7 @@ for scaling agent numbers. For example::
     parameters that have not been overridden in the params_dict!`
 
 In the script, create an instance of
-:py:class:`tbidbaxlipo.models.ssa_job.Job`, setting the time range, the number
+:py:class:`tbidbaxlipo.models.n_cpt_jobs.Job`, setting the time range, the number
 of simulation steps to record, and the number of simulations to run in a single
 job::
 
@@ -57,17 +57,17 @@ Log into the computing cluster and navigate to the directory on the server
 (e.g. `tbidbaxlipo/simdata`) where you want the simulation results to be saved.
 It is a good practice to put the run script used to create and run the model in
 this directory so you maintain a link between the simulation setup and the
-results. Use the script :py:mod:`tbidbaxlipo.models.ssa_job` to submit
+results. Use the script :py:mod:`tbidbaxlipo.models.n_cpt_jobs` to submit
 the simulation jobs on Orchestra, as follows::
 
-    python -m tbibaxlipo.models.ssa_job submit path/to/run_script.py [num_jobs]
+    python -m tbibaxlipo.models.n_cpt_jobs submit [run_script.py] [num_jobs]
 
 **3. Parse the results back.**
 
 In most cases you will only want the means and the standard deviations of the
 observables at each time point. To calculate and save these, you run the script::
 
-    python -m tbidbaxlipo.models.ssa_job parse /path/*.gdat
+    python -m tbidbaxlipo.models.n_cpt_jobs parse /path/*.gdat
 
 The `.gdat` files to load and parse are passed in as a glob or list of files.
 The script saves the means of each observable in a record array pickled to
