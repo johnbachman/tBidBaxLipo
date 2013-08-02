@@ -9,4 +9,5 @@ tBid/Bax Mechanistic Models (:py:mod:`tbidbaxlipo.models`)
    core
    one_cpt
    n_cpt
+   n_cpt_jobs
    site_cpt
