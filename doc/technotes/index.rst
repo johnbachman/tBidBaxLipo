@@ -9,4 +9,4 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   submitting_ssa_jobs
+   comparing_stoch_det_models
