@@ -71,7 +71,7 @@ class Builder(core.Builder):
 
         Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
                                           factor=(1/float(self.scaling_factor)))
-        Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-2)
+        Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1)
 
         Bax = self['Bax']
         solution = self['solution']
