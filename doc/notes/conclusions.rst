@@ -3,11 +3,11 @@ Observations and Conclusions
 
 **Biphasic character of dye release/pore curves.**
     This was most visible in the :doc:`first round of dye release curves
-    </datasets/ants/tbid_bax_lipo_1>`. However, this effect, though
-    still visible, was much reduced in the :doc:`second round of curves
-    </datasets/ants/tbid_bax_lipo_2>`. Explanations considered included
-    tBid-Bax inhibition or Bax depletion and dissociation. Other explanations
-    to consider could be tBid dissociation (jumping) 
+    </datasets/ants/tbid_bax_lipo_1>`. However this effect, though still
+    visible, was much reduced in the :doc:`second round of curves
+    </datasets/ants/tbid_bax_lipo_2>`. Hypotheses considered included tBid-Bax
+    inhibition or Bax depletion and subsequent recycling through dissociation.
+    Another explanations to consider could be tBid dissociation (jumping).
 
 **Biphasic character of NBD-Bax insertion curves (by PTI).**
     This was most visible in the curves that Justin measured in the PTI,

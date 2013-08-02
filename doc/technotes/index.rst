@@ -1,8 +1,8 @@
 Technical Notes
 ===============
 
-Notes on how usage of the code, including submission scripts, data
-parasing utilities, etc.
+Notes on how to use the code, including submission scripts, data
+parsing utilities, best practices, etc.
 
 Contents:
 
