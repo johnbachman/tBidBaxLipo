@@ -23,7 +23,7 @@ limit to how much Bax can occupy liposomes.
 
 .. plot::
 
-    from tbidbaxlipo.pore_comparison.schwarz import *
+    from tbidbaxlipo.plots.pore_plots import *
     from tbidbaxlipo.models import one_cpt
     b = one_cpt.Builder()
     b.translocate_Bax()
@@ -35,7 +35,7 @@ kinetics at all:
 
 .. plot::
 
-    from tbidbaxlipo.pore_comparison.schwarz import *
+    from tbidbaxlipo.plots.pore_plots import *
     from tbidbaxlipo.models import one_cpt
     b = one_cpt.Builder()
     b.translocate_Bax()
@@ -62,7 +62,7 @@ this could be measured fairly in a no-tBid titration experiment).
 
 .. plot::
 
-    from tbidbaxlipo.pore_comparison.schwarz import *
+    from tbidbaxlipo.plots.pore_plots import *
     from tbidbaxlipo.models import lipo_sites
     b = lipo_sites.Builder()
     b.translocate_Bax()
@@ -75,7 +75,7 @@ smaller fraction of total Bax gets bound and activated.
 
 .. plot::
 
-    from tbidbaxlipo.pore_comparison.schwarz import *
+    from tbidbaxlipo.plots.pore_plots import *
     from tbidbaxlipo.models import lipo_sites
     b = lipo_sites.Builder()
     b.translocate_Bax()
@@ -95,7 +95,7 @@ titration:
 
 .. plot::
 
-    from tbidbaxlipo.pore_comparison.schwarz import *
+    from tbidbaxlipo.plots.pore_plots import *
     from tbidbaxlipo.models import one_cpt
     params_dict = {'tBid_mBax_kf':1e-1, 'tBid_iBax_kc':1e-2}
     b = one_cpt.Builder(params_dict)
@@ -108,7 +108,7 @@ Km can reproduce the phenomenon of increasing Bax causing slower kinetics:
 
 .. plot::
 
-    from tbidbaxlipo.pore_comparison.schwarz import *
+    from tbidbaxlipo.plots.pore_plots import *
     from tbidbaxlipo.models import one_cpt
     params_dict = {'tBid_mBax_kf':1e-1, 'tBid_iBax_kc':1e-2}
     b = one_cpt.Builder(params_dict)
@@ -131,7 +131,7 @@ have a bit of this behavior, however).
 
 .. plot::
 
-    from tbidbaxlipo.pore_comparison.schwarz import *
+    from tbidbaxlipo.plots.pore_plots import *
     from tbidbaxlipo.models import one_cpt
     b = one_cpt.Builder()
     b.translocate_tBid_Bax()
@@ -146,7 +146,7 @@ should be a testable prediction.
 
 .. plot::
 
-    from tbidbaxlipo.pore_comparison.schwarz import *
+    from tbidbaxlipo.plots.pore_plots import *
     from tbidbaxlipo.models import one_cpt
     b = one_cpt.Builder()
     b.translocate_tBid_Bax()

@@ -81,7 +81,7 @@ in this liposome titration plot:
 
 .. plot::
 
-    from tbidbaxlipo.pore_comparison.schwarz import plot_liposome_titration
+    from tbidbaxlipo.plots.pore_plots import plot_liposome_titration
     plot_liposome_titration()
 
 That is, **the fraction of Bax bound is dependent on the amount of liposomes in
@@ -140,7 +140,7 @@ vesicles have more than one pore, whereas others have none:
 .. plot::
 
     from tbidbaxlipo.models.one_cpt import Builder
-    from tbidbaxlipo.pore_comparison.schwarz import plot_pores_and_efflux
+    from tbidbaxlipo.plots.pore_plots import plot_pores_and_efflux
     from matplotlib import pyplot as plt
     params_dict = {'Bax_0': 50., 'Vesicles_0': 50.}
     b = Builder(params_dict=params_dict)
@@ -164,7 +164,7 @@ doubled, the steady state number of pores (and the rate) will double as well.
 .. plot::
 
     from tbidbaxlipo.models.one_cpt import Builder
-    from tbidbaxlipo.pore_comparison.schwarz import plot_bax_titration
+    from tbidbaxlipo.plots.pore_plots import plot_bax_titration
     b = Builder()
     b.build_model_bax_schwarz()
     plot_bax_titration(b.model)
@@ -207,7 +207,7 @@ to concentrations of 50 nM as shown above for the irreversible case).
 .. plot::
 
     # 50nM Vesicles and Bax, pore formation forward rate of 1e-3
-    from tbidbaxlipo.pore_comparison.schwarz import \
+    from tbidbaxlipo.plots.pore_plots import \
          plot_effect_of_pore_reverse_rate
     plot_effect_of_pore_reverse_rate()
 
@@ -264,7 +264,7 @@ sites".
 
     from matplotlib import pyplot as plt
     from tbidbaxlipo.models import lipo_sites, one_cpt
-    from tbidbaxlipo.pore_comparison.schwarz import plot_fraction_bax_bound
+    from tbidbaxlipo.plots.pore_plots import plot_fraction_bax_bound
 
     plt.ion()
     params_dict = {'Vesicles_0': 30}
@@ -287,7 +287,7 @@ the log-log plot starts out with a slope of 1 and then saturates.
 .. plot::
 
     from tbidbaxlipo.models import lipo_sites
-    from tbidbaxlipo.pore_comparison.schwarz import plot_bax_titration
+    from tbidbaxlipo.plots.pore_plots import plot_bax_titration
     params_dict = {'Vesicles_0': 2, 'pore_formation_rate_k':5e-3}
     b = lipo_sites.Builder(params_dict=params_dict)
     b.build_model_bax_schwarz()
