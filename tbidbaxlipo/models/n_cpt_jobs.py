@@ -39,7 +39,7 @@ class Job(object):
         :py:mod:`tbidbaxlipo.models.n_cpt`) and return an instance of a Builder
         class after model construction is completed.  """
 
-        return NotImplementedError()
+        raise NotImplementedError()
 
     def run_n_cpt(self, cleanup=False):
         """Run a set of simulations using the n_cpt implementation.
@@ -87,6 +87,33 @@ class Job(object):
         s = Solver(b.model, t)
         s.run()
         return (t, s.yobs)
+
+    @staticmethod
+    def calculate_dye_release_mean_and_std(xrecs, pore_obs_prefix='pores_'):
+        # Get the timepoins
+        num_timepoints = len(xrecs[0])
+        # Get the list of pore observables; makes the assumption that all pore
+        # observable names have the same format, with a prefix followed by the
+        # compartment identifier, e.g. 'pores_c38'.
+        pore_obs_list = [field_name for field_name in xrecs[0].dtype.fields
+                         if field_name.startswith(pore_obs_prefix)]
+        # Assume that there is a pore observable for every vesicle:
+        num_vesicles = len(pore_obs_list)
+        # For every simulation result, calculate a dye release vector
+        dye_release = np.zeros((len(xrecs), num_timepoints))
+        for i, xrec in enumerate(xrecs):
+            assert len(xrec) == num_timepoints # all sims must be same length
+            # Calculate the fraction of vesicles permeabilized at this timepoint
+            for t in range(num_timepoints):
+                permeabilized_count = 0
+                for pore_obs in pore_obs_list:
+                    if xrec[pore_obs][t] > 0:
+                        permeabilized_count += 1
+                dye_release[i, t] = permeabilized_count / float(num_vesicles)
+        # Calculate the mean and SD across the matrix
+        mean = np.mean(dye_release, axis=0)
+        std = np.std(dye_release, axis=0)
+        return (mean, std)
 
     @staticmethod
     def calculate_mean_and_std(xrecs):
