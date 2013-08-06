@@ -115,58 +115,6 @@ class Job(object):
         return (t, s.yobs)
 
 # Operations on stochastic simulation results
-def calculate_dye_release_mean_and_std(xrecs, pore_obs_prefix='pores_'):
-    # Get the timepoins
-    num_timepoints = len(xrecs[0])
-    # Get the list of pore observables; makes the assumption that all pore
-    # observable names have the same format, with a prefix followed by the
-    # compartment identifier, e.g. 'pores_c38'.
-    pore_obs_list = [field_name for field_name in xrecs[0].dtype.fields
-                     if field_name.startswith(pore_obs_prefix)]
-    # Assume that there is a pore observable for every vesicle:
-    num_vesicles = len(pore_obs_list)
-    # For every simulation result, calculate a dye release vector
-    dye_release = np.zeros((len(xrecs), num_timepoints))
-    for i, xrec in enumerate(xrecs):
-        assert len(xrec) == num_timepoints # all sims must be same length
-        # Calculate the fraction of vesicles permeabilized at this timepoint
-        for t in range(num_timepoints):
-            permeabilized_count = 0
-            for pore_obs in pore_obs_list:
-                if xrec[pore_obs][t] > 0:
-                    permeabilized_count += 1
-            dye_release[i, t] = permeabilized_count / float(num_vesicles)
-    # Calculate the mean and SD across the matrix
-    mean = np.mean(dye_release, axis=0)
-    std = np.std(dye_release, axis=0)
-    return (mean, std)
-
-def calculate_mean_and_std(xrecs):
-    """Returns the mean and std of the observables from SSA simulations.
-
-    Parameters
-    ----------
-    xrecs : list of numpy.recarrays
-        A list of observable record arrays, for example of the type
-        returned by :py:meth:`Job.run_n_cpt`.
-
-    Returns
-    -------
-    tuple of (numpy.recarray, numpy.recarray)
-        The first entry in the tuple is the record array of means
-        (across the set of simulations run); the second is the record array
-        of standard deviations.
-    """
-
-    # Convert the list of record arrays into a matrix
-    xall = np.array([x.tolist() for x in xrecs])
-    # Create new record arrays with the means and SDs for all of the the
-    # observables as the entries
-    means = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
-                        buf=np.mean(xall, 0))
-    stds = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
-                        buf=np.std(xall, 0))
-    return (means, stds)
 
 def get_observables_values(observable_names, output, timepoint=None):
     """Get the values for a list of observables from a simulation result.
@@ -260,6 +208,20 @@ def get_frequency_matrix(observable_names, output, timepoint=None):
     return (index, freq_matrix)
 
 def load_bng_files(gdat_files):
+    """Load the observable record arrays from BNG simulations.
+
+    Parameters
+    ----------
+    gdat_files : list of strings
+        A list of filenames to be loaded, e.g. as returned by a glob.
+
+    Returns
+    -------
+    list of numpy.recarrays
+        The entries in the list are the results of each simulation, as
+        a numpy record array indexed by observable name.
+    """
+
     print "Loading BNG simulation result files..."
     xrecs = []
     # Load all of the simulation results into a list of record arrays
@@ -268,6 +230,33 @@ def load_bng_files(gdat_files):
         ssa_result = bng._parse_bng_outfile(gdat_file)
         xrecs.append(ssa_result)
     return xrecs
+
+def calculate_mean_and_std(xrecs):
+    """Returns the mean and std of the observables from SSA simulations.
+
+    Parameters
+    ----------
+    xrecs : list of numpy.recarrays
+        A list of observable record arrays, for example of the type
+        returned by :py:meth:`Job.run_n_cpt`.
+
+    Returns
+    -------
+    tuple of (numpy.recarray, numpy.recarray)
+        The first entry in the tuple is the record array of means
+        (across the set of simulations run); the second is the record array
+        of standard deviations.
+    """
+
+    # Convert the list of record arrays into a matrix
+    xall = np.array([x.tolist() for x in xrecs])
+    # Create new record arrays with the means and SDs for all of the the
+    # observables as the entries
+    means = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
+                        buf=np.mean(xall, 0))
+    stds = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
+                        buf=np.std(xall, 0))
+    return (means, stds)
 
 def calculate_mean_and_std_from_files(gdat_files):
     """Calculates mean and SD for all observables from .gdat files.
@@ -286,13 +275,41 @@ def calculate_mean_and_std_from_files(gdat_files):
     xrecs = load_bng_files(gdat_files)
     return Job.calculate_mean_and_std(xrecs)
 
+def calculate_dye_release_mean_and_std(xrecs, pore_obs_prefix='pores_'):
+    # Get the timepoins
+    num_timepoints = len(xrecs[0])
+    # Get the list of pore observables; makes the assumption that all pore
+    # observable names have the same format, with a prefix followed by the
+    # compartment identifier, e.g. 'pores_c38'.
+    pore_obs_list = [field_name for field_name in xrecs[0].dtype.fields
+                     if field_name.startswith(pore_obs_prefix)]
+    # Assume that there is a pore observable for every vesicle:
+    num_vesicles = len(pore_obs_list)
+    # For every simulation result, calculate a dye release vector
+    dye_release = np.zeros((len(xrecs), num_timepoints))
+    for i, xrec in enumerate(xrecs):
+        assert len(xrec) == num_timepoints # all sims must be same length
+        # Calculate the fraction of vesicles permeabilized at this timepoint
+        for t in range(num_timepoints):
+            permeabilized_count = 0
+            for pore_obs in pore_obs_list:
+                if xrec[pore_obs][t] > 0:
+                    permeabilized_count += 1
+            dye_release[i, t] = permeabilized_count / float(num_vesicles)
+    # Calculate the mean and SD across the matrix
+    mean = np.mean(dye_release, axis=0)
+    std = np.std(dye_release, axis=0)
+    return (mean, std)
+
 if __name__ == '__main__':
     usage_msg =  "Usage:\n"
     usage_msg += "\n"
     usage_msg += "    python simulation.py parse [files]\n"
-    usage_msg += "        Calculates the mean and SD for all observables\n"
-    usage_msg += "        from a list of .gdat files and saves the results in\n"
-    usage_msg += "        two pickle files, one for the mean and one for SD.\n"
+    usage_msg += "        Parses the BNG simulation results from a list of\n"
+    usage_msg += "        .gdat files and saves the results as a list of\n"
+    usage_msg += "        record arrays in n_cpt_obs.pck. Also calculates\n"
+    usage_msg += "        and saves the mean and SD for all observables in\n"
+    usage_msg += "        means.pck and stds.pck, respectively.\n"
     usage_msg += "\n"
     usage_msg += "    python simulation.py submit [run_script.py] [num_jobs]\n"
     usage_msg += "        For use with LSF. Calls bsub to submit the desired\n"
@@ -308,8 +325,12 @@ if __name__ == '__main__':
             print "Please provide a list of files to parse.\n"
             print usage_msg
             sys.exit()
-        (means, stds) = calculate_mean_and_std_from_files(gdat_files)
+        n_cpt_obs = load_bng_files(gdat_files)
+        (means, stds) = calculate_mean_and_std(n_cpt_obs)
         # Pickle the output files
+        with open('n_cpt_obs.pck', 'w') as f:
+            print "Writing record arrays..."
+            pickle.dump(n_cpt_obs, f)
         with open('means.pck', 'w') as f:
             print "Writing means..."
             pickle.dump(means, f)
