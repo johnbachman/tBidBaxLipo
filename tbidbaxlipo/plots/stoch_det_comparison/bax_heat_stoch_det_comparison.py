@@ -29,8 +29,8 @@ def plot():
 
     # Run the stochastic simulation
     xrecs = j.run_n_cpt(cleanup=True)
-    (means, stds) = j.calculate_mean_and_std(xrecs)
-    (dr_mean, dr_std) = j.calculate_dye_release_mean_and_std(xrecs)
+    (means, stds) = simulation.calculate_mean_and_std(xrecs)
+    (dr_mean, dr_std) = simulation.calculate_dye_release_mean_and_std(xrecs)
 
     plt.ion()
     plt.figure()

@@ -194,7 +194,6 @@ class Builder(core.Builder):
 
         plot_simulation(x_avg, x_std, dr_all, self.model, num_sims)
 
-
 def plot_simulation(x_avg, x_std, dr_all, model, num_sims, figure_ids=[0, 1]):
     ci = color_iter()
     marker = ','
@@ -280,70 +279,6 @@ def plot_simulation(x_avg, x_std, dr_all, model, num_sims, figure_ids=[0, 1]):
     #title("Dye release calculated via compartmental model")
 
     return
-
-# SSA data analysis functions
-def plot_compartment_mean(model, observable_name, output):
-    total = 0
-    for i, cpt in enumerate(model.compartments):
-        if (not cpt.name == 'solution'):
-            total += output['%s_%s' % (observable_name, cpt.name)]
-    mean = total / len(model.compartments)
-    plt.figure()
-    plt.plot(output['time'], mean)
-
-def plot_compartment_all(model, observable_name, output):
-    plt.figure()
-    for i, cpt in enumerate(model.compartments):
-        if (not cpt.name == 'solution'):
-            plt.plot(output['time'], output['%s_%s' %
-                                            (observable_name, cpt.name)])
-
-def combine_dists(model, observable_name, output_array):
-    totals = []
-    for output in output_array:
-        if (totals == []):
-            totals = get_compartment_dist(model, observable_name, output)
-        else:
-            totals += get_compartment_dist(model, observable_name, output)
-    return totals
-
-def plot_combined_dist(model, observable_name, output_array):
-    totals = combine_dists(model, observable_name, output_array)
-    plot_dist(totals)
-
-def plot_dist(data):
-    plt.figure()
-
-    #end_counts = get_compartment_dist(model, observable_name, output)
-
-    bins = range(int(min(data)), int(max(data)+1))
-    print "end_counts: "
-    print data
-
-    total_count = sum(data)
-    print "total membrane-bound tBid: "
-    print total_count
-
-    (h, bins, patches) = plt.hist(data, bins=bins)
-    h = h / float(len(data))
-    print "bins: "
-    print bins
-    print "h: "
-    print h
-    print "sum h: %f" % sum(h)
-    #bar(bins[0:len(bins)-1], h)
-    #plt.plot(bins[0:len(bins)-1], h)
-
-    mean_counts = np.mean(data)
-    print "mean counts: "
-    print mean_counts
-
-    poisson_counts = poisson.pmf(bins, mean_counts)
-    #poisson_counts = poisson.pmf(bins, ^)
-    print "sum poisson:  %f" % sum(poisson_counts)
-    print poisson_counts
-    plt.plot(bins, poisson_counts)
-
 
 # COMMENTS
 """

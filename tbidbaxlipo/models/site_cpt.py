@@ -339,198 +339,82 @@ class Builder(core.Builder):
 
         return xrecs[0]
 
-#---------------------------------------------------------------------
-    # SSA data analysis functions
-    def plot_compartment_mean(model, observable_name, output):
-        total = 0
-        for i, cpt in enumerate(model.compartments):
-            if (not cpt.name == 'solution'):
-                total += output['%s_%s' % (observable_name, cpt.name)]
-        mean = total / len(model.compartments)
-        plt.figure()
-        plt.plot(output['time'], mean)
+# COMMENTS
+"""
+Things I would want to know:
+* Is pore formation actually independent?
+  - To know this would want to know if pores per liposome actually follows a Poisson distribution
+    under various assumptions
+* What is the distribution of Bax molecules among liposomes?
+  - At steady state, 
+* 
+SOME OBSERVATIONS
+* When looking simply at binding and unbinding, one finds that, especially with large
+numbers of compartments, the distribution of molecules localized to liposomes follows
+a Poisson distribution. At stationarity, one cal average out the distribution over
+time and get a smooth distribution that way.
 
-    def get_dye_release(model, pore_observable_name, output):
-        num_timepoints = len(output['time'])
-        dye_release = zeros(num_timepoints)
-        for t in range(0, num_timepoints):
-            permeabilized_count = 0.
-            for i, cpt in enumerate(model.compartments):
-                if (not cpt.name == 'solution' and 
-                    output['%s_%s' % (pore_observable_name, cpt.name)][t] > 0):
-                    permeabilized_count += 1
-            frac_permeabilized = permeabilized_count / \
-                                 float(self['Vesicles_0'].value)
-            dye_release[t] = frac_permeabilized
+* Notably (perhaps) when an irreversible step is in place, e.g., the irreversible
+insertion of Bax, the uneven distribution among compartments can get "frozen" in
+place. So there is no smoothing effect by averaging over many timepoints, since
+the distribution of inserted Bax is fixed once all of the Bax has been re-localized.
 
-        return dye_release
+* So, the next step is to consider pore formation. The first thing to do would be
+to have a forward rate of pore formation that was derived from Bax activation.
+In the trivial case of pores simple being synonymous with iBax, one could see 
+average "pores per liposome" by plotting the compartment mean, and could see the
+distribution at any given timepoint and evaluate it's Poisson-ness.
 
-    def plot_compartment_all(model, observable_name, output):
-        plt.ion()
-        plt.figure()
-        for i, cpt in enumerate(model.compartments):
-            if (not cpt.name == 'solution'):
-                plt.plot(output['time'],
-                         output['%s_%s' % (observable_name, cpt.name)])
+* In the case of reversible Bax, one would expect to see the pore distribution
+become more clearly/smoothly Poisson-like as time went on, because the pore
+number would increase and pore "events" would be more smoothly distributed
+among liposomes.
 
-    def plot_predicted_p(model, observable_name, output):
-        # Iterate through data, and at each time point, get the fraction
-        # of compartments with 0 of the observable
-        num_timepoints = len(output['time']) 
-        f0 = []
-        #for t in range(0, num_timepoints):
-            #f0_t
-            #for i, cptgg
+* What about when Bax can auto-activate? There are at least two cases to
+ consider:
 
-    def get_compartment_dist(model, observable_name, output):
-        end_counts = []
-        num_timepoints = len(output['time']) 
-        for t in range(num_timepoints-1, num_timepoints):
-            for i, cpt in enumerate(model.compartments):
-                if (not cpt.name == 'solution'):
-                    end_counts.append(output['%s_%s' % (observable_name,
-                                                        cpt.name)][t])
-        return array(end_counts)
+1) when Bax can "grow" pores, depleting Bax from the solution while not triggering
+new (initial) pore forming events
 
-    def combine_dists(model, observable_name, output_array):
-        totals = []
-        for output in output_array:
-            if (totals == []):
-                totals = get_compartment_dist(model, observable_name, output)
-            else:
-                totals += get_compartment_dist(model, observable_name, output)
-        return totals
+2) when Bax can auto-recruit, potentially triggering additional pore
+formation events (either initial or secondary)
 
-    def plot_combined_dist(model, observable_name, output_array):
-        totals = combine_dists(model, observable_name, output_array)
-        plot_dist(totals)
+The question is, what is the distribution of Bax localization, and
+what is the distribution of initial pore formation? Is the estimate
+gained from f(0) reliable in each of these cases?
 
-    def plot_dist(data):
-        plt.ion()
-        plt.figure()
+TODO:
+* Need to update run_ssa code to output BNG output as it runs
+* Need to commit and push changes to bng.py
+* Need to figure out how to convert rates in det vs. stochastic model
 
-        #end_counts = get_compartment_dist(model, observable_name, output)
+Converting rates:
+- In a deterministic model, there is a rate defining the propensity of
+the transition c -> m. This is modeled as a pseudo-first order reaction
+that is proportional to the amount of lipid/liposomes in the system.
+In the stochastic model, there is a propensity of a molecule to jump
+to a particular compartment; the summation of the propensity over all
+of the compartments should be equal to the propensity of the transition
+in the two compartment model, with a stochastic conversion. This is a property
+of the law of probability that P(A or B or C) = P(A) + P(B) + P(C). 
 
-        bins = range(int(min(data)), int(max(data)+1))
-        print "end_counts: "
-        print data
+So then we need a way of converting from the deterministic rate to the
+stochastic rate.
 
-        total_count = sum(data)
-        print "total membrane-bound tBid: "
-        print total_count
+Deterministic rate constant k (in (nmol/L)-1 s-1)
 
-        h, bins = plt.histogram(data, bins=bins)
-        h = h / float(len(data))
-        print "bins: "
-        print bins
-        print "h: "
-        print h
-        print "sum h: %f" % sum(h)
-        #bar(bins[0:len(bins)-1], h)
-        plt.plot(bins[0:len(bins)-1], h)
+k/V = gamma (nanomoles-1 s-1)
 
-        mean_counts = mean(data)
-        print "mean counts: "
-        print mean_counts
+The volume in the titration expt is 60uL, giving
 
-        poisson_counts = poisson.pmf(bins, mean_counts)
-        #poisson_counts = poisson.pmf(bins, ^)
-        print "sum poisson:  %f" % sum(poisson_counts)
-        print poisson_counts
-        plt.plot(bins, poisson_counts)
+gamma_mol = k / 60 10^-6  L = k / 60*10^-6 (nmol * s)
 
-    # COMMENTS
-    """
-    Things I would want to know:
-    * Is pore formation actually independent?
-      - To know this would want to know if pores per liposome actually follows a Poisson distribution
-        under various assumptions
-    * What is the distribution of Bax molecules among liposomes?
-      - At steady state, 
-    * 
-    SOME OBSERVATIONS
-    * When looking simply at binding and unbinding, one finds that, especially with large
-    numbers of compartments, the distribution of molecules localized to liposomes follows
-    a Poisson distribution. At stationarity, one cal average out the distribution over
-    time and get a smooth distribution that way.
+(This will be larger than K)
 
-    * Notably (perhaps) when an irreversible step is in place, e.g., the irreversible
-    insertion of Bax, the uneven distribution among compartments can get "frozen" in
-    place. So there is no smoothing effect by averaging over many timepoints, since
-    the distribution of inserted Bax is fixed once all of the Bax has been re-localized.
+gamma_molec = gamma_mol / A = k / (60*10^-6 * 10^-9 moles * sec * 6.022 * 10^23)
+gamma_molec = k / (60^10^-6 * 6.022 * 10^14 * molec * sec)
+gamma_molec = k / 60 * 6.022 * 10^8 * molec * sec)
+gamma_molec = k / 361.32 * 10^8 * molec * sec)
+gamma_molec = k / 3.6132 * 10^10 * molec * sec)
 
-    * So, the next step is to consider pore formation. The first thing to do would be
-    to have a forward rate of pore formation that was derived from Bax activation.
-    In the trivial case of pores simple being synonymous with iBax, one could see 
-    average "pores per liposome" by plotting the compartment mean, and could see the
-    distribution at any given timepoint and evaluate it's Poisson-ness.
-
-    * In the case of reversible Bax, one would expect to see the pore distribution
-    become more clearly/smoothly Poisson-like as time went on, because the pore
-    number would increase and pore "events" would be more smoothly distributed
-    among liposomes.
-
-    * What about when Bax can auto-activate? There are at least two cases to
-     consider:
-
-    1) when Bax can "grow" pores, depleting Bax from the solution while not triggering
-    new (initial) pore forming events
-
-    2) when Bax can auto-recruit, potentially triggering additional pore
-    formation events (either initial or secondary)
-
-    The question is, what is the distribution of Bax localization, and
-    what is the distribution of initial pore formation? Is the estimate
-    gained from f(0) reliable in each of these cases?
-
-    TODO:
-    * Need to update run_ssa code to output BNG output as it runs
-    * Need to commit and push changes to bng.py
-    * Need to figure out how to convert rates in det vs. stochastic model
-
-    Converting rates:
-    - In a deterministic model, there is a rate defining the propensity of
-    the transition c -> m. This is modeled as a pseudo-first order reaction
-    that is proportional to the amount of lipid/liposomes in the system.
-    In the stochastic model, there is a propensity of a molecule to jump
-    to a particular compartment; the summation of the propensity over all
-    of the compartments should be equal to the propensity of the transition
-    in the two compartment model, with a stochastic conversion. This is a property
-    of the law of probability that P(A or B or C) = P(A) + P(B) + P(C). 
-
-    So then we need a way of converting from the deterministic rate to the
-    stochastic rate.
-
-    Deterministic rate constant k (in (nmol/L)-1 s-1)
-
-    k/V = gamma (nanomoles-1 s-1)
-
-    The volume in the titration expt is 60uL, giving
-
-    gamma_mol = k / 60 10^-6  L = k / 60*10^-6 (nmol * s)
-
-    (This will be larger than K)
-
-    gamma_molec = gamma_mol / A = k / (60*10^-6 * 10^-9 moles * sec * 6.022 * 10^23)
-    gamma_molec = k / (60^10^-6 * 6.022 * 10^14 * molec * sec)
-    gamma_molec = k / 60 * 6.022 * 10^8 * molec * sec)
-    gamma_molec = k / 361.32 * 10^8 * molec * sec)
-    gamma_molec = k / 3.6132 * 10^10 * molec * sec)
-
-    """
-
-        
-        
-    def run_model_ode(tmax=12000):
-        from pysb.integrate import odesolve
-        t = linspace(0, tmax, 1000)
-        x = odesolve(model, t)
-
-        ci = color_iter()
-        plt.figure(1)
-        # Translocation
-        plt.plot(t, (x['ctBid'])/tBid_0.value, label='ctBid', color=ci.next())
-        plt.plot(t, (x['mtBid'])/tBid_0.value, label='mtBid', color=ci.next())
-        plt.plot(t, (x['cBax'])/Bax_0.value, label='cBax', color=ci.next())
-        plt.plot(t, (x['mBax'])/Bax_0.value, label='mBax', color=ci.next())
-        plt.legend()
+"""

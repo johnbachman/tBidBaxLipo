@@ -1,12 +1,14 @@
 from tbidbaxlipo.models import one_cpt, n_cpt, site_cpt, simulation
 from pylab import *
 import collections
+import glob
+from scipy.stats import poisson
 
 class Job(simulation.Job):
     def __init__(self):
         scaling_factor = 10
         tmax = 60
-        num_sims = 40
+        num_sims = 60
         n_steps = 100
         super(Job, self).__init__({}, scaling_factor, tmax, n_steps, num_sims)
 
@@ -25,8 +27,9 @@ if __name__ == '__main__':
     one_cpt_Bax_0 = b_one.model.parameters['Bax_0'].value
 
     b_n = job.build(n_cpt)
-    n_cpt_obs = job.run_n_cpt(cleanup=True)
-    [n_cpt_means, n_cpt_sd] = job.calculate_mean_and_std(n_cpt_obs)
+    n_cpt_obs = simulation.load_bng_files(glob.glob('simdata/*.gdat'))
+    #n_cpt_obs = job.run_n_cpt(cleanup=False)
+    [n_cpt_means, n_cpt_sd] = simulation.calculate_mean_and_std(n_cpt_obs)
     n_cpt_Bax_0 = b_n.model.parameters['Bax_0'].value
 
     # Compare deterministic to n_cpt
@@ -46,7 +49,8 @@ if __name__ == '__main__':
     """
     b_site = job.build(site_cpt)
     site_cpt_obs = job.run_site_cpt()
-    [site_cpt_means, site_cpt_sd] = job.calculate_mean_and_std(site_cpt_obs)
+    [site_cpt_means, site_cpt_sd] = \
+                        simulation.calculate_mean_and_std(site_cpt_obs)
     site_cpt_Bax_0 = b_site.model.parameters['Bax_0'].value
     figure()
     errorbar(site_cpt_means['time'], site_cpt_means['mBax'] / site_cpt_Bax_0, \
@@ -61,30 +65,36 @@ if __name__ == '__main__':
     legend(loc='lower right')
     """
 
-    # Look at histograms
-    counts_list = []
-    for obs in n_cpt_obs:
-        values = job.get_observables_values(
-                        b_n.get_compartment_observables('mBax'), obs)
-        counts_list.append(collections.Counter(values))
-        #figure()
-        #bins = range(int(min(values)), int(max(values)))
-        #hist(counts, bins=bins)
+    def plot_hist_vs_poisson(observable_basename, timepoint_index):
+        (index, freq_matrix) = simulation.get_frequency_matrix(
+                                    b_n.get_compartment_observables('mBax'),
+                                    n_cpt_obs, timepoint=timepoint_index)
+        means = np.mean(freq_matrix, axis=1)
+        sds = np.std(freq_matrix, axis=1)
 
-    all_keys = set()
-    for counts in counts_list:
-        all_keys |= set(counts.keys())
+        norm_means = means / trapz(means, index)
+        norm_sds = sds / trapz(means, index)
+        norm_se = norm_sds / np.sqrt(len(n_cpt_obs))
 
-    key_min = min(all_keys)
-    key_max = max(all_keys)
-    counts_arr = np.zeros((key_max - key_min + 1, len(counts_list)))
+        figure()
+        plot_index = index - 0.5 # offset so middle of bars line up with ints
+        bar(plot_index, norm_means, 1.0, yerr=norm_se, color='r')
 
-    for i, counts in enumerate(counts_list):
-        for key, val in counts.iteritems():
-            counts_arr[key - key_min, i] = val
+        # Value in deterministic model
+        mBax_per_lipo = one_cpt_obs['mBax'][timepoint_index] / \
+                        b_one.model.parameters['Vesicles_0'].value
 
-    means = np.mean(counts_arr, axis=1)
-    sds = np.std(counts_arr, axis=1)
-    ind = range(int(key_min), int(key_max) + 1)
-    figure()
-    bar(ind, means, 0.6, yerr=sds, color='r')
+        plot(index, poisson.pmf(index, mBax_per_lipo), color='g',
+             linewidth='2')
+        xlim([min(plot_index), max(index)])
+        title('Distribution of %s at %.1f seconds' %
+              (observable_basename, time[timepoint_index]))
+
+    plot_hist_vs_poisson('mBax', 1)
+    plot_hist_vs_poisson('mBax', 10)
+    plot_hist_vs_poisson('mBax', 20)
+    plot_hist_vs_poisson('mBax', 30)
+    plot_hist_vs_poisson('mBax', 40)
+    plot_hist_vs_poisson('mBax', job.n_steps)
+
+

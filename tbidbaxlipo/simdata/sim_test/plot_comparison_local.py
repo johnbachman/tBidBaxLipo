@@ -1,5 +1,6 @@
 from matplotlib import pyplot as plt
 from tbidbaxlipo.simdata.sim_test.run_script import Job
+from tbidbaxlipo.models import simulation
 
 # Create the job instance
 j = Job()
@@ -14,7 +15,7 @@ plt.plot(t, det_obs['pores'], label='one_cpt')
 
 # Run the stochastic simulation
 xrecs = j.run_n_cpt(cleanup=True)
-(means, stds) = j.calculate_mean_and_std(xrecs)
+(means, stds) = simulation.calculate_mean_and_std(xrecs)
 
 # Plot stochastic results
 plt.errorbar(means['time'], means['pores'] / j.scaling_factor,
