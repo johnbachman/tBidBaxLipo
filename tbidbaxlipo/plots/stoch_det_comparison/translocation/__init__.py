@@ -28,11 +28,11 @@ n_cpt_obs = pickle.loads(pkgutil.get_data(
                     'n_cpt_obs.pck'))
 
 def plot_timecourse_comparison():
-    b_one = job.build(one_cpt)
+    b_one = job.one_cpt_builder()
     [time, one_cpt_obs] = job.run_one_cpt()
     one_cpt_Bax_0 = b_one.model.parameters['Bax_0'].value
 
-    b_n = job.build(n_cpt)
+    b_n = job.n_cpt_builder()
     #n_cpt_obs = job.run_n_cpt(cleanup=False)
     [n_cpt_means, n_cpt_sd] = simulation.calculate_mean_and_std(n_cpt_obs)
     n_cpt_Bax_0 = b_n.model.parameters['Bax_0'].value
@@ -54,7 +54,7 @@ def plot_timecourse_comparison():
 
     # Compare deterministic to site_cpt
     """
-    b_site = job.build(site_cpt)
+    b_site = job.site_cpt_builder()
     site_cpt_obs = job.run_site_cpt()
     [site_cpt_means, site_cpt_sd] = \
                         simulation.calculate_mean_and_std(site_cpt_obs)
@@ -74,8 +74,8 @@ def plot_timecourse_comparison():
 
 def plot_hist_vs_poisson(observable_basename, timepoint_index):
     # Get the things we'll need
-    b_n = job.build(n_cpt)
-    b_one = job.build(one_cpt)
+    b_n = job.n_cpt_builder()
+    b_one = job.one_cpt_builder()
     [time, one_cpt_obs] = job.run_one_cpt()
 
     # Get histogram data
@@ -108,7 +108,7 @@ def plot_hist_vs_poisson(observable_basename, timepoint_index):
     return means
 
 def print_mbax_means_and_vars(timepoint):
-    b_n = job.build(n_cpt)
+    b_n = job.n_cpt_builder()
     (mbax_means, mbax_vars) = simulation.get_means_across_cpts(
                         b_n.get_compartment_observables('mBax'),
                         n_cpt_obs, timepoint=timepoint)

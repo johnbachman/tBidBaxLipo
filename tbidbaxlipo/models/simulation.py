@@ -31,6 +31,9 @@ class Job(object):
         self.tmax = tmax
         self.n_steps = n_steps
         self.num_sims = num_sims
+        self._one_cpt_builder = None
+        self._n_cpt_builder = None
+        self._site_cpt_builder = None
 
     def build(self, module):
         """Virtual method to build the model from the appropriate model Builder.
@@ -41,6 +44,25 @@ class Job(object):
         class after model construction is completed.  """
 
         raise NotImplementedError()
+
+    def one_cpt_builder(self):
+        """Lazy initialization method for the one_cpt builder."""
+        if self._one_cpt_builder is None:
+            self._one_cpt_builder = self.build(one_cpt)
+        return self._one_cpt_builder
+
+    def n_cpt_builder(self):
+        """Lazy initialization method for the n_cpt builder."""
+        if self._n_cpt_builder is None:
+            self._n_cpt_builder = self.build(n_cpt)
+        return self._n_cpt_builder
+
+    def site_cpt_builder(self):
+        """Lazy initialization method for the site_cpt builder."""
+        if self._site_cpt_builder is None:
+            self._site_cpt_builder = self.build(site_cpt)
+        return self._site_cpt_builder
+
 
     def run_n_cpt(self, cleanup=False):
         """Run a set of simulations using the n_cpt implementation.
@@ -62,10 +84,10 @@ class Job(object):
             single stochastic simulation. The entries in the record array
             correspond to observables in the model.
         """
-        b = self.build(n_cpt)
+        b = self.n_cpt_builder()
         xrecs = []
         for i in range(self.num_sims):
-            print "Running BNG simulation %d of %d..." % (i, self.num_sims)
+            print "Running BNG simulation %d of %d..." % (i+1, self.num_sims)
             xrecs.append(bng.run_ssa(b.model, t_end=self.tmax,
                          n_steps=self.n_steps, cleanup=cleanup, output_dir='.'))
         return xrecs
@@ -84,7 +106,7 @@ class Job(object):
             single stochastic simulation. The entries in the record array
             correspond to observables in the model.
         """
-        b = self.build(site_cpt)
+        b = self.site_cpt_builder()
         xrecs = []
         for i in range(self.num_sims):
             xrecs.append(kappa.run_simulation(b.model, time=self.tmax,
@@ -106,7 +128,7 @@ class Job(object):
             record array of the model observables.
         """
 
-        b = self.build(one_cpt)
+        b = self.one_cpt_builder()
         # We add one extra point so that the time coordinates of the
         # one_cpt and n_cpt/site_cpt simulations line up
         t = np.linspace(0, self.tmax, self.n_steps + 1)
