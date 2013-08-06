@@ -439,10 +439,9 @@ class Builder(pysb.builder.Builder):
         bax_site_bound = {bax_site:1}
         bax_site_unbound = {bax_site:None}
 
-        #bind(tBid(loc='m'), 'bh3', Bax(loc='m'), bax_site,
-        #  [tBid_mBax_kf, tBid_mBax_kr])
         tBid = self['tBid']
         Bax = self['Bax']
+
         self.rule('tBid_Bax_bind',
              tBid(loc='m', bh3=None) + Bax(loc='m', **bax_site_unbound) >>
              tBid(loc='m', bh3=1) % Bax(loc='m', **bax_site_bound),

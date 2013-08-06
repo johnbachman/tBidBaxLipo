@@ -1,7 +1,6 @@
 from pysb import *
 from pysb.macros import *
 import numpy as np
-#from pylab import *
 from tbidbaxlipo.util.fitting import fit, mse
 from tbidbaxlipo.util import color_iter
 from scipy.stats import poisson
@@ -59,13 +58,14 @@ class Builder(core.Builder):
             if (not cpt.name == 'solution'):
                 self.observable('tBid_%s' % cpt.name, tBid() ** cpt)
                 self.observable('Bax_%s' % cpt.name, Bax() ** cpt)
+                self.observable('mBax_%s' % cpt.name, Bax(loc='m') ** cpt)
                 self.observable('iBax_%s' % cpt.name, Bax(loc='i') ** cpt)
                 self.observable('tBidBax_%s' % cpt.name,
                             tBid(loc='m', bh3=1) % Bax(loc='m', a6=1) ** cpt)
                 #self.observable('Bax2_%s' % cpt.name,
                 #                MatchOnce(Bax(bh3=1) % Bax(bh3=1) ** cpt))
 
-    # MODEL MACROS
+    # Translocation
     def translocate_Bax(self):
         print("n_cpt: translocate_Bax()")
 
@@ -114,6 +114,7 @@ class Builder(core.Builder):
         self.translocate_tBid()
         self.translocate_Bax()
 
+    # Pore formation
     def pores_from_Bax_monomers(self, bax_loc_state='i', reversible=False):
         print("n_cpt: pores_from_Bax_monomers()")
 
@@ -143,7 +144,7 @@ class Builder(core.Builder):
     def pores_from_Bax_dimers(self):
         """Basically a way of counting the time-integrated amount of
            forward pore formation."""
-
+        raise NotImplementedError()
         Parameter('pore_formation_rate_k', 100)
         #Parameter('scaled_pore_formation_rate_k', 0.03)
         Parameter('pore_recycling_rate_k', 100)
@@ -155,6 +156,7 @@ class Builder(core.Builder):
                        Bax(loc='p', bh3=1, a6=None)) + Pores(),
              pore_formation_rate_k)
 
+    # Running the model
     def run_model(self, tmax=12000, num_sims=1):
         xrecs = []
         dr_all = []
@@ -172,7 +174,6 @@ class Builder(core.Builder):
                             buf=np.mean(xall, 0))
 
         plot_simulation(x_avg, x_std, dr_all, self.model, num_sims)
-
 
 def plot_simulation(x_avg, x_std, dr_all, model, num_sims, figure_ids=[0, 1]):
     ci = color_iter()
@@ -338,7 +339,7 @@ def plot_dist(data):
     print "total membrane-bound tBid: "
     print total_count
 
-    h, bins = histogram(data, bins=bins)
+    (h, bins, patches) = plt.hist(data, bins=bins)
     h = h / float(len(data))
     print "bins: "
     print bins
@@ -346,7 +347,7 @@ def plot_dist(data):
     print h
     print "sum h: %f" % sum(h)
     #bar(bins[0:len(bins)-1], h)
-    plt.plot(bins[0:len(bins)-1], h)
+    #plt.plot(bins[0:len(bins)-1], h)
 
     mean_counts = np.mean(data)
     print "mean counts: "

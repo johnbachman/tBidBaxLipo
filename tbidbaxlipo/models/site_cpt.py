@@ -1,6 +1,3 @@
-__author__ = 'johnbachman'
-
-# IMPORTS
 from pysb import *
 from numpy import array, recarray, mean, std
 from matplotlib import pyplot as plt
@@ -12,7 +9,7 @@ from tbidbaxlipo.models import core
 
 class Builder(core.Builder):
 
-    def __init__(self, scaling_factor=50, params_dict=None):
+    def __init__(self, scaling_factor=10, params_dict=None):
         # Sets self.model = Model(), and self.params_dict
         core.Builder.__init__(self, params_dict=params_dict)
 
@@ -21,13 +18,13 @@ class Builder(core.Builder):
         # given below (which match those of the deterministic simulations)
         self.scaling_factor = scaling_factor
 
-        self.parameter('Vesicles_0', 4, factor=self.scaling_factor)
-        self.parameter('tBid_0', 2, factor=self.scaling_factor)
-        self.parameter('Bax_0', 30, factor=self.scaling_factor)
+        self.parameter('Vesicles_0', 5, factor=self.scaling_factor)
+        self.parameter('tBid_0', 20, factor=self.scaling_factor)
+        self.parameter('Bax_0', 100, factor=self.scaling_factor)
 
         # The compartment list needs to be built before declaring monomers
-        self.cpt_list = ['c%d' % cpt_num
-                         for cpt_num in range(1, self['Vesicles_0'].value+1)]
+        self.cpt_list = ['c%d' % cpt_num for cpt_num in
+                         range(1, int(self['Vesicles_0'].value)+1)]
         self.cpt_list.append('solution')
 
         # Now, monomers can be declared
@@ -51,30 +48,17 @@ class Builder(core.Builder):
                  'cpt': cpt_list})
         self.monomer('Pores', ['cpt'], {'cpt': cpt_list})
 
-    # MODEL MACROS
-    def translocate_tBid_Bax(self):
-        print("site_cpt: translocate_tBid_Bax()")
-
-        tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
-                                         factor=(1/float(self.scaling_factor)))
-        tBid_transloc_kr = self.parameter('tBid_transloc_kr', 0)
+    # Translocation
+    def translocate_Bax(self):
+        print("site_cpt: translocate_Bax()")
         Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
                                          factor=(1/float(self.scaling_factor)))
-        Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-2)
+        Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1)
 
-        tBid = self['tBid']
         Bax = self['Bax']
 
         for cpt_name in self.cpt_list:
             if (not cpt_name == 'solution'):
-                self.rule('tBid_translocates_sol_to_%s' % cpt_name,
-                     tBid(loc='c', cpt='solution') >>
-                     tBid(loc='m', cpt=cpt_name),
-                     tBid_transloc_kf)
-                self.rule('tBid_translocates_%s_to_sol' % cpt_name,
-                     tBid(loc='m', bh3=None, cpt=cpt_name) >>
-                     tBid(loc='c', bh3=None, cpt='solution'),
-                     tBid_transloc_kr)
                 self.rule('Bax_translocates_sol_to_%s' % cpt_name,
                      Bax(loc='c', cpt='solution', bh3=None, a6=None) >>
                      Bax(loc='m', cpt=cpt_name, bh3=None, a6=None),
@@ -85,33 +69,59 @@ class Builder(core.Builder):
                      Bax_transloc_kr)
 
         # Observables
-        # -----------
-        self.observable('ctBid', tBid(loc='c', cpt='solution'))
-        self.observable('mtBid', tBid(loc='m'))
         self.observable('cBax', Bax(loc='c', cpt='solution'))
         self.observable('mBax', Bax(loc='m'))
+        for cpt_name in self.cpt_list:
+            if (not cpt_name == 'solution'):
+                self.observable('Bax_%s' % cpt_name, Bax(cpt=cpt_name))
+
+    def translocate_tBid(self):
+        print("site_cpt: translocate_tBid()")
+
+        tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
+                                         factor=(1/float(self.scaling_factor)))
+        tBid_transloc_kr = self.parameter('tBid_transloc_kr', 0)
+
+        tBid = self['tBid']
 
         for cpt_name in self.cpt_list:
             if (not cpt_name == 'solution'):
-                self.observable('tBid_%s' % cpt_name, tBid(cpt=cpt_name))
-                self.observable('Bax_%s' % cpt_name, Bax(cpt=cpt_name))
+                self.rule('tBid_translocates_sol_to_%s' % cpt_name,
+                     tBid(loc='c', bh3=None, cpt='solution') >>
+                     tBid(loc='m', bh3=None, cpt=cpt_name),
+                     tBid_transloc_kf)
+                self.rule('tBid_translocates_%s_to_sol' % cpt_name,
+                     tBid(loc='m', bh3=None, cpt=cpt_name) >>
+                     tBid(loc='c', bh3=None, cpt='solution'),
+                     tBid_transloc_kr)
 
+        # Observables
+        self.observable('ctBid', tBid(loc='c', cpt='solution'))
+        self.observable('mtBid', tBid(loc='m'))
+        for cpt_name in self.cpt_list:
+            if (not cpt_name == 'solution'):
+                self.observable('tBid_%s' % cpt_name, tBid(cpt=cpt_name))
+
+    def translocate_tBid_Bax(self):
+        print("site_cpt: translocate_tBid_Bax()")
+        self.translocate_tBid()
+        self.translocate_Bax()
+
+    # Binding
     def tBid_activates_Bax(self, bax_site='bh3'):
         print("site_cpt: tBid_activates_Bax(bax_site=" + bax_site + ")")
 
         # Forward rate of tBid binding to Bax (E + S -> ES)
         tBid_mBax_kf = self.parameter('tBid_mBax_kf', 1e-2)
         # Reverse rate of tBid binding to Bax (ES -> E + S)
-        tBid_mBax_kr = self.parameter('tBid_mBax_kr', 1)
+        tBid_mBax_kr = self.parameter('tBid_mBax_kr', 1.5)
         # Dissociation of tBid from iBax (EP -> E + P)
-        tBid_iBax_kc = self.parameter('tBid_iBax_kc', 1)
+        tBid_iBax_kc = self.parameter('tBid_iBax_kc', 1e-1)
 
         # Create the dicts to parameterize the site that tBid binds to
         bax_site_bound = {bax_site:1}
         bax_site_unbound = {bax_site:None}
 
-        #bind(tBid(loc='m'), 'bh3', Bax(loc='m'), bax_site,
-        #  [tBid_mBax_kf, tBid_mBax_kr])
         tBid = self['tBid']
         Bax = self['Bax']
 
@@ -150,36 +160,37 @@ class Builder(core.Builder):
                                 tBid(loc='m', bh3=1, cpt=cpt_name) %
                                 Bax(loc='m', cpt=cpt_name, **bax_site_bound))
 
-    # OTHER
-    def pores_from_Bax_monomers():
-        print("pores_from_Bax_monomers()")
+    # Pore formation
+    def pores_from_Bax_monomers(self, bax_loc_state='i', reversible=False):
+        raise NotImplementedError()
+        print("site_cpt: pores_from_Bax_monomers()")
 
-        Parameter('pore_formation_rate_k', 1e-3)
-        #Parameter('pore_recycling_rate_k', 0)
+        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3)
 
-        Rule('Pores_From_Bax_Monomers', 
-             Bax(loc='i') >> Bax(loc='p') + Pores(),
+        Bax = self['Bax']
+        Pores = self['Pores']
+
+        # Compartment dependent
+        self.rule('Pores_From_Bax_Monomers', 
+             Bax(loc=bax_loc_state) >> Bax(loc='p') + Pores(),
              pore_formation_rate_k)
+
+        if reversible:
+            pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-3)
+
+            self.rule('Pores_reverse',
+                 Bax(loc='p') >> Bax(loc='c') ** solution,
+                 pore_reverse_rate_k)
 
         # Pore observables
-        Observable('pBax', Bax(loc='p'))
-        Observable('pores', Pores())    
-        for i, cpt in enumerate(model.compartments):
+        self.observable('pBax', Bax(loc='p'))
+        self.observable('pores', Pores())
+        for cpt_name in self.cpt_list:
             if (not cpt.name == 'solution'):
-                Observable('pores_%s' % cpt.name, Pores() ** cpt)
+                self.observable('pores_%s' % cpt_name, Pores(cpt=cpt_name))
 
     def pores_from_Bax_dimers():
-        """Basically a way of counting the time-integrated amount of
-           forward pore formation."""
-
-        Parameter('pore_formation_rate_k', 100) # This is going to be 
-        #Parameter('scaled_pore_formation_rate_k', 0.03) # This is going to be 
-        Parameter('pore_recycling_rate_k', 100)
-
-        Rule('Pores_From_Bax_Dimers', 
-             MatchOnce(Bax(loc='i', bh3=1, a6=None) % Bax(loc='i', bh3=1, a6=None)) >>
-             MatchOnce(Bax(loc='p', bh3=1, a6=None) % Bax(loc='p', bh3=1, a6=None)) + Pores(),
-             pore_formation_rate_k)
+        raise NotImplementedError()
 
     def rate_calcs(nm_rate):
 
@@ -310,7 +321,6 @@ class Builder(core.Builder):
 
         return xrecs[0]
 
-
 #---------------------------------------------------------------------
     # SSA data analysis functions
     def plot_compartment_mean(model, observable_name, output):
@@ -373,11 +383,9 @@ class Builder(core.Builder):
                 totals += get_compartment_dist(model, observable_name, output)
         return totals
 
-
     def plot_combined_dist(model, observable_name, output_array):
         totals = combine_dists(model, observable_name, output_array)
         plot_dist(totals)
-
 
     def plot_dist(data):
         plt.ion()

@@ -1,8 +1,8 @@
-from pysb import bng
+from pysb import bng, kappa
 import sys
 import numpy as np
 import pickle
-from tbidbaxlipo.models import one_cpt, n_cpt
+from tbidbaxlipo.models import one_cpt, n_cpt, site_cpt
 from pysb.integrate import Solver
 
 class Job(object):
@@ -66,6 +66,28 @@ class Job(object):
         for i in range(self.num_sims):
             xrecs.append(bng.run_ssa(b.model, t_end=self.tmax,
                          n_steps=self.n_steps, cleanup=cleanup, output_dir='.'))
+        return xrecs
+
+    def run_site_cpt(self):
+        """Run a set of simulations using the site_cpt implementation.
+
+        Builds the model using the :py:meth:`Job.build` method, then runs
+        the number of simulations specified in ``self.num_sims`` using
+        `pysb.kappa.run_simulation` and returns the results.
+
+        Returns
+        -------
+        list of numpy.recarrays
+            List of record arrays, each one containing the results of a
+            single stochastic simulation. The entries in the record array
+            correspond to observables in the model.
+        """
+        b = self.build(site_cpt)
+        xrecs = []
+        for i in range(self.num_sims):
+            xrecs.append(kappa.run_simulation(b.model, time=self.tmax,
+                                              points=self.n_steps,
+                                              output_dir='.'))
         return xrecs
 
     def run_one_cpt(self):
