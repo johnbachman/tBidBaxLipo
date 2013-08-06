@@ -7,5 +7,5 @@ Contents:
    :maxdepth: 2
 
    reconciling_rates
-   simple_translocation
+   translocation
 
