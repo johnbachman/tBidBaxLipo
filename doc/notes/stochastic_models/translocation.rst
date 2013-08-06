@@ -13,7 +13,10 @@ for the comparison is in
     In [1]: from tbidbaxlipo.models import simulation
 
     @suppress
-    In [3]: from tbidbaxlipo.plots.stoch_det_comparison.translocation import *
+    In [2]: from tbidbaxlipo.plots.stoch_det_comparison.translocation import *
+
+    @suppress
+    In [3]: from tbidbaxlipo.plots.stoch_det_comparison.plot_funcs import *
 
     @suppress
     In [4]: from tbidbaxlipo.plots.stoch_det_comparison.translocation \
@@ -61,7 +64,7 @@ For the first timepoint:
 
     In [3]: mBax_dist = plot_hist_vs_poisson(job, n_cpt_obs, 'mBax', 1);
 
-    In [4]: print_mbax_means_and_vars(job, n_cpt_obs, 1)
+    In [4]: print_obs_means_and_vars(job, n_cpt_obs, 'mBax', 1)
 
     @suppress
     In [5]: savefig('_static/simple_translocation_1.png')
@@ -75,7 +78,7 @@ For the 20th timepoint:
 
     In [6]: mBax_dist = plot_hist_vs_poisson(job, n_cpt_obs, 'mBax', 20);
 
-    In [7]: print_mbax_means_and_vars(job, n_cpt_obs, 20)
+    In [7]: print_obs_means_and_vars(job, n_cpt_obs, 'mBax', 20)
 
     @suppress
     In [8]: savefig('_static/simple_translocation_2.png')
@@ -90,13 +93,11 @@ For the final timepoint:
     In [9]: mBax_dist = plot_hist_vs_poisson(job, n_cpt_obs, 'mBax', \
        ...: job.n_steps);
 
-    In [10]: print_mbax_means_and_vars(job, n_cpt_obs, job.n_steps)
+    In [10]: print_obs_means_and_vars(job, n_cpt_obs, 'mBax', job.n_steps)
 
     @suppress
     In [11]: savefig('_static/simple_translocation_3.png')
 
 .. image:: ../../_static/simple_translocation_3.png
     :width: 6in
-
-
 
