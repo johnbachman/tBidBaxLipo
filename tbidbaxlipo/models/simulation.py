@@ -151,6 +151,16 @@ def get_observables_values(observable_names, output, timepoint=None):
         values.append(output[obs_name][timepoint])
     return np.array(values)
 
+def get_means_across_cpts(observable_names, output, timepoint=None):
+    means_list = []
+    var_list = []
+    for sim_result in output:
+        values = get_observables_values(observable_names, sim_result,
+                                        timepoint=timepoint)
+        means_list.append(np.mean(values))
+        var_list.append(np.var(values))
+    return (np.array(means_list), np.array(var_list))
+
 def get_frequency_matrix(observable_names, output, timepoint=None):
     """Get the frequencies of observable values across the simulations.
 

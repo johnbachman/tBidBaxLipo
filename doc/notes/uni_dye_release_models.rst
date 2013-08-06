@@ -127,10 +127,18 @@ and vesicles is equal, and it only takes one protein to form a pore, you won't
 get 100% dye release. You will, however, reach 1 pore ver vesicle (on average)
 at completion.** This is due to the uneven (Poisson) distribution of the pores
 among liposomes. The ``one_cpt`` model actually captures this quite nicely, and
-its results are validated by the ``n_cpt`` model. Of course, this also means
-that whenever liposomes are in excess on a molar basis, it is impossible to get
-100% permeabilization. This is because in this model one can get a maximum of
-one pore per protein via an irreversible process.
+its results are validated by the ``n_cpt`` model, as shown in the figure
+below:
+
+.. plot::
+
+    from tbidbaxlipo.plots.bax_heat_stoch_det_comparison import plot
+    plot()
+
+Of course, this also means that whenever liposomes are in excess on a molar
+basis, it is impossible to get 100% permeabilization. This is because in this
+model one can get a maximum of one pore per protein via an irreversible
+process.
 
 For example, if we set the concentration of both Bax and Vesicles to 50 nM,
 we see that dye release plateaus at around 60%, whereas the average

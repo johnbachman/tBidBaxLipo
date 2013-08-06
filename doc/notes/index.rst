@@ -8,6 +8,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   reconciling_rates
+   simple_translocation
    conclusions
    lipo_titration
    uni_dye_release_models
