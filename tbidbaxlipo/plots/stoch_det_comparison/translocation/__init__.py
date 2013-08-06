@@ -6,28 +6,8 @@ from scipy.stats import poisson
 import pkgutil
 import pickle
 
-class Job(simulation.Job):
-    def __init__(self):
-        scaling_factor = 10
-        tmax = 60
-        num_sims = 60
-        n_steps = 100
-        super(Job, self).__init__({}, scaling_factor, tmax, n_steps, num_sims)
 
-    def build(self, module):
-        builder = module.Builder(params_dict=self.params_dict,
-                                 scaling_factor=self.scaling_factor)
-        builder.translocate_Bax()
-        return builder
-
-ion()
-job = Job()
-
-n_cpt_obs = pickle.loads(pkgutil.get_data(
-                    'tbidbaxlipo.plots.stoch_det_comparison.translocation',
-                    'n_cpt_obs.pck'))
-
-def plot_timecourse_comparison():
+def plot_timecourse_comparison(job, n_cpt_obs):
     b_one = job.one_cpt_builder()
     [time, one_cpt_obs] = job.run_one_cpt()
     one_cpt_Bax_0 = b_one.model.parameters['Bax_0'].value
@@ -72,7 +52,7 @@ def plot_timecourse_comparison():
     legend(loc='lower right')
     """
 
-def plot_hist_vs_poisson(observable_basename, timepoint_index):
+def plot_hist_vs_poisson(job, n_cpt_obs, observable_basename, timepoint_index):
     # Get the things we'll need
     b_n = job.n_cpt_builder()
     b_one = job.one_cpt_builder()
@@ -85,8 +65,8 @@ def plot_hist_vs_poisson(observable_basename, timepoint_index):
     means = np.mean(freq_matrix, axis=1)
     sds = np.std(freq_matrix, axis=1)
 
-    norm_means = means / trapz(means, index)
-    norm_sds = sds / trapz(means, index)
+    norm_means = means / np.sum(means)
+    norm_sds = sds / np.sum(means)
     norm_se = norm_sds / np.sqrt(len(n_cpt_obs))
 
     figure()
@@ -107,7 +87,7 @@ def plot_hist_vs_poisson(observable_basename, timepoint_index):
 
     return means
 
-def print_mbax_means_and_vars(timepoint):
+def print_mbax_means_and_vars(job, n_cpt_obs, timepoint):
     b_n = job.n_cpt_builder()
     (mbax_means, mbax_vars) = simulation.get_means_across_cpts(
                         b_n.get_compartment_observables('mBax'),

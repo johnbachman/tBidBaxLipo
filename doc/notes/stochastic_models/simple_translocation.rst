@@ -12,9 +12,14 @@ for the comparison is in
     @suppress
     In [1]: from tbidbaxlipo.models import simulation
 
+    @suppress
     In [3]: from tbidbaxlipo.plots.stoch_det_comparison.translocation import *
 
-    In [5]: b_one = job.build(one_cpt)
+    @suppress
+    In [4]: from tbidbaxlipo.plots.stoch_det_comparison.translocation \
+       ...: import bax_kr_nominal, bax_kr_nominal_t06
+
+    In [5]: b_one = bax_kr_nominal.job.one_cpt_builder()
 
 This model has only two rules, for translocation of Bax to and from the
 single membrane compartment:
@@ -29,8 +34,9 @@ We simulate both the deterministic and stochastic versions for 60 seconds
 .. plot::
 
     from tbidbaxlipo.plots.stoch_det_comparison.translocation import *
-    plot_timecourse_comparison()
-
+    from tbidbaxlipo.plots.stoch_det_comparison.translocation.bax_kr_nominal \
+         import job, n_cpt_obs
+    plot_timecourse_comparison(job, n_cpt_obs)
 
 In this figure, the error bars represent the standard error across all of the
 simulations. As expected, the ``n_cpt`` model matches the single compartment
@@ -49,41 +55,47 @@ For the first timepoint:
 
 .. ipython::
 
-    In [1]: mBax_dist = plot_hist_vs_poisson('mBax', 1);
+    In [1]: job = bax_kr_nominal.job
 
-    In [2]: print_mbax_means_and_vars(1)
+    In [2]: n_cpt_obs = bax_kr_nominal.n_cpt_obs
+
+    In [3]: mBax_dist = plot_hist_vs_poisson(job, n_cpt_obs, 'mBax', 1);
+
+    In [4]: print_mbax_means_and_vars(job, n_cpt_obs, 1)
 
     @suppress
-    In [3]: savefig('_static/mbax_dist_t1.png')
+    In [5]: savefig('_static/simple_translocation_1.png')
 
-.. image:: ../../_static/mbax_dist_t1.png
+.. image:: ../../_static/simple_translocation_1.png
     :width: 6in
 
 For the 20th timepoint:
 
 .. ipython::
 
-    In [4]: mBax_dist = plot_hist_vs_poisson('mBax', 20);
+    In [6]: mBax_dist = plot_hist_vs_poisson(job, n_cpt_obs, 'mBax', 20);
 
-    In [5]: print_mbax_means_and_vars(20)
+    In [7]: print_mbax_means_and_vars(job, n_cpt_obs, 20)
 
     @suppress
-    In [6]: savefig('_static/mbax_dist_t20.png')
+    In [8]: savefig('_static/simple_translocation_2.png')
 
-.. image:: ../../_static/mbax_dist_t20.png
+.. image:: ../../_static/simple_translocation_2.png
     :width: 6in
 
-For the final (100th) timepoint:
+For the final timepoint:
 
 .. ipython::
 
-    In [7]: mBax_dist = plot_hist_vs_poisson('mBax', job.n_steps);
+    In [9]: mBax_dist = plot_hist_vs_poisson(job, n_cpt_obs, 'mBax', \
+       ...: job.n_steps);
 
-    In [8]: print_mbax_means_and_vars(job.n_steps)
+    In [10]: print_mbax_means_and_vars(job, n_cpt_obs, job.n_steps)
 
     @suppress
-    In [9]: savefig('_static/mbax_dist_t_final.png')
+    In [11]: savefig('_static/simple_translocation_3.png')
 
-.. image:: ../../_static/mbax_dist_t_final.png
+.. image:: ../../_static/simple_translocation_3.png
     :width: 6in
+
 
