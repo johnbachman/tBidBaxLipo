@@ -45,14 +45,15 @@ The ``__init__`` method's only role is to make explicit the parameter
 overrides, duration, and other features of the simulation that are passed
 to the superclass constructor.
 
-The ``build`` method takes a module (generally either
-:py:mod:`tbidbaxlipo.models.n_cpt` or :py:mod:`tbidbaxlipo.models.one_cpt` and
-returns the appropriate builder instance after the model has been constructed.
-The ``build`` method should call the constructor ``module.Builder`` as shown,
-passing in the ``params_dict`` and ``scaling_factor`` arguments (note that
-``scaling_factor`` will simply be ignored by the ``__init__`` method of
-``one_cpt.Builder``). Building the model this way requires that model assembly
-code is written in one place and the same parameters are passed in.
+The ``build`` method takes a module (e.g. :py:mod:`tbidbaxlipo.models.one_cpt`,
+:py:mod:`tbidbaxlipo.models.n_cpt` or :py:mod:`tbidbaxlipo.models.site_cpt`)
+and returns the appropriate builder instance after the model has been
+constructed.  The ``build`` method should call the constructor
+``module.Builder`` as shown, passing in the ``params_dict`` and
+``scaling_factor`` arguments (note that ``scaling_factor`` will simply be
+ignored by the ``__init__`` method of ``one_cpt.Builder``).  Building the model
+this way requires that model assembly code is written in one place and the same
+parameters are passed in.
 
 .. important::
 
