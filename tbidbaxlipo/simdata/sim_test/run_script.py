@@ -1,6 +1,6 @@
-from tbidbaxlipo.models import n_cpt_jobs
+from tbidbaxlipo.models import simulation
 
-class Job(n_cpt_jobs.Job):
+class Job(simulation.Job):
     def __init__(self):
         params_dict = {'Bax_transloc_kf':1e-2}
         scaling_factor = 5

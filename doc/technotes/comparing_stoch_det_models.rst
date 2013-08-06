@@ -11,17 +11,17 @@ is a protocol for how to do this using the scripts in this package.
 
 **1. Write a script to build the SSA model and run it.**
 
-The module :py:mod:`tbidbaxlipo.models.n_cpt_jobs` contains most of the
+The module :py:mod:`tbidbaxlipo.models.simulation` contains most of the
 boilerplate code involved in setting up and parsing stochastic simulation
 results. To create a script for simulating a specific model, create a new file
 that will be your run script. In this script you will create a subclass of
-:py:class:`tbidbaxlipo.models.n_cpt_jobs.Job`, implementing only the methods
+:py:class:`tbidbaxlipo.models.simulation.Job`, implementing only the methods
 ``__init__`` and ``build``. In addition you will add a short main script for
 running the job at the command-line.  Here is a complete example::
 
-    from tbidbaxlipo.models import n_cpt_jobs
+    from tbidbaxlipo.models import simulation
 
-    class Job(n_cpt_jobs.Job):
+    class Job(simulation.Job):
         def __init__(self):
             params_dict = {'Bax_transloc_kf':1e-2}
             scaling_factor = 5
@@ -78,10 +78,10 @@ Log into the computing cluster and navigate to the directory on the server
 (e.g. `tbidbaxlipo/simdata/mysim`) where you want the simulation results to be
 saved. It is a good practice to put the run script used to create and run the
 model in this directory so you maintain a link between the simulation setup and
-the results. Run the script :py:mod:`tbidbaxlipo.models.n_cpt_jobs` at the
+the results. Run the script :py:mod:`tbidbaxlipo.models.simulation` at the
 command-line to submit the simulation jobs on Orchestra, as follows::
 
-    python -m tbidbaxlipo.models.n_cpt_jobs submit [run_script.py] [num_jobs]
+    python -m tbidbaxlipo.models.simulation submit [run_script.py] [num_jobs]
 
 **3. Parse the results back.**
 
@@ -89,7 +89,7 @@ In most cases you will only want the means and the standard deviations of the
 observables at each time point. To calculate and save these, you run the
 script::
 
-    python -m tbidbaxlipo.models.n_cpt_jobs parse /path/*.gdat
+    python -m tbidbaxlipo.models.simulation parse /path/*.gdat
 
 The `.gdat` files to load and parse are passed in as a glob or list of files.
 The script saves the means of each observable in a record array pickled to
@@ -119,8 +119,8 @@ be changed from the above example to use it for a new dataset.
 
 **5. Plot results and compare with deterministic model.**
 
-The class :py:class:`tbidbaxlipo.models.n_cpt_jobs.Job` contains a
-:py:meth:`tbidbaxlipo.models.n_cpt_jobs.Job.run_one_cpt` that handles the
+The class :py:class:`tbidbaxlipo.models.simulation.Job` contains a
+:py:meth:`tbidbaxlipo.models.simulation.Job.run_one_cpt` that handles the
 construction and simulation of ``one_cpt`` models in precisely analogous
 fashion to ``n_cpt``, streamlining comparison of models. Here is an example
 plotting script::
