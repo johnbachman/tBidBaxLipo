@@ -4,7 +4,7 @@ import pkgutil
 
 class Job(simulation.Job):
     def __init__(self):
-        params_dict = {'Bax_transloc_kr':1e-1}
+        params_dict = {}
         scaling_factor = 10
         tmax = 60
         num_sims = 60

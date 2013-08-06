@@ -6,7 +6,6 @@ from scipy.stats import poisson
 import pkgutil
 import pickle
 
-
 def plot_timecourse_comparison(job, n_cpt_obs):
     b_one = job.one_cpt_builder()
     [time, one_cpt_obs] = job.run_one_cpt()
@@ -96,6 +95,3 @@ def print_mbax_means_and_vars(job, n_cpt_obs, timepoint):
           (np.mean(mbax_means), np.std(mbax_means))
     print "mBax per liposome variance: %f +/- %f" % \
           (np.mean(mbax_vars), np.std(mbax_vars))
-
-if __name__ == '__main__':
-    job.run_n_cpt(cleanup=False)
