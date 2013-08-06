@@ -341,7 +341,7 @@ if __name__ == '__main__':
     usage_msg += "        .gdat files and saves the results as a list of\n"
     usage_msg += "        record arrays in n_cpt_obs.pck. Also calculates\n"
     usage_msg += "        and saves the mean and SD for all observables in\n"
-    usage_msg += "        means.pck and stds.pck, respectively.\n"
+    usage_msg += "        n_cpt_means.pck and n_cpt_stds.pck, respectively.\n"
     usage_msg += "\n"
     usage_msg += "    python simulation.py submit [run_script.py] [num_jobs]\n"
     usage_msg += "        For use with LSF. Calls bsub to submit the desired\n"
@@ -363,10 +363,10 @@ if __name__ == '__main__':
         with open('n_cpt_obs.pck', 'w') as f:
             print "Writing record arrays..."
             pickle.dump(n_cpt_obs, f)
-        with open('means.pck', 'w') as f:
+        with open('n_cpt_means.pck', 'w') as f:
             print "Writing means..."
             pickle.dump(means, f)
-        with open('stds.pck', 'w') as f:
+        with open('n_cpt_stds.pck', 'w') as f:
             print "Writing SDs..."
             pickle.dump(stds, f)
     # Submit jobs to LSF
