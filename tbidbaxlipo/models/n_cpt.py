@@ -56,7 +56,7 @@ class Builder(core.Builder):
         # pore formation
         for cpt in self.model.compartments:
             if (not cpt.name == 'solution'):
-                self.observable('tBid_%s' % cpt.name, tBid() ** cpt)
+                self.observable('mtBid_%s' % cpt.name, tBid() ** cpt)
                 self.observable('Bax_%s' % cpt.name, Bax() ** cpt)
                 self.observable('mBax_%s' % cpt.name, Bax(loc='m') ** cpt)
                 self.observable('iBax_%s' % cpt.name, Bax(loc='i') ** cpt)

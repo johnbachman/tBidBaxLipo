@@ -100,7 +100,7 @@ class Builder(core.Builder):
         self.observable('mtBid', tBid(loc='m'))
         for cpt_name in self.cpt_list:
             if (not cpt_name == 'solution'):
-                self.observable('tBid_%s' % cpt_name, tBid(cpt=cpt_name))
+                self.observable('mtBid_%s' % cpt_name, tBid(cpt=cpt_name))
 
     def translocate_tBid_Bax(self):
         print("site_cpt: translocate_tBid_Bax()")
