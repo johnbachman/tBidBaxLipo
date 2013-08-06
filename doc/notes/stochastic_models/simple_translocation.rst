@@ -56,7 +56,7 @@ For the first timepoint:
     @suppress
     In [3]: savefig('_static/mbax_dist_t1.png')
 
-.. image:: ../_static/mbax_dist_t1.png
+.. image:: ../../_static/mbax_dist_t1.png
     :width: 6in
 
 For the 20th timepoint:
@@ -70,7 +70,7 @@ For the 20th timepoint:
     @suppress
     In [6]: savefig('_static/mbax_dist_t20.png')
 
-.. image:: ../_static/mbax_dist_t20.png
+.. image:: ../../_static/mbax_dist_t20.png
     :width: 6in
 
 For the final (100th) timepoint:
@@ -84,6 +84,6 @@ For the final (100th) timepoint:
     @suppress
     In [9]: savefig('_static/mbax_dist_t_final.png')
 
-.. image:: ../_static/mbax_dist_t_final.png
+.. image:: ../../_static/mbax_dist_t_final.png
     :width: 6in
 
