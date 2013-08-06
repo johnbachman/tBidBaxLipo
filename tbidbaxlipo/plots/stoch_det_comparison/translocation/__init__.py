@@ -99,7 +99,7 @@ def plot_hist_vs_poisson(observable_basename, timepoint_index):
 
     plot(index, poisson.pmf(index, mBax_per_lipo), color='g',
          linewidth='2')
-    xlim([min(plot_index), max(index)])
+    xlim([min(index)-0.5, max(index)+0.5])
     title('Distribution of %s at %.1f seconds' %
           (observable_basename, time[timepoint_index]))
     xlabel('%s per liposome' % observable_basename)
