@@ -64,6 +64,7 @@ class Job(object):
         b = self.build(n_cpt)
         xrecs = []
         for i in range(self.num_sims):
+            print "Running BNG simulation %d of %d..." % (i, self.num_sims)
             xrecs.append(bng.run_ssa(b.model, t_end=self.tmax,
                          n_steps=self.n_steps, cleanup=cleanup, output_dir='.'))
         return xrecs
