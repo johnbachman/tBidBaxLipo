@@ -28,10 +28,14 @@ sys.path.append(os.path.abspath('ext'))
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
               'sphinx.ext.intersphinx', 'sphinx.ext.todo',
-              'sphinx.ext.coverage', 'sphinx.ext.pngmath',
+              'sphinx.ext.coverage', 'sphinx.ext.mathjax',
               'sphinx.ext.viewcode', 'numpydoc', 'citations']
 
-extensions.extend( ['matplotlib.sphinxext.plot_directive'])
+extensions.extend( ['matplotlib.sphinxext.plot_directive',
+                    #'matplotlib.sphinxext.inheritance_diagram',
+                    'sphinx.ext.doctest',
+                    'IPython.sphinxext.ipython_directive',
+                    'IPython.sphinxext.ipython_console_highlighting'])
 
 todo_include_todos=True
 
