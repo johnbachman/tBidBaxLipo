@@ -167,6 +167,42 @@ class Job(object):
         #with open('dr.pck', 'w') as f:
         #    pickle.dump(dr_all, f)
 
+    @staticmethod
+    def get_observables_values(observable_names, output, timepoint=None):
+        """Get the values for a list of observables from a simulation result.
+
+        Useful primarily for getting a list of observables corresponding to a
+        given observable distributed across all compartments and then analyzing
+        the distribution.
+
+        Parameters
+        ----------
+        observable_names : list of string
+            The list of observable names to look for in the simulation output
+            array, e.g. 'pores_c1', 'pores_c2', etc.
+        output : numpy record array
+            A record array of simulation results indexed by observable names.
+        timepoint : int
+            The index of the timepoint to get the snapshot of the observable.
+            If no value is provided, the final timepoint is used.
+
+        Returns
+        -------
+        numpy.array
+            An array with the simulated values from the output array for the
+            list of observables at the given timepoint.
+        """
+
+        values = []
+        num_timepoints = len(output['time'])
+        if timepoint is None:
+            timepoint = num_timepoints - 1
+        if timepoint < 0 or timepoint >= num_timepoints:
+            raise ValueError('Invalid value for the timepoint index.')
+        for obs_name in observable_names:
+            values.append(output[obs_name][timepoint])
+        return np.array(values)
+
 def calculate_mean_and_std_from_files(gdat_files):
     """Calculates mean and SD for all observables from .gdat files.
 

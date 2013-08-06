@@ -157,6 +157,25 @@ class Builder(core.Builder):
              pore_formation_rate_k)
 
     # Running the model
+    def get_compartment_observables(self, obs_basename):
+        """Get the names for an observable across all compartments.
+
+        Parameters
+        ----------
+        obs_basename : string
+            The basename of the desired observable, e.g. 'mBax'.
+
+        Returns
+        -------
+        list of strings
+            A list of strings of the observable names for the desired
+            observable in each compartment, e.g. ['mBax_c1', 'mBax_c2', ...]
+        """
+
+        return ['%s_%s' % (obs_basename, cpt.name)
+                for cpt in self.model.compartments
+                if not cpt.name == 'solution']
+
     def run_model(self, tmax=12000, num_sims=1):
         xrecs = []
         dr_all = []
@@ -174,6 +193,7 @@ class Builder(core.Builder):
                             buf=np.mean(xall, 0))
 
         plot_simulation(x_avg, x_std, dr_all, self.model, num_sims)
+
 
 def plot_simulation(x_avg, x_std, dr_all, model, num_sims, figure_ids=[0, 1]):
     ci = color_iter()
@@ -271,47 +291,12 @@ def plot_compartment_mean(model, observable_name, output):
     plt.figure()
     plt.plot(output['time'], mean)
 
-def get_dye_release(model, pore_observable_name, output):
-    num_timepoints = len(output['time'])
-    dye_release = np.zeros(num_timepoints)
-    for t in range(0, num_timepoints):
-        permeabilized_count = 0.
-        for i, cpt in enumerate(model.compartments):
-            if (not cpt.name == 'solution' and 
-                output['%s_%s' % (pore_observable_name, cpt.name)][t] > 0):
-                permeabilized_count += 1
-        frac_permeabilized = permeabilized_count / \
-                             float(model.parameters['Vesicles_0'].value)
-        dye_release[t] = frac_permeabilized
-
-    return dye_release
-
 def plot_compartment_all(model, observable_name, output):
     plt.figure()
     for i, cpt in enumerate(model.compartments):
         if (not cpt.name == 'solution'):
             plt.plot(output['time'], output['%s_%s' %
                                             (observable_name, cpt.name)])
-
-def plot_predicted_p(model, observable_name, output):
-    # Iterate through data, and at each time point, get the fraction
-    # of compartments with 0 of the observable
-    num_timepoints = len(output['time']) 
-    f0 = []
-    #for t in range(0, num_timepoints):
-        #f0_t
-        #for i, cptgg
-
-def get_compartment_dist(model, observable_name, output):
-
-    end_counts = []
-    num_timepoints = len(output['time']) 
-    for t in range(num_timepoints-1, num_timepoints):
-        for i, cpt in enumerate(model.compartments):
-            if (not cpt.name == 'solution'):
-                end_counts.append(output['%s_%s' %
-                                         (observable_name, cpt.name)][t])
-    return np.array(end_counts)
 
 def combine_dists(model, observable_name, output_array):
     totals = []

@@ -222,6 +222,24 @@ class Builder(core.Builder):
         print "scaled molec rate: %g" % scaled_molec_rate
 
     # RUNNING THE MODEL
+    def get_compartment_observables(self, obs_basename):
+        """Get the names for an observable across all compartments.
+
+        Parameters
+        ----------
+        obs_basename : string
+            The basename of the desired observable, e.g. 'mBax'.
+
+        Returns
+        -------
+        list of strings
+            A list of strings of the observable names for the desired
+            observable in each compartment, e.g. ['mBax_c1', 'mBax_c2', ...]
+        """
+
+        return ['%s_%s' % (obs_basename, cpt.name)
+                for cpt in self.cpt_list if not cpt == 'solution']
+
     def run_model(self, tmax=12000, num_sims=1, use_kappa=True,
                   figure_ids=[0, 1]):
         xrecs = []   # The array to store the simulation data
