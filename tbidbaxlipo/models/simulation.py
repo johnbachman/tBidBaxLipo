@@ -5,6 +5,7 @@ import pickle
 from tbidbaxlipo.models import one_cpt, n_cpt, site_cpt
 from pysb.integrate import Solver
 import collections
+import subprocess
 
 class Job(object):
     """Class for storing aspects of a SSA simulation job.
@@ -374,15 +375,16 @@ if __name__ == '__main__':
         if len(sys.argv) < 4:
             print usage_msg
             sys.exit()
-        if not sys.argv[1].endswith('.py'):
+
+        run_script = sys.argv[2]
+        if not run_script.endswith('.py'):
             print "The run script must be a Python script with .py extension.\n"
             print usage_msg
             sys.exit()
 
-        run_script = sys.argv[2]
         num_sims = int(sys.argv[3])
-        queue = 'mini'
-        time_limit = '00:10'
+        queue = 'short'
+        time_limit = '12:00'
         output_base = run_script.split('.')[0]
 
         cmd_list = []
