@@ -8,4 +8,4 @@ Contents:
 
    reconciling_rates
    translocation
-
+   tbid_bax_activation
