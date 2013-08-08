@@ -7,6 +7,14 @@ from pysb.integrate import Solver
 import collections
 import subprocess
 import h5py
+import os
+import glob
+
+TIME_CHUNK_SIZE = 101
+"""The chunk size for the time dimension of saved HDF5 datafiles."""
+
+SIM_CHUNK_SIZE = 100
+"""The chunk size for the simulation dimension of saved HDF5 datafiles."""
 
 class Job(object):
     """Class for storing aspects of a SSA simulation job.
@@ -268,27 +276,86 @@ def load_bng_files(gdat_files):
 def save_bng_files_to_hdf5(gdat_files, filename):
     """ Load to hdf5"""
     num_simulations = len(gdat_files)
-    time_chunk_size = 101
-    sim_chunk_size = 100
     dataset = None
 
+    print "Loading BNG simulation result files..."
     for sim_index, gdat_file in enumerate(gdat_files):
         ssa_result = bng._parse_bng_outfile(gdat_file)
+
+        # Initialize the dataset
         if dataset is None:
             num_observables = len(ssa_result.dtype)
             num_timepoints = len(ssa_result)
             f = h5py.File('%s.hdf5' % filename, 'w')
             dataset = f.create_dataset(filename,
-                             (num_simulations, num_timepoints, num_observable),
-                             chunks=(sim_chunk_size, time_chunk_size, 1),
+                             (num_simulations, num_timepoints, num_observables),
+                             chunks=(min(SIM_CHUNK_SIZE, num_simulations),
+                                     min(TIME_CHUNK_SIZE, num_timepoints),
+                                     1),
                              compression=9, shuffle=True)
+        # Make sure there's no funny business
+        assert len(gdat_files) == num_simulations
+        assert len(ssa_result.dtype) == num_observables
+        assert len(ssa_result) == num_timepoints
+        # Load the data into the appropriate slot in the dataset
         dataset[sim_index,:,:] = ssa_result.view('float'). \
                                                 reshape(num_timepoints, -1)
-    dtype_pck = cPickle.dumps(ssa_result.dtype)
-    f.create_dataset(filename + '_dtype_pck', dtype='byte', data=dtype_pck)
-    f.close()
+        print "\rLoaded BNG file %d of %d" % (sim_index+1, num_simulations),
+        sys.stdout.flush()
 
+    dtype_pck = pickle.dumps(ssa_result.dtype)
+    f.create_dataset(filename + '_dtype_pck', dtype='uint8',
+                     data=map(ord, dtype_pck))
+    f.close()
+    print
     return dataset
+
+def save_bng_dirs_to_hdf5(data_dirs, filename):
+    """Load the *.gdat files in each of the listed directories to HDF5."""
+    num_conditions = len(data_dirs)
+    dataset = None
+
+    print "Loading BNG simulation results from data directories..."
+    for condition_index, data_dir in enumerate(data_dirs):
+        print "Loading data from directory %s" % data_dir
+        gdat_files = glob.glob('%s/*.gdat' % data_dir)
+
+        for sim_index, gdat_file in enumerate(gdat_files):
+            ssa_result = bng._parse_bng_outfile(gdat_file)
+            # Initialize the dataset
+            if dataset is None:
+                num_simulations = len(gdat_files)
+                num_observables = len(ssa_result.dtype)
+                num_timepoints = len(ssa_result)
+                f = h5py.File('%s.hdf5' % filename, 'w')
+                dataset = f.create_dataset(filename,
+                                           (num_conditions, num_simulations,
+                                            num_timepoints, num_observables),
+                                           dtype='float',
+                                           chunks=(1, min(SIM_CHUNK_SIZE, num_simulations),
+                                                   min(TIME_CHUNK_SIZE, num_timepoints), 1),
+                                           compression=9, shuffle=True)
+            # Make sure there's no funny business
+            assert len(gdat_files) == num_simulations
+            assert len(ssa_result.dtype) == num_observables
+            assert len(ssa_result) == num_timepoints
+            # Load the data into the appropriate slot in the dataset
+            dataset[condition_index, sim_index, :, :] = \
+                         ssa_result.view('float').reshape(num_timepoints, -1)
+            print "\rLoaded BNG file %d of %d" % (sim_index+1, num_simulations),
+            sys.stdout.flush()
+
+        # (end iteration over all .gdat files in the directory)
+        print # Add a newline
+    # (end iteration over all data directories)
+
+    # Pickle the dtype with the observables and save in the dataset
+    dtype_pck = pickle.dumps(ssa_result.dtype)
+    f.create_dataset(filename + '_dtype_pck', dtype='uint8',
+                     data=map(ord, dtype_pck))
+    f.close()
+    return dataset
+
 
 def calculate_mean_and_std(xrecs):
     """Returns the mean and std of the observables from SSA simulations.
@@ -363,12 +430,15 @@ def calculate_dye_release_mean_and_std(xrecs, pore_obs_prefix='pores_'):
 if __name__ == '__main__':
     usage_msg =  "Usage:\n"
     usage_msg += "\n"
-    usage_msg += "    python simulation.py parse [files]\n"
+    usage_msg += "    python simulation.py parse [hdf5_filename] " \
+                                                "[files or dirs...]\n"
     usage_msg += "        Parses the BNG simulation results from a list of\n"
-    usage_msg += "        .gdat files and saves the results as a list of\n"
-    usage_msg += "        record arrays in n_cpt_obs.pck. Also calculates\n"
-    usage_msg += "        and saves the mean and SD for all observables in\n"
-    usage_msg += "        n_cpt_means.pck and n_cpt_stds.pck, respectively.\n"
+    usage_msg += "        .gdat files or directories and saves the results\n"
+    usage_msg += "        as an HDF5 file. If the first file in the list is\n"
+    usage_msg += "        a *.gdat file, parses as a set of simulations\n"
+    usage_msg += "        as a single condition; if the first file in the\n"
+    usage_msg += "        list is a directory, parses as simulations over\n"
+    usage_msg += "        a range of different conditions.\n"
     usage_msg += "\n"
     usage_msg += "    python simulation.py submit [run_script.py] [num_jobs]\n"
     usage_msg += "        For use with LSF. Calls bsub to submit the desired\n"
@@ -379,23 +449,31 @@ if __name__ == '__main__':
         sys.exit()
     # Parse simulation output files
     if sys.argv[1] == 'parse':
-        gdat_files = sys.argv[2:]
-        if len(gdat_files) == 0:
+        if len(sys.argv) < 4:
+            print "Please provide an output filename and a list of files.\n"
+            print usage_msg
+            sys.exit()
+        hdf5_filename = sys.argv[2]
+        data_files = sys.argv[3:]
+        if hdf5_filename.endswith('.gdat'):
+            print "The argument after 'parse' should be the basename of the " \
+                  "HDF5 output file.\n"
+            print usage_msg
+            sys.exit()
+        if len(data_files) == 0:
             print "Please provide a list of files to parse.\n"
             print usage_msg
             sys.exit()
-        n_cpt_obs = load_bng_files(gdat_files)
-        (means, stds) = calculate_mean_and_std(n_cpt_obs)
-        # Pickle the output files
-        with open('n_cpt_obs.pck', 'w') as f:
-            print "Writing record arrays..."
-            pickle.dump(n_cpt_obs, f)
-        with open('n_cpt_means.pck', 'w') as f:
-            print "Writing means..."
-            pickle.dump(means, f)
-        with open('n_cpt_stds.pck', 'w') as f:
-            print "Writing SDs..."
-            pickle.dump(stds, f)
+        if os.path.isdir(data_files[0]):
+            print "Parsing as a set of directories..."
+            save_bng_dirs_to_hdf5(data_files, hdf5_filename)
+        elif data_files[0].endswith('.gdat'):
+            print "Parsing as a set of .gdat files..."
+            save_bng_files_to_hdf5(data_files, hdf5_filename)
+        else:
+            print "Please provide a list of .gdat files or directories."
+            print usage_msg
+            sys.exit()
     # Submit jobs to LSF
     elif sys.argv[1] == 'submit':
         if len(sys.argv) < 4:
