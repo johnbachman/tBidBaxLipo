@@ -6,6 +6,7 @@ from tbidbaxlipo.models import one_cpt, n_cpt, site_cpt
 from pysb.integrate import Solver
 import collections
 import subprocess
+import h5py
 
 class Job(object):
     """Class for storing aspects of a SSA simulation job.
@@ -263,6 +264,31 @@ def load_bng_files(gdat_files):
         ssa_result = bng._parse_bng_outfile(gdat_file)
         xrecs.append(ssa_result)
     return xrecs
+
+def save_bng_files_to_hdf5(gdat_files, filename):
+    """ Load to hdf5"""
+    num_simulations = len(gdat_files)
+    time_chunk_size = 101
+    sim_chunk_size = 100
+    dataset = None
+
+    for sim_index, gdat_file in enumerate(gdat_files):
+        ssa_result = bng._parse_bng_outfile(gdat_file)
+        if dataset is None:
+            num_observables = len(ssa_result.dtype)
+            num_timepoints = len(ssa_result)
+            f = h5py.File('%s.hdf5' % filename, 'w')
+            dataset = f.create_dataset(filename,
+                             (num_simulations, num_timepoints, num_observable),
+                             chunks=(sim_chunk_size, time_chunk_size, 1),
+                             compression=9, shuffle=True)
+        dataset[sim_index,:,:] = ssa_result.view('float'). \
+                                                reshape(num_timepoints, -1)
+    dtype_pck = cPickle.dumps(ssa_result.dtype)
+    f.create_dataset(filename + '_dtype_pck', dtype='byte', data=dtype_pck)
+    f.close()
+
+    return dataset
 
 def calculate_mean_and_std(xrecs):
     """Returns the mean and std of the observables from SSA simulations.
