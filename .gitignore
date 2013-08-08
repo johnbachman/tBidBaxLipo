@@ -4,6 +4,10 @@ doc/_build
 doc/_static
 doc/sphinxreport.log
 
+*.net
+*.gdat
+*.cdat
+*.bngl
 *.log
 *.tsv
 *species.txt
