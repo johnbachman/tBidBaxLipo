@@ -37,12 +37,12 @@ def plot_hist_vs_poisson(jobs, data, cond_index, obs_basename, timepoint_index):
 
     return means
 
-def print_obs_means_and_vars(job, n_cpt_obs, observable_basename, timepoint):
+def print_obs_means_and_vars(jobs, data, cond_index, obs_basename, timepoint):
+    job = jobs[cond_index]
     b_n = job.n_cpt_builder()
-    (obs_means, obs_vars) = simulation.get_means_across_cpts(
-                        b_n.get_compartment_observables(observable_basename),
-                        n_cpt_obs, timepoint=timepoint)
+    (obs_means, obs_vars) = data.get_means_across_cpts(cond_index,
+                                                       obs_basename, timepoint)
     print "%s per liposome mean: %f +/- %f" % \
-          (observable_basename, np.mean(obs_means), np.std(obs_means))
+          (obs_basename, np.mean(obs_means), np.std(obs_means))
     print "%s per liposome variance: %f +/- %f" % \
-          (observable_basename, np.mean(obs_vars), np.std(obs_vars))
+          (obs_basename, np.mean(obs_vars), np.std(obs_vars))

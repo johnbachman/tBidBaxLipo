@@ -273,7 +273,7 @@ class CptDataset(object):
         # Get the indices of the observables
         obs_indices = [i for i, name in enumerate(self.dtypes.names)
                        if name.startswith(obs_basename + '_')]
-        # Slice the data to get just the condition, observables andtimepoint
+        # Slice the data to get just the condition, observables and timepoint
         # of interest
         data_slice = self.sim_data[cond_index, :, obs_indices, timepoint]
         # The list of counts
@@ -301,17 +301,17 @@ class CptDataset(object):
         index = np.array(range(int(key_min), int(key_max) + 1))
         return (index, freq_matrix)
 
-    '''
-    def get_means_across_cpts(observable_names, output, timepoint=None):
-        means_list = []
-        var_list = []
-        for sim_result in output:
-            values = get_observables_values(observable_names, sim_result,
-                                            timepoint=timepoint)
-            means_list.append(np.mean(values))
-            var_list.append(np.var(values))
-        return (np.array(means_list), np.array(var_list))
-    '''
+    def get_means_across_cpts(self, cond_index, obs_basename, timepoint):
+        # Get the indices of the observables
+        obs_indices = [i for i, name in enumerate(self.dtypes.names)
+                       if name.startswith(obs_basename + '_')]
+        # Slice the data to get just the condition, observables and timepoint
+        # of interest
+        data_slice = self.sim_data[cond_index, :, obs_indices, timepoint]
+
+        obs_means = np.mean(data_slice, axis=1)
+        obs_vars = np.var(data_slice, axis=1)
+        return (obs_means, obs_vars)
 
 def save_bng_files_to_hdf5(gdat_files, filename):
     """ Load to hdf5
