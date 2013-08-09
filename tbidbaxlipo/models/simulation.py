@@ -288,10 +288,9 @@ def save_bng_files_to_hdf5(gdat_files, filename):
             num_timepoints = len(ssa_result)
             f = h5py.File('%s.hdf5' % filename, 'w')
             dataset = f.create_dataset(filename,
-                             (num_simulations, num_timepoints, num_observables),
+                             (num_simulations, num_observables, num_timepoints),
                              chunks=(min(SIM_CHUNK_SIZE, num_simulations),
-                                     min(TIME_CHUNK_SIZE, num_timepoints),
-                                     1),
+                                     1, min(TIME_CHUNK_SIZE, num_timepoints)),
                              compression=9, shuffle=True)
         # Make sure there's no funny business
         assert len(gdat_files) == num_simulations
@@ -299,7 +298,7 @@ def save_bng_files_to_hdf5(gdat_files, filename):
         assert len(ssa_result) == num_timepoints
         # Load the data into the appropriate slot in the dataset
         dataset[sim_index,:,:] = ssa_result.view('float'). \
-                                                reshape(num_timepoints, -1)
+                                                reshape(num_timepoints, -1).T
         print "\rLoaded BNG file %d of %d" % (sim_index+1, num_simulations),
         sys.stdout.flush()
 
@@ -329,19 +328,19 @@ def save_bng_dirs_to_hdf5(data_dirs, filename):
                 num_timepoints = len(ssa_result)
                 f = h5py.File('%s.hdf5' % filename, 'w')
                 dataset = f.create_dataset(filename,
-                                           (num_conditions, num_simulations,
-                                            num_timepoints, num_observables),
-                                           dtype='float',
-                                           chunks=(1, min(SIM_CHUNK_SIZE, num_simulations),
-                                                   min(TIME_CHUNK_SIZE, num_timepoints), 1),
-                                           compression=9, shuffle=True)
+                               (num_conditions, num_simulations,
+                                num_observables, num_timepoints),
+                               dtype='float',
+                               chunks=(1, min(SIM_CHUNK_SIZE, num_simulations),
+                                       1, min(TIME_CHUNK_SIZE, num_timepoints)),
+                               compression=9, shuffle=True)
             # Make sure there's no funny business
             assert len(gdat_files) == num_simulations
             assert len(ssa_result.dtype) == num_observables
             assert len(ssa_result) == num_timepoints
             # Load the data into the appropriate slot in the dataset
             dataset[condition_index, sim_index, :, :] = \
-                         ssa_result.view('float').reshape(num_timepoints, -1)
+                         ssa_result.view('float').reshape(num_timepoints, -1).T
             print "\rLoaded BNG file %d of %d" % (sim_index+1, num_simulations),
             sys.stdout.flush()
 
@@ -442,7 +441,12 @@ if __name__ == '__main__':
     usage_msg += "\n"
     usage_msg += "    python simulation.py submit [run_script.py] [num_jobs]\n"
     usage_msg += "        For use with LSF. Calls bsub to submit the desired\n"
-    usage_msg += "        number of instances of run_script.py."
+    usage_msg += "        number of instances of run_script.py. Note that if\n"
+    usage_msg += "        run_script.py contains a top-level variable 'jobs'\n"
+    usage_msg += "        (which should be a list of instances of a\n"
+    usage_msg += "        simulation.Job subclass), the submit script runs\n"
+    usage_msg += "        num_jobs jobs for each entry in the job list, for\n"
+    usage_msg += "        a total of num_jobs * len(jobs) submitted jobs.\n"
 
     if len(sys.argv) < 2:
         print usage_msg
@@ -455,7 +459,7 @@ if __name__ == '__main__':
             sys.exit()
         hdf5_filename = sys.argv[2]
         data_files = sys.argv[3:]
-        if hdf5_filename.endswith('.gdat'):
+        if hdf5_filename.endswith('.gdat') or os.path.isdir(hdf5_filename):
             print "The argument after 'parse' should be the basename of the " \
                   "HDF5 output file.\n"
             print usage_msg
@@ -486,22 +490,35 @@ if __name__ == '__main__':
             print usage_msg
             sys.exit()
 
-        num_sims = int(sys.argv[3])
+        # Import the run script to see if it has multiple conditions
+        import imp
+        run_mod = imp.load_source('run_mod', run_script)
+        # If the module has a variable 'jobs', we're in a multi-condition
+        # situation
+        if 'jobs' in run_mod.__dict__.keys():
+            num_conditions = len(run_mod.jobs)
+        # Otherwise set the num_conditions to 1
+        else:
+            num_conditions = 1
+
+        num_jobs = int(sys.argv[3])
         queue = 'short'
         time_limit = '12:00'
         output_base = run_script.split('.')[0]
-
         cmd_list = []
-        for i in range(num_sims):
-            output_filename = '%s_%d.out' % (output_base, i)
+        for condition_index in range(num_conditions):
+            for job_index in range(num_jobs):
+                output_filename = '%s_cond%d_job%d.out' % \
+                                  (output_base, condition_index, job_index)
 
-            cmd_list = ['bsub',
-                        '-W', time_limit,
-                        '-q', queue,
-                        '-o', output_filename,
-                        'python', run_script]
-            print ' '.join(cmd_list)
-            subprocess.call(cmd_list)
+                cmd_list = ['bsub',
+                            '-W', time_limit,
+                            '-q', queue,
+                            '-o', output_filename,
+                            'python', run_script,
+                            str(condition_index)]
+                print ' '.join(cmd_list)
+                subprocess.call(cmd_list)
     # Unrecognized command
     else:
         print usage_msg

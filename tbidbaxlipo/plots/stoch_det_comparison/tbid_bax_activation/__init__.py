@@ -1,51 +1,38 @@
-from tbidbaxlipo.models import one_cpt, n_cpt, site_cpt, simulation
-from pylab import *
-import collections
-import glob
-from scipy.stats import poisson
-import pkgutil
+from tbidbaxlipo.models import simulation
 import pickle
+import pkgutil
+import sys
+import os
 
-ion()
+class Job(simulation.Job):
+    def __init__(self, tBid_0, tBid_transloc_kr):
+        params_dict = {'tBid_0': tBid_0, 'tBid_transloc_kr': tBid_transloc_kr}
+        scaling_factor = 20
+        tmax = 10000
+        num_sims = 30
+        n_steps = 100
+        super(Job, self).__init__(params_dict, scaling_factor, tmax, n_steps,
+                                  num_sims)
 
-def plot_timecourse_comparison(job, n_cpt_obs):
-    b_one = job.one_cpt_builder()
-    [time, one_cpt_obs] = job.run_one_cpt()
-    one_cpt_Bax_0 = b_one.model.parameters['Bax_0'].value
-    one_cpt_tBid_0 = b_one.model.parameters['tBid_0'].value
+    def build(self, module):
+        builder = module.Builder(params_dict=self.params_dict,
+                                 scaling_factor=self.scaling_factor)
+        builder.translocate_tBid_Bax()
+        builder.tBid_activates_Bax()
+        builder.model.name = job_name
+        return builder
 
-    b_n = job.n_cpt_builder()
-    [n_cpt_means, n_cpt_sd] = simulation.calculate_mean_and_std(n_cpt_obs)
-    n_cpt_Bax_0 = b_n.model.parameters['Bax_0'].value
-    n_cpt_tBid_0 = b_n.model.parameters['tBid_0'].value
+jobs = [Job(1, 0), Job(1, 1e-2), Job(20, 0), Job(20, 1e-2)]
+job_name = 'tbid_bax_activation'
 
-    # Compare deterministic to n_cpt
-    figure()
-    mBax_se = (n_cpt_sd['mBax'] / n_cpt_Bax_0) / np.sqrt(job.num_sims)
-    cBax_se = (n_cpt_sd['cBax'] / n_cpt_Bax_0) / np.sqrt(job.num_sims)
-    iBax_se = (n_cpt_sd['iBax'] / n_cpt_Bax_0) / np.sqrt(job.num_sims)
-    mtBid_se = (n_cpt_sd['mtBid'] / n_cpt_tBid_0) / np.sqrt(job.num_sims)
-    ctBid_se = (n_cpt_sd['ctBid'] / n_cpt_tBid_0) / np.sqrt(job.num_sims)
-
-    errorbar(n_cpt_means['time'], n_cpt_means['mBax'] / n_cpt_Bax_0, \
-             yerr=mBax_se, color='r', label='mBax');
-    errorbar(n_cpt_means['time'], n_cpt_means['cBax'] / n_cpt_Bax_0, \
-             yerr=cBax_se, color='b', label='cBax');
-    errorbar(n_cpt_means['time'], n_cpt_means['iBax'] / n_cpt_Bax_0, \
-             yerr=iBax_se, color='g', label='iBax');
-    errorbar(n_cpt_means['time'], n_cpt_means['mtBid'] / n_cpt_tBid_0, \
-             yerr=mtBid_se, color='k', label='mtBid');
-    errorbar(n_cpt_means['time'], n_cpt_means['ctBid'] / n_cpt_tBid_0, \
-             yerr=ctBid_se, color='m', label='ctBid');
-
-    plot(time, one_cpt_obs['mBax'] / one_cpt_Bax_0, color='r');
-    plot(time, one_cpt_obs['cBax'] / one_cpt_Bax_0, color='b');
-    plot(time, one_cpt_obs['iBax'] / one_cpt_Bax_0, color='g');
-    plot(time, one_cpt_obs['mtBid'] / one_cpt_tBid_0, color='k');
-    plot(time, one_cpt_obs['ctBid'] / one_cpt_tBid_0, color='m');
-
-    title('one_cpt vs. n_cpt')
-    xlabel('Time (sec)')
-    ylabel('Fraction of Total Bax/tBid')
-    legend(loc='lower right')
-
+if __name__ == '__main__':
+    if len(sys.argv) <= 1:
+        print "The condition index must also be specified."
+        sys.exit()
+    job_index = int(sys.argv[1])
+    job = jobs[job_index]
+    data_dir = os.path.join(os.getcwd(), 'data_%d' % job_index)
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+    os.chdir(data_dir)
+    job.run_n_cpt(cleanup=False)
