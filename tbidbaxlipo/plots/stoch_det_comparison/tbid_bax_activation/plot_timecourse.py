@@ -54,10 +54,6 @@ def plot_timecourse_comparison(job, data, dt):
     legend(loc='lower right')
 
 if __name__ == '__main__':
-    from __init__ import jobs
-    f = h5py.File('data.hdf5')
-    data = f['data']
-    dtypes = pickle.loads(f['data_dtype_pck'][:])
-    dtypes_dict = dict((name, i) for i, name in enumerate(dtypes.names))
+    from __init__ import jobs, data, dtypes, dtypes_dict
     plot_timecourse_comparison(jobs[0], data[0,:,:,:], dtypes_dict)
 
