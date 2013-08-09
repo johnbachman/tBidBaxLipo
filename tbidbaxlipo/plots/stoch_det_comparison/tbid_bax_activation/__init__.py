@@ -7,10 +7,7 @@ import h5py
 mod_path = os.path.dirname(sys.modules[__name__].__file__)
 hdf5_filename = os.path.join(mod_path, 'data.hdf5')
 if os.path.exists(hdf5_filename):
-    f = h5py.File('data.hdf5')
-    data = f['data']
-    dtypes = pickle.loads(f['data_dtype_pck'][:])
-    dtypes_dict = dict((name, i) for i, name in enumerate(dtypes.names))
+    data = simulation.CptDataset('data.hdf5', dtypes_name='data_dtype_pck')
 
 class Job(simulation.Job):
     def __init__(self, tBid_0, tBid_transloc_kr):

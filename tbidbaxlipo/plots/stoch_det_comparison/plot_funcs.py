@@ -10,8 +10,8 @@ def plot_hist_vs_poisson(job, n_cpt_obs, observable_basename, timepoint_index):
 
     # Get histogram data
     (index, freq_matrix) = simulation.get_frequency_matrix(
-                            b_n.get_compartment_observables(observable_basename),
-                            n_cpt_obs, timepoint=timepoint_index)
+                           b_n.get_compartment_observables(observable_basename),
+                           n_cpt_obs, timepoint=timepoint_index)
     means = np.mean(freq_matrix, axis=1)
     sds = np.std(freq_matrix, axis=1)
 

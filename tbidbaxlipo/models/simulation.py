@@ -73,7 +73,6 @@ class Job(object):
             self._site_cpt_builder = self.build(site_cpt)
         return self._site_cpt_builder
 
-
     def run_n_cpt(self, cleanup=False):
         """Run a set of simulations using the n_cpt implementation.
 
@@ -146,135 +145,232 @@ class Job(object):
         s.run()
         return (t, s.yobs)
 
-# Operations on stochastic simulation results
-
-def get_observables_values(observable_names, output, timepoint=None):
-    """Get the values for a list of observables from a simulation result.
-
-    Useful primarily for getting a list of observables corresponding to a
-    given observable distributed across all compartments and then analyzing
-    the distribution.
-
-    Parameters
-    ----------
-    observable_names : list of string
-        The list of observable names to look for in the simulation output
-        array, e.g. 'pores_c1', 'pores_c2', etc.
-    output : numpy record array
-        A record array of simulation results indexed by observable names.
-    timepoint : int
-        The index of the timepoint to get the snapshot of the observable.
-        If no value is provided, the final timepoint is used.
-
-    Returns
-    -------
-    numpy.array
-        An array with the simulated values from the output array for the
-        list of observables at the given timepoint.
+class CptDataset(object):
+    """Wrapper for HDF5 datasets of multi-compartment simulations.
+    Attributes
+    ---------
+    self.datafile : the h5py File object
+    self.sim_data : h5py dataset, indexed by (cond, sim, obs, t)
+    self.dtypes : dtypes
+    self.obs_dict : dict
     """
+    def __init__(self, filename, data_name='data', dtypes_name='dtypes'):
+        self.datafile = h5py.File(filename)
+        self.sim_data = self.datafile[data_name]
+        self.dtypes = pickle.loads(self.datafile[dtypes_name][:])
+        self.obs_dict = dict((name, i)
+                             for i, name in enumerate(self.dtypes.names))
+        self._means = None
+        self._sds = None
 
-    values = []
-    num_timepoints = len(output['time'])
-    if timepoint is None:
-        timepoint = num_timepoints - 1
-    if timepoint < 0 or timepoint >= num_timepoints:
-        raise ValueError('Invalid value for the timepoint index.')
-    for obs_name in observable_names:
-        values.append(output[obs_name][timepoint])
-    return np.array(values)
+    def means(self, cond_index, obs_name):
+        """Gets the mean timecourse for the given condition and observable.
 
-def get_means_across_cpts(observable_names, output, timepoint=None):
-    means_list = []
-    var_list = []
-    for sim_result in output:
-        values = get_observables_values(observable_names, sim_result,
-                                        timepoint=timepoint)
-        means_list.append(np.mean(values))
-        var_list.append(np.var(values))
-    return (np.array(means_list), np.array(var_list))
+        The mean is calculated across the simulations on a per-condition basis,
+        so each condition has its own set of timecourse means for all of its
+        observables.
 
-def get_frequency_matrix(observable_names, output, timepoint=None):
-    """Get the frequencies of observable values across the simulations.
+        Parameters
+        ----------
+        cond_index : int
+            Index for the simulation condition for which we want the means.
+        obs_name : string
+            The name of the observable.
 
-    The primary use is to calculate expected distributions of molecules
-    across compartments from many stochastic multi-compartment simulations.
-    Here ``observable_names`` would be the list of observables for the
-    molecule at the various compartments.
+        Returns
+        -------
+        numpy.array
+            One-dimensional array with the timecourse.
+        """
 
-    Parameters
-    ----------
-    observable_names : list of string
-        The list of observable names to look for in the simulation output
-        array, e.g. 'pores_c1', 'pores_c2', etc.
-    output : numpy record array
-        A record array of simulation results indexed by observable names.
-    timepoint : int
-        The index of the timepoint to get the snapshot of the observable.
-        If no value is provided, the final timepoint is used.
+        # Lazy initialization of the timecourse means
+        if self._means is None:
+            self._means = np.mean(self.sim_data, axis=1)
+        return self._means[cond_index, self.obs_dict[obs_name], :]
 
-    Returns
-    -------
-    tuple of numpy.arrays
-        The first entry is an array of indices giving the values over which the
-        frequencies are observed. The second entry is a matrix with shape
-        (len(index), len(output)), where (i, j) gives the number of times the
-        the value index(i) was observed across the list of observables
-        in simulation output(j).
-    """
+    def sds(self, cond_index, obs_name):
+        """Gets the SD of the timecourse for the given condition and observable.
 
-    # The list of counts
-    counts_list = []
-    for sim_result in output:
-        # Get the array with the amounts of each observable in the list
-        values = get_observables_values(observable_names, sim_result,
-                                        timepoint=timepoint)
-        # Convert to a dict of frequencies of each amount
-        counts_list.append(collections.Counter(values))
+        The standard deviationis calculated across the simulations on a
+        per-condition basis, so each condition has its own set of timecourse
+        SDs for all of its observables.
 
-    # Get the set containing the amounts observed across all simulations
-    all_keys = set()
-    for counts in counts_list:
-        all_keys |= set(counts.keys())
+        Parameters
+        ----------
+        cond_index : int
+            Index for the simulation condition for which we want the standard
+            deviations.
+        obs_name : string
+            The name of the observable.
 
-    # Convert to a matrix in which the 0th entry represents the frequency
-    # of observing the smallest observed amount, and the last entry represents
-    # the frequency of observing the largest observed amount
-    key_min = min(all_keys)
-    key_max = max(all_keys)
-    freq_matrix = np.zeros((key_max - key_min + 1, len(counts_list)))
-    for i, counts in enumerate(counts_list):
-        for key, val in counts.iteritems():
-            freq_matrix[key - key_min, i] = val
-    # The index runs from the minimum to the maximum amount
-    index = np.array(range(int(key_min), int(key_max) + 1))
-    return (index, freq_matrix)
+        Returns
+        -------
+        numpy.array
+            One-dimensional array with the timecourse.
+        """
 
-def load_bng_files(gdat_files):
-    """Load the observable record arrays from BNG simulations.
+        # Lazy initialization of the timecourse means
+        if self._sds is None:
+            self._sds = np.std(self.sim_data, axis=1)
+        return self._sds[cond_index, self.obs_dict[obs_name], :]
 
-    Parameters
-    ----------
-    gdat_files : list of strings
-        A list of filenames to be loaded, e.g. as returned by a glob.
+    '''
+    def get_mean_timecourses(self):
+        """Returns the mean and std of the observables from SSA simulations.
 
-    Returns
-    -------
-    list of numpy.recarrays
-        The entries in the list are the results of each simulation, as
-        a numpy record array indexed by observable name.
-    """
+        Returns
+        -------
+        tuple of (numpy.array, numpy.recarray)
+            The first entry in the tuple is the record array of means
+            (across the set of simulations run); the second is the record array
+            of standard deviations.
+        """
 
-    print "Loading BNG simulation result files..."
-    xrecs = []
-    # Load all of the simulation results into a list of record arrays
-    for gdat_file in gdat_files:
-        #print "Loading %s" % gdat_file
-        ssa_result = bng._parse_bng_outfile(gdat_file)
-        xrecs.append(ssa_result)
-    return xrecs
+        # Convert the list of record arrays into a matrix
+        xall = np.array([x.tolist() for x in xrecs])
+        # Create new record arrays with the means and SDs for all of the the
+        # observables as the entries
+        means = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
+                            buf=np.mean(xall, 0))
+        stds = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
+                            buf=np.std(xall, 0))
+        return (means, stds)
+        n_cpt_
+
+    def calculate_dye_release_mean_and_std(xrecs, pore_obs_prefix='pores_'):
+        # Get the timepoins
+        num_timepoints = len(xrecs[0])
+        # Get the list of pore observables; makes the assumption that all pore
+        # observable names have the same format, with a prefix followed by the
+        # compartment identifier, e.g. 'pores_c38'.
+        pore_obs_list = [field_name for field_name in xrecs[0].dtype.fields
+                         if field_name.startswith(pore_obs_prefix)]
+        # Assume that there is a pore observable for every vesicle:
+        num_vesicles = len(pore_obs_list)
+        # For every simulation result, calculate a dye release vector
+        dye_release = np.zeros((len(xrecs), num_timepoints))
+        for i, xrec in enumerate(xrecs):
+            assert len(xrec) == num_timepoints # all sims must be same length
+            # Calculate the fraction of vesicles permeabilized at this timepoint
+            for t in range(num_timepoints):
+                permeabilized_count = 0
+                for pore_obs in pore_obs_list:
+                    if xrec[pore_obs][t] > 0:
+                        permeabilized_count += 1
+                dye_release[i, t] = permeabilized_count / float(num_vesicles)
+        # Calculate the mean and SD across the matrix
+        mean = np.mean(dye_release, axis=0)
+        std = np.std(dye_release, axis=0)
+        return (mean, std)
+
+    def get_frequency_matrix(observable_names, output, timepoint=None):
+        """Get the frequencies of observable values across the simulations.
+
+        The primary use is to calculate expected distributions of molecules
+        across compartments from many stochastic multi-compartment simulations.
+        Here ``observable_names`` would be the list of observables for the
+        molecule at the various compartments.
+
+        Parameters
+        ----------
+        observable_names : list of string
+            The list of observable names to look for in the simulation output
+            array, e.g. 'pores_c1', 'pores_c2', etc.
+        output : numpy record array
+            A record array of simulation results indexed by observable names.
+        timepoint : int
+            The index of the timepoint to get the snapshot of the observable.
+            If no value is provided, the final timepoint is used.
+
+        Returns
+        -------
+        tuple of numpy.arrays
+            The first entry is an array of indices giving the values over which
+            the frequencies are observed. The second entry is a matrix with
+            shape (len(index), len(output)), where (i, j) gives the number of
+            times the the value index(i) was observed across the list of
+            observables in simulation output(j)."""
+
+        # The list of counts
+        counts_list = []
+        for sim_result in output:
+            # Get the array with the amounts of each observable in the list
+            values = get_observables_values(observable_names, sim_result,
+                                            timepoint=timepoint)
+            # Convert to a dict of frequencies of each amount
+            counts_list.append(collections.Counter(values))
+
+        # Get the set containing the amounts observed across all simulations
+        all_keys = set()
+        for counts in counts_list:
+            all_keys |= set(counts.keys())
+
+        # Convert to a matrix in which the 0th entry represents the frequency
+        # of observing the smallest observed amount, and the last entry
+        #represents the frequency of observing the largest observed amount
+        key_min = min(all_keys)
+        key_max = max(all_keys)
+        freq_matrix = np.zeros((key_max - key_min + 1, len(counts_list)))
+        for i, counts in enumerate(counts_list):
+            for key, val in counts.iteritems():
+                freq_matrix[key - key_min, i] = val
+        # The index runs from the minimum to the maximum amount
+        index = np.array(range(int(key_min), int(key_max) + 1))
+        return (index, freq_matrix)
+
+    # Operations on stochastic simulation results
+    def get_observables_values(observable_names, output, timepoint=None):
+        """Get the values for a list of observables from a simulation result.
+
+        Useful primarily for getting a list of observables corresponding to a
+        given observable distributed across all compartments and then analyzing
+        the distribution.
+
+        Parameters
+        ----------
+        observable_names : list of string
+            The list of observable names to look for in the simulation output
+            array, e.g. 'pores_c1', 'pores_c2', etc.
+        output : numpy record array
+            A record array of simulation results indexed by observable names.
+        timepoint : int
+            The index of the timepoint to get the snapshot of the observable.
+            If no value is provided, the final timepoint is used.
+
+        Returns
+        -------
+        numpy.array
+            An array with the simulated values from the output array for the
+            list of observables at the given timepoint.
+        """
+
+        values = []
+        num_timepoints = len(output['time'])
+        if timepoint is None:
+            timepoint = num_timepoints - 1
+        if timepoint < 0 or timepoint >= num_timepoints:
+            raise ValueError('Invalid value for the timepoint index.')
+        for obs_name in observable_names:
+            values.append(output[obs_name][timepoint])
+        return np.array(values)
+
+    def get_means_across_cpts(observable_names, output, timepoint=None):
+        means_list = []
+        var_list = []
+        for sim_result in output:
+            values = get_observables_values(observable_names, sim_result,
+                                            timepoint=timepoint)
+            means_list.append(np.mean(values))
+            var_list.append(np.var(values))
+        return (np.array(means_list), np.array(var_list))
+    '''
 
 def save_bng_files_to_hdf5(gdat_files, filename):
-    """ Load to hdf5"""
+    """ Load to hdf5
+
+    The file has two datasets, 'data' and 'dtypes'
+    """
+
     num_simulations = len(gdat_files)
     dataset = None
 
@@ -287,7 +383,7 @@ def save_bng_files_to_hdf5(gdat_files, filename):
             num_observables = len(ssa_result.dtype)
             num_timepoints = len(ssa_result)
             f = h5py.File('%s.hdf5' % filename, 'w')
-            dataset = f.create_dataset(filename,
+            dataset = f.create_dataset('data',
                              (num_simulations, num_observables, num_timepoints),
                              chunks=(min(SIM_CHUNK_SIZE, num_simulations),
                                      1, min(TIME_CHUNK_SIZE, num_timepoints)),
@@ -303,14 +399,16 @@ def save_bng_files_to_hdf5(gdat_files, filename):
         sys.stdout.flush()
 
     dtype_pck = pickle.dumps(ssa_result.dtype)
-    f.create_dataset(filename + '_dtype_pck', dtype='uint8',
-                     data=map(ord, dtype_pck))
+    f.create_dataset('dtypes', dtype='uint8', data=map(ord, dtype_pck))
     f.close()
     print
     return dataset
 
 def save_bng_dirs_to_hdf5(data_dirs, filename):
-    """Load the *.gdat files in each of the listed directories to HDF5."""
+    """Load the *.gdat files in each of the listed directories to HDF5.
+
+    The file has two datasets, 'data' and 'dtypes'
+    """
     num_conditions = len(data_dirs)
     dataset = None
 
@@ -327,7 +425,7 @@ def save_bng_dirs_to_hdf5(data_dirs, filename):
                 num_observables = len(ssa_result.dtype)
                 num_timepoints = len(ssa_result)
                 f = h5py.File('%s.hdf5' % filename, 'w')
-                dataset = f.create_dataset(filename,
+                dataset = f.create_dataset('data',
                                (num_conditions, num_simulations,
                                 num_observables, num_timepoints),
                                dtype='float',
@@ -350,81 +448,9 @@ def save_bng_dirs_to_hdf5(data_dirs, filename):
 
     # Pickle the dtype with the observables and save in the dataset
     dtype_pck = pickle.dumps(ssa_result.dtype)
-    f.create_dataset(filename + '_dtype_pck', dtype='uint8',
-                     data=map(ord, dtype_pck))
+    f.create_dataset('dtypes', dtype='uint8', data=map(ord, dtype_pck))
     f.close()
     return dataset
-
-
-def calculate_mean_and_std(xrecs):
-    """Returns the mean and std of the observables from SSA simulations.
-
-    Parameters
-    ----------
-    xrecs : list of numpy.recarrays
-        A list of observable record arrays, for example of the type
-        returned by :py:meth:`Job.run_n_cpt`.
-
-    Returns
-    -------
-    tuple of (numpy.recarray, numpy.recarray)
-        The first entry in the tuple is the record array of means
-        (across the set of simulations run); the second is the record array
-        of standard deviations.
-    """
-
-    # Convert the list of record arrays into a matrix
-    xall = np.array([x.tolist() for x in xrecs])
-    # Create new record arrays with the means and SDs for all of the the
-    # observables as the entries
-    means = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
-                        buf=np.mean(xall, 0))
-    stds = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
-                        buf=np.std(xall, 0))
-    return (means, stds)
-
-def calculate_mean_and_std_from_files(gdat_files):
-    """Calculates mean and SD for all observables from .gdat files.
-
-    Parameters
-    ----------
-    gdat_files : list of strings
-        The list of gdat files to load.
-
-    Returns
-    -------
-    tuple of (numpy.recarray, numpy.recarray)
-        The first entry is the record array of means; the second is
-        the record array of standard deviations.
-    """
-    xrecs = load_bng_files(gdat_files)
-    return Job.calculate_mean_and_std(xrecs)
-
-def calculate_dye_release_mean_and_std(xrecs, pore_obs_prefix='pores_'):
-    # Get the timepoins
-    num_timepoints = len(xrecs[0])
-    # Get the list of pore observables; makes the assumption that all pore
-    # observable names have the same format, with a prefix followed by the
-    # compartment identifier, e.g. 'pores_c38'.
-    pore_obs_list = [field_name for field_name in xrecs[0].dtype.fields
-                     if field_name.startswith(pore_obs_prefix)]
-    # Assume that there is a pore observable for every vesicle:
-    num_vesicles = len(pore_obs_list)
-    # For every simulation result, calculate a dye release vector
-    dye_release = np.zeros((len(xrecs), num_timepoints))
-    for i, xrec in enumerate(xrecs):
-        assert len(xrec) == num_timepoints # all sims must be same length
-        # Calculate the fraction of vesicles permeabilized at this timepoint
-        for t in range(num_timepoints):
-            permeabilized_count = 0
-            for pore_obs in pore_obs_list:
-                if xrec[pore_obs][t] > 0:
-                    permeabilized_count += 1
-            dye_release[i, t] = permeabilized_count / float(num_vesicles)
-    # Calculate the mean and SD across the matrix
-    mean = np.mean(dye_release, axis=0)
-    std = np.std(dye_release, axis=0)
-    return (mean, std)
 
 if __name__ == '__main__':
     usage_msg =  "Usage:\n"
@@ -523,3 +549,5 @@ if __name__ == '__main__':
     else:
         print usage_msg
         sys.exit()
+
+
