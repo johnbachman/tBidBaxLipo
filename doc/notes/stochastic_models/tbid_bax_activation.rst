@@ -10,19 +10,17 @@ to liposomes and Bax is activated by binding with tBid on membranes:
     from pylab import *
     from tbidbaxlipo.plots.stoch_det_comparison.plot_funcs \
         import plot_hist_vs_poisson
-    from tbidbaxlipo.plots.stoch_det_comparison.tbid_bax_activation import *
-    from tbidbaxlipo.plots.stoch_det_comparison.tbid_bax_activation \
-        import tbid20_kr0, tbid20_kr001, tbid1_kr0, tbid1_kr001
+    from tbidbaxlipo.plots.stoch_det_comparison.tbid_bax_activation.plots import *
 
 .. ipython:: python
 
-    job = tbid20_kr0.job
-    n_cpt_obs = tbid20_kr0.n_cpt_obs
+    from tbidbaxlipo.plots.stoch_det_comparison.tbid_bax_activation import *
+    job = jobs[2]
     one_cpt_model = job.one_cpt_builder().model
     one_cpt_model.rules
 
 This model has the nominal parameters of 5 nM liposomes, 20 nM tBid, and 100 nM
-Bax:
+Bax; it also has an irreversible translocation process for tBid:
 
 .. ipython:: python
 
@@ -34,10 +32,10 @@ and inserted (activated) Bax:
 
 .. ipython::
 
-    In [1]: plot_timecourse_comparison(job, n_cpt_obs);
+    In [9]: plot_timecourse_comparison(jobs, data, 2)
 
     @suppress
-    In [2]: savefig('_static/tbid_bax_activation_1.png')
+    In [10]: savefig('_static/tbid_bax_activation_1.png')
 
 .. image:: ../../_static/tbid_bax_activation_1.png
     :width: 6in
@@ -48,7 +46,7 @@ liposomes at the final timepoint, we see that it is not at all Poisson
 
 .. ipython::
 
-    In [3]: plot_hist_vs_poisson(job, n_cpt_obs, 'iBax', job.n_steps);
+    In [3]: plot_hist_vs_poisson(jobs, data, 2, 'iBax', -1);
 
     @suppress
     In [4]: savefig('_static/tbid_bax_activation_2.png')
@@ -60,7 +58,7 @@ However, the distribution of the tBid across liposomes is independent:
 
 .. ipython::
 
-    In [5]: plot_hist_vs_poisson(job, n_cpt_obs, 'mtBid', job.n_steps);
+    In [5]: plot_hist_vs_poisson(jobs, data, 2, 'mtBid', -1);
 
     @suppress
     In [6]: savefig('_static/tbid_bax_activation_3.png')
@@ -83,8 +81,6 @@ It also raises the questions:
   Does this put an upper bound on the distribution? How does this affect the
   bulk kinetics?
 
-- What happens 
-
 Moderate tBid concentration, reversible binding
 -----------------------------------------------
 
@@ -95,9 +91,7 @@ to 0.01 per second:
 
 .. ipython::
 
-    In [2]: job = tbid20_kr001.job
-
-    In [3]: n_cpt_obs = tbid20_kr001.n_cpt_obs
+    In [2]: job = jobs[3]
 
     In [4]: one_cpt_model = job.one_cpt_builder().model
 
@@ -110,7 +104,7 @@ model is excellent for this system:
 
 .. ipython::
 
-    In [6]: plot_timecourse_comparison(job, n_cpt_obs);
+    In [6]: plot_timecourse_comparison(jobs, data, 3);
 
     @suppress
     In [7]: savefig('_static/tbid_bax_activation_4.png')
@@ -118,12 +112,11 @@ model is excellent for this system:
 .. image:: ../../_static/tbid_bax_activation_4.png
     :width: 6in
 
-While a larger simulation will be required to determine more definitively,
-it seems that the distribution of activated Bax is much more Poissonian:
+Here it seems that the distribution of activated Bax is much more Poissonian:
 
 .. ipython::
 
-    In [8]: plot_hist_vs_poisson(job, n_cpt_obs, 'iBax', job.n_steps);
+    In [8]: plot_hist_vs_poisson(jobs, data, 3, 'iBax', -1);
 
     @suppress
     In [9]: savefig('_static/tbid_bax_activation_5.png')
@@ -135,7 +128,7 @@ And as before, the distribution of tBids is independent:
 
 .. ipython::
 
-    In [5]: plot_hist_vs_poisson(job, n_cpt_obs, 'mtBid', job.n_steps);
+    In [5]: plot_hist_vs_poisson(jobs, data, 3, 'mtBid', -1);
 
     @suppress
     In [6]: savefig('_static/tbid_bax_activation_6.png')
@@ -152,9 +145,7 @@ tBid to 1 nM:
 
 .. ipython::
 
-    In [2]: job = tbid1_kr0.job
-
-    In [3]: n_cpt_obs = tbid1_kr0.n_cpt_obs
+    In [2]: job = jobs[0]
 
     In [4]: one_cpt_model = job.one_cpt_builder().model
 
@@ -167,7 +158,7 @@ model is excellent, even here:
 
 .. ipython::
 
-    In [6]: plot_timecourse_comparison(job, n_cpt_obs);
+    In [6]: plot_timecourse_comparison(jobs, data, 0);
 
     @suppress
     In [7]: savefig('_static/tbid_bax_activation_7.png')
@@ -181,7 +172,7 @@ the remaining fraction are heavily loaded with Bax:
 
 .. ipython::
 
-    In [8]: plot_hist_vs_poisson(job, n_cpt_obs, 'iBax', job.n_steps);
+    In [8]: plot_hist_vs_poisson(jobs, data, 0, 'iBax', -1);
 
     @suppress
     In [9]: savefig('_static/tbid_bax_activation_8.png')
@@ -195,7 +186,7 @@ no activated Bax, as expected.
 
 .. ipython::
 
-    In [5]: plot_hist_vs_poisson(job, n_cpt_obs, 'mtBid', job.n_steps);
+    In [5]: plot_hist_vs_poisson(jobs, data, 0, 'mtBid', -1);
 
     @suppress
     In [6]: savefig('_static/tbid_bax_activation_9.png')
@@ -212,9 +203,7 @@ set up the model to have 1 nM tBid, with an off rate of 0.01 per second:
 
 .. ipython::
 
-    In [2]: job = tbid1_kr001.job
-
-    In [3]: n_cpt_obs = tbid1_kr001.n_cpt_obs
+    In [2]: job = jobs[1]
 
     In [4]: one_cpt_model = job.one_cpt_builder().model
 
@@ -227,7 +216,7 @@ models at the level of the bulk observables:
 
 .. ipython::
 
-    In [6]: plot_timecourse_comparison(job, n_cpt_obs);
+    In [6]: plot_timecourse_comparison(jobs, data, 1);
 
     @suppress
     In [10]: savefig('_static/tbid_bax_activation_10.png')
@@ -240,7 +229,7 @@ the uneven distribution of Bax:
 
 .. ipython::
 
-    In [8]: plot_hist_vs_poisson(job, n_cpt_obs, 'iBax', job.n_steps);
+    In [8]: plot_hist_vs_poisson(jobs, data, 1, 'iBax', -1);
 
     @suppress
     In [9]: savefig('_static/tbid_bax_activation_11.png')
@@ -252,7 +241,7 @@ And as before, the distribution of tBids is independent:
 
 .. ipython::
 
-    In [5]: plot_hist_vs_poisson(job, n_cpt_obs, 'mtBid', job.n_steps);
+    In [5]: plot_hist_vs_poisson(jobs, data, 1, 'mtBid', -1);
 
     @suppress
     In [6]: savefig('_static/tbid_bax_activation_12.png')
