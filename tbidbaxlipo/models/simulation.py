@@ -400,6 +400,19 @@ def save_bng_dirs_to_hdf5(data_dirs, filename):
     f.close()
     return dataset
 
+def run_main(jobs):
+    """A main method for use in run scripts for job submissions."""
+    if len(sys.argv) <= 1:
+        print "The condition index must also be specified."
+        sys.exit()
+    job_index = int(sys.argv[1])
+    job = jobs[job_index]
+    data_dir = os.path.join(os.getcwd(), 'data_%d' % job_index)
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+    os.chdir(data_dir)
+    job.run_n_cpt(cleanup=False)
+
 if __name__ == '__main__':
     usage_msg =  "Usage:\n"
     usage_msg += "\n"

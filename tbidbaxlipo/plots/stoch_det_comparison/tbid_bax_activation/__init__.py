@@ -31,13 +31,4 @@ jobs = [Job(1, 0), Job(1, 1e-2), Job(20, 0), Job(20, 1e-2)]
 job_name = 'tbid_bax_activation'
 
 if __name__ == '__main__':
-    if len(sys.argv) <= 1:
-        print "The condition index must also be specified."
-        sys.exit()
-    job_index = int(sys.argv[1])
-    job = jobs[job_index]
-    data_dir = os.path.join(os.getcwd(), 'data_%d' % job_index)
-    if not os.path.exists(data_dir):
-        os.makedirs(data_dir)
-    os.chdir(data_dir)
-    job.run_n_cpt(cleanup=False)
+    simulation.run_main(jobs)
