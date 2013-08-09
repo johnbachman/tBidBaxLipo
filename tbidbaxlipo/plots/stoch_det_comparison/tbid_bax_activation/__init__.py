@@ -5,9 +5,9 @@ import os
 import h5py
 
 mod_path = os.path.dirname(sys.modules[__name__].__file__)
-hdf5_filename = os.path.join(mod_path, 'data.hdf5')
+hdf5_filename = os.path.abspath(os.path.join(mod_path, 'data.hdf5'))
 if os.path.exists(hdf5_filename):
-    data = simulation.CptDataset('data.hdf5', dtypes_name='data_dtype_pck')
+    data = simulation.CptDataset(hdf5_filename, dtypes_name='data_dtype_pck')
 
 class Job(simulation.Job):
     def __init__(self, tBid_0, tBid_transloc_kr):

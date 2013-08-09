@@ -215,28 +215,6 @@ class CptDataset(object):
         return self._sds[cond_index, self.obs_dict[obs_name], :]
 
     '''
-    def get_mean_timecourses(self):
-        """Returns the mean and std of the observables from SSA simulations.
-
-        Returns
-        -------
-        tuple of (numpy.array, numpy.recarray)
-            The first entry in the tuple is the record array of means
-            (across the set of simulations run); the second is the record array
-            of standard deviations.
-        """
-
-        # Convert the list of record arrays into a matrix
-        xall = np.array([x.tolist() for x in xrecs])
-        # Create new record arrays with the means and SDs for all of the the
-        # observables as the entries
-        means = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
-                            buf=np.mean(xall, 0))
-        stds = np.recarray(xrecs[0].shape, dtype=xrecs[0].dtype,
-                            buf=np.std(xall, 0))
-        return (means, stds)
-        n_cpt_
-
     def calculate_dye_release_mean_and_std(xrecs, pore_obs_prefix='pores_'):
         # Get the timepoins
         num_timepoints = len(xrecs[0])
@@ -262,8 +240,9 @@ class CptDataset(object):
         mean = np.mean(dye_release, axis=0)
         std = np.std(dye_release, axis=0)
         return (mean, std)
+    '''
 
-    def get_frequency_matrix(observable_names, output, timepoint=None):
+    def get_frequency_matrix(self, cond_index, obs_basename, timepoint):
         """Get the frequencies of observable values across the simulations.
 
         The primary use is to calculate expected distributions of molecules
@@ -291,13 +270,17 @@ class CptDataset(object):
             times the the value index(i) was observed across the list of
             observables in simulation output(j)."""
 
+        # Get the indices of the observables
+        obs_indices = [i for i, name in enumerate(self.dtypes.names)
+                       if name.startswith(obs_basename + '_')]
+        # Slice the data to get just the condition, observables andtimepoint
+        # of interest
+        data_slice = self.sim_data[cond_index, :, obs_indices, timepoint]
         # The list of counts
         counts_list = []
-        for sim_result in output:
-            # Get the array with the amounts of each observable in the list
-            values = get_observables_values(observable_names, sim_result,
-                                            timepoint=timepoint)
+        for sim_index in range(data_slice.shape[0]):
             # Convert to a dict of frequencies of each amount
+            values = data_slice[sim_index, :]
             counts_list.append(collections.Counter(values))
 
         # Get the set containing the amounts observed across all simulations
@@ -318,6 +301,7 @@ class CptDataset(object):
         index = np.array(range(int(key_min), int(key_max) + 1))
         return (index, freq_matrix)
 
+    '''
     # Operations on stochastic simulation results
     def get_observables_values(observable_names, output, timepoint=None):
         """Get the values for a list of observables from a simulation result.
