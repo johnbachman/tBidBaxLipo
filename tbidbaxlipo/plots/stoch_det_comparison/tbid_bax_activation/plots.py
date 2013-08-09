@@ -9,7 +9,8 @@ import numpy as np
 
 ion()
 
-def plot_timecourse_comparison(job, data):
+def plot_timecourse_comparison(jobs, data, cond_index):
+    job = jobs[cond_index]
     b_one = job.one_cpt_builder()
     [time, one_cpt_obs] = job.run_one_cpt()
     one_cpt_Bax_0 = b_one.model.parameters['Bax_0'].value
@@ -21,22 +22,27 @@ def plot_timecourse_comparison(job, data):
 
     # Compare deterministic to n_cpt
     figure()
-    mBax_se = (data.sds(0, 'mBax') / n_cpt_Bax_0) / np.sqrt(job.num_sims)
-    cBax_se = (data.sds(0, 'cBax') / n_cpt_Bax_0) / np.sqrt(job.num_sims)
-    iBax_se = (data.sds(0, 'iBax') / n_cpt_Bax_0) / np.sqrt(job.num_sims)
-    ctBid_se = (data.sds(0, 'ctBid') / n_cpt_tBid_0) / np.sqrt(job.num_sims)
-    mtBid_se = (data.sds(0, 'mtBid') / n_cpt_tBid_0) / np.sqrt(job.num_sims)
+    mBax_se = ((data.sds(cond_index, 'mBax') / n_cpt_Bax_0) /
+               np.sqrt(job.num_sims))
+    cBax_se = ((data.sds(cond_index, 'cBax') / n_cpt_Bax_0) /
+               np.sqrt(job.num_sims))
+    iBax_se = ((data.sds(cond_index, 'iBax') / n_cpt_Bax_0) /
+               np.sqrt(job.num_sims))
+    ctBid_se = ((data.sds(cond_index, 'ctBid') / n_cpt_tBid_0) /
+               np.sqrt(job.num_sims))
+    mtBid_se = ((data.sds(cond_index, 'mtBid') / n_cpt_tBid_0) /
+               np.sqrt(job.num_sims))
 
-    cpt_time = data.means(0, 'time')
-    errorbar(cpt_time,  data.means(0, 'mBax') / n_cpt_Bax_0, \
+    cpt_time = data.means(cond_index, 'time')
+    errorbar(cpt_time,  data.means(cond_index, 'mBax') / n_cpt_Bax_0, \
              yerr=mBax_se, color='r', label='mBax');
-    errorbar(cpt_time,  data.means(0, 'cBax') / n_cpt_Bax_0, \
+    errorbar(cpt_time,  data.means(cond_index, 'cBax') / n_cpt_Bax_0, \
              yerr=cBax_se, color='b', label='cBax');
-    errorbar(cpt_time,  data.means(0, 'iBax') / n_cpt_Bax_0, \
+    errorbar(cpt_time,  data.means(cond_index, 'iBax') / n_cpt_Bax_0, \
              yerr=iBax_se, color='g', label='iBax');
-    errorbar(cpt_time,  data.means(0, 'mtBid') / n_cpt_tBid_0, \
+    errorbar(cpt_time,  data.means(cond_index, 'mtBid') / n_cpt_tBid_0, \
              yerr=mtBid_se, color='k', label='mtBid');
-    errorbar(cpt_time,  data.means(0, 'ctBid') / n_cpt_tBid_0, \
+    errorbar(cpt_time,  data.means(cond_index, 'ctBid') / n_cpt_tBid_0, \
              yerr=ctBid_se, color='m', label='ctBid');
 
     plot(time, one_cpt_obs['mBax'] / one_cpt_Bax_0, color='r');
@@ -49,8 +55,3 @@ def plot_timecourse_comparison(job, data):
     xlabel('Time (sec)')
     ylabel('Fraction of Total Bax/tBid')
     legend(loc='lower right')
-
-if __name__ == '__main__':
-    from __init__ import jobs, data
-    plot_timecourse_comparison(jobs[0], data)
-
