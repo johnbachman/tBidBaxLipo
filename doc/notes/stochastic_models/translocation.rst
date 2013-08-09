@@ -9,20 +9,16 @@ for the comparison is in
 
 .. ipython::
 
-    @suppress
-    In [1]: from tbidbaxlipo.models import simulation
+    In [2]: from tbidbaxlipo.plots.stoch_det_comparison.translocation import *
 
     @suppress
-    In [2]: from tbidbaxlipo.plots.stoch_det_comparison.translocation import *
+    In [2]: from tbidbaxlipo.plots.stoch_det_comparison.translocation.plots \
+       ...: import *
 
     @suppress
     In [3]: from tbidbaxlipo.plots.stoch_det_comparison.plot_funcs import *
 
-    @suppress
-    In [4]: from tbidbaxlipo.plots.stoch_det_comparison.translocation \
-       ...: import bax_kr_nominal, bax_kr_nominal_t06
-
-    In [5]: b_one = bax_kr_nominal.job.one_cpt_builder()
+    In [5]: b_one = jobs[0].one_cpt_builder()
 
 This model has only two rules, for translocation of Bax to and from the
 single membrane compartment:
@@ -36,10 +32,8 @@ We simulate both the deterministic and stochastic versions for 60 seconds
 
 .. plot::
 
-    from tbidbaxlipo.plots.stoch_det_comparison.translocation import *
-    from tbidbaxlipo.plots.stoch_det_comparison.translocation.bax_kr_nominal \
-         import job, n_cpt_obs
-    plot_timecourse_comparison(job, n_cpt_obs)
+    from tbidbaxlipo.plots.stoch_det_comparison import translocation as t
+    t.plots.plot_timecourse_comparison(t.jobs, t.data, 0)
 
 In this figure, the error bars represent the standard error across all of the
 simulations. As expected, the ``n_cpt`` model matches the single compartment
@@ -58,13 +52,9 @@ For the first timepoint:
 
 .. ipython::
 
-    In [1]: job = bax_kr_nominal.job
+    In [3]: plot_hist_vs_poisson(jobs, data, 0, 'mBax', 1);
 
-    In [2]: n_cpt_obs = bax_kr_nominal.n_cpt_obs
-
-    In [3]: mBax_dist = plot_hist_vs_poisson(job, n_cpt_obs, 'mBax', 1);
-
-    In [4]: print_obs_means_and_vars(job, n_cpt_obs, 'mBax', 1)
+    In [4]: print_obs_means_and_vars(jobs, data, 0, 'mBax', 1)
 
     @suppress
     In [5]: savefig('_static/simple_translocation_1.png')
@@ -76,9 +66,9 @@ For the 20th timepoint:
 
 .. ipython::
 
-    In [6]: mBax_dist = plot_hist_vs_poisson(job, n_cpt_obs, 'mBax', 20);
+    In [3]: plot_hist_vs_poisson(jobs, data, 0, 'mBax', 20);
 
-    In [7]: print_obs_means_and_vars(job, n_cpt_obs, 'mBax', 20)
+    In [4]: print_obs_means_and_vars(jobs, data, 0, 'mBax', 20)
 
     @suppress
     In [8]: savefig('_static/simple_translocation_2.png')
@@ -90,14 +80,12 @@ For the final timepoint:
 
 .. ipython::
 
-    In [9]: mBax_dist = plot_hist_vs_poisson(job, n_cpt_obs, 'mBax', \
-       ...: job.n_steps);
+    In [3]: plot_hist_vs_poisson(jobs, data, 0, 'mBax', -1);
 
-    In [10]: print_obs_means_and_vars(job, n_cpt_obs, 'mBax', job.n_steps)
+    In [4]: print_obs_means_and_vars(jobs, data, 0, 'mBax', -1)
 
     @suppress
     In [11]: savefig('_static/simple_translocation_3.png')
 
 .. image:: ../../_static/simple_translocation_3.png
     :width: 6in
-
