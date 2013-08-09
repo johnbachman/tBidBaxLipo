@@ -1,10 +1,4 @@
-from tbidbaxlipo.models import one_cpt, n_cpt, site_cpt, simulation
 from pylab import *
-import collections
-import glob
-from scipy.stats import poisson
-import pkgutil
-import pickle
 import numpy as np
 
 ion()
