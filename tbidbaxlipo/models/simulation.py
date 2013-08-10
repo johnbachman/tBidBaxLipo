@@ -215,6 +215,9 @@ class CptDataset(object):
         return self._sds[cond_index, self.obs_dict[obs_name], :]
 
     def get_mean_dye_release(self, cond_index, pore_obs_prefix='pores'):
+        """Document me!
+        """
+
         # Get the list of pore observables; makes the assumption that all pore
         # observable names have the same format, with a prefix followed by the
         # compartment identifier, e.g. 'pores_c38'.
@@ -234,8 +237,8 @@ class CptDataset(object):
                 dye_release[sim_index, timepoint] = \
                       (np.count_nonzero(data_slice[sim_index, :, timepoint]) /
                        float(num_vesicles))
-        # Now, take the average across all of the simulations
-        return np.mean(dye_release, axis=0)
+        # Now, take the average/SD across all of the simulations
+        return (np.mean(dye_release, axis=0), np.std(dye_release, axis=0))
 
     def get_frequency_matrix(self, cond_index, obs_basename, timepoint):
         """Get the frequencies of observable values across the simulations.
