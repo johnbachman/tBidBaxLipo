@@ -223,18 +223,17 @@ class CptDataset(object):
         # Slice the data to get just the condition and pore observables.
         # The slice has shape (num_simulations, num_cpts, num_timepoints)
         data_slice = self.sim_data[cond_index, :, pore_indices, :]
-        # Create for dye release with shape
+        # Create a matrix for dye release with shape (num_sims, num_tpts)
         num_simulations = data_slice.shape[0]
         num_timepoints = data_slice.shape[2]
         num_vesicles = len(pore_indices)
-        dye_release_matrix = np.zeros((num_simulations, num_timepoints))
+        dye_release = np.zeros((num_simulations, num_timepoints))
         # For every simulation result, calculate a dye release vector
-        dye_release = np.zeros((len(xrecs), num_timepoints))
         for sim_index in range(num_simulations):
             for timepoint in range(num_timepoints):
                 dye_release[sim_index, timepoint] = \
                       (np.count_nonzero(data_slice[sim_index, :, timepoint]) /
-                       num_vesicles)
+                       float(num_vesicles))
         # Now, take the average across all of the simulations
         return np.mean(dye_release, axis=0)
 
