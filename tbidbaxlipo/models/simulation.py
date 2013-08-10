@@ -214,33 +214,29 @@ class CptDataset(object):
             self._sds = np.std(self.sim_data, axis=1)
         return self._sds[cond_index, self.obs_dict[obs_name], :]
 
-    '''
-    def calculate_dye_release_mean_and_std(xrecs, pore_obs_prefix='pores_'):
-        # Get the timepoins
-        num_timepoints = len(xrecs[0])
+    def get_mean_dye_release(self, cond_index, pore_obs_prefix='pores'):
         # Get the list of pore observables; makes the assumption that all pore
         # observable names have the same format, with a prefix followed by the
         # compartment identifier, e.g. 'pores_c38'.
-        pore_obs_list = [field_name for field_name in xrecs[0].dtype.fields
-                         if field_name.startswith(pore_obs_prefix)]
-        # Assume that there is a pore observable for every vesicle:
-        num_vesicles = len(pore_obs_list)
+        pore_indices = [i for i, name in enumerate(self.dtypes.names)
+                       if name.startswith(pore_obs_prefix + '_')]
+        # Slice the data to get just the condition and pore observables.
+        # The slice has shape (num_simulations, num_cpts, num_timepoints)
+        data_slice = self.sim_data[cond_index, :, pore_indices, :]
+        # Create for dye release with shape
+        num_simulations = data_slice.shape[0]
+        num_timepoints = data_slice.shape[2]
+        num_vesicles = len(pore_indices)
+        dye_release_matrix = np.zeros((num_simulations, num_timepoints))
         # For every simulation result, calculate a dye release vector
         dye_release = np.zeros((len(xrecs), num_timepoints))
-        for i, xrec in enumerate(xrecs):
-            assert len(xrec) == num_timepoints # all sims must be same length
-            # Calculate the fraction of vesicles permeabilized at this timepoint
-            for t in range(num_timepoints):
-                permeabilized_count = 0
-                for pore_obs in pore_obs_list:
-                    if xrec[pore_obs][t] > 0:
-                        permeabilized_count += 1
-                dye_release[i, t] = permeabilized_count / float(num_vesicles)
-        # Calculate the mean and SD across the matrix
-        mean = np.mean(dye_release, axis=0)
-        std = np.std(dye_release, axis=0)
-        return (mean, std)
-    '''
+        for sim_index in range(num_simulations):
+            for timepoint in range(num_timepoints):
+                dye_release[sim_index, timepoint] = \
+                      (np.count_nonzero(data_slice[sim_index, :, timepoint]) /
+                       num_vesicles)
+        # Now, take the average across all of the simulations
+        return np.mean(dye_release, axis=0)
 
     def get_frequency_matrix(self, cond_index, obs_basename, timepoint):
         """Get the frequencies of observable values across the simulations.
@@ -363,15 +359,19 @@ def save_bng_dirs_to_hdf5(data_dirs, filename):
 
 def run_main(jobs):
     """A main method for use in run scripts for job submissions."""
+    # Make sure that we have an argument for the condition index
     if len(sys.argv) <= 1:
         print "The condition index must also be specified."
         sys.exit()
+    # Get the job for the condition
     job_index = int(sys.argv[1])
     job = jobs[job_index]
+    # Make a directory to put the simulation data in for this condition
     data_dir = os.path.join(os.getcwd(), 'data_%d' % job_index)
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
     os.chdir(data_dir)
+    # Run the simulation
     job.run_n_cpt(cleanup=False)
 
 if __name__ == '__main__':
@@ -413,13 +413,9 @@ if __name__ == '__main__':
             print usage_msg
             sys.exit()
         if os.path.isdir(data_files[0]):
-            print "Parsing as a set of directories..."
             save_bng_dirs_to_hdf5(data_files, hdf5_filename)
-        elif data_files[0].endswith('.gdat'):
-            print "Parsing as a set of .gdat files..."
-            save_bng_files_to_hdf5(data_files, hdf5_filename)
         else:
-            print "Please provide a list of .gdat files or directories."
+            print "Please provide a list of .gdat directories."
             print usage_msg
             sys.exit()
     # Submit jobs to LSF
