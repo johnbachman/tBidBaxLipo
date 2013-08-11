@@ -445,7 +445,7 @@ if __name__ == '__main__':
 
         # Get the job_name as the output file basename
         if 'job_name' in run_mod.__dict__.keys():
-            output_base = job_name
+            output_base = run_mod.job_name
         else:
             output_base = run_script.split('.')[0]
 
