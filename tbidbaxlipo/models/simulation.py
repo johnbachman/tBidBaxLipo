@@ -99,7 +99,7 @@ class Job(object):
             print "Running BNG simulation %d of %d..." % (i+1, self.num_sims)
             xrecs.append(bng.run_ssa(b.model, t_end=self.tmax,
                          n_steps=self.n_steps, cleanup=cleanup, output_dir='.',
-                         output_file_basename='%s_proc%d_sim%d.out' %
+                         output_file_basename='%s_proc%d_sim%d' %
                                     (b.model.name, os.getpid(), i)))
         return xrecs
 
