@@ -12,9 +12,9 @@ if os.path.exists(hdf5_filename):
 class Job(simulation.Job):
     def __init__(self, tbid_conc):
         params_dict = {'tBid_transloc_kr': 0, 'tBid_0': tbid_conc}
-        scaling_factor = 5 #20
+        scaling_factor = 20
         tmax = 10000
-        num_sims = 3 #30
+        num_sims = 30
         n_steps = 100
         super(Job, self).__init__(params_dict, scaling_factor, tmax, n_steps,
                                   num_sims)
@@ -29,7 +29,7 @@ class Job(simulation.Job):
         return builder
 
 # Create jobs for each condition
-tbid_concs = range(5)
+tbid_concs = range(21)
 jobs = [Job(tbid_conc) for tbid_conc in tbid_concs]
 job_name = 'tbid_titration'
 
