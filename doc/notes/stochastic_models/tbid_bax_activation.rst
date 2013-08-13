@@ -1,3 +1,5 @@
+.. _tbid_bax_activation:
+
 Activation of Bax by tBid
 =========================
 

@@ -12,13 +12,14 @@ def plot_dye_release_titration(jobs, data):
         one_cpt_dr = 1 - np.exp(-avg_pores)
         (dr_mean, dr_sd) = data.get_mean_dye_release(cond_index)
         dr_se = dr_sd / sqrt(num_sims)
-        plot(one_cpt_time, one_cpt_dr)
-        errorbar(cpt_time, dr_mean, yerr=dr_se, label='Cond %d' % cond_index)
+        plot(one_cpt_time, one_cpt_dr, color='b')
+        errorbar(cpt_time, dr_mean, yerr=dr_se, color='r',
+                 label='Cond %d' % cond_index)
         xlim([0, 4000])
     xlabel('Time (sec)')
     ylabel('Pct. Dye Release')
     title('Dye release kinetics for tBid titration')
-    legend(loc='lower right')
+    #legend(loc='lower right')
     show()
 
 if __name__ == '__main__':
