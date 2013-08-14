@@ -12,4 +12,5 @@ Contents:
 
     tbid_bax_lipo_1
     tbid_bax_lipo_2
+    130614_Bax_43C_titration
     130731_tBid_titration
