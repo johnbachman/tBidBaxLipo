@@ -12,4 +12,4 @@ Contents:
    tbid_bax_activation
    tbid_titration
    bax_heat
-
+   bax_heat_auto
