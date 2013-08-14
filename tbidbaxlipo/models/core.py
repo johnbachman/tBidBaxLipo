@@ -626,19 +626,23 @@ class Builder(pysb.builder.Builder):
              tBid(loc='m', bh3=1) % Bax(loc='m', bh3=1),
              iBaxtBid_to_mBaxtBid_k)
 
-    def basal_Bax_activation(self):
+    def basal_Bax_activation(self, reversible=True):
         print "core: basal_Bax_activation"
         # Spontaneous rate of transition of Bax from the mitochondrial to the
         # inserted state
         # Implies average time is 10000 seconds???
-        basal_Bax_kf = self.parameter('basal_Bax_kf', 2e-3)
-        #basal_Bax_kr = self.parameter('basal_Bax_kr', 10)
-
         Bax = self['Bax']
 
+        basal_Bax_kf = self.parameter('basal_Bax_kf', 2e-3)
         self.rule('basal_Bax_activation',
                   Bax(bh3=None, loc='m') >> Bax(bh3=None, loc='i'),
                   basal_Bax_kf)
+
+        if reversible:
+            basal_Bax_kr = self.parameter('basal_Bax_kr', 1e-2)
+            self.rule('basal_Bax_activation_rev',
+                      Bax(bh3=None, loc='i') >> Bax(bh3=None, loc='m'),
+                      basal_Bax_kr)
 
     ## -- MODEL BUILDING FUNCTIONS -------------------------------------------
     """
@@ -803,6 +807,13 @@ class Builder(pysb.builder.Builder):
         self.Bax_auto_activates_one_step()
         self.pores_from_Bax_monomers(bax_loc_state='i', reversible=False)
         self.model.name = 'bax_heat_auto'
+
+    def build_model_bax_heat_auto_reversible_activation(self):
+        self.translocate_Bax()
+        self.basal_Bax_activation(reversible=True)
+        self.Bax_auto_activates_one_step()
+        self.pores_from_Bax_monomers(bax_loc_state='i', reversible=False)
+        self.model.name = 'bax_heat_auto_reversible_activation'
 
     def build_model_bax_heat_auto_reversible(self):
         self.translocate_Bax()
