@@ -19,8 +19,7 @@ binding as irreversible):
     In [1]: from tbidbaxlipo.plots.stoch_det_comparison.tbid_titration \
        ...: import jobs, data
 
-    In [2]: from tbidbaxlipo.plots.stoch_det_comparison.tbid_titration.plots \
-       ...: import *
+    In [2]: from tbidbaxlipo.plots.stoch_det_comparison.plots import *
 
     In [3]: [job.params_dict for job in jobs]
 
