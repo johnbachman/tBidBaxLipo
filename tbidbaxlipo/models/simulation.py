@@ -314,7 +314,7 @@ class CptDataset(object):
         return (obs_means, obs_vars)
 
 def save_bng_dirs_to_hdf5(data_dirs, filename):
-    """Load the *.gdat files in each of the listed directories to HDF5.
+    """Load the .gdat files in each of the listed directories to HDF5.
 
     The file has two datasets, 'data' and 'dtypes'
     """

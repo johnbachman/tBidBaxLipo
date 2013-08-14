@@ -11,5 +11,23 @@ Bax Activated by Heat, with Auto-Activation
 
     from tbidbaxlipo.plots.stoch_det_comparison.bax_heat_auto import *
     from tbidbaxlipo.plots.stoch_det_comparison.plots import *
+    plot_hist_vs_poisson(jobs, data, 0, 'pores', 10)
+
+.. plot::
+
+    from tbidbaxlipo.plots.stoch_det_comparison.bax_heat_auto import *
+    from tbidbaxlipo.plots.stoch_det_comparison.plots import *
+    plot_hist_vs_poisson(jobs, data, 0, 'pores', 30)
+
+.. plot::
+
+    from tbidbaxlipo.plots.stoch_det_comparison.bax_heat_auto import *
+    from tbidbaxlipo.plots.stoch_det_comparison.plots import *
+    plot_hist_vs_poisson(jobs, data, 0, 'pores', 50)
+
+.. plot::
+
+    from tbidbaxlipo.plots.stoch_det_comparison.bax_heat_auto import *
+    from tbidbaxlipo.plots.stoch_det_comparison.plots import *
     plot_hist_vs_poisson(jobs, data, 0, 'pores', -1)
 

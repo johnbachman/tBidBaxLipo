@@ -11,9 +11,9 @@ if os.path.exists(hdf5_filename):
 class Job(simulation.Job):
     def __init__(self):
         params_dict = {'tBid_transloc_kr': 0, 'tBid_0': 0}
-        scaling_factor = 5
+        scaling_factor = 20
         tmax = 10000
-        num_sims = 3
+        num_sims = 30
         n_steps = 100
         super(Job, self).__init__(params_dict, scaling_factor, tmax, n_steps,
                                   num_sims)
