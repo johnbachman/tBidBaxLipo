@@ -2,6 +2,9 @@
 A set of functions useful for analyzing and plotting data from timecourse
 assays from the Wallac plate reader.
 
+Plate-based kinetics
+--------------------
+
 - Export the data, sorted by well. To do this, take the Microsoft Excel output
   file, go to the "List" tab; highlight the data; then go to the "Data" menu
   and select sort by "Well". Finally export the data to CSV as a "Windows
@@ -24,6 +27,18 @@ assays from the Wallac plate reader.
             'Bim BH3, No Bax' : ['A05', 'B05', 'C05'],
             'Bim BH3, Bax' : ['D05', 'E05', 'F05'],
             'Cecropin A' : ['G01', 'G02', 'G03']}
+
+Well-based kinetics
+-------------------
+
+For well-based kinetics assays, the data does not need to be sorted by well,
+since all of the measurements for the well appear in a set before the
+measurements for the next well. Instead, the data can simply be read with
+:py:func:`read_wallac` after saving the Excel file to .csv. However, note
+that the instrument runs a continuous timer for all kinetics readings, so
+if the kinetics reading is initiated by dispensing a reagent (e.g., liposomes)
+then the time coordinates will need to be explicitly reset for each well.
+This can be done using the function :py:func:`reset_well_times`.
 
 """
 # TODO Write a function that will read the initial and final .csv or
@@ -82,7 +97,7 @@ def read_wallac(csv_file):
     # Initialize the empty dict
     wells = collections.OrderedDict([])
     # We're not currently on any well!
-    cur_well = ""
+    cur_well = None
     # Iterate over the rows:
     for row in csv_reader:
         well_name = row[WELL_COL]
@@ -90,9 +105,10 @@ def read_wallac(csv_file):
         # If we're at the header line, skip it
         if well_name == 'Well':
            continue
-        # If it's a new well, update cur_well and initialize the dict with
-        # a pair of empty lists
-        elif cur_well != well_name:
+        # If it's a new well, or if the well entry is blank (as it is in
+        # kinetics measurements, with multiple readings for the well), then
+        # update cur_well and initialize the dict with a pair of empty lists
+        elif well_name != '' and cur_well != well_name:
             cur_well = well_name
             wells[well_name] = [np.array([]),np.array([])]
         # If it's a well we've seen before, add the time/val pair to the dict
@@ -279,6 +295,17 @@ def reset_first_timepoint_to_zero(wells):
         old_times = wells[well_name][TIME]
         new_times = [(old_time - min_time) for old_time in old_times]
 
+        reset_wells[well_name] = [new_times, wells[well_name][VALUE]]
+
+    return reset_wells
+
+def reset_well_times(wells, offset=0):
+    """For kinetics timecourses, resets the initial timepoint for each
+    kinetics measurement to 0, or some offset."""
+    reset_wells = collections.OrderedDict([])
+    for well_name in wells.keys():
+        min_time = np.min(wells[well_name][TIME])
+        new_times = wells[well_name][TIME] - min_time + offset
         reset_wells[well_name] = [new_times, wells[well_name][VALUE]]
 
     return reset_wells
