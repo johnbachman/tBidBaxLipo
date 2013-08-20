@@ -321,6 +321,27 @@ def get_average_pore_timecourses(normalized_wells):
     return average_pores
 
 def to_dataframe(mean_dict, sd_dict):
+    """Convert timecourses to a pandas dataframe format.
+
+    The keys in both dicts are expected to be space-separated strings, with the
+    second item in the split string the Bax concentration.
+
+    Parameters
+    ----------
+    mean_dict, sd_dict : dicts of lists
+        dict mapping concentrations/conditions to the two-element list
+        with a time vector and the fluorescence means or sds.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A DataFrame with the Bax concentration as the columns and a
+        MultiIndexes on the rows with two levels: ("Timepoint", "Datatype").
+        `Timepoint` is an integer index running from 0. `Datatype` is either
+        'TIME', 'MEAN', or 'SD'. The entries are therefore either time values,
+        mean fluorescence values, or the standard deviation of fluorescence
+        values, depending on what type of row it is.
+    """
 
     # Assume that all conditions have the same number of timepoints
     data_arr = None
