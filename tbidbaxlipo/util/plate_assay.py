@@ -6,15 +6,18 @@ Plate-based kinetics
 --------------------
 
 - Export the data, sorted by well. To do this, take the Microsoft Excel output
-  file, go to the "List" tab; highlight the data; then go to the "Data" menu
-  and select sort by "Well". Finally export the data to CSV as a "Windows
-  Comma Separated (.csv)" file.
+  file, go to the `List` tab; highlight the data; then go to the `Data` menu
+  and select `Sort by Well`. Finally export the data to CSV as a `Windows
+  Comma Separated (.csv)` file.
 
-  NOTE: the csv reader module used in this script appears to have a problem
-  with .csv files exported from Excel using the default .csv settings. However,
-  it works fine with files exported using the .csv "Windows" setting.
+.. note:: .csv Compatibility
 
-- Create a plate layout dict, for example, the following:
+    The csv reader module used in this script appears to have a problem with
+    `.csv` files exported from Excel using the default `.csv` settings.
+    However, it works fine with files exported using the `Windows .csv`
+    setting.
+
+- Create a plate layout dict, for example, the following::
 
     expt = {'No tBid, No Bax' : ['A01', 'B01'], # Leaving out C01
             'No tBid, Bax' : ['D01', 'E01', 'F01'],
@@ -34,7 +37,7 @@ Well-based kinetics
 For well-based kinetics assays, the data does not need to be sorted by well,
 since all of the measurements for the well appear in a set before the
 measurements for the next well. Instead, the data can simply be read with
-:py:func:`read_wallac` after saving the Excel file to .csv. However, note
+:py:func:`read_wallac` after saving the Excel file to `.csv`. However, note
 that the instrument runs a continuous timer for all kinetics readings, so
 if the kinetics reading is initiated by dispensing a reagent (e.g., liposomes)
 then the time coordinates will need to be explicitly reset for each well.
@@ -77,15 +80,15 @@ def read_wallac(csv_file):
 
     Returns
     -------
-    A dict mapping the name of the well to a list of lists. For each dict
-    entry, the first element in the outer list is a list of the time
-    coordinates associated with each timepoint; the second element in the outer
-    list is the list of assay values for each timepoint.
+    dict
+        A dict mapping the name of the well to a list of lists. For each dict
+        entry, the first element in the outer list is a list of the time
+        coordinates associated with each timepoint; the second element in the
+        outer list is the list of assay values for each timepoint.  For
+        example, ``wells['A01']`` returns::
 
-    For example, wells['A01'] returns
-
-        [[79.8, 145.43, ..., 2639.35, 2704.98],
-         [2285,   2318, ...,    2323,    2304]]
+            [[79.8, 145.43, ..., 2639.35, 2704.98],
+             [2285,   2318, ...,    2323,    2304]]
     """
 
     # The plan: iterate over the CSV file, collecting time coordinates
@@ -191,39 +194,6 @@ def plot_condition(wells, layout, condition_name):
     for well_name in wells_for_condition:
         (time, value) = wells[well_name]
         plot(time, value)
-
-"""
-def averages(wells, layout):
-    # Calculates the average, at each timepoint, across replicates for each
-    # experimental condition described in the plate layout.
-    #
-
-    # For every experimental condition...
-    well_averages = {}
-    for condition_name, condition_list in layout.iteritems():
-        # Create a new entry in the averages dict of the form:
-        #   well_averages[condition_name] = [[],[]]
-        # Iterate over all of the wells
-        counter = 0
-        for well_name in condition_list:
-            if counter == 0:
-                time_sum = wells[well_name][TIME]
-                value_sum = wells[well_name][VALUE]
-            else:
-                time_sum = map(lambda x, y: x + y, time_sum,
-                               wells[well_name][TIME])
-                value_sum = map(lambda x, y: x + y, value_sum,
-                                wells[well_name][VALUE])
-            counter += 1
-
-        # Calculate condition average over all wells
-        time_average = map(lambda x: float(x) / float(counter), time_sum)
-        value_average = map(lambda x: float(x) / float(counter), value_sum)
-        well_averages[condition_name] = [time_average, value_average]
-
-    # end iteration over conditions
-    return well_averages
-"""
 
 def averages(wells, layout):
     # For every experimental condition...
