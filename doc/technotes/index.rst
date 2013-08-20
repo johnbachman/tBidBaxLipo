@@ -10,3 +10,4 @@ Contents:
    :maxdepth: 2
 
    comparing_stoch_det_models
+   fitting_ants_titration
