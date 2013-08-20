@@ -569,6 +569,7 @@ class Builder(pysb.builder.Builder):
 
     # -- OTHER MOTIFS --------------------------------------------------------
     def Bax_auto_activates(target_bax_site='a6'):
+        print "core: Bax_auto_activates"
         # Andrews suggests that tBid/Bax Kd should work out to 25nM
         # Forward rate of iBax binding to Bax (E + S -> ES)
         self.parameter('iBax_mBax_kf', 1e-4)
@@ -626,8 +627,8 @@ class Builder(pysb.builder.Builder):
              tBid(loc='m', bh3=1) % Bax(loc='m', bh3=1),
              iBaxtBid_to_mBaxtBid_k)
 
-    def basal_Bax_activation(self, reversible=True):
-        print "core: basal_Bax_activation"
+    def basal_Bax_activation(self, reversible=False):
+        print "core: basal_Bax_activation, reversible=%s" % reversible
         # Spontaneous rate of transition of Bax from the mitochondrial to the
         # inserted state
         # Implies average time is 10000 seconds???
