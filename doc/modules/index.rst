@@ -8,4 +8,4 @@ tBid/Bax/Lipo Module Reference
    models/index
    mcmc/index
    reporters/index
-
+   util/index

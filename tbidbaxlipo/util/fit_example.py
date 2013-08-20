@@ -14,4 +14,3 @@ fitting.fit(fit_func, [m, b], data, t)
 print "m: %f" % m()
 print "b: %f" % b()
 
-
