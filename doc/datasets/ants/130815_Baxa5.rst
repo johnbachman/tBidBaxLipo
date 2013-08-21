@@ -1,0 +1,18 @@
+Bax :math:`\alpha 5` peptide, pilot experiment (8/15/13)
+========================================================
+
+A pilot experiment to explore kinetics of liposome permeabilization by the
+Bax-:math:`\alpha 5` peptide. At first I tried a by-plate measuring strategy
+but the kinetics were far too fast for this. With the small amont of liposomes
+I had left (after wasting most of it in the dispenser pump), I measured 4
+wells: two with approximately 4 uM peptide (20 uM starting solution, diluted
+1:5, 20 uL of peptide solution in 100 uL total reaction volume), and 1:10
+dilution of liposomes (50 uL of 1:5 diluted liposomes in 100 uL total volume),
+approximately 5 nM.
+
+.. plot::
+
+    from tbidbaxlipo.plots.layout_130815 import main
+    main()
+
+
