@@ -1,6 +1,12 @@
 Bax Activated by Heat
 =====================
 
+.. ipython:: python
+
+    from tbidbaxlipo.plots.stoch_det_comparison.bax_heat import jobs, data
+    m = jobs[0].one_cpt_builder().model
+    [r.name for r in m.rules]
+
 .. plot::
     :context:
 
@@ -19,4 +25,5 @@ Bax Activated by Heat
 
     close('all')
     plot_hist_vs_poisson(jobs, data, 0, 'pores', -1)
+
 

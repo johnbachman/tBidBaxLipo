@@ -1,6 +1,12 @@
 Bax Activated by Heat, with Auto-Activation
 ===========================================
 
+.. ipython:: python
+
+    from tbidbaxlipo.plots.stoch_det_comparison.bax_heat_auto import jobs, data
+    m = jobs[0].one_cpt_builder().model
+    [r.name for r in m.rules]
+
 .. plot::
     :context:
 
