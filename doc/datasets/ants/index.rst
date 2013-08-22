@@ -15,3 +15,4 @@ Contents:
     130614_Bax_43C_titration
     130731_tBid_titration
     130815_Baxa5
+    130822_wallac_test

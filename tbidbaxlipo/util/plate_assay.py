@@ -381,3 +381,12 @@ def to_dataframe(mean_dict, sd_dict):
     df = pd.DataFrame(data_arr, index=row_index, columns=col_index)
 
     return df
+
+def truncate_timecourses(wells, start):
+    trunc = collections.OrderedDict()
+
+    for well in wells.keys():
+        trunc[well] = []
+        trunc[well].append(wells[well][TIME][start:])
+        trunc[well].append(wells[well][VALUE][start:])
+    return trunc
