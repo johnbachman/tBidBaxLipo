@@ -1,6 +1,9 @@
 Fitting dye release kinetics by MCMC
 ====================================
 
+Local Fitting
+-------------
+
 1. After the dye release experiment, save the files as `.csv`. If the kinetics
    are by plate (typical for slower kinetics, like Bax assays), then it is
    necessary to sort the spreadsheet by the `Well` column, then save as `.csv`.
@@ -36,4 +39,32 @@ Fitting dye release kinetics by MCMC
    should be run in the directory that will contain the report.
 
 6. View the report by opening the generated `index.html` file.
+
+Fitting on Orchestra
+--------------------
+
+Perform steps 1-3 as above.
+
+4. Tweak the script :py:mod:`tbidbaxlipo.mcmc.pore_mcmc_jobs` to use the
+   appropriate number of steps, number of chains per model, and desired models
+   and compartmentalization types. Then go to a directory on the server where the `.mcmc`
+   files are to be created and run::
+
+    cd /hms/scratch1/jab69
+    mkdir some_pore_fits
+    cd some_pore_fits
+    python -m tbidbaxlipo.mcmc.pore_mcmc_jobs
+
+5. When the jobs are done running, modify :py:mod:`tbidbaxlipo.run_report` to contain
+   the list of reports you wish to run on the chains. Switch to a web accessible
+   directory and run (note that since it may take a long time to run all reports,
+   it's best to submit this as a job)::
+
+    cd /www/sorger.med.harvard.edu/docroot/data/jab69
+    mkdir some_pore_fits
+    cd some_pore_fits
+    bsub -q short -W 12:00 python -m tbidaxlipo.run_report /hms/scratch1/jab69/some_pore_fits/*.mcmc
+
+6. View the report by opening a browser and navigating to the report, e.g., at
+   ``http://sorger.med.harvard.edu/data/bachman/some_pore_fits/index.html``.
 
