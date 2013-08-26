@@ -22,6 +22,9 @@ model_names = ['bax_heat',
                'bax_heat_auto_reversible',
                'bax_heat_auto_dimer',
                'bax_heat_auto_dimer_reversible',
+               'bax_schwarz',
+               'bax_schwarz_reversible',
+               'peptide_solution_dimer',
               ]
 
 class PoreMCMC(tbidbaxlipo.mcmc.MCMC):
@@ -157,8 +160,10 @@ if __name__ == '__main__':
 
     # Prepare the data
     # ================
-    data = pickle.load(open('../data/130614_norm_timecourses_df.pck'))
+    from tbidbaxlipo.plots.layout_130614 import df as data
     dataset_name = '130614'
+    #from tbidbaxlipo.plots.layout_130815 import data
+    #dataset_name = '130815'
 
     # Parse the args
     # ==============
@@ -233,7 +238,9 @@ if __name__ == '__main__':
     # Initialize the MCMC arguments
     opts = bayessb.MCMCOpts()
     opts.model = model
-    opts.tspan = np.linspace(0, 6000, 196) # This should not be used
+    # Num timepoints
+    num_pts = len(data[data.columns[0]][:,'TIME'])
+    opts.tspan = np.linspace(0, 6000, num_pts) # This should not be used
     opts.estimate_params = builder.estimate_params
     opts.initial_values = builder.random_initial_values()
     opts.nsteps = nsteps
@@ -245,11 +252,12 @@ if __name__ == '__main__':
     #opts.accept_window = 100
     #opts.sigma_adj_interval = 200
     opts.anneal_length = 0
-    opts.use_hessian = False #True # TRUE
+    opts.use_hessian = False
     opts.hessian_scale = 1
-    opts.hessian_period = opts.nsteps / 20 #10
+    opts.hessian_period = opts.nsteps / 10 #10
     opts.seed = random_seed
     opts.T_init = 1 # T_init
+    from tbidbaxlipo.mcmc.pore_mcmc import PoreMCMC
     mcmc = PoreMCMC(opts, data, dataset_name, builder)
 
     mcmc.do_fit()

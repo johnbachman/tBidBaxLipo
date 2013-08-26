@@ -65,11 +65,16 @@ norm_wells = get_normalized_well_timecourses(
 """Timecourses normalized and then averaged."""
 
 # First timepoint shifted to 0 (better for fitting)
-reset_norm_subset = reset_first_timepoint_to_zero(norm_averages)
+reset_norm_means = reset_first_timepoint_to_zero(norm_averages)
 """Timecourses normalized, averaged, then with first point shifted to t = 0."""
+reset_norm_sds = reset_first_timepoint_to_zero(norm_stds)
+
+# Pandas dataframe
+df = to_dataframe(reset_norm_means, reset_norm_sds)
+"""Pandas DataFrame version of reset_norm_means/sds"""
 
 # Pore timecourses
-pores = get_average_pore_timecourses(reset_norm_subset)
+pores = get_average_pore_timecourses(reset_norm_means)
 """Average pores derived by taking -log(1 - data)."""
 
 def main():
@@ -98,7 +103,7 @@ def main():
 
     # First timepoint shifted to 0 (better for fitting)
     figure()
-    plot_all(reset_norm_subset)
+    plot_all(reset_norm_means)
     title("Norm., Avg., Reset to t = 0")
 
     # Pore timecourses
