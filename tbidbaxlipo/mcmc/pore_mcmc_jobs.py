@@ -13,17 +13,17 @@ import itertools
 # == Models ==
 models = ['bax_heat',
           'bax_heat_reversible',
-          #'bax_heat_dimer',
-          #'bax_heat_dimer_reversible',
-          #'bax_heat_auto',
-          #'bax_heat_auto_reversible_activation',
-          #'bax_heat_auto_reversible',
-          #'bax_heat_auto_dimer',
-          #'bax_heat_auto_dimer_reversible',
-          #'bax_schwarz',
-          #'bax_schwarz_reversible',
-          #'bax_schwarz_dimer',
-          #'bax_schwarz_dimer_reversible',
+          'bax_heat_dimer',
+          'bax_heat_dimer_reversible',
+          'bax_heat_auto',
+          'bax_heat_auto_reversible_activation',
+          'bax_heat_auto_reversible',
+          'bax_heat_auto_dimer',
+          'bax_heat_auto_dimer_reversible',
+          'bax_schwarz',
+          'bax_schwarz_reversible',
+          'bax_schwarz_dimer',
+          'bax_schwarz_dimer_reversible',
           ]
 
 cpt_types = ['one_cpt', 'lipo_sites']
@@ -31,13 +31,13 @@ cpt_types = ['one_cpt', 'lipo_sites']
 model_arg_list = ['model=%s' % model_name for model_name in models]
 cpt_type_arg_list = ['cpt_type=%s' % cpt_type for cpt_type in cpt_types]
 
-nsteps = 5000
+nsteps = 50000
 """The number of steps in each chain."""
 
 #num_temps = 8
 #"""The number of temperatures to run. Actual cores used will be num_temps + 1"""
 
-num_chains = 3
+num_chains = 10
 """The number of chains to run for each model."""
 
 random_seed_arg_list = ['random_seed=%d' % i for i in range(num_chains)]
