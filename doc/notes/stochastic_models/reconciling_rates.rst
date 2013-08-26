@@ -1,6 +1,7 @@
 Reconciling stochastic and deterministic models of dye release
 ==============================================================
 
+
 In a continous/deterministic model of dye release (e.g., as implemented in the
 module :py:mod:`tbidbaxlipo.models.one_cpt`), all reactions occurring on
 vesicles are considered to occur in an undifferentiated compartment, and one

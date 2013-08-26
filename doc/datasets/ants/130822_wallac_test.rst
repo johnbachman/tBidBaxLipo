@@ -35,7 +35,7 @@ I took the mean, SD, and CV of these means to look at the pipetting error:
     print_statistics()
 
 The results show that **the variability between wells due to pipetting error
-is considerable, nearly 8%.**
+is considerable, nearly 9%.**
 
 As an additional check, we plot the mean fluorescence values across the rows
 to see if there are any edge effects. However, there is no obvious correlation

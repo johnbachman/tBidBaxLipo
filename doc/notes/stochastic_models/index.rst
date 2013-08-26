@@ -6,6 +6,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   intro
    reconciling_rates
    translocation
    tbid_bax_activation
