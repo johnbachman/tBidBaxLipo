@@ -182,17 +182,47 @@ class Builder(core.Builder):
 
         ves = self['ves']
         solution = self['solution']
-        Bax = self['Bax']
+        Bax_mono = self['Bax'](bh3=None, a6=None)
         Vesicles = self['Vesicles']
 
-        self.rule('Bax_translocates_sol_to_%s' % ves.name,
-             Bax(loc='c') ** solution + Vesicles() ** solution >>
-             Bax(loc='m') ** ves + Vesicles() ** solution,
+        self.rule('Bax_mono_translocates_sol_to_%s' % ves.name,
+             Bax_mono(loc='c') ** solution + Vesicles() ** solution >>
+             Bax_mono(loc='m') ** ves + Vesicles() ** solution,
              Bax_transloc_kf)
-        self.rule('Bax_translocates_%s_to_sol' % ves.name,
-             Bax(loc='m', bh3=None, a6=None) ** ves >>
-             Bax(loc='c', bh3=None, a6=None) ** solution,
+        self.rule('Bax_mono_translocates_%s_to_sol' % ves.name,
+             Bax_mono(loc='m') ** ves >>
+             Bax_mono(loc='c') ** solution,
              Bax_transloc_kr)
+
+    def translocate_Bax_dimers(self):
+        print("one_cpt: translocate_Bax_dimers()")
+
+        param_names = [p.name for p in self.model.parameters]
+        if 'Bax_transloc_kf' not in param_names or \
+           'Bax_transloc_kr' not in param_names:
+            raise Exception("translocate_Bax motif must be called first "
+                            "to declare translocation rate parameters.")
+        Bax_transloc_kf = self['Bax_transloc_kf']
+        Bax_transloc_kr = self['Bax_transloc_kr']
+        ves = self['ves']
+        solution = self['solution']
+        Vesicles = self['Vesicles']
+        Bax = self['Bax']
+
+        self.rule('Bax_dimer_translocates_sol_to_%s' % ves.name,
+                Bax(loc='c', bh3=1, a6=None) ** solution %
+                Bax(loc='c', bh3=1, a6=None) ** solution +
+                Vesicles() ** solution >>
+                Bax(loc='m', bh3=1, a6=None) ** ves %
+                Bax(loc='m', bh3=1, a6=None) ** ves +
+                Vesicles() ** solution,
+                Bax_transloc_kf)
+        self.rule('Bax_dimer_translocates_%s_to_sol' % ves.name,
+                Bax(loc='m', bh3=1, a6=None) ** ves %
+                Bax(loc='m', bh3=1, a6=None) ** ves >>
+                Bax(loc='c', bh3=1, a6=None) ** solution %
+                Bax(loc='c', bh3=1, a6=None) ** solution,
+                Bax_transloc_kf)
 
     def pores_from_Bax_monomers(self, bax_loc_state='i', reversible=False):
         """Basically a way of counting the time-integrated amount of

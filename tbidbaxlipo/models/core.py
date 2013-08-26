@@ -473,6 +473,7 @@ class Builder(pysb.builder.Builder):
              Bax(loc='i', bh3=None, a6=None) >> Bax(loc='m', bh3=None, a6=None),
              krev)
 
+
     def Bax_dimerizes(self, bax_loc_state='i'):
         """
         Notes
@@ -483,21 +484,26 @@ class Builder(pysb.builder.Builder):
           steady-state at around 12 minutes.
         """
 
-        print("core: Bax_dimerizes")
+        print("core: Bax_dimerizes(bax_loc_state=%s)" % bax_loc_state)
 
         # Rate of dimerization formation/oligomerization of activated Bax (s^-1)
-        Bax_dimerization_kf = self.parameter('Bax_dimerization_kf', 1e-2,
+        Bax_dimerization_kf = self.parameter(
+               'Bax_%s_dimerization_kf' % bax_loc_state, 1e-2,
                factor=self.within_compartment_rsf())
-        Bax_dimerization_kr = self.parameter('Bax_dimerization_kr', 1e-2)
+        Bax_dimerization_kr = self.parameter(
+               'Bax_%s_dimerization_kr' % bax_loc_state, 1e-2)
 
         Bax = self['Bax']
 
-        self.rule('Bax_Forms_Dimers',
+        self.rule('Bax_%s_forms_dimers' % bax_loc_state,
              Bax(loc=bax_loc_state, bh3=None, a6=None) +
              Bax(loc=bax_loc_state, bh3=None, a6=None) <>
              Bax(loc=bax_loc_state, bh3=1, a6=None) %
              Bax(loc=bax_loc_state, bh3=1, a6=None),
              Bax_dimerization_kf, Bax_dimerization_kr)
+        self.observable('Bax2_%s' % bax_loc_state,
+             Bax(loc=bax_loc_state, bh3=1, a6=None) %
+             Bax(loc=bax_loc_state, bh3=1, a6=None))
 
     def Bax_tetramerizes(self, bax_loc_state='i'):
         """
@@ -876,5 +882,37 @@ class Builder(pysb.builder.Builder):
         self.pores_from_Bax_monomers()
         self.model.name = 'tap1'
 
+    def build_model_peptide_solution_dimer(self):
+        # First, declare the model topology
+        self.translocate_Bax()
+        self.Bax_dimerizes(bax_loc_state='c')
+        self.translocate_Bax_dimers()
+        self.Bax_dimerizes(bax_loc_state='m')
+        self.pores_from_Bax_dimers(bax_loc_state='m', reversible=False)
 
+        # Create the expressions for the equilibrated concentrations
+        # of solution monomer and dimer
+        # First, some components we'll need
+        Bax_0 = self['Bax_0']
+        kf = self['Bax_c_dimerization_kf']
+        kr = self['Bax_c_dimerization_kr']
+        ka = self.expression('Bax_transloc_KA', (0.5*kf) / kr)
+        Bax = self['Bax']
+        solution = self['solution']
+
+        # Concentration of solution Bax dimer
+        Bax2_0 = self.expression('Bax2_0',
+                             (1/ka)*(0.5*Bax_0*ka -
+                                     0.125*(8*Bax_0*ka + 1)**0.5 + 0.125))
+        # Concentration of solution Bax monomer
+        Bax1_0 = self.expression('Bax1_0', Bax_0 - 2*Bax2_0)
+
+        # Reset initial conditions accordingly
+        self.model.initial_conditions = []
+        bax_args = {'a6':None, 'lipo':None, 'c3':'s', 'c62':'s', 'c120':'s',
+                'c122':'s', 'c126':'s', 'c184':'s'}
+        self.initial(Bax(bh3=1, loc='c', **bax_args)**solution %
+                  Bax(bh3=1, loc='c', **bax_args)**solution, Bax2_0)
+        self.initial(Bax(bh3=None, loc='c', **bax_args)**solution, Bax1_0)
+        self.initial(self['Vesicles'](bax=None) **solution, self['Vesicles_0'])
 
