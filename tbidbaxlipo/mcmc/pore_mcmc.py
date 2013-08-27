@@ -13,6 +13,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import collections
 import sys
+import pandas as pd
 
 model_names = ['bax_heat',
                'bax_heat_reversible',
@@ -87,6 +88,41 @@ class PoreMCMC(tbidbaxlipo.mcmc.MCMC):
             tc = self.data[bax_conc]
             axis.plot(tc[:,'TIME'], tc[:,'MEAN'], # error=tc[:,'SD'],
                        color='gray')
+
+    def get_observables_as_dataframe(self, position):
+        data_arr = None
+        row_tuples = None
+        # Iterate over the bax concentrations in the dataset
+        for conc_index, bax_conc in enumerate(self.data.columns):
+            time = np.array(self.data[bax_conc][:, 'TIME'])
+
+            # Initialize the size of the flattened data array
+            if data_arr is None:
+                data_arr = np.zeros([len(time) * 2, len(self.data.columns)])
+
+            # Initialize row_tuples for this timepoint index
+            if row_tuples is None:
+                row_tuples = []
+                for i in range(len(time)):
+                    for row_tuple in zip([i]*2, ['TIME', 'MEAN']):
+                        row_tuples.append(row_tuple)
+
+            # Fill the data array with simulated dye release data
+            self.solver.tspan = time
+            self.options.model.parameters['Bax_0'].value = bax_conc
+            x = self.simulate(position=position, observables=True)
+            avg_pores = x['pores'] / \
+                        self.options.model.parameters['Vesicles_0'].value
+            y_mod = 1 - np.exp(-avg_pores)
+
+            data_arr[0::2, conc_index] = time
+            data_arr[1::2, conc_index] = y_mod
+
+        # Build indices and dataframe
+        row_index = pd.MultiIndex.from_tuples(row_tuples,
+                                              names=('Timepoint', 'Datatype'))
+        df = pd.DataFrame(data_arr, index=row_index, columns=self.data.columns)
+        return df
 
     def get_observable_timecourses(self, position):
         """Return the timecourses for all concentrations."""

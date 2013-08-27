@@ -13,7 +13,8 @@ reports that are run, edit this script.
 import glob
 from bayessb.report import Report
 import bayessb.report.reporters
-from tbidbaxlipo.reporters import knowledge, topology, experiment, residuals
+from tbidbaxlipo.reporters import knowledge, topology, experiment, residuals, \
+                                  bax_heat
 from tbidbaxlipo.mcmc import import_mcmc_groups
 import sys
 import pickle
@@ -29,7 +30,7 @@ print chain_file_list
 chain_dict = import_mcmc_groups(chain_file_list)
 
 # Run the reporters
-rep = Report(chain_dict, [bayessb.report.reporters])
+rep = Report(chain_dict, [bayessb.report.reporters, bax_heat])
 #rep = Report(chain_dict, [bayessb.report.reporters, residuals])
 #rep = Report(chain_dict, [topology, bayessb.report.reporters,
 #                          knowledge, experiment])
