@@ -16,14 +16,18 @@ boilerplate code involved in setting up and parsing stochastic simulation
 results. To create a script for simulating a specific model, create a new file
 that will be your run script. In this script you will create a subclass of
 :py:class:`tbidbaxlipo.models.simulation.Job`, implementing only the methods
-``__init__`` and ``build``. In addition you will add a short main script for
-running the job at the command-line.  Here is a complete example::
+``__init__`` and ``build``. The script should also declare top-level package
+variables ``jobs`` and ``job_name``. The list variable ``jobs`` will contain
+the instances of the ``Job`` class (initialized with various initial
+conditions, parameters, etc.) that are to be run. Finally you will add a
+boilerplate ``__main__`` script for running the job at the command-line.  Here
+is a complete example::
 
     from tbidbaxlipo.models import simulation
 
     class Job(simulation.Job):
-        def __init__(self):
-            params_dict = {'Bax_transloc_kf':1e-2}
+        def __init__(self, Bax_transloc_kf):
+            params_dict = {'Bax_transloc_kf':Bax_transloc_kf}
             scaling_factor = 5
             tmax = 10000
             n_steps = 200
@@ -37,9 +41,10 @@ running the job at the command-line.  Here is a complete example::
             builder.build_model_bax_heat()
             return builder
 
+    jobs = [Job(1e-2), Job(1e-3)]
+
     if __name__ == '__main__':
-        j = Job()
-        j.run_n_cpt()
+        simulation.run_main(jobs)
 
 The ``__init__`` method's only role is to make explicit the parameter
 overrides, duration, and other features of the simulation that are passed
@@ -63,62 +68,76 @@ parameters are passed in.
     have not been overridden in the params_dict!`
 
 Finally, if stochastic simulations are to be run on the computing cluster, it
-is necessary to add the final ``__main__`` script, which simply creates an
-instance of the ``Job`` class and calls the ``run_n_cpt`` method. You now have
-a script that will handle the execution of a single job (though note that one
-job can run multiple simulations).
+is necessary to add the final ``__main__`` script, which calls the generic
+``run_main`` method from the ``simulation`` module. ``run_main`` handles
+parsing of command line arguments and running the appropriate job in the
+``jobs`` list based on the command line arguments.
 
 .. note:: Local execution
 
     Since there is nothing cluster-specific in the run script, you can also use
-    it to do a test run locally.
+    it to do a test run locally. However, if there is more than one job
+    in the job list, you will have to pass in an index
 
 **2. Submit the run script jobs via LSF.**
 
 Log into the computing cluster and navigate to the directory on the server
-(e.g. `tbidbaxlipo/simdata/mysim`) where you want the simulation results to be
-saved. It is a good practice to put the run script used to create and run the
-model in this directory so you maintain a link between the simulation setup and
-the results. Run the script :py:mod:`tbidbaxlipo.models.simulation` at the
-command-line to submit the simulation jobs on Orchestra, as follows::
+(e.g. `tbidbaxlipo/plots/mysim`) where you want the simulation results to be
+saved. It is a good practice to write the run script used to create and run the
+model as the ``__init__.py`` file for the module ``mysim``. This maintains the
+link between the simulation setup and the results. Run the script
+:py:mod:`tbidbaxlipo.models.simulation` at the command-line to submit the
+simulation jobs on Orchestra, as follows::
 
     python -m tbidbaxlipo.models.simulation submit [run_script.py] [num_jobs]
 
+The submit script will submit ``num_jobs`` jobs to Orchestra for `each` of the
+jobs in the job array.
+
+Jobs run in this way will automatically save simulation results in a series of
+directories ``data_0``, ``data_1``, etc. The numbers associated with the
+directories are matched to the index of the jobs in the ``jobs`` list of the
+run script.
+
 **3. Parse the results back.**
 
-In most cases you will only want the means and the standard deviations of the
-observables at each time point. To calculate and save these, you run the
-script::
+The parsing functionality of :py:mod:`tbidbaxlipo.models.simulation` will
+parse the simulation results into an HDF5 file. To generate the HDF5
+file, run the script::
 
-    python -m tbidbaxlipo.models.simulation parse /path/*.gdat
+    python -m tbidbaxlipo.models.simulation parse [hdf5_filename] [dirs]
 
-The `.gdat` files to load and parse are passed in as a glob or list of files.
-The script saves the means of each observable in a record array pickled to
-the file ``means.pck``; the standard deviations are pickled in ``stds.pck``.
+Command-line arguments include the basename of the HDF5 filename to generate
+(the standard name is ``data``, which will result in the file ``data.hdf5``)
+and a list of data directories, typically ``data_*``, so the typical command
+will be::
+
+    python -m tbidbaxlipo.models.simulation parse data data_*
+
+Note that if there are many simulations, the parsing process can take a long
+time.
 
 **4. (Optional) Make the data an importable resource.**
 
-If you put the simulation data in a submodule directory, you can add an
-``__init__.py`` file which allows the mean and SD data to be imported for
-plotting and analysis. Here is some boilerplate code::
+If you put the simulation data in a submodule directory, you can add a few
+boilerplate lines to the ``__init__.py`` file which will allow access to the
+data in the HDF5 file::
 
-    import pickle
-    import pkgutil
+    mod_path = os.path.dirname(sys.modules[__name__].__file__)
+    hdf5_filename = os.path.abspath(os.path.join(mod_path, 'data.hdf5'))
+    if os.path.exists(hdf5_filename):
+        data = simulation.CptDataset(hdf5_filename)
 
-    try:
-        means = pickle.loads(pkgutil.get_data(
-                            'tbidbaxlipo.simdata.sim_test', 'means.pck'))
-        stds = pickle.loads(pkgutil.get_data(
-                            'tbidbaxlipo.simdata.sim_test', 'stds.pck'))
-    except IOError:
-        pass
+If the name ``data.hdf5`` has been used for the HDF5 file, then this code
+can be used without modification.
 
-The try/catch block handles the case when the pickle files don't exist (and
-hence allows submodules to be imported without error).  Only the path to the
-package containing the data (``tbidbaxlipo.simdata.sim_test``) needs to
-be changed from the above example to use it for a new dataset.
+The HDF5 dataset can then be imported by calling code as::
+
+    from tbidbaxlipo.plots.mysim import data
 
 **5. Plot results and compare with deterministic model.**
+
+.. todo:: The below needs to be updated.
 
 The class :py:class:`tbidbaxlipo.models.simulation.Job` contains a
 :py:meth:`tbidbaxlipo.models.simulation.Job.run_one_cpt` that handles the
@@ -155,48 +174,3 @@ In this example, note:
   observables may be required. Here, the instance of ``Job`` contains the
   scaling factor that was used for stochastic simulation, and hence it can
   be used to rescale the observables in ``means`` and ``stds``.
-
-Running model comparisons locally
----------------------------------
-
-In some cases SSA simulations run relatively fast and can be run locally rather
-than on the computing cluster. This makes steps **2** - **4** above
-unnecessary.  Instead, SSA results can be obtained and plotted within a single
-script.  The following is an analogous example to **5** above::
-
-    from matplotlib import pyplot as plt
-    from tbidbaxlipo.simdata.sim_test.run_script import Job
-    from tbidbaxlipo.models import simulation
-
-    # Create the job instance
-    j = Job()
-
-    # Run the deterministic simulation
-    (t, det_obs) = j.run_one_cpt()
-
-    # Plot deterministic results
-    plt.ion()
-    plt.figure()
-    plt.plot(t, det_obs['pores'], label='one_cpt')
-
-    # Run the stochastic simulation
-    xrecs = j.run_n_cpt(cleanup=True)
-    (means, stds) = simulation.calculate_mean_and_std(xrecs)
-
-    # Plot stochastic results
-    plt.errorbar(means['time'], means['pores'] / j.scaling_factor,
-                 yerr=stds['pores'] / j.scaling_factor, label='n_cpt')
-
-    # Label the plot
-    plt.xlabel('Time (secs)')
-    plt.ylabel('Total pores')
-    plt.title('Comparing one_cpt and n_cpt simulations')
-    plt.legend(loc='lower right')
-
-When run with the example run script shown above, this script produces the
-following results:
-
-.. plot::
-
-    import tbidbaxlipo.simdata.sim_test.plot_comparison_local
-
