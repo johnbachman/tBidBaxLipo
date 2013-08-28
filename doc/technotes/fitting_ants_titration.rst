@@ -60,7 +60,7 @@ Perform steps 1-3 as above.
    directory and run (note that since it may take a long time to run all reports,
    it's best to submit this as a job)::
 
-    cd /www/sorger.med.harvard.edu/docroot/data/jab69
+    cd /www/sorger.med.harvard.edu/docroot/data/bachman
     mkdir some_pore_fits
     cd some_pore_fits
     bsub -q short -W 12:00 python -m tbidaxlipo.run_report /hms/scratch1/jab69/some_pore_fits/*.mcmc

@@ -13,5 +13,4 @@ Contents:
    lipo_titration
    uni_dye_release_models
    nbd_notes
-   bi_dye_release_models
 
