@@ -8,6 +8,7 @@ import tbidbaxlipo.data
 from matplotlib import pyplot as plt
 import numpy as np
 from tbidbaxlipo.util import fitting
+from tbidbaxlipo.plots import bax_heat
 
 def extract(keys, dict):
     extracted_dict = collections.OrderedDict([])
@@ -132,22 +133,14 @@ def plot_two_exp_fits():
             time = np.array(well_data[TIME])
             y = np.array(well_data[VALUE])
 
-            fmax = fitting.Parameter(0.9)
-            k1 = fitting.Parameter(0.01)
-            k2 = fitting.Parameter(0.001)
+            (fmax, k1, k2) = bax_heat.fit_timecourse(time, y)
 
-            def two_part_exp(t):
-                return (fmax() * (1 - np.exp(-k1() *
-                                  (1 - np.exp(-k2()*t)) * t)))
-
-            fitting.fit(two_part_exp, [fmax, k1, k2], y, time)
-
-            fmax_arr[j, i] = fmax()
-            k1_arr[j, i] = k1()
-            k2_arr[j, i] = k2()
+            fmax_arr[j, i] = fmax
+            k1_arr[j, i] = k1
+            k2_arr[j, i] = k2
 
             plt.plot(time, y, 'b')
-            plt.plot(time, two_part_exp(time), 'r')
+            plt.plot(time, bax_heat.two_exp_func(time, fmax, k1, k2), 'r')
             plt.title(well_conc)
             plt.xticks([0, 2000, 4000, 6000, 8000])
             plt.ylabel('% Release')
