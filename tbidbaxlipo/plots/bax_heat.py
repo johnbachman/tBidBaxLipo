@@ -17,6 +17,18 @@ def fit_timecourse(time, y):
 
     return (fmax(), k1(), k2())
 
+def fit_from_dataframe(df):
+    num_concs = len(df.columns)
+    fmax_arr = np.zeros(num_concs)
+    k1_arr = np.zeros(num_concs)
+    k2_arr = np.zeros(num_concs)
+    for i, bax_conc in enumerate(df.columns):
+        conc_data = df[bax_conc]
+        time = conc_data[:, 'TIME']
+        y = conc_data[:, 'MEAN']
+        (fmax_arr[i], k1_arr[i], k2_arr[i]) = fit_timecourse(time, y)
+    return (fmax_arr, k1_arr, k2_arr)
+
 def fit_from_solver_sims(t, concs, simulations):
     """Fit a matrix of simulated dye release curves with a uniform
     time vector for all simulations, e.g., as produced by a series of

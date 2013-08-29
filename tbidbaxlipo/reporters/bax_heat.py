@@ -3,6 +3,7 @@ import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from tbidbaxlipo.util import fitting
+from tbidbaxlipo.plots.bax_heat import fit_from_dataframe, two_exp_func
 
 reporter_group_name = 'Bax activated by heat'
 num_samples = 10
@@ -17,38 +18,25 @@ def two_exponential_fits(mcmc_set):
     # Run a simulation
     (max_lkl, max_lkl_position) = mcmc_set.maximum_likelihood()
     data = mcmc.get_observables_as_dataframe(max_lkl_position)
-
-    fmax_arr = np.zeros(len(data.columns))
-    k1_arr = np.zeros(len(data.columns))
-    k2_arr = np.zeros(len(data.columns))
     bax_concs = np.array(data.columns, dtype='float')
 
     plot_filename = '%s_two_exp_fits.png' % (mcmc_set.name)
     thumbnail_filename = '%s_two_exp_fits_th.png' % (mcmc_set.name)
 
+    (fmax_arr, k1_arr, k2_arr) = fit_from_dataframe(data)
+
     fig = Figure()
     for i, bax_conc in enumerate(bax_concs):
         ax = fig.gca()
-
         conc_data = data[bax_conc]
         time = conc_data[:, 'TIME']
         y = conc_data[:, 'MEAN']
 
-        fmax = fitting.Parameter(0.9)
-        k1 = fitting.Parameter(0.01)
-        k2 = fitting.Parameter(0.001)
-
-        def two_part_exp(t):
-            return (fmax() * (1 - np.exp(-k1() * (1 - np.exp(-k2()*t)) * t)))
-
-        fitting.fit(two_part_exp, [fmax, k1, k2], y, time)
-
-        fmax_arr[i] = fmax()
-        k1_arr[i] = k1()
-        k2_arr[i] = k2()
-
+        two_exp_fit = two_exp_func(time, fmax_arr[i], k1_arr[i], k2_arr[i])
+        # Plot original sim
         ax.plot(time, y, 'b')
-        ax.plot(time, two_part_exp(time), 'r')
+        # Plot fitted func
+        ax.plot(time, two_exp_fit, 'r')
 
     ax.set_title('Two-exponential fits for %s' % mcmc_set.name)
     ax.set_xlabel('Time')
