@@ -21,12 +21,12 @@ class Job(simulation.Job):
     def build(self, module):
         builder = module.Builder(params_dict=self.params_dict,
                                  scaling_factor=self.scaling_factor)
-        builder.build_model_bax_heat_auto()
+        builder.build_model_bax_heat_auto1()
         return builder
 
 # Create jobs for each condition
 jobs = [Job()]
-job_name = 'bax_heat_auto'
+job_name = 'bax_heat_auto1'
 
 if __name__ == '__main__':
     simulation.run_main(jobs)

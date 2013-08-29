@@ -26,13 +26,13 @@ class Job(simulation.Job):
     def build(self, module):
         builder = module.Builder(params_dict=self.params_dict,
                                  scaling_factor=self.scaling_factor)
-        builder.build_model_bax_heat_auto_reversible_activation()
+        builder.build_model_bax_heat_auto1_reversible_activation()
         return builder
 
 # Create jobs for each condition
 bax_concs = np.array(layout_130614.df.columns, dtype='float')
 jobs = [Job(bax_conc) for bax_conc in bax_concs]
-job_name = 'bax_heat_auto_titration'
+job_name = 'bax_heat_auto1_reversible_activation_titration'
 
 if __name__ == '__main__':
     simulation.run_main(jobs)
