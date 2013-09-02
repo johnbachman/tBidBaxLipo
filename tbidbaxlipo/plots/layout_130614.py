@@ -160,6 +160,7 @@ def plot_k1_curve(k1_arr, conc_list):
     plt.xlabel('[Bax] (nM)')
     plt.ylabel('$k_1\ (\mathrm{sec}^{-1})$')
 
+    # Fit with exponential-linear curve
     vi = fitting.Parameter(0.05)
     vf = fitting.Parameter(0.025)
     tau = fitting.Parameter(0.02)
@@ -169,6 +170,22 @@ def plot_k1_curve(k1_arr, conc_list):
                             ((1 - np.exp(-tau()*t))/tau()) )
     fitting.fit(biphasic, [vi, vf, tau], k1_means, conc_list)
     plt.plot(conc_list, biphasic(conc_list), 'r', linewidth=2)
+
+    # Fit with "double-binding curve"
+    ksat = fitting.Parameter(0.0005)
+    knonsat = fitting.Parameter(20)
+    R0 = fitting.Parameter(20)
+    def double_binding(t):
+        return (R0() * t)/(ksat() + t) + (knonsat()*t)
+    fitting.fit(double_binding, [R0, ksat, knonsat], k1_means, conc_list)
+    plt.plot(conc_list, double_binding(conc_list), 'g', linewidth=2)
+
+    plt.text(400, 0.00025,
+            r'$\frac{R_0 Bax_0}{K_{sat} + Bax_0} + K_{nonsat} Bax_0$')
+    plt.text(400, 0.00020, r'$R_0$ = %.3g nM' % R0())
+    plt.text(400, 0.00015, r'$K_{sat}$ = %.3g nM' % ksat())
+    plt.text(400, 0.00010, r'$K_{nonsat}$ = %.3g nM' % knonsat())
+
     plt.text(35, 0.00054,
             r'$v_f + (v_i - v_f) \left(\frac{1 - e^{-\tau t}}{\tau}\right)$')
     plt.text(35, 0.00049, r'$v_i$ = %.3g sec$^{-1}$ nM$^{-1}$' % vi())
