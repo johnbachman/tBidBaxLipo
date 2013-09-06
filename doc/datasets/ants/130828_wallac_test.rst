@@ -1,15 +1,17 @@
+.. _130828_wallac_test:
+
 Measuring plate reader error, after repairs (8/28/13)
 =====================================================
 
 After noticing the large variability in pipetting in the experiment done
-on 8/22/13, I contacted Barb Grant and Kathy Buhl to see if the instrument
+on :ref:`8/22/13 <130822_wallac_test>`, I contacted Barb Grant and Kathy Buhl to see if the instrument
 could be repaired or calibrated. Kathy Buhl contacted Mike Lemish from
 Perkin Elmer, who changed out the syringe and tubing.
 
-Afterwards I ran an experiment very similar to the one on 8/22/13, but this
-time I first pipetted 80uL of buffer into every well in the plate, then
-programmed the machine to dispense 20 uL into every well prior to reading, then
-read the plate 10 times.
+Afterwards I ran an experiment very similar to the one on :ref:`8/22/13
+<130822_wallac_test>`, but this time I first pipetted 80uL of buffer into every
+well in the plate, then programmed the machine to dispense 20 uL into every
+well prior to reading, then read the plate 10 times.
 
 Again, I examined the within-well vs. between-well variability.  I took the
 mean, SD and CV for each timecourse across the 10 timepoints, and plotted each

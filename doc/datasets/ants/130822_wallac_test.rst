@@ -1,3 +1,5 @@
+.. _130822_wallac_test:
+
 Measuring plate reader error (8/22/13)
 ======================================
 
