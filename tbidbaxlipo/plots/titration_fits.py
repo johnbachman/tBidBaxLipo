@@ -114,8 +114,12 @@ class TitrationFit(object):
             y = conc_data[:, 'MEAN']
             plt.plot(time, y, color='r')
             plt.plot(time, self.fit_func(time, self.k_arr[:,i]), color='b')
+        plt.xlabel('Time (sec)')
         plt.show()
 
+##########################################
+# Various Fitting functions (subclasses) #
+##########################################
 
 class OneExpNoFmax(TitrationFit):
     r"""Fit timecourses to a one-parameter exponential function.
@@ -177,7 +181,6 @@ class TwoExp(TitrationFit):
     def fit_func(t, k_arr):
         return (k_arr[1]* (1 - np.exp(-k_arr[0] *
                                       (1 - np.exp(-k_arr[2]*t)) * t)))
-
 
 def fit_from_solver_sims(t, concs, simulations):
     """Fit a matrix of simulated dye release curves with a uniform
