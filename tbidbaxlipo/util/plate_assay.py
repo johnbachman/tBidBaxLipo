@@ -320,7 +320,7 @@ def get_average_pore_timecourses(normalized_wells):
 
     return average_pores
 
-def to_dataframe(mean_dict, sd_dict):
+def to_dataframe(mean_dict, sd_dict=None):
     """Convert timecourses to a pandas dataframe format.
 
     The keys in both dicts are expected to be space-separated strings, with the
@@ -356,7 +356,10 @@ def to_dataframe(mean_dict, sd_dict):
         # Get the values from the dicts
         time = mean_dict[conc_string][TIME]
         mean = mean_dict[conc_string][VALUE]
-        sd = sd_dict[conc_string][VALUE]
+        if sd_dict is not None:
+            sd = sd_dict[conc_string][VALUE]
+        else:
+            sd = 0
 
         if data_arr is None:
             # Initialize the size of the flattened data array
