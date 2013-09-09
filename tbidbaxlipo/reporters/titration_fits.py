@@ -3,7 +3,7 @@ import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from tbidbaxlipo.util import fitting
-from tbidbaxlipo.plots.bax_heat import fit_from_dataframe, two_exp_func
+from tbidbaxlipo.plots.titration_fits import TwoExp
 
 reporter_group_name = 'Bax activated by heat'
 num_samples = 10
@@ -23,7 +23,8 @@ def two_exponential_fits(mcmc_set):
     plot_filename = '%s_two_exp_fits.png' % (mcmc_set.name)
     thumbnail_filename = '%s_two_exp_fits_th.png' % (mcmc_set.name)
 
-    (fmax_arr, k1_arr, k2_arr) = fit_from_dataframe(data)
+    fit = TwoExp()
+    (k1_arr, fmax_arr, k2_arr) = fit.fit_from_dataframe(data)
 
     fig = Figure()
     for i, bax_conc in enumerate(bax_concs):
@@ -32,7 +33,7 @@ def two_exponential_fits(mcmc_set):
         time = conc_data[:, 'TIME']
         y = conc_data[:, 'MEAN']
 
-        two_exp_fit = two_exp_func(time, fmax_arr[i], k1_arr[i], k2_arr[i])
+        two_exp_fit = fit.fit_func(time, (k1_arr[i], fmax_arr[i], k2_arr[i]))
         # Plot original sim
         ax.plot(time, y, 'b')
         # Plot fitted func
