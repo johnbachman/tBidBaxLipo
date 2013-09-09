@@ -125,7 +125,7 @@ def read_wallac(csv_file):
 
     return wells
 
-def plot_all(wells, errors=None, do_legend=True):
+def plot_all(wells, errors=None, do_legend=True, legend_position=0.8):
     """Plots all of the timecourses in the dict.
 
     Parameters
@@ -148,7 +148,8 @@ def plot_all(wells, errors=None, do_legend=True):
         fontP.set_size('small')
         ax = gca()
         box = ax.get_position()
-        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+        ax.set_position([box.x0, box.y0, box.width * legend_position,
+                         box.height])
         legend(loc='upper left', prop=fontP, ncol=1, bbox_to_anchor=(1, 1),
              fancybox=True, shadow=True)
 
