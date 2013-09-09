@@ -57,11 +57,6 @@ One-parameter exponential fits
     from tbidbaxlipo.plots.titration_fits import OneExpNoFmax
     fit = OneExpNoFmax()
     fit.plot_fits_from_dataframe(df)
-    plt.figure()
-    plt.plot(fit.concs, fit.k_arr[0], marker='o')
-    plt.xlabel('Bax (nM)')
-    plt.ylabel(r'$k_1$')
-    plt.title(r'$k_1$ vs. Bax conc')
 
 Linear fits to pore-transformed data
 ------------------------------------
@@ -78,11 +73,6 @@ one-parameter exponential.
     from tbidbaxlipo.plots.titration_fits import Linear
     fit = Linear()
     fit.plot_fits_from_dataframe(df)
-    plt.figure()
-    plt.plot(fit.concs, fit.k_arr[0], marker='o')
-    plt.xlabel('Bax (nM)')
-    plt.ylabel(r'$k_1$')
-    plt.title(r'$k_1$ vs. Bax conc')
 
 Two-parameter exponential fits
 ------------------------------
@@ -94,14 +84,3 @@ Two-parameter exponential fits
     from tbidbaxlipo.plots.titration_fits import OneExpFmax
     fit = OneExpFmax()
     fit.plot_fits_from_dataframe(df)
-    plt.figure()
-    plt.plot(fit.concs, fit.k_arr[0], marker='o')
-    plt.xlabel('Bax (nM)')
-    plt.ylabel(r'$k_1$')
-    plt.title(r'$k_1$ vs. Bax conc')
-    plt.figure()
-    plt.plot(fit.concs, fit.k_arr[1], marker='o')
-    plt.xlabel('Bax (nM)')
-    plt.ylabel(r'$F_{max}$')
-    plt.title(r'$F_{max}$ vs. Bax conc')
-
