@@ -35,10 +35,14 @@ class TitrationFit(object):
     initial_guesses : list of numbers
         Initial values used for fitting.
     """
-    def __init__(self, initial_guesses):
+    def __init__(self, param_names, initial_guesses):
         if initial_guesses is None or len(initial_guesses) == 0:
             raise ValueError('initial_guesses cannot be None or empty.')
+        if len(param_names) != len(initial_guesses):
+            raise ValueError('There must be the same number of parameter names '
+                             'and initial guesses.')
 
+        self.param_names = param_names
         self.k_arr = None
         self.concs = None
         self.num_params = len(initial_guesses)
@@ -60,7 +64,7 @@ class TitrationFit(object):
             The best-fit parameter values produced by the fitting procedure.
         """
         params = [fitting.Parameter(self.initial_guesses[i])
-                  for i in range(self.num_params)]
+                  for i in range(len(self.initial_guesses))]
         def fit_func_closure(t):
             return self.fit_func(t, [p() for p in params])
         fitting.fit(fit_func_closure, params, y, time)
@@ -88,7 +92,7 @@ class TitrationFit(object):
             The two-dimensional list of best-fit parameters, with
             shape (num_params, num_concs).
         """
-        self.k_arr = np.zeros((self.num_params, len(df.columns)))
+        self.k_arr = np.zeros((len(self.initial_guesses), len(df.columns)))
         self.concs = df.columns.values
         for i, bax_conc in enumerate(self.concs):
             conc_data = df[bax_conc]
@@ -117,6 +121,14 @@ class TitrationFit(object):
         plt.xlabel('Time (sec)')
         plt.show()
 
+        for k_index in range(len(self.initial_guesses)):
+            plt.figure()
+            plt.plot(self.concs, self.k_arr[k_index], marker='o')
+            plt.xlabel(self.param_names[k_index])
+            plt.ylabel('Bax (nM)')
+            plt.title('%s vs. Bax conc' % self.param_names[k_index])
+            plt.show()
+
 ##########################################
 # Various Fitting functions (subclasses) #
 ##########################################
@@ -129,7 +141,8 @@ class OneExpNoFmax(TitrationFit):
         y(t) = 1 - e^{-k_1 t}
     """
     def __init__(self):
-        super(OneExpNoFmax, self).__init__(initial_guesses=[1e-4])
+        super(OneExpNoFmax, self).__init__(param_names=['$k_1$'],
+                                           initial_guesses=[1e-4])
 
     @staticmethod
     def fit_func(t, k_arr):
@@ -146,7 +159,8 @@ class Linear(TitrationFit):
     numbers via the Poisson assumption of Schwarz.
     """
     def __init__(self):
-        super(Linear, self).__init__(initial_guesses=[1e-4])
+        super(Linear, self).__init__(param_names=['$k_1$'],
+                                     initial_guesses=[1e-4])
 
     @staticmethod
     def fit_func(t, k_arr):
@@ -157,11 +171,12 @@ class OneExpFmax(TitrationFit):
 
     .. math::
 
-        y(t) = k_2 (1 - e^{-k1 t})
+        y(t) = F_{max} (1 - e^{-k1 t})
     """
 
     def __init__(self):
-        super(OneExpFmax, self).__init__(initial_guesses=[1e-4, 0.9])
+        super(OneExpFmax, self).__init__(param_names=['$k_1$', '$F_{max}$'],
+                                         initial_guesses=[1e-4, 0.9])
 
     @staticmethod
     def fit_func(t, k_arr):
@@ -172,15 +187,22 @@ class TwoExp(TitrationFit):
 
     .. math::
 
-        y(t) = k_2 \left(1 - e^{-k1 * (1 - e^{-k3 t}) t \right)
+        y(t) = F_{max} \left(1 - e^{-k_1 * (1 - e^{-k_2 t}) t \right)
     """
     def __init__(self):
-        super(TwoExp, self).__init__(initial_guesses=[1e-4, 0.9, 1e-2])
+        super(TwoExp, self).__init__(
+                    param_names=['$k_1$', '$F_{max}$', '$k_2$'],
+                    initial_guesses=[1e-4, 0.9, 1e-2])
 
     @staticmethod
     def fit_func(t, k_arr):
         return (k_arr[1]* (1 - np.exp(-k_arr[0] *
                                       (1 - np.exp(-k_arr[2]*t)) * t)))
+
+##########################################
+# Plotting utility functions             #
+##########################################
+
 
 def fit_from_solver_sims(t, concs, simulations):
     """Fit a matrix of simulated dye release curves with a uniform
