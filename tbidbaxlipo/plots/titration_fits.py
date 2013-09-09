@@ -101,8 +101,36 @@ class TitrationFit(object):
             self.k_arr[:,i] = self.fit_timecourse(time, y)
         return self.k_arr
 
+    def fit_from_CptDataset(self, data):
+        """Fit an HDF5 dataset of multi-compartment stochastic simulations.
+
+        Parameters
+        ----------
+        data : tbidbaxlipo.models.simulation.CptDataset
+            Wrapper around an HDF5 dataset containing stochastic simulation
+            results.
+
+        Returns
+        -------
+        list of numbers
+            The two-dimensional list of best-fit parameters, with
+            shape (num_params, num_concs).
+        """
+        self.k_arr = np.zeros((len(self.initial_guesses),
+                               data.sim_data.shape[0]))
+        time = data.sim_data[0,0,0,:]
+        for i in range(data.sim_data.shape[0]):
+            (dr_mean, dr_sd) = data.get_mean_dye_release(i)
+            self.k_arr[:, i] = self.fit_timecourse(time, dr_mean)
+        return self.k_arr
+
+
     def plot_fits_from_dataframe(self, df):
-        """Creates a figure showing the timecourses and the best fits.
+        """Creates figures showing the best fits and the parameters.
+
+        Includes a figure including both the original timecourse data and the
+        best fits of the given model to the data; also creates figures showing
+        the concentration-dependence of each of the parameters in the model.
 
         Parameters
         ----------
@@ -121,6 +149,49 @@ class TitrationFit(object):
         plt.xlabel('Time (sec)')
         plt.show()
 
+        for k_index in range(len(self.initial_guesses)):
+            plt.figure()
+            plt.plot(self.concs, self.k_arr[k_index], marker='o')
+            plt.xlabel(self.param_names[k_index])
+            plt.ylabel('Bax (nM)')
+            plt.title('%s vs. Bax conc' % self.param_names[k_index])
+            plt.show()
+
+    def plot_fits_from_CptDataset(self, jobs, data):
+        """Creates figures showing the best fits and the parameters.
+
+        Includes a figure including both the original timecourse data and the
+        best fits of the given model to the data; also creates figures showing
+        the concentration-dependence of each of the parameters in the model.
+
+        Parameters
+        ----------
+        jobs : list of tbidbaxlipo.models.simulation.Job objects
+            The job objects are expected to contain entries for the
+            ``Bax_0`` parameter setting the initial condition of Bax
+            in their ``params_dict`` field.
+        data : tbidbaxlipo.models.simulation.CptDataset
+            Wrapper around an HDF5 dataset containing stochastic simulation
+            results.
+
+        Returns
+        -------
+        list of numbers
+            The two-dimensional list of best-fit parameters, with
+            shape (num_params, num_concs).
+        """
+        plt.figure()
+        self.fit_from_CptDataset(data)
+        time = data.sim_data[0,0,0,:]
+        assert len(jobs) == data.sim_data.shape[0]
+        for i, job in enumerate(jobs):
+            (dr_mean, dr_sd) = data.get_mean_dye_release(i)
+            plt.plot(time, dr_mean, color='r')
+            plt.plot(time, self.fit_func(time, self.k_arr[:,i]), color='b')
+        plt.xlabel('Time (sec)')
+        plt.show()
+
+        self.concs = [j.params_dict['Bax_0'] for j in jobs]
         for k_index in range(len(self.initial_guesses)):
             plt.figure()
             plt.plot(self.concs, self.k_arr[k_index], marker='o')
@@ -199,81 +270,3 @@ class TwoExp(TitrationFit):
         return (k_arr[1]* (1 - np.exp(-k_arr[0] *
                                       (1 - np.exp(-k_arr[2]*t)) * t)))
 
-##########################################
-# Plotting utility functions             #
-##########################################
-
-
-def fit_from_solver_sims(t, concs, simulations):
-    """Fit a matrix of simulated dye release curves with a uniform
-    time vector for all simulations, e.g., as produced by a series of
-    deterministic simulations. The concentration index should be the
-    first index into the simulations array, and the time index
-    should be the second one.
-
-    Returns
-    -------
-    list of numpy.array
-        List with three elements (fmax_arr, k1_arr, k2_arr). The elements
-        in the arrays represent the fmax, k1, and k2 values for each of
-        the provided concentrations/timecourses.
-    """
-    num_concs = len(concs)
-    fmax_arr = np.zeros(num_concs)
-    k1_arr = np.zeros(num_concs)
-    k2_arr = np.zeros(num_concs)
-    for i in range(num_concs):
-        (fmax_arr[i], k1_arr[i], k2_arr[i]) =  \
-                        fit_timecourse(t, simulations[i, :])
-    return (fmax_arr, k1_arr, k2_arr)
-
-def fit_from_CptDataset(data):
-    """Fit an HDF5 dataset of multi-compartment stochastic simulations."""
-    time = data.sim_data[0,0,0,:]
-    num_concs = data.sim_data.shape[0]
-    fmax_arr = np.zeros(num_concs)
-    k1_arr = np.zeros(num_concs)
-    k2_arr = np.zeros(num_concs)
-    for i in range(num_concs):
-        (dr_mean, dr_sd) = data.get_mean_dye_release(i)
-        (fmax_arr[i], k1_arr[i], k2_arr[i]) = fit_timecourse(time, dr_mean)
-    return (fmax_arr, k1_arr, k2_arr)
-
-
-def plot_fits_from_solver_sims(t, concs, simulations):
-    plt.figure()
-    (fmax_arr, k1_arr, k2_arr) = fit_from_solver_sims(t, concs, simulations)
-    for i in range(len(concs)):
-        # Plot data
-        plt.plot(t, simulations[i,:], color='r')
-        # Plot fit
-        plt.plot(t, two_exp_func(t, fmax_arr[i], k1_arr[i], k2_arr[i]),
-                 color='b')
-    plt.show()
-    return (fmax_arr, k1_arr, k2_arr)
-
-def plot_fits_from_CptDataset(data):
-    plt.figure()
-    time = data.sim_data[0,0,0,:]
-    num_concs = data.sim_data.shape[0]
-    (fmax_arr, k1_arr, k2_arr) = fit_from_CptDataset(data)
-    for i in range(num_concs):
-        (dr_mean, dr_sd) = data.get_mean_dye_release(i)
-        plt.plot(time, dr_mean, color='r')
-        plt.plot(time, two_exp_func(time, fmax_arr[i], k1_arr[i], k2_arr[i]),
-                 color='b')
-    plt.show()
-    return (fmax_arr, k1_arr, k2_arr)
-
-if __name__ == '__main__':
-    from tbidbaxlipo.plots.layout_130905 import *
-    #fit = OneExpNoFmax()
-    #reset_norm_means = truncate_timecourses(reset_norm_means, 0, 80)
-    #pores = truncate_timecourses(pores, 0, 80)
-    #pore_df = to_dataframe(pores)
-    df = to_dataframe(reset_norm_means)
-    ion()
-    fit = TwoExp()
-    fit.plot_fits_from_dataframe(df)
-    figure()
-    plot(fit.concs, fit.k_arr[0], marker='o')

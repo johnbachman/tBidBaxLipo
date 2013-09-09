@@ -24,6 +24,7 @@ concentrations. First, for the minimum concentration:
 .. plot::
     :context:
 
+    plt.close('all')
     from matplotlib import pyplot as plt
     from tbidbaxlipo.plots.stoch_det_comparison.bax_heat_auto_titration \
                 import jobs, data
@@ -83,14 +84,8 @@ Two-exponential fits
     :context:
 
     plt.close('all')
-    from tbidbaxlipo.plots import bax_heat
-    (fmax_arr, k1_arr, k2_arr) = bax_heat.plot_fits_from_CptDataset(data)
-    bax_concs = [job.params_dict['Bax_0'] for job in jobs]
-    plt.figure()
-    plt.plot(bax_concs, fmax_arr)
-    plt.figure()
-    plt.plot(bax_concs, k1_arr)
-    plt.figure()
-    plt.plot(bax_concs, k2_arr)
+    from tbidbaxlipo.plots import titration_fits
+    fit = titration_fits.TwoExp()
+    fit.plot_fits_from_CptDataset(jobs, data)
 
 
