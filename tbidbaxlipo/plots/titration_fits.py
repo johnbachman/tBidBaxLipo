@@ -1,3 +1,16 @@
+"""
+This module contains code to fit dye release titration fits to a variety of
+mathematical functions. The fitting routines can handle data produced from
+multiple sources, including actual experimental data as well as synthetic data
+from deterministic and stochastic simulation.
+
+Most fitting code is implemented in the superclass :py:class:`TitrationFit`;
+specific mathematical functions are implemented in the various subclasses.  The
+subclasses implement the specific mathematical function as a static method, and
+also specify the number of parameters in the model, the names of the
+parameters, and their initial values.
+"""
+
 from tbidbaxlipo.util import fitting
 import numpy as np
 from matplotlib import pyplot as plt
@@ -16,6 +29,10 @@ class TitrationFit(object):
 
     Parameters
     ----------
+    param_names : list of strings
+        List of strings giving human-readable names for the parameters used
+        in the model. The order of the names should correspond to the order
+        of the initial guesses.
     initial_guesses : list of numbers
         Values to be used as the starting guesses for fitting. The length
         of this array is used to determine the number of parameters.
@@ -24,15 +41,15 @@ class TitrationFit(object):
     ----------
     k_arr : numpy.array
         Array containing the fitted parameters. The array has shape
-        (num_params, num_concentrations), i.e., there is a set of
-        parameters from every fitted concentration timecourse.
+        (num_params, num_concentrations), i.e., there is a set of parameters
+        from every fitted concentration timecourse.
     concs : numpy.array
-        The list of concentrations used in the titration. Serves as
-        the x-coordinate when plotting the parameter values as a function
-        of concentration.
+        The list of concentrations used in the titration. Serves as the
+        x-coordinate when plotting the parameter values as a function of
+        concentration.
     num_params : int
         The number of parameters in the function used for fitting.
-    initial_guesses : list of numbers
+    initial_guesses : list
         Initial values used for fitting.
     """
     def __init__(self, param_names, initial_guesses):
@@ -217,6 +234,7 @@ class OneExpNoFmax(TitrationFit):
 
     @staticmethod
     def fit_func(t, k_arr):
+        """Single parameter exponential fitting function."""
         return (1 - np.exp(-k_arr[0]*t))
 
 class Linear(TitrationFit):
@@ -235,6 +253,7 @@ class Linear(TitrationFit):
 
     @staticmethod
     def fit_func(t, k_arr):
+        """Linear fitting function."""
         return k_arr[0]*t
 
 class OneExpFmax(TitrationFit):
@@ -242,7 +261,7 @@ class OneExpFmax(TitrationFit):
 
     .. math::
 
-        y(t) = F_{max} (1 - e^{-k1 t})
+        y(t) = F_{max} (1 - e^{-k_1 t})
     """
 
     def __init__(self):
@@ -251,6 +270,7 @@ class OneExpFmax(TitrationFit):
 
     @staticmethod
     def fit_func(t, k_arr):
+        """Two-parameter exponential fitting function."""
         return k_arr[1] * (1 - np.exp(-k_arr[0]*t))
 
 class TwoExp(TitrationFit):
@@ -258,7 +278,7 @@ class TwoExp(TitrationFit):
 
     .. math::
 
-        y(t) = F_{max} \left(1 - e^{-k_1 * (1 - e^{-k_2 t}) t \right)
+        y(t) = F_{max} \left(1 - e^{-k_1 (1 - e^{-k_2 t}) t} \right)
     """
     def __init__(self):
         super(TwoExp, self).__init__(
@@ -267,6 +287,7 @@ class TwoExp(TitrationFit):
 
     @staticmethod
     def fit_func(t, k_arr):
+        """Two-exponential fitting function."""
         return (k_arr[1]* (1 - np.exp(-k_arr[0] *
                                       (1 - np.exp(-k_arr[2]*t)) * t)))
 
