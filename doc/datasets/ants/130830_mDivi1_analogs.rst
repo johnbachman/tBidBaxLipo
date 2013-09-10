@@ -1,3 +1,5 @@
+.. _130830_mDivi1_analogs:
+
 ANTS release with mDivi-1 analogs (8/30/13)
 ===========================================
 

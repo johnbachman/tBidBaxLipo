@@ -8,8 +8,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   stochastic_models/index
    conclusions
+   stochastic_models/index
    lipo_titration
    uni_dye_release_models
    nbd_notes
