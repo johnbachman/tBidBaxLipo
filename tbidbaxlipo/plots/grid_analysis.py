@@ -12,9 +12,9 @@ Example usage::
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-from util.fitting import Parameter, fit, mse
-from util.numsort import sorted_copy as sort_numeric
-from util.report import Report
+from tbidbaxlipo.util.fitting import Parameter, fit, mse
+from tbidbaxlipo.util.numsort import sorted_copy as sort_numeric
+from tbidbaxlipo.util.report import Report
 from tbidbaxlipo.data import gridv1, gridv2
 from nose.tools import raises
 import pandas as pd

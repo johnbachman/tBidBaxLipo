@@ -1,5 +1,5 @@
-Dye release analysis (:py:mod:`tbidbaxlipo.grid_analysis`)
-==========================================================
+Dye release analysis (:py:mod:`tbidbaxlipo.plots.grid_analysis`)
+================================================================
 
-.. automodule:: tbidbaxlipo.grid_analysis
+.. automodule:: tbidbaxlipo.plots.grid_analysis
    :members:

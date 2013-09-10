@@ -12,7 +12,7 @@ from mpi4py import MPI
 
 from bayessb import MCMCOpts
 from bayessb.mpi.pt_mpi import PT_MPI_Master, PT_MPI_Worker
-import tbidbaxlipo.nbd_analysis as nbd
+import tbidbaxlipo.plots.nbd_analysis as nbd
 from tbidbaxlipo.mcmc.nbd_mcmc import model_names, nbd_site_names, NBD_MCMC
 from pysb.integrate import Solver
 

@@ -1,6 +1,6 @@
 from tbidbaxlipo.mcmc.nbd_mcmc import NBD_MCMC
 from tbidbaxlipo.mcmc.nbd_mcmc import model_names, nbd_site_names
-import tbidbaxlipo.nbd_analysis as nbd
+import tbidbaxlipo.plots.nbd_analysis as nbd
 import sys
 import numpy as np
 import bayessb
