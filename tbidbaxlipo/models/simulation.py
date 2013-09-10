@@ -149,8 +149,9 @@ class Job(object):
 
 class CptDataset(object):
     """Wrapper for HDF5 datasets of multi-compartment simulations.
+
     Attributes
-    ---------
+    ----------
     self.datafile : the h5py File object
     self.sim_data : h5py dataset, indexed by (cond, sim, obs, t)
     self.dtypes : dtypes
@@ -217,9 +218,27 @@ class CptDataset(object):
         return self._sds[cond_index, self.obs_dict[obs_name], :]
 
     def get_mean_dye_release(self, cond_index, pore_obs_prefix='pores'):
-        """Document me!
-        """
+        """Get the mean timecourse for dye release across a set of simulations.
 
+        Parameters
+        ----------
+        cond_index : int
+            The index of the condition to get the dye release timecourse for.
+        pore_obs_prefix : string
+            The observables denoting pores in each compartment are expected to
+            follow a naming scheme with a common prefix followed by the name of
+            the compartment, etc., e.g. 'pores_c1', 'pores_c2', etc.  The
+            ``pore_obs_prefix`` argument specifies the common string prefix to
+            the compartment pore observables. Default is "pores".
+
+        Returns
+        -------
+        tuple of numpy.arrays
+            The first element in the tuple is a numpy.array containing the mean
+            timecourse for dye release; the second element contains the
+            standard deviation across for dye release across the set of
+            simulations.
+        """
         # Get the list of pore observables; makes the assumption that all pore
         # observable names have the same format, with a prefix followed by the
         # compartment identifier, e.g. 'pores_c38'.
@@ -316,7 +335,31 @@ class CptDataset(object):
 def save_bng_dirs_to_hdf5(data_dirs, filename):
     """Load the .gdat files in each of the listed directories to HDF5.
 
-    The file has two datasets, 'data' and 'dtypes'
+    The HDF5 file created contains two datasets:
+
+    * A dataset named ``'data'`` which contains the simulation results in a
+      four-dimensional numpy array of floats with shape `(num_conditions,
+      num_simulations, num_observables, num_timepoints)`.
+
+    * A dataset named ``'dtypes'`` containing the string-pickled dtype of the
+      simulation results. The dtype contains the names of all of the
+      observables from the original record array, and hence can be used to
+      get the index for a particular observable in the full table of simulation
+      results.
+
+    Parameters
+    ----------
+    data_dirs : list of strings
+        The list of directories containing the .gdat files to load, e.g.
+        `['data_0', 'data_1', 'data_2', ... ]`
+    filename : string
+        The name of the HDF5 file to create.
+
+    Returns
+    -------
+    h5py dataset
+        The dataset containing the parsed simulation results and the corresponding
+        dtype list.
     """
     num_conditions = len(data_dirs)
     dataset = None
@@ -350,7 +393,6 @@ def save_bng_dirs_to_hdf5(data_dirs, filename):
                          ssa_result.view('float').reshape(num_timepoints, -1).T
             print "\rLoaded BNG file %d of %d" % (sim_index+1, num_simulations),
             sys.stdout.flush()
-
         # (end iteration over all .gdat files in the directory)
         print # Add a newline
     # (end iteration over all data directories)
@@ -362,7 +404,19 @@ def save_bng_dirs_to_hdf5(data_dirs, filename):
     return dataset
 
 def run_main(jobs):
-    """A main method for use in run scripts for job submissions."""
+    """A main method for use in run scripts for job submissions.
+
+    Parases the job index to run from ``sys.argv[1]`` and runs the appropriate
+    job from the job list. In addition, creates a subdirectory ``data_%d``,
+    where `%d` denotes the job index, and changes the working directory to that
+    directory so that SSA simulation results can be output there.
+
+    Parameters
+    ----------
+    jobs : list of :py:class:`Job` instances
+        The list of simulation jobs to run, each one corresponding to a
+        different simulation condition.
+    """
     # Make sure that we have an argument for the condition index
     if len(sys.argv) <= 1:
         print "The condition index must also be specified."
