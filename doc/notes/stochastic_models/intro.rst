@@ -1,3 +1,5 @@
+.. _stochastic_models_intro:
+
 Introduction
 ============
 

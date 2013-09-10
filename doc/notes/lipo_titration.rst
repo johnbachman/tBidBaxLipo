@@ -1,4 +1,4 @@
-Liposome Titration and Bax Insertion
+Liposome titration and Bax insertion
 ====================================
 
 Here we examine the predictions of different models on the relationship
