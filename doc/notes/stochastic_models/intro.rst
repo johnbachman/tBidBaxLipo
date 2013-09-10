@@ -101,6 +101,8 @@ can self-recruit (as in the case of the Bcl-2 protein Bax). Investigation
 of these important systems requires the application of new numerical and
 analytical methods.
 
+.. _previously_published_models:
+
 Previously published models of permeabilization kinetics
 --------------------------------------------------------
 

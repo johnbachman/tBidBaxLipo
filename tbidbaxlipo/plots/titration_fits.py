@@ -22,10 +22,10 @@ class TitrationFit(object):
     ``fit_func`` that takes the time vector and a list (or array) of parameter
     values.
 
-    In addition, subclasses should implement an ``__init__`` method that
-    calls the superclass ``__init__`` with a list of initial guesses
-    for the parameters, in an order corresponding the parameters used in
-    ``fit_func``.
+    In addition, subclasses should implement an ``__init__`` method that calls
+    the superclass ``__init__`` with a list of parameter names and initial
+    guesses for the parameter values, in an order corresponding the parameters
+    used in ``fit_func``.
 
     Parameters
     ----------
@@ -34,8 +34,7 @@ class TitrationFit(object):
         in the model. The order of the names should correspond to the order
         of the initial guesses.
     initial_guesses : list of numbers
-        Values to be used as the starting guesses for fitting. The length
-        of this array is used to determine the number of parameters.
+        Values to be used as the starting guesses for fitting.
 
     Attributes
     ----------

@@ -77,7 +77,7 @@ parsing of command line arguments and running the appropriate job in the
 
     Since there is nothing cluster-specific in the run script, you can also use
     it to do a test run locally. However, if there is more than one job
-    in the job list, you will have to pass in an index
+    in the job list, you will have to pass in an index.
 
 **2. Submit the run script jobs via LSF.**
 

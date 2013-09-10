@@ -10,7 +10,7 @@ to liposomes and Bax is activated by binding with tBid on membranes:
     :suppress:
 
     from pylab import *
-    from tbidbaxlipo.plots.stoch_det_comparison.plot_funcs \
+    from tbidbaxlipo.plots.stoch_det_comparison.plots \
         import plot_hist_vs_poisson
     from tbidbaxlipo.plots.stoch_det_comparison.tbid_bax_activation.plots import *
 
