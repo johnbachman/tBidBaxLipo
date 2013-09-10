@@ -30,7 +30,7 @@ class Job(simulation.Job):
         builder.model.name = job_name
         return builder
 
-bax_concs = np.linspace(1, 600, 30)
+bax_concs = set([int(a) for a in np.logspace(0, 3, 30)])
 jobs = [Job(bax_conc) for bax_conc in bax_concs]
 job_name = 'translocation_titration'
 

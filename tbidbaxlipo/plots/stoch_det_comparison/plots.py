@@ -34,7 +34,7 @@ def plot_bax_timecourse_comparison(jobs, data, cond_index):
                np.sqrt(job.num_sims))
     iBax_se = ((data.sds(cond_index, 'iBax') / n_cpt_Bax_0) /
                np.sqrt(job.num_sims))
-    iBax_se = ((data.sds(cond_index, 'pBax') / n_cpt_Bax_0) /
+    pBax_se = ((data.sds(cond_index, 'pBax') / n_cpt_Bax_0) /
                np.sqrt(job.num_sims))
 
     cpt_time = data.means(cond_index, 'time')
