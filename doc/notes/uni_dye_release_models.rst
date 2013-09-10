@@ -1,58 +1,96 @@
-Unimolecular Dye Release Models
-===============================
+Properties of unimolecular dye release models
+=============================================
 
-General considerations: Schwarz
--------------------------------
+The simplest possible model of vesicle permeabilization, one first proposed
+by Schwarz ([Schwarz1992b]_), consists of the following elementary reactions:
 
-Schwarz's analysis indicated that when pore formation is independent, then
-pores by definition have a Poisson distribution across liposomes, which allows
-the efflux data to be used to calculate the average number of pores per vesicle
+.. math::
+
+    P_c + L \rightleftharpoons P_l
+
+.. math::
+
+    m \cdot P_l \rightarrow Pore
+
+Where :math:`P_c` and :math:`P_l` represent the peptide or protein in its
+aqueous (cytosolic) or lipid-associated state, :math:`L` represents the
+concentration of vesicles, and :math:`m` is the number of monomers involved
+in pore formation.
+
+:ref:`As mentioned earlier <previously_published_models>`, Schwarz's analysis
+indicates that when pore formation is independent, then pores by definition
+have a Poisson distribution across liposomes, which allows the experimental
+efflux data to be used to calculate the average number of pores per vesicle
 (and hence also the total number of pores, given that the concentration of
 vesicles is known).
 
-In his analysis of the permeabilization kinetics of the peptide melittin,
-Schwarz found that the kinetics at each concentration followed a two-phase
-process which can be fit with a three-parameter equation.
+Assuming that the peptide/protein :math:`P` comes rapidly to steady-state
+in its association with vesicles, pore formation proceeds linearly with
+a rate proportional to :math:`P_l`, that is
 
-Moreover, he noted that the log-log plot showed a straight-line fit indicating
-a third-order dependence, while that of the final rate had a second-order
-dependence (I should check these numbers TODO).
+.. math::
 
-He modeled this using a simple model involving the partitioning of the
-proteins to liposomes, followed by the irreversible formation of pores. There
-are some notable features of his model and analysis:
+    \frac{d\ Pore}{dt} = k_{pore} [P_l]^n
 
-* First, his predictions for the amount of protein partitioned to the membrane
-  is based on a dimensionless partition coefficient, multiplied by a
-  thermodynamic interaction parameter which is meant to take into account
-  possible unfavorable interactions between proteins as they accumulate in
-  the membrane (e.g., repulsion of charges), multiplied by the amount of
-  lipid. This is described by the equation:
+
+Where the exponent :math:`n \leq m`. As a function of time, this will be
+observed simply as a straight line for pore formation over time:
+
+.. math::
+
+    Pore(t) = k_{app} t
+
+With the Poisson assumption of the independence of pore formation, this means
+that dye release will follow a single exponential,
+
+.. math::
+
+    \mathrm{Frac. permeabilized} = 1 - e^{-k_{app}t}
+
+When the data are well-fit by a single exponential (e.g. as they are in the
+case of detergent-activated, truncated Bax, [Saito2000]_), then the scaling of
+the apparent rate of pore formation, :math:`k_{app}`, as a function of the
+concentration of total :math:`P`, can be analyzed, yielding estimates of the
+values of the elementary parameters :math:`k_{pore}` and :math:`n`.
+
+However, it is important to note the assumptions that this type of simple model
+depends on:
+
+**First, in its simplest form, it suggests that liposomes do not saturate with
+protein.** That is, there is no limit to the amount of protein that can bind to
+them.  In his work Schwarz addressed this by formulating a thermodynamic
+relationship determining the amount of protein at the membrane at equilibrium
+([Rizzo1987]_, [Schwarz1992b]_). In his formulation, a dimensionless partition
+coefficient is multiplied by a thermodynamic interaction parameter which is
+meant to take into account possible unfavorable interactions between proteins
+as they accumulate in the membrane (e.g., repulsion of charges); this is
+multiplied by the amount of lipid. The equation is
 
 .. math::
 
     r_1 = \frac{\Gamma_1 \cdot c_1}{\alpha_1}
 
-where :math:`r_1` denotes the protein to lipid molar ratio, :math:`\Gamma_1`
-is the dimensionless partition coefficient, :math:`\alpha_1` is the
-thermodynamic interaction coefficient, and :math:`c_1` is the concentration
-of free (aqueous) monomeric peptide.
+where :math:`r_1` denotes the resulting protein to lipid molar ratio (which
+determines :math:`P_l` in our notation), :math:`\Gamma_1` is the dimensionless
+partition coefficient, :math:`\alpha_1` is the thermodynamic interaction
+coefficient, and :math:`c_1` is the concentration of free (aqueous) monomeric
+peptide. A value of ` for :math:`\alpha_1` indicates that there is no
+unfavorable interactions among proteins on the membrane, and hence binding is
+not impaired. Schwarz suggests that peptides used at sufficiently low
+concentrations will have :math:`\alpha_1` values close to 1.
 
-* Second, he notes that in all cases his assumption is that the amount of
-  protein involved in oligomerization or pore formation is very small relative
-  to the total amount, implying that the pool of protein is never appreciably
-  consumed. This is a bit odd since one of his first observations about the
-  melittin data is that the reaction appears to stop at levels that are
-  significantly below 100% permeabilization.
+**Second, it requires that the amount of membrane-bound protein be small
+relative to the total protein, that is,** :math:`P_l << P_{total}`. If this is
+not the case, then the kinetics will slow down as a substantial amount of the
+aqueous protein available for partitioning to and permeabilizing and membranes
+is depleted. This would be particularly problematic for permeabilization
+processes in which the pore-forming agent becomes irreversibly associated with
+membranes after permeabilization, as may be the case with Bax and some pore
+forming peptides that are internalized into the inner leaflet of the bilayer
+after pore formation ([Pokorny2002]_). 
 
-* In an analysis which I haven't completely followed, he predicts that the
-  oligomerization model which he describes predicts the third-order dependence
-  but not the second-order dependence. He hypothesizes an initial deposit of
-  dimers that is then consumed as the bilayer properties change rapidly. This
-  might be worth trying to reproduce in the model.
-
-The simplest model: monomeric Bax pores
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Non-saturable partitioning of Bax to membranes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To illustrate the application of our modeling approach we begin by examining
 the simple unimolecular pore formation models described by Schwarz.  The

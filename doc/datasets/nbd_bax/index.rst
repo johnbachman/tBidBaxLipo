@@ -1,3 +1,5 @@
+.. _nbd_bax_datasets:
+
 NBD-Bax Kinetics
 ================
 
