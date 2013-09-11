@@ -1,3 +1,23 @@
+"""
+Code to streamline the process of fitting mechanistic models by MCMC.
+
+The bulk of this module consists of the class :py:class:`MCMC`, a subclass of
+`bayessb.MCMC` (from the bayessb_ module) that contains code that is common to
+all `tbidbaxlipo` MCMC fitting procedures (e.g., pickling/unpickling, plotting
+fits vs. data, etc.).
+
+In addition, this class contains a helper function,
+:py:func:`import_mcmc_groups`, which parses lists of MCMC chain filenames into
+group representing different runs (with different random seeds) of the same
+model.
+
+For more information on implementing fitting procedures by subclassing
+:py:class:`tbidbaxlipo.mcmc.MCMC`, see
+:ref:`creating_new_mcmc_fitting_procedures`.
+
+.. _bayessb: http://sorgerlab.github.com/bayessb
+"""
+
 import bayessb
 import numpy as np
 from matplotlib.font_manager import FontProperties
@@ -6,6 +26,19 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 import os
 
 class MCMC(bayessb.MCMC):
+    """Superclass for creating MCMC fitting procedures.
+
+    The constructor chain-calls the `bayessb.MCMC` constructor, passing
+    it the MCMCOpts object in ``options``.
+
+    Parameters
+    ----------
+    options : bayessb.MCMCOpts
+        The options for the MCMC fitting procedure.
+    builder : :py:class:`tbidbaxlipo.models.core.Builder`
+        An instance of :py:class:`tbidbaxlipo.models.core.Builder`
+        (or a subclass).
+    """
     def __init__(self, options, builder):
         bayessb.MCMC.__init__(self, options)
 
@@ -13,6 +46,12 @@ class MCMC(bayessb.MCMC):
 
     # Pickling functions for this class
     def __getstate__(self):
+        """Pickling function.
+
+        Because function references are not pickled correctly, this function
+        sets the references to the likelihood, prior, and step functions
+        (contained in ``self.options``) to None prior to pickling.
+        """
         self.options.likelihood_fn = None
         self.options.prior_fn = None
         self.options.step_fn = None
@@ -20,15 +59,27 @@ class MCMC(bayessb.MCMC):
         return mcmc_state
 
     def __setstate__(self, state):
-        #(mcmc_state, nbd_mcmc_state) = state
+        """Unpickling function.
+
+        Restores the references to the likelihood, prior, and step functions in
+        ``self.options``. The likelihood function is obtained by calling
+        ``self.get_likelihood_function()``, and the prior function is obtained
+        from the model builder instance as ``self.builder.prior``. By default,
+        the step function used is the generic step function contained in this
+        class, namely ``self.step``.
+        """
         bayessb.MCMC.__setstate__(self, state)
-        #self.__dict__.update(nbd_mcmc_state)
         self.options.likelihood_fn = self.get_likelihood_function()
         self.options.prior_fn = self.builder.prior
         self.options.step_fn = self.step
 
     def do_fit(self):
-        """Runs MCMC on the given model."""
+        """Runs MCMC on the given model.
+
+        Initializes the MCMC (by calling ``self.initialize()``), prints out the
+        starting parameter values, then runs the MCMC (by calling
+        ``self.run()``)
+        """
         self.initialize()
 
         # Print initial parameter values
@@ -46,7 +97,22 @@ class MCMC(bayessb.MCMC):
         self.run()
 
     def fit_plotting_function(self, position):
-        """Gets the observable timecourse and plots it against the data."""
+        """Gets the observable timecourse and plots it against the data.
+
+        Useful for visualizing model output by examining the fit of the model
+        at the maximum likelihood or maximum a posteriori parameters, etc.
+
+        Parameters
+        ----------
+        position : numpy.array
+            Vector of parameter values to use for simulation and plotting.
+
+        Returns
+        -------
+        matplotlib.figure.Figure
+            Figure instance containing the plot of the data and the simulation
+            at the given position.
+        """
         # Run the simulation at the given position
         timecourses = self.get_observable_timecourses(position)
         # Make the plot
@@ -76,8 +142,15 @@ class MCMC(bayessb.MCMC):
 
     @staticmethod
     def step(mcmc):
-        """The function to call at every iteration. Currently just prints
-        out a few progress indicators.
+        """The function to call at every MCMC iteration.
+
+        Prints out a few progress indicators such as the acceptance rate,
+        likelihood, posterior, etc.
+
+        Parameters
+        ----------
+        mcmc : bayessb.MCMC
+            The MCMC being run.
         """
         window = 200
         local_acc = np.sum(mcmc.accepts[(mcmc.iter - window):mcmc.iter]) / \
