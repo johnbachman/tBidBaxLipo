@@ -62,14 +62,14 @@ class MCMC(bayessb.MCMC):
         """Unpickling function.
 
         Restores the references to the likelihood, prior, and step functions in
-        ``self.options``. The likelihood function is obtained by calling
-        ``self.get_likelihood_function()``, and the prior function is obtained
-        from the model builder instance as ``self.builder.prior``. By default,
-        the step function used is the generic step function contained in this
-        class, namely ``self.step``.
+        ``self.options``. The likelihood function is contained by
+        ``self.likelihood``, and the prior function is obtained from the model
+        builder instance as ``self.builder.prior``. By default, the step
+        function used is the generic step function contained in this class,
+        namely ``self.step``.
         """
         bayessb.MCMC.__setstate__(self, state)
-        self.options.likelihood_fn = self.get_likelihood_function()
+        self.options.likelihood_fn = self.likelihood
         self.options.prior_fn = self.builder.prior
         self.options.step_fn = self.step
 

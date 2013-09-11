@@ -22,15 +22,6 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
         self.options.prior_fn = self.builder.prior
         self.options.step_fn = self.step
 
-    # Pickling function for this class
-    # Differs from superclass in that it assigns to self.likelihood
-    # rather then self.get_likelihood_function()
-    def __setstate__(self, state):
-        bayessb.MCMC.__setstate__(self, state)
-        self.options.likelihood_fn = self.likelihood
-        self.options.prior_fn = self.builder.prior
-        self.options.step_fn = self.step
-
     @staticmethod
     def likelihood(mcmc, position):
         mcmc.simulate(position=position)

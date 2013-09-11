@@ -55,6 +55,15 @@ class NBD_MCMC(tbidbaxlipo.mcmc.MCMC):
         self.options.prior_fn = self.builder.prior
         self.options.step_fn = self.step
 
+    # Pickling function for this class
+    # Differs from superclass in that it assigns to self.get_likelihood_function
+    # rather then self.likelihood
+    def __setstate__(self, state):
+        bayessb.MCMC.__setstate__(self, state)
+        self.options.likelihood_fn = self.get_likelihood_function()
+        self.options.prior_fn = self.builder.prior
+        self.options.step_fn = self.step
+
     # NBD Functions
     # ==============
     def generate_figures(self, report_name='report', do_report=True,
