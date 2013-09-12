@@ -25,6 +25,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import os
 import pickle
+from collections import OrderedDict
 
 class MCMC(bayessb.MCMC):
     """Superclass for creating MCMC fitting procedures.
@@ -183,17 +184,18 @@ class MCMC(bayessb.MCMC):
 # Run/submit script helper functions          #
 ###############################################
 
+def output_filename_from_args(args):
+    """Get the appropriate output filename given the current args."""
+    # Join and then re-split the list at the spaces
+    # This makes the string 'model=%s num_xxx=%d' into two separate args
+    arg_strings = ' '.join(args).split(' ')
+    # Now build up the list of key/val pairs and make a dict
+    arg_dict = OrderedDict(arg_string.split('=') for arg_string in arg_strings)
+    # Build and return the output filename
+    output_filename = '_'.join(['%s%s' % (key, val) for key, val in arg_dict.iteritems()]) + '.out'
+    return output_filename
+
 class Job(object):
-    def output_filename_from_args(self, args):
-        """Get the appropriate output filename given the current args."""
-        # Join and then re-split the list at the spaces
-        # This makes the string 'model=%s num_xxx=%d' into two separate args
-        arg_strings = ' '.join(args).split(' ')
-        # Now build up the list of key/val pairs and make a dict
-        arg_dict = OrderedDict(arg_string.split('=') for arg_string in arg_strings)
-        # Build and return the output filename
-        output_filename = '_'.join(arg_dict.values()) + '.out'
-        return output_filename
 
     def get_mcmc_opts(self, builder, args, T_init=1):
         """Fills out the fields of the MCMCOpts object."""
