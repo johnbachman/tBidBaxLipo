@@ -30,6 +30,7 @@ from mpi4py import MPI
 from pysb.integrate import Solver
 import sys
 import itertools
+import subprocess
 
 class MCMC(bayessb.MCMC):
     """Superclass for creating MCMC fitting procedures.
@@ -192,7 +193,7 @@ def output_filename_from_args(args):
     """Get the appropriate output filename given the current args."""
     # Join and then re-split the list at the spaces
     # This makes the string 'model=%s num_xxx=%d' into two separate args
-    arg_strings = ' '.join(args).split(' ')
+    arg_strings = resplit_args(args)
     # Now build up the list of key/val pairs and make a dict
     arg_dict = OrderedDict(arg_string.split('=') for arg_string in arg_strings)
     # Build and return the output filename
@@ -259,8 +260,8 @@ class Job(object):
             print "\nrun_parallel must be run as part of a pool of > 1 "
             print "processes using a MPI implementation such as mpirun.lsf.\n"
             print "Example submission of a single parallel job:\n"
-            print "    bsub -q parallel -n 9 -W 00:10 mpirun.lsf python \\"
-            print "         mcmc_script.py run_parallel [args]"
+            print "    bsub -q parallel -n 9 -W 00:10 -a openmpi mpirun.lsf \\"
+            print "         python mcmc_script.py run_parallel [args]"
             sys.exit()
         # The rank of this chain (0 is the master, others are workers)
         rank = comm.Get_rank()
@@ -286,10 +287,19 @@ class Job(object):
             pt = PT_MPI_Worker(comm, rank, mcmc, swap_period)
             pt.run()
 
+def resplit_args(args):
+    """Take the list of args, join with spaces, then split at the spaces.
+
+    This allows arg list elements consisting of multiple arguments
+    (e.g., ``'model=multiconf num_confs=2'``) to be parse correctly as
+    separate args.
+    """
+    return ' '.join(args).split(' ')
+
 def submit_single(varying_arg_lists, fixed_args, script_str,
                   queue='short', time_limit='12:00'):
     for varying_args in itertools.product(*varying_arg_lists):
-        all_args = list(varying_args) + fixed_args
+        all_args = resplit_args(list(varying_args) + fixed_args)
         base_cmd_list = ['bsub',
                 '-q', queue,
                 '-W', time_limit,
@@ -297,12 +307,12 @@ def submit_single(varying_arg_lists, fixed_args, script_str,
                 'python', '-m', script_str, 'run_single']
         cmd_list = base_cmd_list + all_args
         print ' '.join(cmd_list)
-        #subprocess.call(cmd_list)
+        subprocess.call(cmd_list)
 
 def submit_parallel(varying_arg_lists, fixed_args, script_str,
                     num_temps=8, time_limit='24:00'):
     for varying_args in itertools.product(*varying_arg_lists):
-        all_args = list(varying_args) + fixed_args
+        all_args = resplit_args(list(varying_args) + fixed_args)
         base_cmd_list = [
                 'bsub', '-a', 'openmpi',
                 '-n', str(num_temps+1),
@@ -313,7 +323,7 @@ def submit_parallel(varying_arg_lists, fixed_args, script_str,
                 'python', '-m', script_str, 'run_parallel']
         cmd_list = base_cmd_list + all_args
         print ' '.join(cmd_list)
-        #subprocess.call(cmd_list)
+        subprocess.call(cmd_list)
 
 
 # Chain handling helper function

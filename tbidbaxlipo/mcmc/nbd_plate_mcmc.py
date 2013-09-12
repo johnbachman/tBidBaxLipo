@@ -69,6 +69,7 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
 
 class Job(tbidbaxlipo.mcmc.Job):
     def parse_command_line_args(self, argv):
+        print argv
         # Keyword args are set at the command line as e.g., key=val
         # and subsequently split at the equals sign
         kwargs = dict([arg.split('=') for arg in argv])
@@ -163,29 +164,41 @@ def get_varying_arg_lists():
     states to different replicates for each NBD-labeled Bax mutant.
     """
     # The numbers of conformations to attempt to fit to the data.
-    num_confs_list = [2, 3, 4, 5]
-    num_confs_args = ['num_confs=%d' % num_confs
-                      for num_confs in num_confs_list]
+    #num_confs_list = [2, 3, 4, 5]
+    num_confs_list = [2]
+    # The numbers of exponentials to attempt to fit to the data.
+    #num_exps_list = [1, 2, 3]
+    num_exps_list = [1]
     #The NBD sites to attempt to fit."""
     #nbd_sites = ['c120', 'c122', 'c126', 'c15', 'c175', 'c179', 'c188', 'c36',
     # 'c40', 'c47', 'c5', 'c54', 'c62', 'c68', 'c79']
-    nbd_sites = ['c175', 'c179', 'c5', 'c15']
+    #nbd_sites = ['c175', 'c179', 'c5', 'c15']
+    nbd_sites = ['c175']
     nbd_site_args = ['nbd_site=%s' % nbd_site for nbd_site in nbd_sites]
     # The number of replicates for each NBD mutant."""
-    num_replicates = 4
+    num_replicates = 1
+    #num_replicates = 4
     replicate_args = ['replicate=%d' % rep for rep in range(num_replicates)]
     # The number of chains to run for each model.
-    num_chains = 10
+    num_chains = 1
     chain_index_args = ['random_seed=%d' % i for i in range(num_chains)]
+    # The multiconf models to run
+    multiconf_args = ['model=multiconf num_confs=%d' % num_confs
+                          for num_confs in num_confs_list]
+    # The exponential models to run
+    exponential_args = ['model=exponential num_exponentials=%d' % num_exps
+                            for num_exps in num_exps_list]
+    # The full list of models to run
+    model_args = multiconf_args + exponential_args
 
-    varying_arg_lists = [num_confs_args, nbd_site_args,
-                         replicate_args, chain_index_args]
+    varying_arg_lists = [nbd_site_args, model_args, replicate_args,
+                         chain_index_args]
     return varying_arg_lists
 
 def get_fixed_args():
     # The number of steps in each chain.
-    nsteps = 50000
-    fixed_args = ['nsteps=%d' % nsteps]
+    nsteps = 500
+    fixed_args = ['nsteps=%d dataset=plate' % nsteps]
     return fixed_args
 
 
@@ -218,8 +231,8 @@ def main():
         submit_single(get_varying_arg_lists(),
                       get_fixed_args(),
                       'tbidbaxlipo.mcmc.nbd_plate_mcmc',
-                      queue='mini',
-                      time_limit='00:10')
+                      queue='short',
+                      time_limit='1:00')
     elif sys.argv[1] == 'submit_parallel':
         submit_parallel(get_varying_arg_lists(),
                         get_fixed_args(),
