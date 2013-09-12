@@ -25,7 +25,7 @@ Examples of fitting procedures created in this way include:
 
 * :py:class:`tbidbaxlipo.mcmc.nbd_mcmc.NBD_MCMC`, which is used for fitting
   NBD-Bax fluorescence data from the PTI fluorimeter;
-* :py:class:`tbidbaxlipo.mcmc.nbd_plate_mcmc.NBDPlateMCMC`, for fitting
+* :py:class:`tbidbaxlipo.mcmc.nbd_multiconf.NBDPlateMCMC`, for fitting
   NBD-Bax fluorescence data from the plate reader;
 * :py:class:`tbidbaxlipo.mcmc.pore_mcmc.PoreMCMC`, for fitting dye release
   titration data.
@@ -212,7 +212,7 @@ The code is for running the scripts is substantially boilerplate, but enough
 differences exist regarding arguments for models and datasets to use that
 generalizing the run script does not seem worthwhile. Instead, copy-and-paste
 with modifications seems to be a satisfactory approach. Run script code can
-be duplicated from :py:mod:`tbidbaxlipo.mcmc.pore_mcmc`, :py:mod:`tbidbaxlipo.mcmc.nbd_plate_mcmc`, or :py:mod:`tbidbaxlipo.mcmc.nbd_mcmc_run`.
+be duplicated from :py:mod:`tbidbaxlipo.mcmc.pore_mcmc`, :py:mod:`tbidbaxlipo.mcmc.nbd_multiconf`, or :py:mod:`tbidbaxlipo.mcmc.nbd_mcmc_run`.
 
 The run script, when implemented, should allow the execution of a MCMC
 fitting procedure at the command-line using a syntax such as the following
