@@ -25,7 +25,7 @@ Examples of fitting procedures created in this way include:
 
 * :py:class:`tbidbaxlipo.mcmc.nbd_mcmc.NBD_MCMC`, which is used for fitting
   NBD-Bax fluorescence data from the PTI fluorimeter;
-* :py:class:`tbidbaxlipo.mcmc.nbd_multiconf.NBDPlateMCMC`, for fitting
+* :py:class:`tbidbaxlipo.mcmc.nbd_multiconf.MCMC`, for fitting
   NBD-Bax fluorescence data from the plate reader;
 * :py:class:`tbidbaxlipo.mcmc.pore_mcmc.PoreMCMC`, for fitting dye release
   titration data.

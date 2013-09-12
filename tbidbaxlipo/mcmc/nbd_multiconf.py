@@ -18,7 +18,7 @@ from collections import OrderedDict
 # MCMC class                                  #
 ###############################################
 
-class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
+class MCMC(tbidbaxlipo.mcmc.MCMC):
     """ Document me"""
     def __init__(self, options, data, dataset_name, builder):
         tbidbaxlipo.mcmc.MCMC.__init__(self, options, builder)
@@ -221,12 +221,12 @@ def main():
         print usage
         sys.exit()
 
-    from tbidbaxlipo.mcmc.nbd_multiconf import NBDPlateMCMC
+    from tbidbaxlipo.mcmc.nbd_multiconf import MCMC
     job = Job()
     if sys.argv[1] == 'run_single':
-        job.run_single(NBDPlateMCMC, sys.argv[2:])
+        job.run_single(MCMC, sys.argv[2:])
     elif sys.argv[1] == 'run_parallel':
-        job.run_parallel(NBDPlateMCMC, sys.argv[2:])
+        job.run_parallel(MCMC, sys.argv[2:])
     elif sys.argv[1] == 'submit_single':
         submit_single(get_varying_arg_lists(),
                       get_fixed_args(),
@@ -250,7 +250,7 @@ if __name__ == '__main__':
 # Tests                                       #
 ###############################################
 
-def get_NBDPlateMCMC_instance():
+def get_MCMC_instance():
     # Choose which data/replicate to fit
     tc = nbd_plate_data.data[('c68', 0)]
     time = tc[:, 'TIME'].values
@@ -281,15 +281,15 @@ def get_NBDPlateMCMC_instance():
     opts.norm_step_size = 0.1
     opts.seed = 1
 
-    mcmc = NBDPlateMCMC(opts, values, 'c68rep0', b)
+    mcmc = MCMC(opts, values, 'c68rep0', b)
     return mcmc
 
-def test_NBDPlateMCMC_init():
-    npm = get_NBDPlateMCMC_instance()
+def test_MCMC_init():
+    npm = get_MCMC_instance()
     assert True
 
 def test_plot_data():
-    npm = get_NBDPlateMCMC_instance()
+    npm = get_MCMC_instance()
     fig = plt.figure()
     axis = fig.gca()
     npm.plot_data(axis)
@@ -297,13 +297,13 @@ def test_plot_data():
     assert True
 
 def test_plot_fit():
-    npm = get_NBDPlateMCMC_instance()
+    npm = get_MCMC_instance()
     npm.initialize()
     fig = npm.fit_plotting_function(position=npm.initial_position)
     fig.savefig('test_plot_fit.png')
 
 def test_get_basename():
-    npm = get_NBDPlateMCMC_instance()
+    npm = get_MCMC_instance()
     npm.get_basename()
     assert True
 
