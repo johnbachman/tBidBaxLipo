@@ -1,18 +1,17 @@
-from tbidbaxlipo.models.nbd import multiconf, exponential
-from tbidbaxlipo.data import nbd_data, nbd_plate_data
-import bayessb
-import numpy as np
-import tbidbaxlipo.mcmc
-from tbidbaxlipo.mcmc import submit_single, submit_parallel
-from matplotlib import pyplot as plt
 import pickle
 import sys
 import math
-from bayessb.mpi.pt_mpi import PT_MPI_Master, PT_MPI_Worker
-from mpi4py import MPI
 import subprocess
 import itertools
 from collections import OrderedDict
+import numpy as np
+from matplotlib import pyplot as plt
+from mpi4py import MPI
+import bayessb
+from tbidbaxlipo.models.nbd import multiconf, exponential
+from tbidbaxlipo.data import nbd_data, nbd_plate_data
+import tbidbaxlipo.mcmc
+from tbidbaxlipo.mcmc import submit_single, submit_parallel
 
 ###############################################
 # MCMC class                                  #
