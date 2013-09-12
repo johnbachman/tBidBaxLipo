@@ -3,6 +3,7 @@ from tbidbaxlipo.data import nbd_data, nbd_plate_data
 import bayessb
 import numpy as np
 import tbidbaxlipo.mcmc
+from tbidbaxlipo.mcmc import submit_single, submit_parallel
 from matplotlib import pyplot as plt
 import pickle
 import sys
@@ -152,10 +153,10 @@ class Job(tbidbaxlipo.mcmc.Job):
                 'dataset_name': dataset_name}
 
 ###############################################
-# Submit scripts                              #
+# Submit parameters                           #
 ###############################################
 
-def submit_single():
+def get_varying_arg_lists():
     """Submit multiple MCMC jobs for the NBD plate data to LSF.
 
     Allows fitting models with alternative numbers of assumed conformational
@@ -163,7 +164,8 @@ def submit_single():
     """
     # The numbers of conformations to attempt to fit to the data.
     num_confs_list = [2, 3, 4, 5]
-    num_confs_args = ['num_confs=%d' % num_confs for num_confs in num_confs_list]
+    num_confs_args = ['num_confs=%d' % num_confs
+                      for num_confs in num_confs_list]
     #The NBD sites to attempt to fit."""
     #nbd_sites = ['c120', 'c122', 'c126', 'c15', 'c175', 'c179', 'c188', 'c36',
     # 'c40', 'c47', 'c5', 'c54', 'c62', 'c68', 'c79']
@@ -176,35 +178,16 @@ def submit_single():
     num_chains = 10
     chain_index_args = ['random_seed=%d' % i for i in range(num_chains)]
 
+    varying_arg_lists = [num_confs_args, nbd_site_args,
+                         replicate_args, chain_index_args]
+    return varying_arg_lists
+
+def get_fixed_args():
     # The number of steps in each chain.
     nsteps = 50000
-    # The LSF queue to submit the jobs to.
-    queue = 'mini'
-    # The estimated runtime of the job.
-    time_limit = '00:10'
-
-    def base_cmd_list(output_filename):
-        base_cmd_list = ['bsub',
-                '-W', time_limit,
-                '-q', queue,
-                '-o', output_filename,
-                'python',
-                '-m',
-                'tbidbaxlipo.mcmc.nbd_plate_mcmc']
-        return base_cmd_list
-
     fixed_args = ['nsteps=%d' % nsteps]
+    return fixed_args
 
-    for var_args in itertools.product(num_confs_args, nbd_site_args,
-                                      replicate_args, chain_index_args):
-        all_args = list(var_args) + fixed_args
-        cmd_list = base_cmd_list(tbidbaxlipo.mcmc.output_filename_from_args(
-                                                            all_args)) + all_args
-        print ' '.join(cmd_list)
-        subprocess.call(cmd_list)
-
-def submit_parallel():
-    pass
 
 ###############################################
 # Main                                        #
@@ -232,9 +215,17 @@ def main():
     elif sys.argv[1] == 'run_parallel':
         job.run_parallel(NBDPlateMCMC, sys.argv[2:])
     elif sys.argv[1] == 'submit_single':
-        submit_single()
+        submit_single(get_varying_arg_lists(),
+                      get_fixed_args(),
+                      'tbidbaxlipo.mcmc.nbd_plate_mcmc',
+                      queue='mini',
+                      time_limit='00:10')
     elif sys.argv[1] == 'submit_parallel':
-        submit_parallel()
+        submit_parallel(get_varying_arg_lists(),
+                        get_fixed_args(),
+                        'tbidbaxlipo.mcmc.nbd_plate_mcmc',
+                        num_temps=8,
+                        time_limit='24:00')
     else:
         print usage
         sys.exit()

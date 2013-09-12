@@ -29,6 +29,7 @@ from collections import OrderedDict
 from mpi4py import MPI
 from pysb.integrate import Solver
 import sys
+import itertools
 
 class MCMC(bayessb.MCMC):
     """Superclass for creating MCMC fitting procedures.
@@ -284,6 +285,35 @@ class Job(object):
         else:
             pt = PT_MPI_Worker(comm, rank, mcmc, swap_period)
             pt.run()
+
+def submit_single(varying_arg_lists, fixed_args, script_str,
+                  queue='short', time_limit='12:00'):
+    for varying_args in itertools.product(*varying_arg_lists):
+        all_args = list(varying_args) + fixed_args
+        base_cmd_list = ['bsub',
+                '-q', queue,
+                '-W', time_limit,
+                '-o', output_filename_from_args(all_args),
+                'python', '-m', script_str, 'run_single']
+        cmd_list = base_cmd_list + all_args
+        print ' '.join(cmd_list)
+        #subprocess.call(cmd_list)
+
+def submit_parallel(varying_arg_lists, fixed_args, script_str,
+                    num_temps=8, time_limit='24:00'):
+    for varying_args in itertools.product(*varying_arg_lists):
+        all_args = list(varying_args) + fixed_args
+        base_cmd_list = [
+                'bsub', '-a', 'openmpi',
+                '-n', str(num_temps+1),
+                '-q', 'parallel',
+                '-W', time_limit,
+                '-o', output_filename_from_args(all_args),
+                'mpirun.lsf',
+                'python', '-m', script_str, 'run_parallel']
+        cmd_list = base_cmd_list + all_args
+        print ' '.join(cmd_list)
+        #subprocess.call(cmd_list)
 
 
 # Chain handling helper function
