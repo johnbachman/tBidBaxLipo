@@ -24,6 +24,7 @@ from matplotlib.font_manager import FontProperties
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import os
+import pickle
 
 class MCMC(bayessb.MCMC):
     """Superclass for creating MCMC fitting procedures.
@@ -176,6 +177,101 @@ class MCMC(bayessb.MCMC):
 
     def get_basename(self):
         raise NotImplementedError()
+
+
+###############################################
+# Run/submit script helper functions          #
+###############################################
+
+class Job(object):
+    def output_filename_from_args(self, args):
+        """Get the appropriate output filename given the current args."""
+        # Join and then re-split the list at the spaces
+        # This makes the string 'model=%s num_xxx=%d' into two separate args
+        arg_strings = ' '.join(args).split(' ')
+        # Now build up the list of key/val pairs and make a dict
+        arg_dict = OrderedDict(arg_string.split('=') for arg_string in arg_strings)
+        # Build and return the output filename
+        output_filename = '_'.join(arg_dict.values()) + '.out'
+        return output_filename
+
+    def get_mcmc_opts(self, builder, args, T_init=1):
+        """Fills out the fields of the MCMCOpts object."""
+        opts = bayessb.MCMCOpts()
+        opts.model = builder.model
+        opts.tspan = args['time']
+        opts.estimate_params = builder.estimate_params
+        opts.initial_values = builder.random_initial_values()
+        opts.nsteps = args['nsteps']
+        opts.norm_step_size = 0.1
+        opts.sigma_step = 0
+        #opts.sigma_max = 50
+        #opts.sigma_min = 0.01
+        #opts.accept_rate_target = 0.23
+        #opts.accept_window = 100
+        #opts.sigma_adj_interval = 200
+        opts.anneal_length = 0
+        opts.use_hessian = True # CHECK
+        opts.hessian_scale = 1
+        opts.hessian_period = opts.nsteps / 20 #10
+        opts.seed = args['random_seed']
+        opts.T_init = T_init
+        return opts
+
+    def run_single(self, mcmc_class, argv):
+        args = self.parse_command_line_args(argv)
+        b = args['builder']
+        np.random.seed(args['random_seed'])
+        opts = self.get_mcmc_opts(b, args)
+
+        #from tbidbaxlipo.mcmc.nbd_plate_mcmc import NBDPlateMCMC
+        mcmc = mcmc_class(opts, args['values'], args['dataset_name'], b)
+
+        mcmc.do_fit()
+
+        # Pickle it
+        output_file = open('%s.mcmc' % mcmc.get_basename(), 'w')
+        pickle.dump(mcmc, output_file)
+        output_file.close()
+
+        print "Done."
+
+    def run_parallel(self, mcmc_class, argv, swap_period=5, min_temp=1, max_temp=1e5):
+        """Run a parallel tempering job."""
+        # Frequency for proposing swaps
+        #swap_period = 5
+        # Temperature range
+        #min_temp = 1
+        #max_temp = 1e5
+
+        args = self.parse_command_line_args(argv)
+        # The communicator to use
+        comm = MPI.COMM_WORLD
+        # Number of chains/workers in the whole pool
+        num_chains = comm.Get_size()
+        # The rank of this chain (0 is the master, others are workers)
+        rank = comm.Get_rank()
+        # Forces the solver to use inline without testing first
+        Solver._use_inline = True
+        # Create temperature array based on number of workers (excluding master)
+        temps = np.logspace(np.log10(min_temp), np.log10(max_temp), num_chains-1)
+
+        # Initialize the MCMC arguments
+        b = args['builder']
+        opts = self.get_mcmc_opts(b, args, T_init=temps[rank - 1])
+
+        mcmc = mcmc_class(opts, args['values'], args['dataset_name'], b)
+        mcmc.initialize()
+
+        # The master coordinates when swaps occur ---------
+        if rank == 0:
+            pt = PT_MPI_Master(comm, rank, opts, swap_period, num_chains)
+            pt.run()
+        # Everyone else runs MCMC steps and swaps when told -----------
+        else:
+            pt = PT_MPI_Worker(comm, rank, mcmc, swap_period)
+            pt.run()
+
 
 # Chain handling helper function
 # ==============================
