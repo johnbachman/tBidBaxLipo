@@ -63,7 +63,7 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
                                self.options.seed)
 
 ###############################################
-# Utility functions                           #
+# Job running class                           #
 ###############################################
 
 class Job(tbidbaxlipo.mcmc.Job):
@@ -151,15 +151,9 @@ class Job(tbidbaxlipo.mcmc.Job):
                 'time': time, 'values': values, 'nsteps': nsteps,
                 'dataset_name': dataset_name}
 
-
-###############################################
-# Run scripts                                 #
-###############################################
-
 ###############################################
 # Submit scripts                              #
 ###############################################
-
 
 def submit_single():
     """Submit multiple MCMC jobs for the NBD plate data to LSF.
@@ -201,14 +195,13 @@ def submit_single():
 
     fixed_args = ['nsteps=%d' % nsteps]
 
-    for var_args in itertools.product(num_confs_args, nbd_site_args, replicate_args,
-                                      chain_index_args):
+    for var_args in itertools.product(num_confs_args, nbd_site_args,
+                                      replicate_args, chain_index_args):
         all_args = list(var_args) + fixed_args
-        cmd_list = base_cmd_list(tbidbaxlipo.mcmc.output_filename_from_args(all_args)) \
-                   + all_args
+        cmd_list = base_cmd_list(tbidbaxlipo.mcmc.output_filename_from_args(
+                                                            all_args)) + all_args
         print ' '.join(cmd_list)
-        #subprocess.call(cmd_list)
-
+        subprocess.call(cmd_list)
 
 def submit_parallel():
     pass
@@ -237,7 +230,7 @@ def main():
     if sys.argv[1] == 'run_single':
         job.run_single(NBDPlateMCMC, sys.argv[2:])
     elif sys.argv[1] == 'run_parallel':
-        run_parallel(sys.argv[2:])
+        job.run_parallel(NBDPlateMCMC, sys.argv[2:])
     elif sys.argv[1] == 'submit_single':
         submit_single()
     elif sys.argv[1] == 'submit_parallel':

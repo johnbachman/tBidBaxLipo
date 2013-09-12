@@ -26,6 +26,9 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 import os
 import pickle
 from collections import OrderedDict
+from mpi4py import MPI
+from pysb.integrate import Solver
+import sys
 
 class MCMC(bayessb.MCMC):
     """Superclass for creating MCMC fitting procedures.
@@ -251,12 +254,20 @@ class Job(object):
         comm = MPI.COMM_WORLD
         # Number of chains/workers in the whole pool
         num_chains = comm.Get_size()
+        if num_chains <= 1:
+            print "\nrun_parallel must be run as part of a pool of > 1 "
+            print "processes using a MPI implementation such as mpirun.lsf.\n"
+            print "Example submission of a single parallel job:\n"
+            print "    bsub -q parallel -n 9 -W 00:10 mpirun.lsf python \\"
+            print "         mcmc_script.py run_parallel [args]"
+            sys.exit()
         # The rank of this chain (0 is the master, others are workers)
         rank = comm.Get_rank()
         # Forces the solver to use inline without testing first
         Solver._use_inline = True
         # Create temperature array based on number of workers (excluding master)
-        temps = np.logspace(np.log10(min_temp), np.log10(max_temp), num_chains-1)
+        temps = np.logspace(np.log10(min_temp), np.log10(max_temp),
+                            num_chains-1)
 
         # Initialize the MCMC arguments
         b = args['builder']
