@@ -3,7 +3,7 @@ A class for fitting the mechanistic pore formation models to dye release data.
 """
 
 import tbidbaxlipo.mcmc
-from tbidbaxlipo.models import lipo_sites, one_cpt
+from tbidbaxlipo.models import lipo_sites, one_cpt, two_lipo_sites
 import bayessb
 import pickle
 import numpy as np
@@ -16,16 +16,19 @@ import sys
 import pandas as pd
 
 model_names = ['bax_heat',
+               'bax_heat_aggregation',
                'bax_heat_reversible',
+               'bax_heat_reversible_aggregation',
                'bax_heat_dimer',
                'bax_heat_dimer_reversible',
-               'bax_heat_auto',
-               'bax_heat_auto_reversible',
-               'bax_heat_auto_dimer',
-               'bax_heat_auto_dimer_reversible',
+               'bax_heat_auto1',
+               'bax_heat_auto1_reversible',
+               'bax_heat_auto1_dimer',
+               'bax_heat_auto1_dimer_reversible',
                'bax_schwarz',
                'bax_schwarz_reversible',
                'peptide_solution_dimer',
+               'bax_heat_bh3_exposure_auto2',
               ]
 
 class PoreMCMC(tbidbaxlipo.mcmc.MCMC):
@@ -50,43 +53,42 @@ class PoreMCMC(tbidbaxlipo.mcmc.MCMC):
         self.dataset_name = dataset_name
 
         # Set the MCMC functions
-        self.options.likelihood_fn = self.get_likelihood_function()
+        self.options.likelihood_fn = self.likelihood
         self.options.prior_fn = self.builder.prior
         self.options.step_fn = self.step
 
     # Implementations of necessary functions
-    def get_likelihood_function(self):
+    @staticmethod
+    def likelihood(mcmc, position):
+        """The likelihood function."""
+        err = 0
+        for bax_conc in mcmc.data.columns:
+            # Get the data for this concentration
+            tc = mcmc.data[bax_conc]
+            y_data  = np.array(tc[:,'MEAN'])
+            time = np.array(tc[:,'TIME'])
+            mcmc.solver.tspan = time # set the time span
 
-        def likelihood(mcmc, position):
-            err = 0
-            for bax_conc in mcmc.data.columns:
-                # Get the data for this concentration
-                tc = mcmc.data[bax_conc]
-                y_data  = np.array(tc[:,'MEAN'])
-                time = np.array(tc[:,'TIME'])
-                mcmc.solver.tspan = time # set the time span
+            # Get the simulated data for this concentration
+            mcmc.options.model.parameters['Bax_0'].value = bax_conc
+            x = mcmc.simulate(position=position, observables=True)
+            avg_pores = x['pores']/ \
+                        mcmc.options.model.parameters['Vesicles_0'].value
+            y_mod = 1 - np.exp(-avg_pores)
 
-                # Get the simulated data for this concentration
-                mcmc.options.model.parameters['Bax_0'].value = bax_conc
-                x = mcmc.simulate(position=position, observables=True)
-                avg_pores = x['pores']/ \
-                            mcmc.options.model.parameters['Vesicles_0'].value
-                y_mod = 1 - np.exp(-avg_pores)
-
-                # Calculate the error, accounting for the SD at this
-                # concentration.
-                # Skip the first timepoint--the SD is 0 (due to normalization)
-                # and hence gives nan when calculating the error.
-                err += np.sum(((y_data[1:] - y_mod[1:])**2) / \
-                        (2 * (np.array(tc[:,'SD'][1:]) ** 2)))
-            return err
-        return likelihood
+            # Calculate the error, accounting for the SD at this
+            # concentration.
+            # Skip the first timepoint--the SD is 0 (due to normalization)
+            # and hence gives nan when calculating the error.
+            err += np.sum(((y_data[1:] - y_mod[1:])**2) / \
+                    (2 * (np.array(tc[:,'SD'][1:]) ** 2)))
+        return err
 
     def plot_data(self, axis):
         # Plot the titration of Bax timecourses
         for bax_conc in self.data.columns:
             tc = self.data[bax_conc]
-            axis.plot(tc[:,'TIME'], tc[:,'MEAN'], # error=tc[:,'SD'],
+            axis.errorbar(tc[:,'TIME'], tc[:,'MEAN'], yerr=tc[:,'SD'],
                        color='gray')
 
     def get_observables_as_dataframe(self, position):
@@ -166,7 +168,7 @@ def get_PoreMCMC_instance():
     opts.anneal_length = 0
     opts.use_hessian = False
     opts.sigma_step = 0
-    opts.norm_step_size = 0.1
+    opts.norm_step_size = 0.01
     opts.seed = 1
 
     pm = PoreMCMC(opts, data, dataset_name, b)
@@ -192,12 +194,14 @@ def test_plot_fit():
 
 if __name__ == '__main__':
     # Allowable compartmentalization type names:
-    cpt_types = ['one_cpt', 'lipo_sites']
+    cpt_types = ['one_cpt', 'lipo_sites', 'two_lipo_sites']
 
     # Prepare the data
     # ================
-    from tbidbaxlipo.plots.layout_130614 import df as data
-    dataset_name = '130614'
+    #from tbidbaxlipo.plots.layout_130614 import df as data
+    #dataset_name = '130614'
+    from tbidbaxlipo.plots.layout_130905 import df as data
+    dataset_name = '130905'
     #from tbidbaxlipo.plots.layout_130815 import data
     #dataset_name = '130815'
 
@@ -236,6 +240,8 @@ if __name__ == '__main__':
         builder = lipo_sites.Builder()
     elif cpt_type == 'one_cpt':
         builder = one_cpt.Builder()
+    elif cpt_type == 'two_lipo_sites':
+        builder = two_lipo_sites.Builder()
 
     # Now we get the model, which is specified as a string from the
     # set seen below.
@@ -280,7 +286,7 @@ if __name__ == '__main__':
     opts.estimate_params = builder.estimate_params
     opts.initial_values = builder.random_initial_values()
     opts.nsteps = nsteps
-    opts.norm_step_size = 0.01
+    opts.norm_step_size = 0.05
     opts.sigma_step = 0
     #opts.sigma_max = 50
     #opts.sigma_min = 0.01
@@ -288,7 +294,7 @@ if __name__ == '__main__':
     #opts.accept_window = 100
     #opts.sigma_adj_interval = 200
     opts.anneal_length = 0
-    opts.use_hessian = False
+    opts.use_hessian = True
     opts.hessian_scale = 1
     opts.hessian_period = opts.nsteps / 10 #10
     opts.seed = random_seed
