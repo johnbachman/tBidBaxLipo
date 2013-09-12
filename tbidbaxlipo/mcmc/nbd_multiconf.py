@@ -139,8 +139,8 @@ class Job(tbidbaxlipo.mcmc.Job):
         # Multi-exponential models
         elif model == 'exponential':
             if 'num_exponentials' not in kwargs:
-                raise Exception("Argument num_exponentials must be specified for "
-                                "model of type exponential.")
+                raise Exception("Argument num_exponentials must be specified "
+                                "for model of type exponential.")
             num_exponentials = int(kwargs['num_exponentials'])
             b = exponential.Builder()
             b.build_model_exponential(num_exponentials, values[0])
@@ -149,7 +149,7 @@ class Job(tbidbaxlipo.mcmc.Job):
             assert False
 
         return {'builder': b, 'random_seed': random_seed,
-                'time': time, 'values': values, 'nsteps': nsteps,
+                'time': time, 'data': values, 'nsteps': nsteps,
                 'dataset_name': dataset_name}
 
 ###############################################

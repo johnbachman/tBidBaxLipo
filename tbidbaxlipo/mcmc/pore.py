@@ -2,18 +2,15 @@
 A class for fitting the mechanistic pore formation models to dye release data.
 """
 
-import tbidbaxlipo.mcmc
-from tbidbaxlipo.models import lipo_sites, one_cpt, two_lipo_sites
-import bayessb
+import collections
+import sys
 import pickle
 import numpy as np
 from matplotlib import pyplot as plt
-from matplotlib.font_manager import FontProperties
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_agg import FigureCanvasAgg
-import collections
-import sys
 import pandas as pd
+import bayessb
+from tbidbaxlipo.models import lipo_sites, one_cpt, two_lipo_sites
+import tbidbaxlipo.mcmc
 
 model_names = ['bax_heat',
                'bax_heat_aggregation',
@@ -25,13 +22,23 @@ model_names = ['bax_heat',
                'bax_heat_auto1_reversible',
                'bax_heat_auto1_dimer',
                'bax_heat_auto1_dimer_reversible',
+               'bax_heat_auto2',
+               'bax_heat_auto2_reversible',
+               'bax_heat_auto2_dimer',
+               'bax_heat_auto2_dimer_reversible',
                'bax_schwarz',
                'bax_schwarz_reversible',
+               'bax_schwarz_dimer',
+               'bax_schwarz_dimer_reversible',
                'peptide_solution_dimer',
                'bax_heat_bh3_exposure_auto2',
               ]
 
-class PoreMCMC(tbidbaxlipo.mcmc.MCMC):
+###############################################
+# MCMC class                                  #
+###############################################
+
+class MCMC(tbidbaxlipo.mcmc.MCMC):
     """Fit mechanistic tBid/Bax models to dye release titration data.
 
     Initialize parent tbidbaxlipo.mcmc.MCMC and then set additional fields.
@@ -92,6 +99,8 @@ class PoreMCMC(tbidbaxlipo.mcmc.MCMC):
                        color='gray')
 
     def get_observables_as_dataframe(self, position):
+        """Allows fitted simulation results to be fit the same way as the data.
+        """
         data_arr = None
         row_tuples = None
         # Iterate over the bax concentrations in the dataset
@@ -150,7 +159,132 @@ class PoreMCMC(tbidbaxlipo.mcmc.MCMC):
                                  self.options.nsteps,
                                  self.options.seed)
 
-def get_PoreMCMC_instance():
+###############################################
+# Job running class                           #
+###############################################
+
+class Job(tbidbaxlipo.mcmc.Job):
+    def parse_command_line_args(self, argv):
+        print argv
+        # Allowable compartmentalization type names:
+        cpt_types = ['one_cpt', 'lipo_sites', 'two_lipo_sites']
+
+        # Prepare the data
+        # ================
+        #from tbidbaxlipo.plots.layout_130614 import df as data
+        #dataset_name = '130614'
+        from tbidbaxlipo.plots.layout_130905 import df as data
+        dataset_name = '130905'
+        #from tbidbaxlipo.plots.layout_130815 import data
+        #dataset_name = '130815'
+
+        # Parse the args
+        # ==============
+        # Keyword args are set at the command line as e.g., key=val
+        # and subsequently split at the equals sign
+        kwargs = dict([arg.split('=') for arg in argv])
+
+        # Before we begin, we make sure we have all the keyword arguments that
+        # we are going to need.
+        if 'random_seed' not in kwargs or \
+           'cpt_type' not in kwargs or \
+           'nsteps' not in kwargs or \
+           'model' not in kwargs:
+            print ('One or more needed arguments was not specified! ' \
+                    'Arguments must include random_seed, model, cpt_type, ' \
+                    'and nsteps.')
+            sys.exit()
+
+        # First we get the compartmentalization type:
+        cpt_type = kwargs['cpt_type']
+        if cpt_type not in cpt_types:
+            raise Exception('Allowable values for cpt_type are: one_cpt, '
+                            'lipo_sites')
+
+        # Get the appropriate builder
+        if cpt_type == 'lipo_sites':
+            builder = lipo_sites.Builder()
+        elif cpt_type == 'one_cpt':
+            builder = one_cpt.Builder()
+        elif cpt_type == 'two_lipo_sites':
+            builder = two_lipo_sites.Builder()
+
+        # Now we get the model, which is specified as a string from the
+        # set seen below.
+        if kwargs['model'] not in model_names:
+            raise Exception('%s is not an allowed model!' %
+                            kwargs['model'])
+        else:
+            # Here we use a bit of Python trickery to avoid a long list of
+            # if/elif statements: we append the model abbreviation to the
+            # build_model function name and then eval it:
+            build_model_cmd = 'builder.build_model_%s()' % kwargs['model']
+            eval(build_model_cmd)
+            model = builder.model
+
+        # Set the random seed:
+        random_seed = int(kwargs['random_seed'])
+
+        # Set the number of steps:
+        nsteps = int(kwargs['nsteps'])
+
+        # Set a dummy time vector
+        time = np.linspace(0, 6000, len(data[data.columns[0]][:, 'TIME']))
+
+        return {'builder': builder, 'random_seed': random_seed,
+                'time': time, 'nsteps': nsteps, 'data': data,
+                'dataset_name': dataset_name}
+
+###############################################
+# Main                                        #
+###############################################
+
+def main():
+    usage =  '\nUsage:\n\n'
+    usage += 'python pore.py run_single [args]\n'
+    usage += '  Run a single MCMC chain with the args in [args].\n'
+    usage += 'python pore.py run_parallel [args]\n'
+    usage += '  Run a parallel tempering MCMC with the args in [args].\n'
+    usage += 'python pore.py submit_single\n'
+    usage += '  Submit a set of single-chain jobs on Orchestra.\n'
+    usage += 'python pore.py submit_parallel\n'
+    usage += '  Submit a set of parallel tempering jobs on Orchestra.\n'
+
+    if len(sys.argv) <= 1:
+        print usage
+        sys.exit()
+
+    from tbidbaxlipo.mcmc.pore import MCMC
+    job = Job()
+    if sys.argv[1] == 'run_single':
+        job.run_single(MCMC, sys.argv[2:], use_hessian=False)
+    elif sys.argv[1] == 'run_parallel':
+        job.run_parallel(MCMC, sys.argv[2:])
+    elif sys.argv[1] == 'submit_single':
+        submit_single(get_varying_arg_lists(),
+                      get_fixed_args(),
+                      'tbidbaxlipo.mcmc.pore',
+                      queue='short',
+                      time_limit='1:00')
+    elif sys.argv[1] == 'submit_parallel':
+        submit_parallel(get_varying_arg_lists(),
+                        get_fixed_args(),
+                        'tbidbaxlipo.mcmc.pore',
+                        num_temps=8,
+                        time_limit='24:00')
+    else:
+        print usage
+        sys.exit()
+
+if __name__ == '__main__':
+    main()
+
+
+###############################################
+# Tests                                       #
+###############################################
+
+def get_MCMC_instance():
     b = one_cpt.Builder()
     b.build_model_bax_heat()
 
@@ -171,15 +305,15 @@ def get_PoreMCMC_instance():
     opts.norm_step_size = 0.01
     opts.seed = 1
 
-    pm = PoreMCMC(opts, data, dataset_name, b)
+    pm = MCMC(opts, data, dataset_name, b)
     return pm
 
-def test_PoreMCMC_init():
-    pm = get_PoreMCMC_instance()
+def test_MCMC_init():
+    pm = get_MCMC_instance()
     assert True
 
 def test_plot_data():
-    pm = get_PoreMCMC_instance()
+    pm = get_MCMC_instance()
     fig = plt.figure()
     axis = fig.gca()
     pm.plot_data(axis)
@@ -187,127 +321,8 @@ def test_plot_data():
     assert True
 
 def test_plot_fit():
-    pm = get_PoreMCMC_instance()
+    pm = get_MCMC_instance()
     pm.initialize()
     fig = pm.fit_plotting_function(position=pm.initial_position)
     fig.savefig('test_plot_fit.png')
-
-if __name__ == '__main__':
-    # Allowable compartmentalization type names:
-    cpt_types = ['one_cpt', 'lipo_sites', 'two_lipo_sites']
-
-    # Prepare the data
-    # ================
-    #from tbidbaxlipo.plots.layout_130614 import df as data
-    #dataset_name = '130614'
-    from tbidbaxlipo.plots.layout_130905 import df as data
-    dataset_name = '130905'
-    #from tbidbaxlipo.plots.layout_130815 import data
-    #dataset_name = '130815'
-
-    # Parse the args
-    # ==============
-    # Keyword args are set at the command line as e.g., key=val
-    # and subsequently split at the equals sign
-    kwargs = dict([arg.split('=') for arg in sys.argv[1:]])
-
-    # We set these all to None so later on we can make sure they were
-    # properly initialized.
-    random_seed = None
-    model = None
-
-    print "Keyword arguments: "
-    print kwargs
-
-    # Before we begin, we make sure we have all the keyword arguments that
-    # we are going to need.
-    if 'random_seed' not in kwargs or \
-       'cpt_type' not in kwargs or \
-       'nsteps' not in kwargs or \
-       'model' not in kwargs:
-        raise Exception('One or more needed arguments was not specified! ' \
-                'Arguments must include random_seed, model, cpt_type, ' \
-                'and nsteps.')
-
-    # First we get the compartmentalization type:
-    cpt_type = kwargs['cpt_type']
-    if cpt_type not in cpt_types:
-        raise Exception('Allowable values for cpt_type are: one_cpt, '
-                        'lipo_sites')
-
-    # Get the appropriate builder
-    if cpt_type == 'lipo_sites':
-        builder = lipo_sites.Builder()
-    elif cpt_type == 'one_cpt':
-        builder = one_cpt.Builder()
-    elif cpt_type == 'two_lipo_sites':
-        builder = two_lipo_sites.Builder()
-
-    # Now we get the model, which is specified as a string from the
-    # set seen below.
-    if kwargs['model'] not in model_names:
-        raise Exception('%s is not an allowed model!' %
-                        kwargs['model'])
-    else:
-        # Here we use a bit of Python trickery to avoid a long list of
-        # if/elif statements: we append the model abbreviation to the
-        # build_model function name and then eval it:
-        build_model_cmd = 'builder.build_model_%s()' % kwargs['model']
-        eval(build_model_cmd)
-        model = builder.model
-
-    # Set the random seed:
-    random_seed = int(kwargs['random_seed'])
-
-    # Set the number of steps:
-    nsteps = int(kwargs['nsteps'])
-
-    # Set the initial temperature
-    if 'T_init' in kwargs:
-        T_init = float(kwargs['T_init'])
-    else:
-        T_init = 1
-
-    # A sanity check to make sure everything worked:
-    if None in [model, random_seed, nsteps]:
-        raise Exception('Something went wrong! One of the arguments to ' \
-                        'do_fit was not initialized properly.')
-
-    # We set the random_seed here because it affects our choice of initial
-    # values
-    np.random.seed(random_seed)
-
-    # Initialize the MCMC arguments
-    opts = bayessb.MCMCOpts()
-    opts.model = model
-    # Num timepoints
-    num_pts = len(data[data.columns[0]][:,'TIME'])
-    opts.tspan = np.linspace(0, 6000, num_pts) # This should not be used
-    opts.estimate_params = builder.estimate_params
-    opts.initial_values = builder.random_initial_values()
-    opts.nsteps = nsteps
-    opts.norm_step_size = 0.05
-    opts.sigma_step = 0
-    #opts.sigma_max = 50
-    #opts.sigma_min = 0.01
-    #opts.accept_rate_target = 0.23
-    #opts.accept_window = 100
-    #opts.sigma_adj_interval = 200
-    opts.anneal_length = 0
-    opts.use_hessian = True
-    opts.hessian_scale = 1
-    opts.hessian_period = opts.nsteps / 10 #10
-    opts.seed = random_seed
-    opts.T_init = 1 # T_init
-    from tbidbaxlipo.mcmc.pore_mcmc import PoreMCMC
-    mcmc = PoreMCMC(opts, data, dataset_name, builder)
-
-    mcmc.do_fit()
-
-    # Pickle it
-    output_file = open('%s.mcmc' % mcmc.get_basename(), 'w')
-    pickle.dump(mcmc, output_file)
-    output_file.close()
-
-    print "Done."
 

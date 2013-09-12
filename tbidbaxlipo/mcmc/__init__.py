@@ -202,7 +202,7 @@ def output_filename_from_args(args):
 
 class Job(object):
 
-    def get_mcmc_opts(self, builder, args, T_init=1):
+    def get_mcmc_opts(self, builder, args, T_init=1, use_hessian=True):
         """Fills out the fields of the MCMCOpts object."""
         opts = bayessb.MCMCOpts()
         opts.model = builder.model
@@ -218,20 +218,20 @@ class Job(object):
         #opts.accept_window = 100
         #opts.sigma_adj_interval = 200
         opts.anneal_length = 0
-        opts.use_hessian = True # CHECK
+        opts.use_hessian = use_hessian # CHECK
         opts.hessian_scale = 1
         opts.hessian_period = opts.nsteps / 20 #10
         opts.seed = args['random_seed']
         opts.T_init = T_init
         return opts
 
-    def run_single(self, mcmc_class, argv):
+    def run_single(self, mcmc_class, argv, use_hessian=True):
         args = self.parse_command_line_args(argv)
         b = args['builder']
         np.random.seed(args['random_seed'])
-        opts = self.get_mcmc_opts(b, args)
+        opts = self.get_mcmc_opts(b, args, use_hessian=use_hessian)
 
-        mcmc = mcmc_class(opts, args['values'], args['dataset_name'], b)
+        mcmc = mcmc_class(opts, args['data'], args['dataset_name'], b)
 
         mcmc.do_fit()
 
