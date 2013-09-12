@@ -306,7 +306,7 @@ def submit_single(varying_arg_lists, fixed_args, script_str,
                 'python', '-m', script_str, 'run_single']
         cmd_list = base_cmd_list + all_args
         print ' '.join(cmd_list)
-        subprocess.call(cmd_list)
+        #subprocess.call(cmd_list)
 
 def submit_parallel(varying_arg_lists, fixed_args, script_str,
                     num_temps=8, time_limit='24:00'):

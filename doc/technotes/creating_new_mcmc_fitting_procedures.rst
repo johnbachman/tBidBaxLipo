@@ -27,7 +27,7 @@ Examples of fitting procedures created in this way include:
   NBD-Bax fluorescence data from the PTI fluorimeter;
 * :py:class:`tbidbaxlipo.mcmc.nbd_multiconf.MCMC`, for fitting
   NBD-Bax fluorescence data from the plate reader;
-* :py:class:`tbidbaxlipo.mcmc.pore_mcmc.PoreMCMC`, for fitting dye release
+* :py:class:`tbidbaxlipo.mcmc.pore_mcmc.MCMC`, for fitting dye release
   titration data.
 
 In addition to implementing the appropriate methods in the subclass, these
@@ -57,9 +57,9 @@ unique output filenames.
 
 Finally, the ``__init__`` method should set the references to the likelihood,
 prior, and step functions, as these are defined from the builder. Here
-is an example from :py:class:`tbidbaxlipo.mcmc.pore_mcmc.PoreMCMC`::
+is an example from :py:class:`tbidbaxlipo.mcmc.pore_mcmc.MCMC`::
 
-    class PoreMCMC(tbidbaxlipo.mcmc.MCMC):
+    class MCMC(tbidbaxlipo.mcmc.MCMC):
         def __init__(self, options, data, dataset_name, builder):
             # Call the superclass constructor
             tbidbaxlipo.mcmc.MCMC.__init__(self, options, builder)
@@ -98,8 +98,8 @@ with different initial conditions, possibly with different time vectors
 (because each concentration condition in the dataset may have a different set
 of time vectors).
 
-The following is the implementation of the likelihood function for `PoreMCMC`,
-:py:meth:`tbidbaxlipo.mcmc.pore_mcmc.PoreMCMC.likelihood`::
+The following is the implementation of the likelihood function for `MCMC`,
+:py:meth:`tbidbaxlipo.mcmc.pore_mcmc.MCMC.likelihood`::
 
     @staticmethod
     def likelihood(mcmc, position):
@@ -163,7 +163,7 @@ keys are the human-readable names for the observables or simulation conditions
 (to be used in the plot legend), and the values are two-element lists
 consisting of the time vector and the simulated values: ``[time, y]``.
 
-As an example, here is the implementation for `PoreMCMC`, :py:meth:`tbidbaxlipo.mcmc.pore_mcmc.PoreMCMC.get_observable_timecourses`::
+As an example, here is the implementation for `MCMC`, :py:meth:`tbidbaxlipo.mcmc.pore_mcmc.MCMC.get_observable_timecourses`::
 
     def get_observable_timecourses(self, position):
         """Return the timecourses for all concentrations."""
@@ -188,7 +188,7 @@ Finally, implement the ``get_basename`` method, which returns the string name
 that will be used for pickled MCMC output files. The method should include
 whatever information from the MCMC object that is necessary for the name to be
 unique, such as the dataset and model used, the number of steps in the walk,
-the random seed, etc. Here is the implementation for `PoreMCMC`::
+the random seed, etc. Here is the implementation for `MCMC`::
 
     def get_basename(self):
         return '%s_%s_%s_%d_s%d' % (self.dataset_name,

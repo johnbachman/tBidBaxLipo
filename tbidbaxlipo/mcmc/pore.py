@@ -11,6 +11,7 @@ import pandas as pd
 import bayessb
 from tbidbaxlipo.models import lipo_sites, one_cpt, two_lipo_sites
 import tbidbaxlipo.mcmc
+from tbidbaxlipo.mcmc import submit_single, submit_parallel
 
 model_names = ['bax_heat',
                'bax_heat_aggregation',
@@ -236,6 +237,28 @@ class Job(tbidbaxlipo.mcmc.Job):
                 'dataset_name': dataset_name}
 
 ###############################################
+# Submit parameters                           #
+###############################################
+
+def get_varying_arg_lists():
+    cpt_types = ['one_cpt', 'lipo_sites']
+
+    model_arg_list = ['model=%s' % model_name for model_name in model_names]
+    cpt_type_arg_list = ['cpt_type=%s' % cpt_type for cpt_type in cpt_types]
+
+    # The number of chains to run for each model.
+    num_chains = 1
+    chain_index_args = ['random_seed=%d' % i for i in range(num_chains)]
+
+    return [cpt_type_arg_list, model_arg_list, chain_index_args]
+
+def get_fixed_args():
+    # The number of steps in each chain.
+    nsteps = 500
+    fixed_args = ['nsteps=%d' % nsteps]
+    return fixed_args
+
+###############################################
 # Main                                        #
 ###############################################
 
@@ -265,7 +288,7 @@ def main():
                       get_fixed_args(),
                       'tbidbaxlipo.mcmc.pore',
                       queue='short',
-                      time_limit='1:00')
+                      time_limit='12:00')
     elif sys.argv[1] == 'submit_parallel':
         submit_parallel(get_varying_arg_lists(),
                         get_fixed_args(),
@@ -278,7 +301,6 @@ def main():
 
 if __name__ == '__main__':
     main()
-
 
 ###############################################
 # Tests                                       #
