@@ -231,7 +231,6 @@ class Job(object):
         np.random.seed(args['random_seed'])
         opts = self.get_mcmc_opts(b, args)
 
-        #from tbidbaxlipo.mcmc.nbd_plate_mcmc import NBDPlateMCMC
         mcmc = mcmc_class(opts, args['values'], args['dataset_name'], b)
 
         mcmc.do_fit()

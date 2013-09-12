@@ -5,7 +5,6 @@ of assumed conformational states to different replicates for each NBD-labeled
 Bax mutant.
 """
 
-from tbidbaxlipo.mcmc import nbd_plate_mcmc
 import subprocess
 import numpy as np
 import itertools

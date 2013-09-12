@@ -208,20 +208,20 @@ def get_fixed_args():
 
 def main():
     usage =  '\nUsage:\n\n'
-    usage += 'python nbd_plate_mcmc.py run_single [args]\n'
+    usage += 'python nbd_multiconf.py run_single [args]\n'
     usage += '  Run a single MCMC chain with the args in [args].\n'
-    usage += 'python nbd_plate_mcmc.py run_parallel [args]\n'
+    usage += 'python nbd_multiconf.py run_parallel [args]\n'
     usage += '  Run a parallel tempering MCMC with the args in [args].\n'
-    usage += 'python nbd_plate_mcmc.py submit_single\n'
+    usage += 'python nbd_multiconf.py submit_single\n'
     usage += '  Submit a set of single-chain jobs on Orchestra.\n'
-    usage += 'python nbd_plate_mcmc.py submit_parallel\n'
+    usage += 'python nbd_multiconf.py submit_parallel\n'
     usage += '  Submit a set of parallel tempering jobs on Orchestra.\n'
 
     if len(sys.argv) <= 1:
         print usage
         sys.exit()
 
-    from tbidbaxlipo.mcmc.nbd_plate_mcmc import NBDPlateMCMC
+    from tbidbaxlipo.mcmc.nbd_multiconf import NBDPlateMCMC
     job = Job()
     if sys.argv[1] == 'run_single':
         job.run_single(NBDPlateMCMC, sys.argv[2:])
@@ -230,13 +230,13 @@ def main():
     elif sys.argv[1] == 'submit_single':
         submit_single(get_varying_arg_lists(),
                       get_fixed_args(),
-                      'tbidbaxlipo.mcmc.nbd_plate_mcmc',
+                      'tbidbaxlipo.mcmc.nbd_multiconf',
                       queue='short',
                       time_limit='1:00')
     elif sys.argv[1] == 'submit_parallel':
         submit_parallel(get_varying_arg_lists(),
                         get_fixed_args(),
-                        'tbidbaxlipo.mcmc.nbd_plate_mcmc',
+                        'tbidbaxlipo.mcmc.nbd_multiconf',
                         num_temps=8,
                         time_limit='24:00')
     else:
