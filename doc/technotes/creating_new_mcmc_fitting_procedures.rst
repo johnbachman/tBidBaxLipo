@@ -75,24 +75,25 @@ is an example from :py:class:`tbidbaxlipo.mcmc.pore_mcmc.PoreMCMC`::
 
 **Implement the likelihood function.**
 
-This is the centerpiece of the MCMC script, where we defined the error metric
-(and hence the likelihood) for the model/data pair. The likelihood function can
-be implemented in a variety of ways, including as a closure around a function
-that is configured using information in the MCMC object and then returned (as
-in :py:meth:`tbidbaxlipo.mcmc.nbd_mcmc.NBD_MCMC.get_likelihood_function`) or as
-a static method. Since the likelihood function is always called with two
+The likelihood function is the centerpiece of the MCMC script, where we define
+the error metric (and hence the likelihood) for the model/data pair. The
+function must ultimately be a function that takes two arguments, the MCMC
+object (``mcmc``) and the position in parameter space (``position``).  It
+should return a single value representing the likelihood of observing the data
+given the model with the current set of parameters.
+
+The likelihood function can be implemented in a variety of ways, including as a
+closure around a function that is configured using information in the MCMC
+object and then returned (as in
+:py:meth:`tbidbaxlipo.mcmc.nbd_mcmc.NBD_MCMC.get_likelihood_function`) or as a
+static method. Since the likelihood function is always called with two
 arguments, the first of which is the MCMC object itself, any information in the
 MCMC object will be accessible through this argument.
-
-The likelihood function must ultimately be a function that takes two arguments,
-the MCMC object (``mcmc``) and the position in parameter space (``position``).
-It should return a single value representing the likelihood of observing the
-data given the model with the current set of parameters.
 
 Likelihood functions involving a single simulation of the model are fairly
 simple, involving running the model, calculated the chi-squared error relative
 to the data, and returning the value. Datasets involving titrations are
-slightly more complicated in that they invole multiple simulations of the model
+slightly more complicated in that they involve multiple simulations of the model
 with different initial conditions, possibly with different time vectors
 (because each concentration condition in the dataset may have a different set
 of time vectors).
