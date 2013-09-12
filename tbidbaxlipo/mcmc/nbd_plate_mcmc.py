@@ -7,6 +7,15 @@ from matplotlib import pyplot as plt
 import pickle
 import sys
 import math
+from bayessb.mpi.pt_mpi import PT_MPI_Master, PT_MPI_Worker
+from mpi4py import MPI
+import subprocess
+import itertools
+from collections import OrderedDict
+
+###############################################
+# MCMC class                                  #
+###############################################
 
 class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
     """ Document me"""
@@ -46,7 +55,6 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
         (time, values) = timecourses['Predicted NBD Signal']
         return [time, self.data - values]
 
-# TESTS #####
     def get_basename(self):
         return '%s_%s_%d_T%.2f_s%d' % (self.dataset_name,
                                self.builder.model.name,
@@ -54,67 +62,14 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
                                self.options.T_init,
                                self.options.seed)
 
-def get_NBDPlateMCMC_instance():
-    # Choose which data/replicate to fit
-    tc = nbd_plate_data.data[('c68', 0)]
-    time = tc[:, 'TIME'].values
-    values = tc[:, 'VALUE'].values
-
-    # Choose which model to build
-    num_confs = 2
-    b = multiconf.Builder()
-    b.build_model_multiconf(num_confs, values[0])
-
-    # Set initial estimates for scaling parameters
-    scaling_parameters = [p for p in b.model.parameters
-                          if p.name.endswith('_scaling')]
-    for p in scaling_parameters:
-        p.value = np.max(values)
-
-    opts = bayessb.MCMCOpts()
-    opts.model = b.model
-    opts.tspan = time
-    opts.estimate_params = [p for p in b.model.parameters
-                            if not p.name.endswith('_0')]
-    opts.initial_values = [p.value for p in opts.estimate_params]
-    opts.nsteps = 10
-    opts.T_init = 1
-    opts.anneal_length = 0
-    opts.use_hessian = False
-    opts.sigma_step = 0
-    opts.norm_step_size = 0.1
-    opts.seed = 1
-
-    mcmc = NBDPlateMCMC(opts, values, 'c68rep0', b)
-    return mcmc
-
-def test_NBDPlateMCMC_init():
-    npm = get_NBDPlateMCMC_instance()
-    assert True
-
-def test_plot_data():
-    npm = get_NBDPlateMCMC_instance()
-    fig = plt.figure()
-    axis = fig.gca()
-    npm.plot_data(axis)
-    #plt.show()
-    assert True
-
-def test_plot_fit():
-    npm = get_NBDPlateMCMC_instance()
-    npm.initialize()
-    fig = npm.fit_plotting_function(position=npm.initial_position)
-    fig.savefig('test_plot_fit.png')
-
-def test_get_basename():
-    npm = get_NBDPlateMCMC_instance()
-    npm.get_basename()
-    assert True
+###############################################
+# Utility functions                           #
+###############################################
 
 def parse_command_line_args(argv):
     # Keyword args are set at the command line as e.g., key=val
     # and subsequently split at the equals sign
-    kwargs = dict([arg.split('=') for arg in argv[1:]])
+    kwargs = dict([arg.split('=') for arg in argv])
 
     print "Keyword arguments: "
     print kwargs
@@ -127,9 +82,10 @@ def parse_command_line_args(argv):
        'replicate' not in kwargs or \
        'dataset' not in kwargs or \
        'model' not in kwargs:
-        raise Exception('One or more needed arguments was not specified! ' \
+        print ('One or more needed arguments was not specified! ' \
                 'Arguments must include random_seed, nsteps, model, ' \
                 'nbd_site, dataset and replicate.')
+        sys.exit()
 
     # Set the random seed:
     random_seed = int(kwargs['random_seed'])
@@ -197,26 +153,13 @@ def parse_command_line_args(argv):
             'time': time, 'values': values, 'nsteps': nsteps,
             'dataset_name': dataset_name}
 
-# MAIN ######
-if __name__ == '__main__':
-    args = parse_command_line_args(sys.argv)
-
-    # Build the MCMCOpts
-    # ==================
-    b = args['builder']
-
-    # We set the random_seed here because it affects our choice of initial
-    # values
-    np.random.seed(args['random_seed'])
-
+def get_mcmc_opts(builder, args, T_init=1):
+    """Fills out the fields of the MCMCOpts object."""
     opts = bayessb.MCMCOpts()
-    opts.model = b.model
+    opts.model = builder.model
     opts.tspan = args['time']
-    opts.estimate_params = b.estimate_params
-    #opts.estimate_params = [p for p in b.model.parameters
-    #                        if not p.name.endswith('_0')]
-    #opts.initial_values = [p.value for p in b.estimate_params]
-    opts.initial_values = b.random_initial_values()
+    opts.estimate_params = builder.estimate_params
+    opts.initial_values = builder.random_initial_values()
     opts.nsteps = args['nsteps']
     opts.norm_step_size = 0.1
     opts.sigma_step = 0
@@ -230,7 +173,19 @@ if __name__ == '__main__':
     opts.hessian_scale = 1
     opts.hessian_period = opts.nsteps / 20 #10
     opts.seed = args['random_seed']
-    opts.T_init = 1
+    opts.T_init = T_init
+    return opts
+
+###############################################
+# Run scripts                                 #
+###############################################
+
+def run_single(argv):
+    args = parse_command_line_args(argv)
+
+    b = args['builder']
+    np.random.seed(args['random_seed'])
+    opts = get_mcmc_opts(b, args)
 
     from tbidbaxlipo.mcmc.nbd_plate_mcmc import NBDPlateMCMC
     mcmc = NBDPlateMCMC(opts, args['values'], args['dataset_name'], b)
@@ -243,4 +198,200 @@ if __name__ == '__main__':
     output_file.close()
 
     print "Done."
+
+def run_parallel(mcmc, argv):
+    """Run a parallel tempering job."""
+    args = parse_command_line_args(argv)
+    # The communicator to use
+    comm = MPI.COMM_WORLD
+    # Number of chains/workers in the whole pool
+    num_chains = comm.Get_size()
+    # The rank of this chain (0 is the master, others are workers)
+    rank = comm.Get_rank()
+    # Forces the solver to use inline without testing first
+    Solver._use_inline = True
+    # Frequency for proposing swaps
+    swap_period = 5
+    # Temperature range
+    min_temp = 1
+    max_temp = 1e5
+    # Create temperature array based on number of workers (excluding master)
+    temps = np.logspace(np.log10(min_temp), np.log10(max_temp), num_chains-1)
+
+    # Initialize the MCMC arguments
+    b = args['builder']
+    opts = get_mcmc_opts(b, args, T_init=temps[rank - 1])
+
+    mcmc = NBDPlateMCMC(opts, args['values'], args['dataset_name'], b)
+    mcmc.initialize()
+
+    # The master coordinates when swaps occur ---------
+    if rank == 0:
+        pt = PT_MPI_Master(comm, rank, opts, swap_period, num_chains)
+        pt.run()
+    # Everyone else runs MCMC steps and swaps when told -----------
+    else:
+        pt = PT_MPI_Worker(comm, rank, mcmc, swap_period)
+        pt.run()
+
+###############################################
+# Submit scripts                              #
+###############################################
+
+def output_filename_from_args(args):
+    """Get the appropriate output filename given the current args."""
+    # Join and then re-split the list at the spaces
+    # This makes the string 'model=%s num_xxx=%d' into two separate args
+    arg_strings = ' '.join(args).split(' ')
+    # Now build up the list of key/val pairs and make a dict
+    arg_dict = OrderedDict(arg_string.split('=') for arg_string in arg_strings)
+    # Build and return the output filename
+    output_filename = '_'.join(arg_dict.values()) + '.out'
+    return output_filename
+
+def submit_single():
+    """Submit multiple MCMC jobs for the NBD plate data to LSF.
+
+    Allows fitting models with alternative numbers of assumed conformational
+    states to different replicates for each NBD-labeled Bax mutant.
+    """
+    # The numbers of conformations to attempt to fit to the data.
+    num_confs_list = [2, 3, 4, 5]
+    num_confs_args = ['num_confs=%d' % num_confs for num_confs in num_confs_list]
+    #The NBD sites to attempt to fit."""
+    #nbd_sites = ['c120', 'c122', 'c126', 'c15', 'c175', 'c179', 'c188', 'c36',
+    # 'c40', 'c47', 'c5', 'c54', 'c62', 'c68', 'c79']
+    nbd_sites = ['c175', 'c179', 'c5', 'c15']
+    nbd_site_args = ['nbd_site=%s' % nbd_site for nbd_site in nbd_sites]
+    # The number of replicates for each NBD mutant."""
+    num_replicates = 4
+    replicate_args = ['replicate=%d' % rep for rep in range(num_replicates)]
+    # The number of chains to run for each model.
+    num_chains = 10
+    chain_index_args = ['random_seed=%d' % i for i in range(num_chains)]
+
+    # The number of steps in each chain.
+    nsteps = 50000
+    # The LSF queue to submit the jobs to.
+    queue = 'mini'
+    # The estimated runtime of the job.
+    time_limit = '00:10'
+
+    def base_cmd_list(output_filename):
+        base_cmd_list = ['bsub',
+                '-W', time_limit,
+                '-q', queue,
+                '-o', output_filename,
+                'python',
+                '-m',
+                'tbidbaxlipo.mcmc.nbd_plate_mcmc']
+        return base_cmd_list
+
+    fixed_args = ['nsteps=%d' % nsteps]
+
+    for var_args in itertools.product(num_confs_args, nbd_site_args, replicate_args,
+                                      chain_index_args):
+        all_args = list(var_args) + fixed_args
+        cmd_list = base_cmd_list(output_filename_from_args(all_args)) + all_args
+        print ' '.join(cmd_list)
+        subprocess.call(cmd_list)
+
+
+def submit_parallel():
+    pass
+
+###############################################
+# Main                                        #
+###############################################
+
+def main():
+    usage =  '\nUsage:\n\n'
+    usage += 'python nbd_plate_mcmc.py run_single [args]\n'
+    usage += '  Run a single MCMC chain with the args in [args].\n'
+    usage += 'python nbd_plate_mcmc.py run_parallel [args]\n'
+    usage += '  Run a parallel tempering MCMC with the args in [args].\n'
+    usage += 'python nbd_plate_mcmc.py submit_single\n'
+    usage += '  Submit a set of single-chain jobs on Orchestra.\n'
+    usage += 'python nbd_plate_mcmc.py submit_parallel\n'
+    usage += '  Submit a set of parallel tempering jobs on Orchestra.\n'
+
+    if len(sys.argv) <= 1:
+        print usage
+        sys.exit()
+
+    if sys.argv[1] == 'run_single':
+        run_single(sys.argv[2:])
+    elif sys.argv[1] == 'run_parallel':
+        run_parallel(sys.argv[2:])
+    elif sys.argv[1] == 'submit_single':
+        submit_single()
+    elif sys.argv[1] == 'submit_parallel':
+        submit_parallel()
+    else:
+        print usage
+        sys.exit()
+
+if __name__ == '__main__':
+    main()
+
+###############################################
+# Tests                                       #
+###############################################
+
+def get_NBDPlateMCMC_instance():
+    # Choose which data/replicate to fit
+    tc = nbd_plate_data.data[('c68', 0)]
+    time = tc[:, 'TIME'].values
+    values = tc[:, 'VALUE'].values
+
+    # Choose which model to build
+    num_confs = 2
+    b = multiconf.Builder()
+    b.build_model_multiconf(num_confs, values[0])
+
+    # Set initial estimates for scaling parameters
+    scaling_parameters = [p for p in b.model.parameters
+                          if p.name.endswith('_scaling')]
+    for p in scaling_parameters:
+        p.value = np.max(values)
+
+    opts = bayessb.MCMCOpts()
+    opts.model = b.model
+    opts.tspan = time
+    opts.estimate_params = [p for p in b.model.parameters
+                            if not p.name.endswith('_0')]
+    opts.initial_values = [p.value for p in opts.estimate_params]
+    opts.nsteps = 10
+    opts.T_init = 1
+    opts.anneal_length = 0
+    opts.use_hessian = False
+    opts.sigma_step = 0
+    opts.norm_step_size = 0.1
+    opts.seed = 1
+
+    mcmc = NBDPlateMCMC(opts, values, 'c68rep0', b)
+    return mcmc
+
+def test_NBDPlateMCMC_init():
+    npm = get_NBDPlateMCMC_instance()
+    assert True
+
+def test_plot_data():
+    npm = get_NBDPlateMCMC_instance()
+    fig = plt.figure()
+    axis = fig.gca()
+    npm.plot_data(axis)
+    #plt.show()
+    assert True
+
+def test_plot_fit():
+    npm = get_NBDPlateMCMC_instance()
+    npm.initialize()
+    fig = npm.fit_plotting_function(position=npm.initial_position)
+    fig.savefig('test_plot_fit.png')
+
+def test_get_basename():
+    npm = get_NBDPlateMCMC_instance()
+    npm.get_basename()
+    assert True
 
