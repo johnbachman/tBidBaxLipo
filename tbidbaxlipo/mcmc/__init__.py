@@ -19,6 +19,7 @@ For more information on implementing fitting procedures by subclassing
 """
 
 import bayessb
+from bayessb.mpi.pt_mpi import PT_MPI_Worker, PT_MPI_Master
 import numpy as np
 from matplotlib.font_manager import FontProperties
 from matplotlib.figure import Figure
