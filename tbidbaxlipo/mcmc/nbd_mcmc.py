@@ -9,7 +9,6 @@ just-Bax condition, and then perturb it with the addition of tBid.
 
 import numpy as np
 import matplotlib
-#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import tbidbaxlipo.mcmc
 from tbidbaxlipo.util.report import Report
@@ -19,7 +18,11 @@ model_names = ['ta', 'tai', 'taid', 'taidt', 'tair', 'taird', 'tairdt',
 
 nbd_site_names = ['c3', 'c62']
 
-class NBD_MCMC(tbidbaxlipo.mcmc.MCMC):
+###############################################
+# MCMC class                                  #
+###############################################
+
+class MCMC(tbidbaxlipo.mcmc.MCMC):
     """Fit mechanistic tBid/Bax models to NBD data.
 
     Initialize parent tbidbaxlipo.mcmc.MCMC and then set additional fields.
@@ -254,5 +257,49 @@ class NBD_MCMC(tbidbaxlipo.mcmc.MCMC):
                                     self.options.T_init,
                                     #np.log10(self.options.thermo_temp),
                                     self.options.seed)
+
+###############################################
+# Main                                        #
+###############################################
+
+def main():
+    usage =  '\nUsage:\n\n'
+    usage += 'python nbd_mcmc.py run_single [args]\n'
+    usage += '  Run a single MCMC chain with the args in [args].\n'
+    usage += 'python nbd_mcmc.py run_parallel [args]\n'
+    usage += '  Run a parallel tempering MCMC with the args in [args].\n'
+    usage += 'python nbd_mcmc.py submit_single\n'
+    usage += '  Submit a set of single-chain jobs on Orchestra.\n'
+    usage += 'python nbd_mcmc.py submit_parallel\n'
+    usage += '  Submit a set of parallel tempering jobs on Orchestra.\n'
+
+    if len(sys.argv) <= 1:
+        print usage
+        sys.exit()
+
+    from tbidbaxlipo.mcmc.nbd_mcmc import MCMC
+    job = Job()
+    if sys.argv[1] == 'run_single':
+        job.run_single(MCMC, sys.argv[2:])
+    elif sys.argv[1] == 'run_parallel':
+        job.run_parallel(MCMC, sys.argv[2:])
+    elif sys.argv[1] == 'submit_single':
+        submit_single(get_varying_arg_lists(),
+                      get_fixed_args(),
+                      'tbidbaxlipo.mcmc.nbd_multiconf',
+                      queue='short',
+                      time_limit='1:00')
+    elif sys.argv[1] == 'submit_parallel':
+        submit_parallel(get_varying_arg_lists(),
+                        get_fixed_args(),
+                        'tbidbaxlipo.mcmc.nbd_multiconf',
+                        num_temps=8,
+                        time_limit='24:00')
+    else:
+        print usage
+        sys.exit()
+
+if __name__ == '__main__':
+    main()
 
 
