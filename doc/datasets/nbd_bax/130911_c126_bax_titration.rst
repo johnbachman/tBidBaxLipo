@@ -127,7 +127,7 @@ remain constant.
 .. image:: ../../_static/130911_c126_bax_titration_5.png
     :width: 6in
 
-To evaluate this accurately, we fit the curves to with parameters describing
+To evaluate this accurately, we fit the curves with parameters describing
 the rate and maximum steady state insertion and plot the values of these
 parameters as a function of Bax concentration. However, to fit the curves, we
 have to account for the lag before the start of the measurement, which we can
