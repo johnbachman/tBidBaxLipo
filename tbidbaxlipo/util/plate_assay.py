@@ -227,6 +227,18 @@ def averages(wells, layout):
     # end iteration over conditions
     return (well_averages, well_stds)
 
+def subtract_background(wells, background):
+    """Subtract the given background vector (given as a single array)
+    from each of the timecourse wells in the wells dict.
+    """
+    bgsub_timecourses = collections.OrderedDict([])
+    for well_name in wells.keys():
+        time = wells[well_name][TIME]
+        tc = wells[well_name][VALUE]
+        bgsub_tc = tc - background
+        bgsub_timecourses[well_name] = [time, bgsub_tc]
+    return bgsub_timecourses
+
 def get_repeat_averages_by_well(wells):
     """For a set of replicate measurements made to establish a baseline
     (e.g., many measurements made of initial or final state)

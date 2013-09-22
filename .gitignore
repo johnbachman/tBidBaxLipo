@@ -19,7 +19,6 @@ doc/sphinxreport.log
 *.pyc
 *.swp
 anneal_output.txt
-*.xlsx
 *.gv
 *.dot
 *.out
