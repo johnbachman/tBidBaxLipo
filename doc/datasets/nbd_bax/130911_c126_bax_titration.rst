@@ -87,22 +87,23 @@ conditions:
 .. image:: ../../_static/130911_c126_bax_titration_3.png
     :width: 6in
 
-Normalized by 0 cBid :math:`F_0`
---------------------------------
+Background subtracted, normalized by 0 cBid :math:`F_0`
+-------------------------------------------------------
 
-Now we look at the data normalized by the initial fluorescence values from the
-0 cBid timecourses. Interestingly, though they are obviously noisy, the 0 nM
-cBid timecourses themselves show that the F/F0 kinetics due to spontaneous Bax
-insertion increases initially over the lower Bax concentrations, then seems to
-plateau around 100 nM. There is a spontaneous increase in F/F0 in the 0 Bax
-condition, though this likely represents a very small increase in absolute
-terms that is exaggerated after normalization due to the fact that the F0 values
-are small in this case. However, it might be worth subtracting this background
-increase out from the raw fluorescence values before normalizing.
+Now we look at the data after subtracting out the baseline fluorescence
+increase in the no Bax (liposomes and Bid only) condition, normalized by the
+initial fluorescence values from the 0 cBid timecourses.
+
+Though the no-Bid timecourses normalized in this way are obviously noisy due
+to the low signal, they appear to mostly lie on top of each other, suggesting
+that the kinetics of spontaneous insertion scale uniformly with concentration,
+with no saturation. It will be interesting to see if this holds true in
+an experiment with heated Bax.
 
 .. ipython::
 
-    In [8]: plot_normalized_by_no_bid_f0(bid_conc=0)
+    In [8]: plot_normalized(bid_conc=0, bid_conc_for_normalization=0, \
+       ...: subtract_background=True)
 
     @suppress
     In [9]: plt.savefig('_static/130911_c126_bax_titration_4.png')
@@ -112,17 +113,19 @@ increase out from the raw fluorescence values before normalizing.
 
 With cBid added, from the shape of the curves it appears that there is a large
 portion of the initial timecourses missing. That said, it appears that the
-steady-state values for F/F0 increase for the lowest concentrations in the
-titration, before plateauing around ~3.6 for 100-200 nM; however at this point
-the kinetics start to slow down, even as the steady-state value appears to
-remain constant.
+steady-state F/F0 values are fairly constant across concentrations, with the
+exception of the 12.5 nM condition, which is lower than the others, and the 25
+nM condition which is higher (though both have a lot of error).  Moreover, it
+appears that the kinetics slow down at higher Bax concentrations, suggestive of
+a saturation effect.
 
 .. ipython::
 
-    In [10]: plot_normalized_by_no_bid_f0(bid_conc=20)
+    In [8]: plot_normalized(bid_conc=20, bid_conc_for_normalization=0, \
+       ...: subtract_background=True)
 
     @suppress
-    In [11]: plt.savefig('_static/130911_c126_bax_titration_5.png')
+    In [9]: plt.savefig('_static/130911_c126_bax_titration_5.png')
 
 .. image:: ../../_static/130911_c126_bax_titration_5.png
     :width: 6in
@@ -137,13 +140,14 @@ t_0)})` and get the following fits:
 
 .. ipython::
 
-    In [12]: (k1, fmax, t0) = plot_normalized_by_no_bid_f0_fits(bid_conc=20, \
-       ....: t0_val=None)
+    In [8]: (k1, fmax, t0) = plot_normalized(bid_conc=20,
+       ...: bid_conc_for_normalization=0, subtract_background=True,
+       ...: do_fit=True, t0_val=None)
 
     @suppress
-    In [11]: plt.savefig('_static/130911_c126_bax_titration_5a.png')
+    In [9]: plt.savefig('_static/130911_c126_bax_titration_6.png')
 
-.. image:: ../../_static/130911_c126_bax_titration_5a.png
+.. image:: ../../_static/130911_c126_bax_titration_6.png
     :width: 6in
 
 The values for the fitted parameters are as follows:
@@ -160,9 +164,9 @@ The values for the fitted parameters are as follows:
 The fitted values for the delay parameter :math:`t_0` show a pattern, with the
 higher Bax concentrations better fit by shorter delays, and the lower
 concentrations with longer delays (note also that the poor fit to 0 Bax is
-irrelevant). Is this an artifact of the shape of the high concentration curves,
-or does it reflect the possibility that the lower concentration wells were
-pipetted first and the higher ones later?
+irrelevant). This appears to be an artifact of the shape of the high
+concentration curves, as Justin actually pipetted the Bax in the reverse order
+(highest concentrations first).
 
 Turning to the parameter plots, the plot for :math:`k_1` vs. Bax shows a very
 clear slowing down in insertion rate as the Bax concentration is increased:
@@ -183,13 +187,14 @@ clear slowing down in insertion rate as the Bax concentration is increased:
     In [5]: plt.title('$k_1$ vs. [Bax]')
 
     @suppress
-    In [11]: plt.savefig('_static/130911_c126_bax_titration_5b.png')
+    In [11]: plt.savefig('_static/130911_c126_bax_titration_7.png')
 
-.. image:: ../../_static/130911_c126_bax_titration_5b.png
+.. image:: ../../_static/130911_c126_bax_titration_7.png
     :width: 6in
 
-On the other hand, the :math:`F_{max}` values show a hyperbolic increase,
-plateauing around 200 nM:
+On the other hand, the :math:`F_{max}` values, though a bit noisy, hover
+generally in the range of 3.0-3.3 without an obvious pattern. It would be
+a good idea to get error bars on these before making any strong conclusions.
 
 .. ipython::
 
@@ -207,18 +212,18 @@ plateauing around 200 nM:
     In [5]: plt.title('$F_{max}$ vs. [Bax]')
 
     @suppress
-    In [11]: plt.savefig('_static/130911_c126_bax_titration_5c.png')
+    In [11]: plt.savefig('_static/130911_c126_bax_titration_8.png')
 
-.. image:: ../../_static/130911_c126_bax_titration_5c.png
+.. image:: ../../_static/130911_c126_bax_titration_8.png
     :width: 6in
 
-Normalized by 0 nM cBid, fit with fixed :math:`t_0`
----------------------------------------------------
+Background-subtracted, normalized by 0 nM cBid, fit with fixed :math:`t_0`
+--------------------------------------------------------------------------
 
 A potential concern about the results shown above is that the fitted values for
 the parameters :math:`k_1` and :math:`F_{max}` may be influenced by the fitted
 value for the parameter :math:`t_0`, which is allowed to vary for each curve.
-Some of the fitted delays seem unrealistically long (e.g. ~800-900 sec for 12.5
+Some of the fitted delays seem unrealistically long (e.g. ~700-800 sec for 12.5
 and 25 nM Bax), and it also seems likely that a uniform delay for all wells due
 to the software crash that Justin described would be large relative to the
 smaller variable delays in pipetting the different wells.
@@ -232,13 +237,14 @@ fitted value for 0 Bax):
 
     In [1]: mean_t0 = np.mean(t0[:-1]); print mean_t0
 
-    In [2]: (k1, fmax, t0) = plot_normalized_by_no_bid_f0_fits(bid_conc=20, \
-       ...: t0_val=mean_t0)
+    In [8]: (k1, fmax, t0) = plot_normalized(bid_conc=20,
+       ...: bid_conc_for_normalization=0, subtract_background=True,
+       ...: do_fit=True, t0_val=mean_t0)
 
     @suppress
-    In [11]: plt.savefig('_static/130911_c126_bax_titration_5d.png')
+    In [11]: plt.savefig('_static/130911_c126_bax_titration_9.png')
 
-.. image:: ../../_static/130911_c126_bax_titration_5d.png
+.. image:: ../../_static/130911_c126_bax_titration_9.png
     :width: 6in
 
 Fortunately, the fits still appear to be quite good despite the fact that we
@@ -276,13 +282,13 @@ have been reduced:
     In [5]: plt.title('$k_1$ vs. [Bax]')
 
     @suppress
-    In [11]: plt.savefig('_static/130911_c126_bax_titration_5e.png')
+    In [11]: plt.savefig('_static/130911_c126_bax_titration_10.png')
 
-.. image:: ../../_static/130911_c126_bax_titration_5e.png
+.. image:: ../../_static/130911_c126_bax_titration_10.png
     :width: 6in
 
-The :math:`F_{max}` values show a clear hyperbolic increase, plateauing around
-200 nM:
+The :math:`F_{max}` values unchanged, which makes sense since the steady-state
+value shouldn't be much affected by the slight change in start time:
 
 .. ipython::
 
@@ -300,37 +306,146 @@ The :math:`F_{max}` values show a clear hyperbolic increase, plateauing around
     In [5]: plt.title('$F_{max}$ vs. [Bax]')
 
     @suppress
-    In [11]: plt.savefig('_static/130911_c126_bax_titration_5f.png')
+    In [11]: plt.savefig('_static/130911_c126_bax_titration_11.png')
 
-.. image:: ../../_static/130911_c126_bax_titration_5f.png
+.. image:: ../../_static/130911_c126_bax_titration_11.png
     :width: 6in
 
+Normalized by 0 cBid :math:`F_0`, no background subtraction
+-----------------------------------------------------------
+
+The following plots demonstrate the importance of background subtraction in
+plotting and fitting the curves correctly. Here we normalize the raw values by
+the corresponding initial fluorescence :math:`F_0` from the no Bid titration,
+but we do not subtract the background (no Bax) fluorescence values for each
+timepoint before doing so.
+
+In the plot of the no-Bid timecourses we can clearly see that the 0 Bax
+condition, once normalized, has a non-negligible increase in baseline
+fluorescence. In addition, it appears that the kinetics of the other curves
+scale with concentration, with the lower concentrations increasing more slowly
+than the higher concentrations. However, this is merely due to the fact that
+since we have not subtracted the background from the :math:`F_0` values, the
+fold-change increase over background appears to be less for the curves with low
+signal (low concentration).
+
+.. ipython::
+
+    In [8]: plot_normalized(bid_conc=0, bid_conc_for_normalization=0, \
+       ...: subtract_background=False)
+
+    @suppress
+    In [9]: plt.savefig('_static/130911_c126_bax_titration_12.png')
+
+.. image:: ../../_static/130911_c126_bax_titration_12.png
+    :width: 6in
+
+Similarly, the plots for the 20 nM cBid condition seem to show that the steady
+state :math:`F/F_0` values go up in a saturating fashion with concentration:
+
+.. ipython::
+
+    In [8]: plot_normalized(bid_conc=20, bid_conc_for_normalization=0, \
+       ...: subtract_background=False)
+
+    @suppress
+    In [11]: plt.savefig('_static/130911_c126_bax_titration_13.png')
+
+.. image:: ../../_static/130911_c126_bax_titration_13.png
+    :width: 6in
+
+The fits for the :math:`F_{max}` parameter show the apparent increase in
+steady-state fluorescence, which looks deceptively like a binding curve:
+
+.. ipython::
+
+    In [8]: (k1, fmax, t0) = plot_normalized(bid_conc=20,
+       ...: bid_conc_for_normalization=0, subtract_background=False,
+       ...: do_fit=True, t0_val=None)
+
+    @suppress
+    In [11]: plt.savefig('_static/130911_c126_bax_titration_14.png')
+
+.. image:: ../../_static/130911_c126_bax_titration_14.png
+    :width: 6in
+
+.. ipython:: python
+
+    # Format parameter values in a table
+    tt = Texttable()
+    tt.header(['[Bax]', 'k1', 'Fmax', 't0'])
+    tt.set_cols_dtype(['f', 'e', 'f', 'f'])
+    tt.add_rows(reversed(zip(bax_concs, k1, fmax, t0)), header=False)
+    print tt.draw()
+
+.. ipython::
+
+    In [1]: plt.figure()
+
+    In [2]: plt.plot(bax_concs[:-1], k1[:-1], linewidth=2, marker='o', color='r')
+
+    @suppress
+    In [3]: plt.xlabel('[Bax] (nM)')
+
+    @suppress
+    In [4]: plt.ylabel('$k_1$')
+
+    @suppress
+    In [5]: plt.title('$k_1$ vs. [Bax]')
+
+    @suppress
+    In [11]: plt.savefig('_static/130911_c126_bax_titration_15.png')
+
+.. image:: ../../_static/130911_c126_bax_titration_15.png
+    :width: 6in
+
+.. ipython::
+
+    In [1]: plt.figure()
+
+    In [2]: plt.plot(bax_concs[:-1], fmax[:-1], linewidth=2, marker='o', color='r')
+
+    @suppress
+    In [3]: plt.xlabel('[Bax] (nM)')
+
+    @suppress
+    In [4]: plt.ylabel('$F_{max}$')
+
+    @suppress
+    In [5]: plt.title('$F_{max}$ vs. [Bax]')
+
+    @suppress
+    In [11]: plt.savefig('_static/130911_c126_bax_titration_16.png')
+
+.. image:: ../../_static/130911_c126_bax_titration_16.png
+    :width: 6in
 
 Normalized by 20 nM cBid :math:`F_0`
 ------------------------------------
 
 Alternatively, we can normalize the 20 nM cBid timecourses by their own initial value, which produces the following curves as a result:
 
-
 .. ipython::
 
-    In [12]: plot_normalized_by_20_bid_f0()
+    In [8]: plot_normalized(bid_conc=20, bid_conc_for_normalization=20, \
+       ...: subtract_background=True)
 
     @suppress
-    In [13]: plt.savefig('_static/130911_c126_bax_titration_6.png')
+    In [13]: plt.savefig('_static/130911_c126_bax_titration_17.png')
 
-.. image:: ../../_static/130911_c126_bax_titration_6.png
+.. image:: ../../_static/130911_c126_bax_titration_17.png
     :width: 6in
 
-Here it looks like the steady-state values for the timecourses don't saturate
-until fairly high concentrations of Bax, around 400 nM. One thing that makes
-this normalization suspect, however, is that the maximum values reached are
-only around 2.5, whereas previous datasets for the NBD-c126 mutant had shown
-the F/F0 values typically reaching values between 3 and 4. That, plus the fact
-that there is no good reason for why the 20 nM cBid case would be more
-fluorescent other than that the timecourses were cropped (e.g., there shouldn't
-be substantially fluorescent buffer components for 20 nM cBid, for example)
-suggest that this normalization is inappropriate.
+Despite the fact that we've subtracted the fluorescence from the no-Bax
+condition, in these plots it artificially looks like the steady-state values
+for the timecourses increase with concentration. This normalization is suspect,
+however, because the maximum values reached are only around 2.5, whereas
+previous datasets for the NBD-c126 mutant had shown the F/F0 values typically
+reaching values between 3 and 4.  That, plus the fact that there is no good
+reason for why the 20 nM cBid case would be more fluorescent other than that
+the timecourses were cropped (e.g., there shouldn't be substantially
+fluorescent buffer components for 20 nM cBid, for example) suggest that this
+normalization is inappropriate.
 
 Nevertheless, if we accept the normalization, we can fit the timecourses with
 the single exponential function :math:`1 + F_{max} (1 - e^{-k_1 t})` and plot
@@ -338,16 +453,17 @@ the concentration dependence of the parameters:
 
 .. ipython::
 
-    In [14]: (k1, fmax) = plot_normalized_by_20_bid_f0_fits()
+    In [8]: (k1, fmax, t0) = plot_normalized(bid_conc=20,
+       ...: bid_conc_for_normalization=20, subtract_background=True,
+       ...: do_fit=True, t0_val=None)
 
     @suppress
-    In [15]: plt.savefig('_static/130911_c126_bax_titration_7.png')
+    In [15]: plt.savefig('_static/130911_c126_bax_titration_18.png')
 
-.. image:: ../../_static/130911_c126_bax_titration_7.png
+.. image:: ../../_static/130911_c126_bax_titration_18.png
     :width: 6in
 
-The fits are fairly good, though not excellent; in particular they miss the
-slight activation lag that is visible in the highest concentration curves. When we plot the fitted values for :math:`k_1`, it is clear that the insertion
+When we plot the fitted values for :math:`k_1`, it is clear that the insertion
 process is slower at higher Bax:
 
 .. ipython::
@@ -364,15 +480,10 @@ process is slower at higher Bax:
     In [19]: plt.ylabel('$k_1$ value')
 
     @suppress
-    In [20]: plt.savefig('_static/130911_c126_bax_titration_8.png')
+    In [20]: plt.savefig('_static/130911_c126_bax_titration_19.png')
 
-.. image:: ../../_static/130911_c126_bax_titration_8.png
+.. image:: ../../_static/130911_c126_bax_titration_19.png
     :width: 6in
-
-For the :math:`F_{max}` values, we again see a hyperbolic increase with Bax
-concentration. The principal difference with the results from the 0 nM cBid
-normalization is that the :math:`F_{max}` values don't appear to saturate until
-very high Bax concentrations (400-800 nM):
 
 .. ipython::
 
@@ -388,8 +499,8 @@ very high Bax concentrations (400-800 nM):
     In [19]: plt.ylabel('$F_{max}$ value')
 
     @suppress
-    In [20]: plt.savefig('_static/130911_c126_bax_titration_9.png')
+    In [20]: plt.savefig('_static/130911_c126_bax_titration_20.png')
 
-.. image:: ../../_static/130911_c126_bax_titration_9.png
+.. image:: ../../_static/130911_c126_bax_titration_20.png
     :width: 6in
 

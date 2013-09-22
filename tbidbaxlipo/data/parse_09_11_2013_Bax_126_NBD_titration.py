@@ -72,7 +72,7 @@ col_tuples = list(product([0.], bax_concs, [1]))
 col_tuples += list(product([20.], bax_concs, [1, 2, 3]))
 
 col_index = pd.MultiIndex.from_tuples(col_tuples,
-                                      names=('Bax', 'Liposomes', 'Replicate'))
+                                      names=('Bid', 'Bax', 'Replicate'))
 
 # Build the dataset
 data = pd.DataFrame(data_matrix.T, index=time, columns=col_index)
@@ -137,8 +137,8 @@ def plot_f0():
     def linear(concs):
         return m() * concs + b()
     fitting.fit(linear, [m, b], f0_means[:-1], bax_concs[:-1])
-    plt.errorbar(bax_concs[:], f0_means[:], yerr=f0_stds[:], linewidth=2,
-                 color='b', label='20 nM cBid, $F_0$ data')
+    plt.errorbar(bax_concs[:], f0_means[:], yerr=f0_stds[:] / np.sqrt(3),
+                 linewidth=2, color='b', label='20 nM cBid, $F_0$ data')
     plt.plot(bax_concs, linear(bax_concs), color='r', linewidth=2,
              label='20 nM cBid, fit')
 
@@ -167,7 +167,7 @@ def plot_raw_timecourses(bid_conc=0):
         conc_data = data[bid_conc][bax_concs[conc_index]][:].values
         time = data[bid_conc][bax_concs[conc_index]][:].index
         plt.errorbar(time, np.mean(conc_data, axis=1),
-                 yerr=np.std(conc_data, axis=1),
+                 yerr=np.std(conc_data, axis=1) / np.sqrt(3),
                  label='Bax %s nM' % bax_concs[conc_index])
     box = plt.gca().get_position()
     plt.gca().set_position([box.x0, box.y0, box.width * 0.8, box.height])
@@ -176,139 +176,64 @@ def plot_raw_timecourses(bid_conc=0):
     plt.title('Raw data, %s nM cBid' % bid_conc)
     plt.show()
 
-def plot_normalized_by_no_bid_f0(bid_conc=0):
-    # Normalized timecourse data, by no Bid at time 0 (F/F0)
-    plt.figure()
-    for conc_index in range(NUM_CONCS):
-        time = data[bid_conc][bax_concs[conc_index]][:].index.values
-        conc_data = data[bid_conc][bax_concs[conc_index]][:].values
-        no_bid_f0 = data[0][bax_concs[conc_index]][1].values[0]
-        conc_data = conc_data / float(no_bid_f0)
-        plt.errorbar(time, np.mean(conc_data, axis=1),
-                     yerr=np.std(conc_data, axis=1),
-                     label='Bax %s nM' % bax_concs[conc_index])
-    box = plt.gca().get_position()
-    plt.gca().set_position([box.x0, box.y0, box.width * 0.8, box.height])
-    plt.legend(loc='upper left', prop=fontP, ncol=1,
-               bbox_to_anchor=(1, 1), fancybox=True, shadow=True)
-    plt.title(r'Normalized ($F/F_0$) by 0 nM cBid $F_0$')
-    plt.show()
-
-def plot_normalized_by_20_bid_f0():
-    plt.figure()
-    for conc_index in range(NUM_CONCS):
-        conc_data = norm_data[20][bax_concs[conc_index]][:].values
-        time = data[20][bax_concs[conc_index]][:].index.values
-        plt.errorbar(time, np.mean(conc_data, axis=1),
-                 yerr=np.std(conc_data, axis=1),
-                 label='Bax %s nM' % bax_concs[conc_index])
-    box = plt.gca().get_position()
-    plt.gca().set_position([box.x0, box.y0, box.width * 0.8, box.height])
-    plt.legend(loc='upper left', prop=fontP, ncol=1,
-               bbox_to_anchor=(1, 1), fancybox=True, shadow=True)
-    plt.title('Normalized ($F/F_0$) by 20 nM cBid $F_0$')
-    plt.show()
-
-def plot_normalized_by_no_bid_f0_fits(bid_conc=0, t0_val=None):
-
-    # Normalized timecourse data, by no Bid at time 0 (F/F0)
+def plot_normalized(bid_conc=0, bid_conc_for_normalization=0,
+                    subtract_background=True, do_fit=False,
+                    t0_val=None):
     plt.figure()
     k1_arr = []
     fmax_arr = []
     t0_arr = []
     for conc_index in range(NUM_CONCS):
-        # Normalize the data
         time = np.array(data[bid_conc][bax_concs[conc_index]][:].index.values,
                         dtype='float')
         conc_data = data[bid_conc][bax_concs[conc_index]][:].values
-        no_bid_f0 = data[0][bax_concs[conc_index]][1].values[0]
-        conc_data = conc_data / float(no_bid_f0)
-        # Fit
-        fmax = fitting.Parameter(3.)
-        k1 = fitting.Parameter(0.0005)
-        def one_exp(t):
-            return 1. + fmax() * (1 - np.exp(-k1() * (t + t0())))
+        f0 = data[bid_conc_for_normalization] \
+                 [bax_concs[conc_index]][1].values[0]
+        if subtract_background: # from 0 Bax timecourse
+            bg = data[bid_conc][0][:].mean(axis=1).values
+            conc_data = np.subtract(conc_data.T, bg).T
+            f0 = f0 - bg[0]
+        conc_data = conc_data / float(f0)
+        # Plots the fits if desired
+        if do_fit:
+            fmax = fitting.Parameter(3.)
+            k1 = fitting.Parameter(0.0005)
+            def one_exp(t):
+                return 1. + fmax() * (1 - np.exp(-k1() * (t + t0())))
+            # Check if we're supposed to fit the t0 parameter or not
+            if t0_val is None:
+                t0 = fitting.Parameter(556)
+                fitting.fit(one_exp, [fmax, k1, t0],
+                            np.mean(conc_data, axis=1), time)
+            else:
+                t0 = fitting.Parameter(t0_val)
+                fitting.fit(one_exp, [fmax, k1], np.mean(conc_data, axis=1),
+                            time)
 
-        # Check if we're supposed to fit the t0 parameter or not
-        if t0_val is None:
-            t0 = fitting.Parameter(556)
-            fitting.fit(one_exp, [fmax, k1, t0], np.mean(conc_data, axis=1),
-                        time)
-        else:
-            t0 = fitting.Parameter(t0_val)
-            fitting.fit(one_exp, [fmax, k1], np.mean(conc_data, axis=1),
-                        time)
-
-        k1_arr.append(k1())
-        fmax_arr.append(fmax())
-        t0_arr.append(t0())
-        # Plot
-        plt.errorbar(time, np.mean(conc_data, axis=1),
-                     yerr=np.std(conc_data, axis=1),
+            k1_arr.append(k1())
+            fmax_arr.append(fmax())
+            t0_arr.append(t0())
+            # Plot
+            plt.plot(time, one_exp(time), color='k')
+            plt.plot(time, np.mean(conc_data, axis=1),
                      label='Bax %s nM' % bax_concs[conc_index])
-        plt.plot(time, one_exp(time), color='k')
+        else:
+            plt.errorbar(time, np.mean(conc_data, axis=1),
+                         yerr=np.std(conc_data, axis=1) / np.sqrt(3),
+                         label='Bax %s nM' % bax_concs[conc_index])
 
     box = plt.gca().get_position()
     plt.gca().set_position([box.x0, box.y0, box.width * 0.8, box.height])
     plt.legend(loc='upper left', prop=fontP, ncol=1,
                bbox_to_anchor=(1, 1), fancybox=True, shadow=True)
-    plt.title(r'Normalized ($F/F_0$) by 0 nM cBid $F_0$')
+    plt.title(r'Normalized ($F/F_0$) by %s nM cBid $F_0$' % \
+              bid_conc_for_normalization)
     plt.show()
-    return (k1_arr, fmax_arr, t0_arr)
 
-def plot_normalized_by_20_bid_f0_fits():
-    plt.figure()
-    k1_arr = []
-    fmax_arr = []
-    for conc_index in range(NUM_CONCS):
-        conc_data = np.array(norm_data[20][bax_concs[conc_index]][:].values,
-                             dtype='float')
-        time = np.array(data[20][bax_concs[conc_index]][:].index.values,
-                        dtype='float')
-        fmax = fitting.Parameter(2.5)
-        k1 = fitting.Parameter(0.0005)
-        def one_exp(t):
-            return 1. + fmax() * (1 - np.exp(-k1() * t))
-        fitting.fit(one_exp, [fmax, k1], np.mean(conc_data, axis=1), time)
-        k1_arr.append(k1())
-        fmax_arr.append(fmax())
-
-        plt.errorbar(time, np.mean(conc_data, axis=1),
-                     yerr=np.std(conc_data, axis=1),
-                     label='Bax %s nM' % bax_concs[conc_index])
-        plt.plot(time, one_exp(time), color='k')
-    plt.title('Normalized (F/F0), Exp fit')
-    k1_arr = np.array(k1_arr)
-    fmax_arr = np.array(fmax_arr)
-    return (k1_arr, fmax_arr)
-
+    if do_fit:
+        return (k1_arr, fmax_arr, t0_arr)
+    else:
+        return None
 
 if __name__ == '__main__':
-
-    plt.ion()
-
-    sys.exit()
-
-    # 6. Titration of fmax values fit with Hill and exponential funcs
-    plt.figure()
-    plt.plot(bax_concs[:-1], fmax_arr[:-1], linestyle='', marker='o',
-             color='b')
-    # (hill fit)
-    fmax_kd = fitting.Parameter(100)
-    fmax_fmax = fitting.Parameter(3)
-    def hill(conc):
-        return (fmax_fmax() * conc) / (fmax_kd() + conc)
-    fitting.fit(hill, [fmax_fmax, fmax_kd], fmax_arr[:-1], bax_concs[:-1])
-    plt.plot(bax_concs[:-1], hill(bax_concs[:-1]), color='r', linewidth=2)
-    print "fmax_fmax: %f" % fmax_fmax()
-    print "fmax_kd: %f" % fmax_kd()
-    # (exponential fit)
-    fmax = fitting.Parameter(3)
-    k1 = fitting.Parameter(0.01)
-    def one_exp(t):
-        return fmax() * (1 - np.exp(-k1() * t))
-    fitting.fit(one_exp, [fmax, k1], fmax_arr[:-1], bax_concs[:-1])
-    plt.plot(bax_concs[:-1], one_exp(bax_concs[:-1]), color='g', linewidth=2)
-
-    # Pickle it
-    #pickle.dump(data, open('nbd_c126_bax_titration_data.pck', 'w'))
+    pass
