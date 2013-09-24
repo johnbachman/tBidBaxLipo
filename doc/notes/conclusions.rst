@@ -56,7 +56,12 @@ Summary/Conclusions
     cause slow release of small-molecule marker dyes. Taken together, this
     suggests that the effect of the mDivi-1 analogs is to alter lipid
     organization or packing in such a way as to restrict or retard the
-    formation of Bax pores.
+    formation of Bax pores. I hypothesized that the inhibition of
+    permeabilization would be more complete if the pores were required to be
+    large, as they would be with a FITC dextran assay. However, :ref:`the
+    effects of the drugs were even more muted in a FITC dextran assay
+    <130923_dextran_mDivi1_analogs>`, though they were still apparent, and in
+    the same rank ordering for the different drugs.
 
 **Two-phase dependence of kinetic rate on Bax concentration for heated Bax.**
     Results from :ref:`permeabilization experiments with Bax heated to 43C
