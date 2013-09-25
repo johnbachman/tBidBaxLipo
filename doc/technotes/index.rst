@@ -12,3 +12,4 @@ Contents:
    comparing_stoch_det_models
    fitting_ants_titration
    creating_new_mcmc_fitting_procedures
+   liposome_calculations

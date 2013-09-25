@@ -63,6 +63,13 @@ References
     transport of cytochrome c reconstituted in pure liposomes. Nature Cell
     Biology, 2(8), 553–555. :doi:`10.1038/35019596`
 
+.. [Satsoura2012]
+    Satsoura, D., Kučerka, N., Shivakumar, S., Pencer, J., Griffiths, C.,
+    Leber, B., et al. (2012). Interaction of the full-length Bax protein with
+    biomimetic mitochondrial liposomes: a small-angle neutron scattering and
+    fluorescence study. Biochimica et biophysica acta, 1818(3), 384–401.
+    :doi:`10.1016/j.bbamem.2011.10.007`
+
 .. [Schlesinger2006]
      Schlesinger, P. H., & Saito, M. (2006). The Bax pore in liposomes,
      Biophysics. Cell Death and Differentiation, 13(8), 1403–1408.
