@@ -168,8 +168,8 @@ class TitrationFit(object):
         for k_index in range(len(self.initial_guesses)):
             plt.figure()
             plt.plot(self.concs, self.k_arr[k_index], marker='o')
-            plt.xlabel(self.param_names[k_index])
-            plt.ylabel('Bax (nM)')
+            plt.xlabel('Bax (nM)')
+            plt.ylabel(self.param_names[k_index])
             plt.title('%s vs. Bax conc' % self.param_names[k_index])
             plt.show()
 
