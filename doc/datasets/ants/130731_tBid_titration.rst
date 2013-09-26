@@ -23,14 +23,14 @@ structure/function of the apparent tBid/Bax binding.
 
 Second, it is interesting that 0.24 nM has virtually no activity, whereas the
 2.4 nM tBid has a strong effect, reaching about 50% of the maximal level of
-permeabilization--and this even though the concentration of liposomes was 
-24 nM. Does this perhaps suggest that tBid can indeed unbind from liposomes to
-go on to permeabilize other liposomes? But then why was there no unbinding signal
+permeabilization--and this even though the concentration of liposomes was 24
+nM. Does this perhaps suggest that tBid can indeed unbind from liposomes to go
+on to permeabilize other liposomes? But then why was there no unbinding signal
 in the octet experiment? Perhaps tBid can only unbind when Bax is present?
 
 .. plot::
 
-    from tbidbaxlipo.plots.layout_130731 import main
-    main()
+    from tbidbaxlipo.plots.layout_130731 import plot_data
+    plot_data()
 
 

@@ -39,47 +39,59 @@ timecourse_file = os.path.abspath(os.path.join(data_path,
 triton_file = os.path.abspath(os.path.join(data_path,
                                         '130731_tBid_Bax_Triton.csv'))
 
-def main():
+# Assemble all the wells included in the layout
+# http://stackoverflow.com/questions/406121/
+# flattening-a-shallow-list-in-python
+wells_to_read = list(itertools.chain(*layout.values()))
+
+# Timecourse wells
+timecourse_wells = read_wallac(timecourse_file)
+timecourse_wells = extract(wells_to_read, timecourse_wells)
+
+# Post-Triton values
+final_wells = read_wallac(triton_file)
+final_wells = extract(wells_to_read, final_wells)
+final_well_avgs = get_repeat_averages_by_well(final_wells)
+
+# Initial timepoints
+initial_wells_tc = get_first_points_by_well(timecourse_wells)
+
+# Averages of raw timecourses across replicates
+#(timecourse_averages, timecourse_stds) = averages(timecourse_wells, layout)
+
+# Normalized timecourses
+norm_wells = get_normalized_well_timecourses(
+                    timecourse_wells, initial_wells_tc, final_well_avgs)
+
+# Normalized timecourses, averaged
+(norm_averages, norm_stds) = averages(norm_wells, layout)
+
+# First timepoint shifted to 0 (better for fitting)
+reset_norm_subset = reset_first_timepoint_to_zero(norm_averages)
+
+# Pore timecourses
+pores = get_average_pore_timecourses(norm_wells)
+
+# pandas dataframe
+#df = to_dataframe(norm_averages, norm_stds)
+
+def plot_data():
     ion()
 
-    # Assemble all the wells included in the layout
-    # http://stackoverflow.com/questions/406121/
-    # flattening-a-shallow-list-in-python
-    wells_to_read = list(itertools.chain(*layout.values()))
-
-    # Timecourse wells
-
-    timecourse_wells = read_wallac(timecourse_file)
-    timecourse_wells = extract(wells_to_read, timecourse_wells)
     figure()
     plot_all(timecourse_wells)
     title("Raw timecourses")
 
-    # Initial timepoints
-    initial_wells_tc = get_first_points_by_well(timecourse_wells)
-
-    # Post-Triton values
-    final_wells = read_wallac(triton_file)
-    final_wells = extract(wells_to_read, final_wells)
-    final_well_avgs = get_repeat_averages_by_well(final_wells)
-
-    # Averages of raw timecourses across replicates
-    #(timecourse_averages, timecourse_stds) = averages(timecourse_wells, layout)
     #figure()
     #plot_all(timecourse_averages, errors=timecourse_stds)
     #title("Raw timecourses, averaged")
 
-    # Normalized timecourses
-    norm_wells = get_normalized_well_timecourses(
-            timecourse_wells, initial_wells_tc, final_well_avgs)
     figure()
-    plot_all(norm_wells)
+    plot_all(norm_wells, legend_position=0.7)
     title("Normalized timecourses")
 
-    # Normalized timecourses, averaged
-    (norm_averages, norm_stds) = averages(norm_wells, layout)
     figure()
-    plot_all(norm_averages)
+    plot_all(norm_averages, legend_position=0.7)
     title("Normalized timecourses, averaged")
 
     # Plot just the Bax 63 nM wells
@@ -90,7 +102,7 @@ def main():
                    'Bax 63 nM, tBid 235 nM',
                    'Bax 63 nM, tBid 2350 nM',]
     figure()
-    plot_all(extract(bax63_wells, norm_averages))
+    plot_all(extract(bax63_wells, norm_averages), legend_position=0.7)
     ylim((0, 1))
     title("63 nM Bax timecourses")
 
@@ -102,33 +114,17 @@ def main():
                    'Bax 252 nM, tBid 235 nM',
                    'Bax 252 nM, tBid 2350 nM',]
     figure()
-    plot_all(extract(bax252_wells, norm_averages))
+    plot_all(extract(bax252_wells, norm_averages), legend_position=0.7)
     ylim((0, 1))
     title("252 nM Bax timecourses")
 
-    # First timepoint shifted to 0 (better for fitting)
-    reset_norm_subset = reset_first_timepoint_to_zero(norm_averages)
     figure()
-    plot_all(reset_norm_subset)
+    plot_all(reset_norm_subset, legend_position=0.7)
     title("Norm., Avg., Reset to t = 0")
 
-    #with open('130731_norm_timecourses.pck', 'w') as f:
-    #    pickle.dump(reset_norm_subset, f)
-
-    # Pore timecourses
-    pores = get_average_pore_timecourses(norm_wells)
     figure()
     plot_all(pores)
     title("Avg. pores per liposome")
 
-    #with open('130614_pore_timecourses.pck', 'w') as f:
-    #    pickle.dump(pores, f)
-
-    # pandas dataframe
-    #df = to_dataframe(norm_averages, norm_stds)
-
-    #with open('130614_norm_timecourses_df.pck', 'w') as f:
-    #    pickle.dump(df, f)
-
 if __name__ == '__main__':
-    main()
+    plot_data()
