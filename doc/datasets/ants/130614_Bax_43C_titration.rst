@@ -86,3 +86,16 @@ Two-parameter exponential fits
     from tbidbaxlipo.plots.titration_fits import OneExpFmax
     fit = OneExpFmax()
     fit.plot_fits_from_dataframe(df)
+
+Two-exponential fits
+--------------------
+
+.. plot::
+
+    from matplotlib import pyplot as plt
+    from tbidbaxlipo.plots.layout_130614 import df
+    from tbidbaxlipo.plots.titration_fits import TwoExp
+    fit = TwoExp()
+    fit.plot_fits_from_dataframe(df)
+
+

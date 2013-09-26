@@ -17,7 +17,7 @@ def extract(keys, dict):
     return extracted_dict
 
 layout = collections.OrderedDict([
-        #('Bax 0 nM',  ['A12', 'B12', 'C12']),
+        ('Bax 0 nM',  ['A12', 'B12', 'C12']),
         ('Bax 11 nM', ['A11', 'B11', 'C11']),
         ('Bax 16 nM', ['A10', 'B10', 'C10']),
         ('Bax 25 nM', ['A09', 'B09', 'C09']),
@@ -68,17 +68,27 @@ norm_wells = get_normalized_well_timecourses(
 (norm_averages, norm_stds) = averages(norm_wells, layout)
 """Timecourses normalized and then averaged."""
 
+# Get background average
+background = norm_averages['Bax 0 nM'][VALUE]
+
+# Normalized and background subtracted
+bgsub_norm_wells = subtract_background(norm_wells, background)
+
+# Normalized, background subtracted, averaged
+(bgsub_norm_averages, bgsub_norm_stds) = averages(bgsub_norm_wells, layout)
+
 # First timepoint shifted to 0 (better for fitting)
-reset_norm_means = reset_first_timepoint_to_zero(norm_averages)
-"""Timecourses normalized, averaged, then with first point shifted to t = 0."""
-reset_norm_sds = reset_first_timepoint_to_zero(norm_stds)
+reset_bgsub_means = reset_first_timepoint_to_zero(bgsub_norm_averages)
+"""Timecourses normalized, BG-subtracted, averaged, then with first point
+shifted to t = 0."""
+reset_bgsub_sds = reset_first_timepoint_to_zero(bgsub_norm_stds)
 
 # Pandas dataframe
-df = to_dataframe(reset_norm_means, reset_norm_sds)
+df = to_dataframe(bgsub_norm_averages, bgsub_norm_stds)
 """Pandas DataFrame version of reset_norm_means/sds"""
 
 # Pore timecourses
-pores = get_average_pore_timecourses(reset_norm_means)
+pores = get_average_pore_timecourses(norm_averages)
 """Average pores derived by taking -log(1 - data)."""
 
 def plot_data():
@@ -100,15 +110,25 @@ def plot_data():
     plot_all(norm_wells)
     title("Normalized timecourses")
 
+    # Normalized timecourses, background-subtracted
+    figure()
+    plot_all(bgsub_norm_wells)
+    title("Normalized, BG-subtracted timecourses")
+
     # Normalized timecourses, averaged
     figure()
     plot_all(norm_averages, errors=norm_stds)
     title("Normalized timecourses, averaged")
 
+    # Normalized timecourses, background subtracted, averaged
+    figure()
+    plot_all(bgsub_norm_averages, errors=norm_stds)
+    title("Normalized timecourses, BG-subtracted, averaged")
+
     # First timepoint shifted to 0 (better for fitting)
     figure()
-    plot_all(reset_norm_means)
-    title("Norm., Avg., Reset to t = 0")
+    plot_all(reset_bgsub_means)
+    title("Norm., BG-sub, avg., Reset to t = 0")
 
     # Pore timecourses
     figure()
@@ -116,7 +136,7 @@ def plot_data():
     title("Avg. pores per liposome")
 
 def plot_two_exp_fits():
-    data = norm_wells
+    data = bgsub_norm_wells
     fmax_arr = np.zeros((3, len(layout.keys())))
     k1_arr = np.zeros((3, len(layout.keys())))
     k2_arr = np.zeros((3, len(layout.keys())))
@@ -160,7 +180,7 @@ def plot_k1_curve(k1_arr, conc_list):
     plt.title('$k_1$')
     plt.xlabel('[Bax] (nM)')
     plt.ylabel('$k_1\ (\mathrm{sec}^{-1})$')
-
+    """
     # Fit with exponential-linear curve
     vi = fitting.Parameter(0.05)
     vf = fitting.Parameter(0.025)
@@ -194,6 +214,7 @@ def plot_k1_curve(k1_arr, conc_list):
     plt.text(35, 0.00039, r'$\frac{1}{\tau}$ = %.2f nM' % (1/tau()))
     plt.title('Biphasic fit of $k_1$')
     plt.show()
+    """
 
 def plot_k2_curve(k2_arr, conc_list):
     k2_means = np.mean(k2_arr, axis=0)
@@ -209,29 +230,62 @@ def plot_fmax_curve(fmax_arr, conc_list):
 
     # Plot of Fmax
     plt.figure()
-    plt.errorbar(conc_list, fmax_means, yerr=fmax_sds / np.sqrt(3),
-                 label='Data', linestyle='')
     plt.ylabel(r'$F_{max}$ value (% Release)')
     plt.xlabel('[Bax] (nM)')
     plt.title(r'$F_{max}$')
 
     # Try fitting the fmax values to a hill function
-    hill_vmax = fitting.Parameter(0.9)
+    hill_vmax = fitting.Parameter(1)
     kd = fitting.Parameter(100)
     def hill(s):
         return ((hill_vmax() * s) / (kd() + s))
-    fitting.fit(hill, [kd, hill_vmax], fmax_means, conc_list)
+    fitting.fit(hill, [kd], fmax_means[1:], conc_list[1:])
     plt.plot(conc_list, hill(conc_list), 'r', linewidth=2, label='Hill fit')
 
     plt.text(35, 0.93, '$K_D$ = %.2f' % kd(), fontsize=16)
-    plt.text(35, 0.99, '$V_{max}$ = %.2f' % hill_vmax(), fontsize=16)
+    #plt.text(35, 0.99, '$V_{max}$ = %.2f' % hill_vmax(), fontsize=16)
 
     # Try fitting the fmax values to an exponential function
     exp_fmax = fitting.Parameter(1.0)
     exp_k = fitting.Parameter(0.01)
     def exp_func(s):
         return exp_fmax() * (1 - np.exp(-exp_k()*s))
-    fitting.fit(exp_func, [exp_fmax, exp_k], fmax_means, conc_list)
-    plt.plot(conc_list, exp_func(conc_list), 'g', linewidth=2, label='Exp fit')
+    fitting.fit(exp_func, [exp_fmax, exp_k], fmax_means[1:], conc_list[1:])
+    plt.plot(conc_list, exp_func(conc_list), 'g', linewidth=2,
+             label='Exp fit')
+
+    # Plot the data
+    plt.errorbar(conc_list[1:], fmax_means[1:],
+                 yerr=fmax_sds[1:] / np.sqrt(3),
+                 label='Data', linestyle='', linewidth=2)
+
     plt.legend(loc='lower right')
     plt.show()
+
+if __name__ == '__main__':
+    plt.ion()
+    #(fmax_arr, k1_arr, k2_arr, conc_list) = plot_two_exp_fits()
+    #plot_fmax_curve(fmax_arr, conc_list)
+
+    from tbidbaxlipo.plots.titration_fits import TwoExp, Linear
+    fit = TwoExp()
+    pore_df = to_dataframe(pores, bgsub_norm_stds)
+    fit.plot_fits_from_dataframe(pore_df)
+    p = fit.fit_from_dataframe(pore_df)
+
+
+    # Multiply Fmax values by molar concentration of liposomes
+    concs = np.array(pore_df.columns.values, dtype='float')[1:-1]
+    concentration_of_pores = p[1][1:-1] * 0.775
+    plt.figure()
+    plt.plot(concs, concentration_of_pores)
+
+    # Fit a straight line to the concentrations
+    from tbidbaxlipo.util import fitting
+    m = fitting.Parameter(0.025)
+    b = fitting.Parameter(0)
+    def linear(x):
+        return m()*x + b()
+    fitting.fit(linear, [m, b], concentration_of_pores, concs)
+    plt.plot(concs, linear(concs))
+
