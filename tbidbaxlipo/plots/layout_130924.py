@@ -16,6 +16,7 @@ def extract(keys, dict):
         extracted_dict[key] = dict[key]
     return extracted_dict
 
+
 layout = collections.OrderedDict([
         ('Bax 0 nM',  ['A12', 'B12', 'C12']),
         ('Bax 0.12 nM', ['A11', 'B11', 'C11']),
@@ -90,6 +91,16 @@ df = to_dataframe(bgsub_norm_averages, bgsub_norm_stds)
 # Pore timecourses
 pores = get_average_pore_timecourses(bgsub_norm_averages)
 """Average pores derived by taking -log(1 - data)."""
+
+active_concs = ['Bax 7.9 nM',
+                'Bax 15.8 nM',
+                'Bax 31.5 nM',
+                'Bax 63 nM',
+                'Bax 126 nM']
+subset_means = extract(active_concs, bgsub_norm_averages)
+subset_sds = extract(active_concs, bgsub_norm_stds)
+subset_df = to_dataframe(subset_means, subset_sds)
+#concs = np.array(subset_df.columns.values, dtype='float')
 
 def plot_data():
     """Plots the data and various transformations of it."""
@@ -266,15 +277,6 @@ if __name__ == '__main__':
     plt.ion()
     #plot_data()
     #plot_two_exp_fits()
-    active_concs = ['Bax 7.9 nM',
-                    'Bax 15.8 nM',
-                    'Bax 31.5 nM',
-                    'Bax 63 nM',
-                    'Bax 126 nM']
-    subset_means = extract(active_concs, bgsub_norm_averages)
-    subset_sds = extract(active_concs, bgsub_norm_stds)
-    subset_df = to_dataframe(subset_means, subset_sds)
-    concs = np.array(subset_df.columns.values, dtype='float')
     """
 
     from tbidbaxlipo.plots.titration_fits import TwoExp
