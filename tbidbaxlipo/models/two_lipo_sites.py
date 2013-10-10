@@ -119,4 +119,16 @@ class Builder(one_cpt.Builder):
                     Bax(bh3=None, loc='m', lipo=None),
                     basal_Bax_nonsat_kr)
 
+    """
+    def Bax_reverses(self):
+        print('two_lipo_sites: Bax_reverses')
+
+        Bax = self['Bax']
+        sol = self['solution']
+        ves = self['ves']
+        krev = self.parameter('iBax_reverse_k', 1e-3)
+        self.rule('iBax_nonsat_reverses',
+                Bax(loc='i'
+    """
+
 
