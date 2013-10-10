@@ -458,19 +458,21 @@ class Builder(pysb.builder.Builder):
              kc)
 
     def Bax_reverses(self):
-        """Reversion of the inserted form of Bax to the loosely associated
-        state, at which point it can return to the solution."""
+        """Reversion of the inserted form of Bax to the solution."""
 
         print('core: Bax_reverses')
 
         Bax = self['Bax']
+        sol = self['solution']
+        ves = self['ves']
 
         # Reversion of active Bax (P -> S)
-        krev = self.parameter('iBax_reverse_k', 1e-2)
+        krev = self.parameter('iBax_reverse_k', 1e-3)
 
         # iBax reverses back to mBax
         self.rule('iBax_reverses',
-             Bax(loc='i', bh3=None, a6=None) >> Bax(loc='m', bh3=None, a6=None),
+             Bax(loc='i', bh3=None, a6=None, lipo=ANY) ** ves >>
+             Bax(loc='c', bh3=None, a6=None, lipo=None) ** sol,
              krev)
 
     def Bax_dimerizes(self, bax_loc_state='i'):
