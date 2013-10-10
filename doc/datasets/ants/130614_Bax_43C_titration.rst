@@ -42,6 +42,17 @@ Fits of each replicate to the three-parameter equation
 
     plt.close('all')
     plot_k1_curve(k1_arr, conc_list)
+    from tbidbaxlipo.util import fitting
+    m = fitting.Parameter(0.0001)
+    b = fitting.Parameter(0.0001)
+    mean_k1 = np.mean(k1_arr, axis=0)
+    def linear(x):
+        return m()*x + b()
+    conc_list = np.array(conc_list)
+    fitting.fit(linear, [m, b], mean_k1[1:], conc_list[1:])
+    plt.plot(conc_list, linear(conc_list))
+    #plt.plot(conc_list, mean_k1, color='g')
+    plt.ylim([0, 1.1*np.max(mean_k1)])
 
 .. plot::
     :context:
