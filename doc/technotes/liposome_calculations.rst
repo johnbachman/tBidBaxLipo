@@ -11,10 +11,16 @@ First, we figure out the total amount of lipids in our solution:
 
     In [1]: import math
 
-    # mass, in grams
+    # mass of lipid film, in grams
     In [1]: mass_of_lipids = 0.001
 
-    # in daltons
+    # resuspension volume, in mL
+    In [1]: resuspension_vol = 1.
+
+    # concentration of lipid, in mg/ml
+    In [1]: mg_per_ml_lipid = (1e3 * mass_of_lipids) / float(resuspension_vol)
+
+    # MW of lipids, in daltons
     In [2]: avg_mw_of_lipids = 770
 
     In [3]: moles_of_lipid = mass_of_lipids / float(avg_mw_of_lipids)
@@ -41,6 +47,7 @@ Next, we calculate the number of lipid molecules per liposome:
     In [18]: n_of_lipids_per_liposome = \
        ....: (surface_area_of_liposomes / surface_area_of_lipid_molecule) * 2
 
+    In [19]: n_of_lipids_per_liposome
 We can now calculate the number of liposomes as the number of lipid molecules
 divided by the number of lipid molecules per liposome:
 
@@ -76,9 +83,13 @@ within two 1 mL fractions, for a dilution factor of 2:
 
 .. ipython::
 
-    In [33]: dilution_factor = 2
+    In [33]: dilution_factor = 1.
 
-    In [34]: conc_of_liposomes_after_column = conc_of_liposomes_before_column / dilution_factor
+    In [34]: conc_of_lipid_after_column = conc_of_lipid_before_column * dilution_factor
+
+    In [34]: conc_of_liposomes_after_column = conc_of_liposomes_before_column * dilution_factor
+
+    In [34]: mg_per_ml_lipid_after_column = mg_per_ml_lipid * dilution_factor
 
 The concentration of lipids in a reaction is typically determined by the amount
 of the final liposome solution is included within the 100 uL reaction volume.
@@ -91,13 +102,16 @@ nanomolar, for different amounts of liposome solution included in the reaction:
 
     In [34]: tt = Texttable()
 
-    In [35]: tt.header(['uL', '[Liposomes] (nM)'])
+    In [35]: tt.header(['uL', '[Liposomes] (nM)', '[Lipid] (uM)',
+       ....: '[Lipid] (mg/ml)'])
 
     In [36]: vols = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 30, 40, 50, 60, 70, \
        ....:         80, 90, 100]
 
-    In [36]: rows = zip(vols, [((vol*conc_of_liposomes_after_column)/100.)*1e9 \
-       ....:                   for vol in vols])
+    In [36]: rows = zip(vols,
+       ....:  [((vol*conc_of_liposomes_after_column)/100.)*1e9 for vol in vols],
+       ....:  [((vol*conc_of_lipid_after_column)/100.)*1e6 for vol in vols],
+       ....:  [((vol*mg_per_ml_lipid_after_column)/100.) for vol in vols])
 
     In [37]: tt.add_rows(rows, header=False)
 
