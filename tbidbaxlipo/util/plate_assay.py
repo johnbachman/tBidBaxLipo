@@ -114,14 +114,14 @@ def read_wallac(csv_file):
         elif well_name != '' and cur_well != well_name:
             cur_well = well_name
             wells[well_name] = [np.array([]),np.array([])]
-        # If it's a well we've seen before, add the time/val pair to the dict
-        else:
-            time = dt.datetime.strptime(row[TIME_COL], '%H:%M:%S.%f')
-            secs = (time.hour * 3600) + (time.minute * 60) + time.second + \
-                   (time.microsecond * 0.000001)
-            value = int(row[VALUE_COL])
-            wells[cur_well][TIME] = np.append(wells[cur_well][TIME], secs)
-            wells[cur_well][VALUE] = np.append(wells[cur_well][VALUE], value)
+
+        # Add the time/val pair to the dict
+        time = dt.datetime.strptime(row[TIME_COL], '%H:%M:%S.%f')
+        secs = (time.hour * 3600) + (time.minute * 60) + time.second + \
+               (time.microsecond * 0.000001)
+        value = int(row[VALUE_COL])
+        wells[cur_well][TIME] = np.append(wells[cur_well][TIME], secs)
+        wells[cur_well][VALUE] = np.append(wells[cur_well][VALUE], value)
 
     return wells
 
@@ -236,6 +236,18 @@ def subtract_background(wells, background):
         time = wells[well_name][TIME]
         tc = wells[well_name][VALUE]
         bgsub_tc = tc - background
+        bgsub_timecourses[well_name] = [time, bgsub_tc]
+    return bgsub_timecourses
+
+def subtract_background_set(wells, background_dict):
+    """Subtract the ordered dict of background vectors from the timecourse
+    wells in the wells dict.
+    """
+    bgsub_timecourses = collections.OrderedDict([])
+    for i, well_name in enumerate(wells.keys()):
+        time = wells[well_name][TIME]
+        tc = wells[well_name][VALUE]
+        bgsub_tc = tc - background_dict.values()[i][VALUE]
         bgsub_timecourses[well_name] = [time, bgsub_tc]
     return bgsub_timecourses
 
