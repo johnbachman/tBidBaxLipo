@@ -11,4 +11,4 @@ Contents:
 
    nbd_bax/index
    ants/index
-
+   fret/index
