@@ -125,6 +125,74 @@ def read_wallac(csv_file):
 
     return wells
 
+def read_flex(tsv_file):
+    """Reads a datafile exported from the FlexStation 3.
+
+    NOTE: Data should be organized by time, so that each row contains
+    a timepoint and each column contains data for one well.
+
+    Parameters
+    ----------
+    tsv_file : string
+        Path to the tab-separated file to load.
+    """
+    # The plan: get the names of all the wells by iterating over the header
+    # column, then populate the entries for those wells by iterating
+    csv_reader = csv.reader(open(tsv_file), dialect='excel-tab')
+    # Initialize the empty dict
+    time_array = []
+    wells = collections.OrderedDict([])
+    row_counter = 0
+    for row_counter, row in enumerate(csv_reader):
+        # Check and see if we've finished reading all the data (which would
+        # show up as a blank line/empty row)
+        if not row:
+            break
+        # Skip the first two rows
+        if row_counter < 2:
+            continue
+        # If we're in the second row, which contains the well names, create
+        # entries in the dict for the wells
+        elif row_counter == 2:
+            # Save the header row so that we can use it for indexing later
+            header_row = row
+            # Now iterate over each column in the row
+            for i, well_name in enumerate(row):
+                # Skip the first two columns, which contain the time and
+                # temperature headings, respectively
+                if i < 2:
+                    continue
+                # Create an empty list to which we will add the time/value lists
+                else:
+                    wells[well_name] = [[], []]
+        # For the rows containing data, fill in the data values; the time arrays
+        # will be added later
+        else:
+            for i, value in enumerate(row):
+                # Add the time value to the time array, after formatting
+                if i == 0:
+                    time = dt.datetime.strptime(value, '%M:%S')
+                    secs = (time.hour * 3600) + (time.minute * 60) + \
+                            time.second + (time.microsecond * 0.000001)
+                    time_array.append(secs)
+                # Skip the temperature column
+                elif i == 1:
+                    continue
+                # Otherwise, add the value to the appropriate well, unless
+                # it's empty, in which case we add nothing
+                else:
+                    if value == '':
+                        continue
+                    well_name = header_row[i]
+                    wells[well_name][VALUE].append(float(value))
+    # Now that we're done iterating over the file, iterate over the dict we've
+    # created and add the time array to each entry in the dict
+    for well_name, entry in wells.iteritems():
+        entry[TIME] = time_array
+        if not entry[VALUE]:
+            del wells[well_name]
+    return wells
+
 def plot_all(wells, errors=None, do_legend=True, legend_position=0.8):
     """Plots all of the timecourses in the dict.
 
