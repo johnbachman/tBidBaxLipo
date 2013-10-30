@@ -98,3 +98,10 @@ def residuals(function, y, x):
     err = y - function(x)
     return err
 
+def r_squared(y, yhat):
+    ybar = np.mean(y)
+    ssres = np.sum((y - yhat) ** 2)
+    #ssreg = np.sum((yhat - ybar) ** 2)
+    sstot = np.sum((y - ybar) ** 2)
+    return 1 - (ssres / sstot)
+

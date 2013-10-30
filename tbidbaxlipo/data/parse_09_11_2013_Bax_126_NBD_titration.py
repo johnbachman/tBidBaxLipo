@@ -81,12 +81,6 @@ norm_data_matrix = [tc / float(tc[0]) for tc in data_matrix]
 norm_data_matrix = np.array(norm_data_matrix)
 norm_data = pd.DataFrame(norm_data_matrix.T, index=time, columns=col_index)
 
-def r_squared(y, yhat):
-    ybar = np.mean(y)
-    ssres = np.sum((y - yhat) ** 2)
-    #ssreg = np.sum((yhat - ybar) ** 2)
-    sstot = np.sum((y - ybar) ** 2)
-    return 1 - (ssres / sstot)
 
 def plot_f0():
     plt.figure()
@@ -118,7 +112,7 @@ def plot_f0():
     print "F0 linear fit, no Bid"
     print "m: %s" % m()
     print "b: %s" % b()
-    print "R^2: %s" % r_squared(f0_no_bid, linear(bax_concs))
+    print "R^2: %s" % fitting.r_squared(f0_no_bid, linear(bax_concs))
     print
 
     # Plot f0 values for 20 nM cBid
@@ -154,7 +148,7 @@ def plot_f0():
     print "NOTE: Ignoring F0 for Bax = 0 in fit"
     print "m: %s" % m()
     print "b: %s" % b()
-    print "R^2: %s" % r_squared(f0_means[:-1], linear(bax_concs[:-1]))
+    print "R^2: %s" % fitting.r_squared(f0_means[:-1], linear(bax_concs[:-1]))
 
     plt.legend(loc='lower right')
     plt.title('$F_0$ values')
