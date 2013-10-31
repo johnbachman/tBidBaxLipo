@@ -36,6 +36,7 @@ First, the raw data, showing pretty good stability with a handful of outliers:
     :context:
 
     from tbidbaxlipo.plots.layout_131030 import *
+    close('all')
     [timecourse_wells, timecourse_averages, timecourse_stds,
      conc_list, means, stds, log_concs, log_means, log_stds] = \
                     get_wells('131030_Fluorescein_Flex_Med_6read.txt')

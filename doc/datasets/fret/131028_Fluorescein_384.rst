@@ -17,6 +17,7 @@ First off, the distribution of means for the 25 nM dye solution wells:
     :context:
 
     from tbidbaxlipo.plots.layout_131028 import *
+    plt.close('all')
     plot(A_timecourses)
 
 Now, the distribution of means for the 23.75 nM dye solution wells:

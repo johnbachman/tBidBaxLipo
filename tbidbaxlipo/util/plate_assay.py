@@ -125,8 +125,8 @@ def read_wallac(csv_file):
 
     return wells
 
-def read_flex(tsv_file):
-    """Reads a datafile exported from the FlexStation 3.
+def read_flexstation_kinetics(tsv_file):
+    """Reads a kinetics datafile exported from the FlexStation 3.
 
     NOTE: Data should be organized by time, so that each row contains
     a timepoint and each column contains data for one well.
@@ -184,7 +184,10 @@ def read_flex(tsv_file):
                     if value == '':
                         continue
                     well_name = header_row[i]
-                    wells[well_name][VALUE].append(float(value))
+                    if value == '#Sat':
+                        wells[well_name][VALUE].append(np.nan)
+                    else:
+                        wells[well_name][VALUE].append(float(value))
     # Now that we're done iterating over the file, iterate over the dict we've
     # created and add the time array to each entry in the dict
     for well_name, entry in wells.iteritems():

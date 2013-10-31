@@ -44,7 +44,7 @@ def get_wells(filename):
                                      #'131021_Fluorescein_03sec.csv'))
 
     # Timecourse wells
-    timecourse_wells = read_flex(timecourse_file)
+    timecourse_wells = read_flexstation_kinetics(timecourse_file)
 
     # Averages of raw timecourses across replicates
     (timecourse_averages, timecourse_stds) = averages(timecourse_wells, layout)
