@@ -21,7 +21,7 @@ Example usage:
     print "m: %f\nb: %f" % (m(), b())
 """
 
-from numpy import shape, arange, sum
+from numpy import shape, arange, sum, mean
 from scipy import optimize
 
 class Parameter:
@@ -99,9 +99,9 @@ def residuals(function, y, x):
     return err
 
 def r_squared(y, yhat):
-    ybar = np.mean(y)
-    ssres = np.sum((y - yhat) ** 2)
-    #ssreg = np.sum((yhat - ybar) ** 2)
-    sstot = np.sum((y - ybar) ** 2)
+    ybar = mean(y)
+    ssres = sum((y - yhat) ** 2)
+    #ssreg = sum((yhat - ybar) ** 2)
+    sstot = sum((y - ybar) ** 2)
     return 1 - (ssres / sstot)
 
