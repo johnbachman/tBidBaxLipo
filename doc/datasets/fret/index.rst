@@ -1,4 +1,4 @@
-FRET Membrane Binidng
+FRET Membrane Binding
 =====================
 
 Contents:
@@ -8,3 +8,4 @@ Contents:
 
     131021_Fluorescein
     131028_Fluorescein_384
+    131030_Fluorescein_Flex_Dilution

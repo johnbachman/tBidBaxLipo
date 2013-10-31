@@ -89,15 +89,19 @@ def plot_cvs(means, stds, log_concs):
     # Plot CV at each concentration for the replicates
     figure()
     cvs = (stds / means) * 100.
+    infs = np.isinf(log_concs)
+    log_concs_noinf = log_concs[infs == False]
+    cvs_noinf = cvs[infs == False]
     for rep_index in range(cvs.shape[1]):
-        plot(log_concs, cvs[:,rep_index], marker='o',
+        plot(log_concs_noinf, cvs_noinf[:,rep_index], marker='o',
              label='Row %d' % (rep_index + 1))
     title('CV of %s reads vs. [Fluorescein]' % num_timepoints)
     xlabel('log10([Fluorescein]) (nM)')
     ylabel('CV (%)')
     legend(loc='upper right')
 
-def plot_dilution_series(conc_list, means, stds, log_concs, log_means, log_stds):
+def plot_dilution_series(conc_list, means, stds, log_concs, log_means,
+                         log_stds):
     # Plot each dilution series separately
     figure()
     for rep_index in range(means.shape[1]):
@@ -110,8 +114,13 @@ def plot_dilution_series(conc_list, means, stds, log_concs, log_means, log_stds)
 
     # And now on a log scale
     figure()
+    infs = np.isinf(log_concs)
+    log_concs_noinf = log_concs[infs == False]
+    log_means_noinf = log_means[infs == False]
+    log_stds_noinf = log_stds[infs == False]
     for rep_index in range(log_means.shape[1]):
-        errorbar(log_concs, log_means[:,rep_index], yerr=log_stds[:, rep_index],
+        errorbar(log_concs_noinf, log_means_noinf[:,rep_index],
+                 yerr=log_stds_noinf[:, rep_index],
                  label='Row %d' % (rep_index + 1))
     xlabel('log10([Fluorescein]) (nM)')
     ylabel('log10(RFU)')
@@ -119,12 +128,20 @@ def plot_dilution_series(conc_list, means, stds, log_concs, log_means, log_stds)
     title('Fluorescein dilution series, log-log plot')
 
 def plot_bar_plot(means, stds):
+    dilution_means = np.mean(means, axis=1)
+    nans = np.isnan(dilution_means)
+    means_nonan = means[nans == False]
+    stds_nonan = stds[nans == False]
     # Bar plot of replicates showing error bars
     figure()
     width = 1 / float((means.shape[1]+1))
     for rep_index in range(means.shape[1]):
-        bar(np.arange(num_concs)+(width*rep_index), means[:,rep_index], width,
-                 yerr=stds[:,rep_index])
+        bar(np.arange(num_concs-np.sum(nans))+(width*rep_index),
+                means_nonan[:,rep_index], width,
+                yerr=stds_nonan[:,rep_index])
+    ylabel('RFU')
+    xlabel('Dilution')
+    title('Fluorescein dilution series replicates')
 
 def plot_fits(means, log_means, conc_list, log_concs):
     # Ignore any NaNs
@@ -134,12 +151,17 @@ def plot_fits(means, log_means, conc_list, log_concs):
     dilution_means = dilution_means[nans==False]
     dilution_stds = np.std(means[nans==False], axis=1)
 
+
     # Take mean of all dilution series
-    log_dilution_means = np.mean(log_means[nans==False], axis=1)
-    log_dilution_stds = np.std(log_means[nans==False], axis=1)
+    infs = np.isinf(log_concs)
+    log_dilution_means = np.mean(log_means[(infs + nans) == False],
+                                 axis=1)
+    log_dilution_stds = np.std(log_means[(infs + nans) == False],
+                               axis=1)
 
     conc_list_no_nan = conc_list[nans == False]
-    log_concs_no_nan = log_concs[nans == False]
+    conc_list_nonan_noinf = conc_list[(infs + nans) == False]
+    log_concs_nonan_noinf = log_concs[(infs + nans) == False]
 
 
     # Fit with line
@@ -148,38 +170,35 @@ def plot_fits(means, log_means, conc_list, log_concs):
     def linear(x):
         return m()*x + b()
     fitting.fit(linear, [m, b], dilution_means, conc_list_no_nan)
-    print m()
-    print b()
+    print "m: %f" % m()
+    print "b: %f" % b()
+
+    r_squared = fitting.r_squared(dilution_means, linear(conc_list_no_nan))
+    print "R^2: %f" % r_squared
 
     figure()
     errorbar(conc_list_no_nan, dilution_means, yerr=dilution_stds,
             color='r', linestyle='')
     plot(conc_list_no_nan, linear(conc_list_no_nan), color='r', label='Linear')
-    #plot(conc_list_no_nan, quenching_quad(conc_list_no_nan), color='g',
-    #     label='Dimerization')
-    #plot(conc_list, andersson(conc_list), color='b', label='Andersson et al.')
-    #plot(conc_list, power_law(conc_list), color='m', label='Power law')
     xlabel('[Fluorescein] (nM)')
     ylabel('RFU')
     title('Fits to Fluorescein titration')
     legend(loc='lower right')
 
     figure()
-    errorbar(log_concs_no_nan, log_dilution_means, yerr=log_dilution_stds,
+    errorbar(log_concs_nonan_noinf, log_dilution_means, yerr=log_dilution_stds,
              color='r', linestyle='')
-    plot(log_concs_no_nan, np.log10(linear(conc_list_no_nan)),
+    plot(log_concs_nonan_noinf, np.log10(linear(conc_list_nonan_noinf)),
             color='r', label='Linear')
     legend(loc='lower right')
     xlabel('log10([Fluorescein]) (nM)')
     ylabel('log10(RFU)')
     title('Fits to Fluorescein titration, log-log')
 
-    return fitting.r_squared(dilution_means, linear(conc_list_no_nan))
-
 
 if __name__ == '__main__':
-    for filename in ['131030_Fluorescein_Flex_High_22read.txt',
-                     '131030_Fluorescein_Flex_Med_6read.txt',
+    for filename in ['131030_Fluorescein_Flex_Med_6read.txt',
+                     '131030_Fluorescein_Flex_High_22read.txt',
                      '131030_Fluorescein_Flex_Med_100read.txt']:
         [timecourse_wells, timecourse_averages, timecourse_stds,
          conc_list, means, stds, log_concs, log_means, log_stds] = \
@@ -190,5 +209,4 @@ if __name__ == '__main__':
         plot_cvs(means, stds, log_concs)
         plot_dilution_series(conc_list, means, stds, log_concs, log_means,
                              log_stds)
-        r_squared = plot_fits(means, log_means, conc_list, log_concs)
-        print "R^2: %f" % r_squared
+        plot_fits(means, log_means, conc_list, log_concs)
