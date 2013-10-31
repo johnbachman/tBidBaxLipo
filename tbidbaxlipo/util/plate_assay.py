@@ -125,6 +125,99 @@ def read_wallac(csv_file):
 
     return wells
 
+def read_flexstation_flex(tsv_file):
+    """Reads a Flex mode datafile exported from the FlexStation 3.
+
+    NOTE: Data should be organized by time, so that each row contains
+    a timepoint and each column contains data for one well.
+
+    In Flex mode files, time values for the reads are contained in distinct
+    columns with names like "A8T" with time values for reads in column "A8".
+    To parse these we first treat these time columns as wells like the others,
+    then at the end we rebuild the dict and put the corresponding time and
+    value columns together.
+
+    Parameters
+    ----------
+    tsv_file : string
+        Path to the tab-separated file to load.
+
+    Returns
+    -------
+    collections.OrderedDict
+        An ordered dictionary with well names as keys and two-element lists
+        as the entries. The first entry in each two-element list is a list
+        of time coordinates; the second is a list of values (e.g.,
+        fluorescence values).
+    """
+    # The plan: get the names of all the wells by iterating over the header
+    # column, then populate the entries for those wells by iterating
+    csv_reader = csv.reader(open(tsv_file), dialect='excel-tab')
+    # Initialize the empty dict
+    time_array = []
+    raw_wells = collections.OrderedDict([])
+    for row_counter, row in enumerate(csv_reader):
+        # Check and see if we've finished reading all the data (which would
+        # show up as a blank line/empty row)
+        if not row:
+            break
+        # Skip the first two rows
+        if row_counter < 2:
+            continue
+        # If we're in the second row, which contains the well names, create
+        # entries in the dict for the wells
+        elif row_counter == 2:
+            # Save the header row so that we can use it for indexing later
+            header_row = row
+            # Now iterate over each column in the row
+            for i, well_name in enumerate(row):
+                # Skip the first two columns, which contain the plate and
+                # temperature headings, respectively
+                if i < 2:
+                    continue
+                # Create an empty list to which we will add the time/value lists
+                else:
+                    raw_wells[well_name] = []
+        # For the rows containing data, fill in the data values; the time arrays
+        # will be added later
+        else:
+            for i, value in enumerate(row):
+                if i < 2:
+                    continue
+                # Add the time or fluorescence value to the appropriate well,
+                # unless it's empty, in which case we add nothing
+                else:
+                    if value == '':
+                        continue
+                    header_name = header_row[i]
+                    if value == '#Sat':
+                        raw_wells[header_name].append(np.nan)
+                    elif value == '#Low':
+                        raw_wells[header_name].append(np.nan)
+                    else:
+                        raw_wells[header_name].append(float(value))
+    # Now that we're done iterating over the file, iterate over the dict we've
+    # created and add the time array to each entry in the dict
+    import pdb; pdb.set_trace()
+    wells = collections.OrderedDict([])
+    for well_name, values in raw_wells.iteritems():
+        # If this well doesn't contain any data, skip it
+        if not values:
+            continue
+        # If we're in a time well, parse out the well name
+        if well_name.endswith('T'):
+            index = TIME
+            well_name = well_name[:-1]
+        else:
+            index = VALUE
+
+        # If this is a new well, create it
+        if not well_name in wells.keys():
+            wells[well_name] = [[],[]]
+        # Add the data to the appropriate field for the wel
+        wells[well_name][index] = values
+    return wells
+
 def read_flexstation_kinetics(tsv_file):
     """Reads a kinetics datafile exported from the FlexStation 3.
 
@@ -135,6 +228,14 @@ def read_flexstation_kinetics(tsv_file):
     ----------
     tsv_file : string
         Path to the tab-separated file to load.
+
+    Returns
+    -------
+    collections.OrderedDict
+        An ordered dictionary with well names as keys and two-element lists
+        as the entries. The first entry in each two-element list is a list
+        of time coordinates; the second is a list of values (e.g.,
+        fluorescence values).
     """
     # The plan: get the names of all the wells by iterating over the header
     # column, then populate the entries for those wells by iterating
@@ -142,7 +243,6 @@ def read_flexstation_kinetics(tsv_file):
     # Initialize the empty dict
     time_array = []
     wells = collections.OrderedDict([])
-    row_counter = 0
     for row_counter, row in enumerate(csv_reader):
         # Check and see if we've finished reading all the data (which would
         # show up as a blank line/empty row)
