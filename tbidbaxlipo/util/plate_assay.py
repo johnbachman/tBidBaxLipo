@@ -198,7 +198,6 @@ def read_flexstation_flex(tsv_file):
                         raw_wells[header_name].append(float(value))
     # Now that we're done iterating over the file, iterate over the dict we've
     # created and add the time array to each entry in the dict
-    import pdb; pdb.set_trace()
     wells = collections.OrderedDict([])
     for well_name, values in raw_wells.iteritems():
         # If this well doesn't contain any data, skip it
@@ -397,6 +396,19 @@ def averages(wells, layout):
 
     # end iteration over conditions
     return (well_averages, well_stds)
+
+def distributions_by_condition(wells, layout):
+    # For every experimental condition...
+    distributions = collections.OrderedDict([])
+    for condition_name, condition_list in layout.iteritems():
+        num_conditions = len(condition_list)
+        # Create a new entry in the averages dict consisting of a numpy
+        # array
+        distribution = []
+        for row_index, well_name in enumerate(condition_list):
+            distribution.append(wells[well_name])
+        distributions[condition_name] = np.array(distribution)
+    return distributions
 
 def subtract_background(wells, background):
     """Subtract the given background vector (given as a single array)
