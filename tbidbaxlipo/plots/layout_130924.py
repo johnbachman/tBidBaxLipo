@@ -8,7 +8,7 @@ import tbidbaxlipo.data
 from matplotlib import pyplot as plt
 import numpy as np
 from tbidbaxlipo.util import fitting
-from tbidbaxlipo.plots.titration_fits import TwoExp
+from tbidbaxlipo.plots import titration_fits
 
 def extract(keys, dict):
     extracted_dict = collections.OrderedDict([])
@@ -70,6 +70,7 @@ norm_wells = get_normalized_well_timecourses(
 """Timecourses normalized and then averaged."""
 
 # Get background average
+background_time = norm_averages['Bax 0 nM'][TIME]
 background = norm_averages['Bax 0 nM'][VALUE]
 
 # Normalized and background subtracted
@@ -92,15 +93,6 @@ df = to_dataframe(bgsub_norm_averages, bgsub_norm_stds)
 pores = get_average_pore_timecourses(bgsub_norm_averages)
 """Average pores derived by taking -log(1 - data)."""
 
-active_concs = ['Bax 7.9 nM',
-                'Bax 15.8 nM',
-                'Bax 31.5 nM',
-                'Bax 63 nM',
-                'Bax 126 nM']
-subset_means = extract(active_concs, bgsub_norm_averages)
-subset_sds = extract(active_concs, bgsub_norm_stds)
-subset_df = to_dataframe(subset_means, subset_sds)
-#concs = np.array(subset_df.columns.values, dtype='float')
 
 def plot_data():
     """Plots the data and various transformations of it."""
@@ -164,7 +156,7 @@ def plot_two_exp_fits():
             time = np.array(well_data[TIME])
             y = np.array(well_data[VALUE])
 
-            fit = TwoExp()
+            fit = titration_fits.TwoExp()
             (k1, fmax, k2) = fit.fit_timecourse(time, y)
 
             fmax_arr[j, i] = fmax
@@ -278,7 +270,6 @@ if __name__ == '__main__':
     #plot_data()
     #plot_two_exp_fits()
     """
-
     from tbidbaxlipo.plots.titration_fits import TwoExp
     fit = TwoExp()
     fit.plot_fits_from_dataframe(subset_df)
@@ -297,18 +288,41 @@ if __name__ == '__main__':
     plt.title('k2')
     """
     # Pores
-    subset_pores = extract(active_concs, pores)
+    #subset_pores = extract(active_concs, pores)
+    #subset_pores_df = to_dataframe(subset_pores, subset_sds)
 
-    subset_pores_df = to_dataframe(subset_pores, subset_sds)
+    #plot_all(subset_means)
+    #plot_all(subset_pores)
 
-    plt.figure()
-    plot_all(subset_means)
-    plot_all(subset_pores)
+    active_concs = ['Bax 7.9 nM',
+                    'Bax 15.8 nM',
+                    'Bax 31.5 nM',
+                    'Bax 63 nM',
+                    'Bax 126 nM']
+    #subset_means = extract(active_concs, bgsub_norm_averages)
+    #subset_means = extract(active_concs, norm_averages)
+    #subset_sds = extract(active_concs, norm_stds)
+    #subset_df = to_dataframe(subset_means, subset_sds)
+    #concs = np.array(subset_df.columns.values, dtype='float')
+    df = to_dataframe(norm_averages, norm_stds)
+    concs = np.array(df.columns.values, dtype='float')
 
-    fit = TwoExp()
-    fit.plot_fits_from_dataframe(subset_pores_df)
-    p = fit.fit_from_dataframe(subset_pores_df)
+    fit = titration_fits.TwoExp()
+    bg_rate = fit.fit_timecourse(background_time, background)
+    print bg_rate
+    plt.ion()
+    plt.plot(background_time, background)
+    plt.plot(background_time, fit.fit_func(background_time, bg_rate))
+    t = np.linspace(0, 100000, 1000)
+    plt.plot(t, fit.fit_func(t, bg_rate))
 
+    fit = titration_fits.TwoExp()
+    #fit.plot_fits_from_dataframe(subset_df)
+    #p = fit.fit_from_dataframe(subset_df)
+    fit.plot_fits_from_dataframe(df)
+    p = fit.fit_from_dataframe(df)
+
+    """
     plt.figure()
     plt.plot(concs, p[0], marker='o', color='r')
     plt.title('k1')
@@ -320,6 +334,26 @@ if __name__ == '__main__':
     plt.figure()
     plt.plot(concs, p[2], marker='o', color='r')
     plt.title('k2')
+    """
 
+    # With fitting of bg
+    #print "bg_rate %f" % bg_rate
+    fit = titration_fits.TwoExpWithBackground(bg_rate)
+    #fit.plot_fits_from_dataframe(subset_df)
+    #p = fit.fit_from_dataframe(subset_df)
+    fit.plot_fits_from_dataframe(df)
+    p = fit.fit_from_dataframe(df)
 
+    """
+    plt.figure()
+    plt.plot(concs, p[0], marker='o', color='r')
+    plt.title('k1')
 
+    plt.figure()
+    plt.plot(concs, p[1], marker='o', color='r')
+    plt.title('Fmax')
+
+    plt.figure()
+    plt.plot(concs, p[2], marker='o', color='r')
+    plt.title('k2')
+    """
