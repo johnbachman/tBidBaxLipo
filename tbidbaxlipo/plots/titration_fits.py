@@ -230,9 +230,7 @@ class OneExpNoFmax(TitrationFit):
     def __init__(self):
         super(OneExpNoFmax, self).__init__(param_names=['$k_1$'],
                                            initial_guesses=[1e-4])
-
-    @staticmethod
-    def fit_func(t, k_arr):
+    def fit_func(self, t, k_arr):
         """Single parameter exponential fitting function."""
         return (1 - np.exp(-k_arr[0]*t))
 
@@ -250,8 +248,7 @@ class Linear(TitrationFit):
         super(Linear, self).__init__(param_names=['$k_1$'],
                                      initial_guesses=[1e-4])
 
-    @staticmethod
-    def fit_func(t, k_arr):
+    def fit_func(self, t, k_arr):
         """Linear fitting function."""
         return k_arr[0]*t
 
@@ -267,8 +264,7 @@ class OneExpFmax(TitrationFit):
         super(OneExpFmax, self).__init__(param_names=['$k_1$', '$F_{max}$'],
                                          initial_guesses=[1e-4, 0.9])
 
-    @staticmethod
-    def fit_func(t, k_arr):
+    def fit_func(self, t, k_arr):
         """Two-parameter exponential fitting function."""
         return k_arr[1] * (1 - np.exp(-k_arr[0]*t))
 
@@ -282,11 +278,40 @@ class TwoExp(TitrationFit):
     def __init__(self):
         super(TwoExp, self).__init__(
                     param_names=['$k_1$', '$F_{max}$', '$k_2$'],
-                    initial_guesses=[1e-4, 0.9, 1e-2])
+                    initial_guesses=[1e-5, 0.5, 1e-3])
 
-    @staticmethod
-    def fit_func(t, k_arr):
+    def fit_func(self, t, k_arr):
         """Two-exponential fitting function."""
         return (k_arr[1]* (1 - np.exp(-k_arr[0] *
                                       (1 - np.exp(-k_arr[2]*t)) * t)))
+class TwoExpNoFmax(TitrationFit):
+    def __init__(self):
+        super(TwoExpNoFmax, self).__init__(
+                    param_names=['$k_1$', '$k_2$'],
+                    initial_guesses=[1e-5, 1e-3])
+
+    def fit_func(self, t, k_arr):
+        """Two-exponential fitting function."""
+        return (1 - np.exp(- k_arr[0] * (1 - np.exp(-k_arr[1]*t)) * t))
+
+
+class TwoExpWithBackground(TitrationFit):
+    r"""Fit timecourses to a three-parameter, two-phase exponential.
+
+    .. math::
+
+        y(t) = F_{max} \left(1 - e^{-k_1 (1 - e^{-k_2 t}) t} \right)
+    """
+    def __init__(self, bg_rates):
+        super(TwoExpWithBackground, self).__init__(
+                    param_names=['$k_1$', '$F_{max}$', '$k_2$'],
+                    initial_guesses=[1e-4, 0.9, 1e-2])
+        self.bg_rates = bg_rates
+
+    def fit_func(self, t, k_arr):
+        """Two-exponential fitting function."""
+        return ((k_arr[1]+self.bg_rates[1]) *
+                (1 - np.exp(-(self.bg_rates[0] + k_arr[0]) *
+                             (1 - np.exp(-(self.bg_rates[2] + k_arr[2])
+                                 * t)) * t)))
 
