@@ -37,14 +37,19 @@ num_timepoints = 20
 
 ion()
 
-def get_wells(filename):
+def get_wells(filename, layout, reader='flexstation'):
     timecourse_file = os.path.abspath(os.path.join(data_path, filename))
                                      #'131030_Fluorescein_Flex_Med_6read.txt'))
                                      #'131022_Fluorescein_01sec.csv'))
                                      #'131021_Fluorescein_03sec.csv'))
 
     # Timecourse wells
-    timecourse_wells = read_flexstation_kinetics(timecourse_file)
+    if reader == 'wallac':
+        timecourse_wells = read_wallac(timecourse_file)
+    elif reader == 'flexstation':
+        timecourse_wells = read_flexstation_kinetics(timecourse_file)
+    else:
+        raise ValueError('reader must be flexstation or wallac')
 
     # Averages of raw timecourses across replicates
     (timecourse_averages, timecourse_stds) = averages(timecourse_wells, layout)
@@ -202,7 +207,7 @@ if __name__ == '__main__':
                      '131030_Fluorescein_Flex_Med_100read.txt']:
         [timecourse_wells, timecourse_averages, timecourse_stds,
          conc_list, means, stds, log_concs, log_means, log_stds] = \
-                        get_wells(filename)
+                        get_wells(filename, layout)
 
         plot_data(timecourse_wells, timecourse_averages, timecourse_stds)
         plot_bar_plot(means, stds)
