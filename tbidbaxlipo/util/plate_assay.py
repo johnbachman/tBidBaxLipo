@@ -56,18 +56,16 @@ import numpy as np
 import collections
 import pandas as pd
 
-# Indices of the exported CSV
-WELL_COL = 2
-TIME_COL = 4
-VALUE_COL = 5
-
 # We store the well data in a list of lists; the first list
 # has the time coordinates, the second list has the values
 # (see read_wallac, below)
 TIME = 0
 VALUE = 1
 
-def read_wallac(csv_file):
+def read_envision(csv_file):
+    return read_wallac(csv_file, WELL_COL=4, TIME_COL=10, VALUE_COL=13)
+
+def read_wallac(csv_file, WELL_COL=2, TIME_COL=4, VALUE_COL=5):
     """Parses the plate reader data from a CSV file.
 
     NOTE: The data must be sorted by well before exporting to CSV. See the
@@ -366,7 +364,7 @@ def plot_condition(wells, layout, condition_name):
         (time, value) = wells[well_name]
         plot(time, value)
 
-def averages(wells, layout):
+def averages(wells, layout, stderr=False):
     # For every experimental condition...
     well_averages = collections.OrderedDict([])
     well_stds = collections.OrderedDict([])
@@ -389,7 +387,10 @@ def averages(wells, layout):
         time_averages = np.mean(time_matrix, axis=0)
         value_averages = np.mean(value_matrix, axis=0)
         time_stds = np.std(time_matrix, axis=0)
-        value_stds = np.std(value_matrix, axis=0)
+        if stderr:
+            value_stds = np.std(value_matrix, axis=0) / np.sqrt(num_conditions)
+        else:
+            value_stds = np.std(value_matrix, axis=0)
 
         well_averages[condition_name] = [time_averages, value_averages]
         well_stds[condition_name] = [time_stds, value_stds]
