@@ -86,7 +86,9 @@ def fit(function, parameters, y, x = None, maxfev=100000):
 
     if x is None: x = arange(y.shape[0])
     p = [param() for param in parameters]
-    result = optimize.leastsq(f, p, ftol=1e-12, xtol=1e-12, maxfev=maxfev)
+    result = optimize.leastsq(f, p, ftol=1e-12, xtol=1e-12, maxfev=maxfev,
+                              full_output=True)
+    return result
 
 def mse(function, y, x):
     err = y - function(x)
