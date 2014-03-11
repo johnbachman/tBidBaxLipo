@@ -12,13 +12,13 @@ First, we figure out the total amount of lipids in our solution:
     In [1]: import math
 
     # mass of lipid film, in grams
-    In [1]: mass_of_lipids = 0.001
+    In [1]: mass_of_lipids = 0.002
 
-    # resuspension volume, in mL
-    In [1]: resuspension_vol = 1.
+    # resuspension volume, in liters
+    In [1]: resuspension_volume = 0.001
 
     # concentration of lipid, in mg/ml
-    In [1]: mg_per_ml_lipid = (1e3 * mass_of_lipids) / float(resuspension_vol)
+    In [1]: mg_per_ml_lipid = mass_of_lipids / float(resuspension_volume)
 
     # MW of lipids, in daltons
     In [2]: avg_mw_of_lipids = 770
@@ -63,9 +63,6 @@ mL):
 
 .. ipython::
 
-    # in liters
-    In [29]: resuspension_volume = 1e-3
-
     In [30]: conc_of_liposomes_before_column = moles_of_liposomes / resuspension_volume
 
     # in Molar
@@ -79,11 +76,12 @@ mL):
 For assays where the liposomes must be separated from free dye by running them
 over a benchtop column, we must account for the dilution factor from running
 the column. For a CL-2B column, we typically recover all of the liposomes
-within two 1 mL fractions, for a dilution factor of 2:
+within two 1 mL fractions, for a dilution factor of 0.5 (though Aisha argues that
+0.4 may be more accurate):
 
 .. ipython::
 
-    In [33]: dilution_factor = 1.
+    In [33]: dilution_factor = 0.5
 
     In [34]: conc_of_lipid_after_column = conc_of_lipid_before_column * dilution_factor
 
