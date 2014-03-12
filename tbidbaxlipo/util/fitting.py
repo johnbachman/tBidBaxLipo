@@ -75,6 +75,13 @@ def fit(function, parameters, y, x = None, maxfev=100000):
     maxfev : int
         Maximum function evaluations. Passed to ``scipy.optimize.leastsq``
         as a keyword argument.
+
+    Returns
+    -------
+    tuple: (residuals, result)
+        The first entry in the tuple is a num_timepoints length array
+        containing the residuals at the best fit parameter values. The second
+        element is the result object returned by scipy.optimize.leastsq.
     """
     def f(params):
         i = 0
@@ -88,9 +95,21 @@ def fit(function, parameters, y, x = None, maxfev=100000):
     p = [param() for param in parameters]
     result = optimize.leastsq(f, p, ftol=1e-12, xtol=1e-12, maxfev=maxfev,
                               full_output=True)
-    return result
+    p_final = [param() for param in parameters]
+    residuals = f(p_final)
+
+    return (residuals, result)
 
 def fit_matrix(function, parameters, y, x = None, maxfev=100000):
+    """Similar to fit, but takes fits a matrix of multiple replicates.
+
+    The data array y is expected to be of the form
+    (num_timepoints, num_replicates).
+
+    Note that the residuals entry in the returned tuple has length
+    num_timepoints * num_replicates.
+    """
+
     (num_timepoints, num_replicates) = y.shape
 
     def f(params):
@@ -109,9 +128,9 @@ def fit_matrix(function, parameters, y, x = None, maxfev=100000):
     result = optimize.leastsq(f, p, ftol=1e-12, xtol=1e-12, maxfev=maxfev,
                               full_output=True)
     p_final = [param() for param in parameters]
-    residual_variance = np.var(f(p_final))
+    residuals = f(p_final)
 
-    return (residual_variance, result)
+    return (residuals, result)
 
 
 def mse(function, y, x):
