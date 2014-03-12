@@ -615,3 +615,25 @@ def truncate_timecourses(wells, start, end=None):
         trunc[well].append(wells[well][TIME][start:end])
         trunc[well].append(wells[well][VALUE][start:end])
     return trunc
+
+def get_replicates_for_condition(wells, layout, condition):
+    """Takes a string representing a condition (e.g., 'Bax 100 nM'), gets the
+    set of wells associated with the condition from the layout dict, then
+    returns a time vector and a matrix with shape (num_timepoints,
+    num_replicates) containing the timecourses for each replicate for
+    that condition."""
+    well_names = layout[condition]
+    num_replicates = len(well_names)
+    time_arr = wells[well_names[0]][TIME]
+    num_timepoints = len(time_arr)
+    replicate_matrix = np.zeros((num_timepoints, num_replicates))
+    for i, well_name in enumerate(well_names):
+        replicate_matrix[:,i] = wells[well_name][VALUE]
+    return (time_arr, replicate_matrix)
+
+def extract(keys, dict):
+    extracted_dict = collections.OrderedDict([])
+    for key in keys:
+        extracted_dict[key] = dict[key]
+    return extracted_dict
+
