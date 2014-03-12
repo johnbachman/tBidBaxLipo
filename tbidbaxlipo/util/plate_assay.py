@@ -211,8 +211,8 @@ def read_flexstation_flex(tsv_file):
         # If this is a new well, create it
         if not well_name in wells.keys():
             wells[well_name] = [[],[]]
-        # Add the data to the appropriate field for the wel
-        wells[well_name][index] = values
+        # Add the data to the appropriate field for the well
+        wells[well_name][index] = np.array(values)
     return wells
 
 def read_flexstation_kinetics(tsv_file):
@@ -261,17 +261,27 @@ def read_flexstation_kinetics(tsv_file):
                     continue
                 # Create an empty list to which we will add the time/value lists
                 else:
-                    wells[well_name] = [[], []]
+                    wells[well_name] = [np.array([]), np.array([])]
         # For the rows containing data, fill in the data values; the time arrays
         # will be added later
         else:
             for i, value in enumerate(row):
                 # Add the time value to the time array, after formatting
                 if i == 0:
-                    time = dt.datetime.strptime(value, '%M:%S')
+                    # If there is one colon (':') separator, then there is no hour
+                    # prefix
+                    if value.count(':') == 1:
+                        time = dt.datetime.strptime(value, '%M:%S')
+                    # If there are two colon separators, there is an hour prefix
+                    elif value.count(':') == 2:
+                        time = dt.datetime.strptime(value, '%H:%M:%S')
+                    # Otherwise, we're confused
+                    else:
+                        raise Exception('Could not parse time field: too many colons!')
+
                     secs = (time.hour * 3600) + (time.minute * 60) + \
                             time.second + (time.microsecond * 0.000001)
-                    time_array.append(secs)
+                    time_array = np.append(time_array, secs)
                 # Skip the temperature column
                 elif i == 1:
                     continue
@@ -282,14 +292,17 @@ def read_flexstation_kinetics(tsv_file):
                         continue
                     well_name = header_row[i]
                     if value == '#Sat':
-                        wells[well_name][VALUE].append(np.nan)
+                        wells[well_name][VALUE] = \
+                                np.append(wells[well_name][VALUE], np.nan)
                     else:
-                        wells[well_name][VALUE].append(float(value))
+                        wells[well_name][VALUE] = \
+                                np.append(wells[well_name][VALUE], float(value))
+
     # Now that we're done iterating over the file, iterate over the dict we've
     # created and add the time array to each entry in the dict
     for well_name, entry in wells.iteritems():
         entry[TIME] = time_array
-        if not entry[VALUE]:
+        if len(entry[VALUE]) == 0:
             del wells[well_name]
     return wells
 
