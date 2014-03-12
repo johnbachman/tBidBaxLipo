@@ -21,7 +21,7 @@ Example usage:
     print "m: %f\nb: %f" % (m(), b())
 """
 
-from numpy import shape, arange, sum, mean
+import numpy as np
 from scipy import optimize
 
 class Parameter:
@@ -84,26 +84,50 @@ def fit(function, parameters, y, x = None, maxfev=100000):
         err = y - function(x)
         return err
 
-    if x is None: x = arange(y.shape[0])
+    if x is None: x = np.arange(y.shape[0])
     p = [param() for param in parameters]
     result = optimize.leastsq(f, p, ftol=1e-12, xtol=1e-12, maxfev=maxfev,
                               full_output=True)
     return result
 
+def fit_matrix(function, parameters, y, x = None, maxfev=100000):
+    (num_timepoints, num_replicates) = y.shape
+
+    def f(params):
+        err_matrix = np.zeros((num_timepoints, num_replicates))
+        i = 0
+        for p in parameters:
+            p.set(params[i])
+            i += 1
+        # For every replicate, call the function
+        for i in range(num_replicates):
+            err_matrix[:, i] = y[:, i] - function(x)
+        return err_matrix.reshape(num_timepoints * num_replicates)
+
+    if x is None: x = np.arange(y.shape[0])
+    p = [param() for param in parameters]
+    result = optimize.leastsq(f, p, ftol=1e-12, xtol=1e-12, maxfev=maxfev,
+                              full_output=True)
+    p_final = [param() for param in parameters]
+    residual_variance = np.var(f(p_final))
+
+    return (residual_variance, result)
+
+
 def mse(function, y, x):
     err = y - function(x)
     n = err.shape[0]
     sq_err = err**2
-    return sum(sq_err) / n
+    return np.sum(sq_err) / n
 
 def residuals(function, y, x):
     err = y - function(x)
     return err
 
 def r_squared(y, yhat):
-    ybar = mean(y)
-    ssres = sum((y - yhat) ** 2)
-    #ssreg = sum((yhat - ybar) ** 2)
-    sstot = sum((y - ybar) ** 2)
+    ybar = np.mean(y)
+    ssres = np.sum((y - yhat) ** 2)
+    #ssreg = np.sum((yhat - ybar) ** 2)
+    sstot = np.sum((y - ybar) ** 2)
     return 1 - (ssres / sstot)
 
