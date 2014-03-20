@@ -268,6 +268,24 @@ class OneExpFmax(TitrationFit):
         """Two-parameter exponential fitting function."""
         return k_arr[1] * (1 - np.exp(-k_arr[0]*t))
 
+class Schwarz(TitrationFit):
+    r"""Fit timecourses to a three-parameter, two-phase linear function.
+
+    .. math::
+
+        y(t) = k_2 t + (k_1 - k_2) \frac{1 - e^{-k t}}{k}
+    """
+    def __init__(self):
+        super(Schwarz, self).__init__(
+                    param_names=['$k_1$', '$k_2$', '$tau$'],
+                    initial_guesses=[1e-4, 1e-5, 8e-5])
+
+    def fit_func(self, t, k_arr):
+        """Fitting function from Schwarz."""
+        return (k_arr[1] * t) + \
+               (k_arr[0] - k_arr[1]) * \
+               ((1 - np.exp(-k_arr[2] * t)) / k_arr[2])
+
 class TwoExp(TitrationFit):
     r"""Fit timecourses to a three-parameter, two-phase exponential.
 
