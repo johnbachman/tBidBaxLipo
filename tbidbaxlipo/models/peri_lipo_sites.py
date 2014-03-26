@@ -57,8 +57,10 @@ class Builder(one_cpt.Builder):
         if nbd_sites is not None:
             self.declare_nbd_scaling_parameters(nbd_sites)
 
+
+ 
     def translocate_Bax(self):
-        print("peri_lipo_sites: translocate_Bax()")
+        print("lipo_sites: translocate_Bax()")
 
         Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2)
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1)
@@ -74,65 +76,5 @@ class Builder(one_cpt.Builder):
              Bax(loc='m', lipo=1) ** ves % Vesicles(bax=1) ** solution,
              Bax_transloc_kf, Bax_transloc_kr)
 
-    def translocate_convert_Bax(self):
-        print("peri_lipo_sites: translocate_convert_Bax()")
 
-        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2)
-        Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1)
-        Bax_transloc_kcat = self.parameter('Bax_transloc_kcat', 1e-1)
-        Bax_dissoc_kr = self.parameter('Bax_dissoc_kr', 1e-1)
-
-        Bax = self['Bax']
-        Vesicles = self['Vesicles']
-        solution = self['solution']
-        ves = self['ves']
-
-        self.rule('Bax_translocates_sol_to_ves',
-             Bax(loc='c', lipo=None) ** solution +
-             Vesicles(bax=None) ** solution <>
-             Bax(loc='c', lipo=1) ** ves % Vesicles(bax=1) ** solution,
-             Bax_transloc_kf, Bax_transloc_kr)
-        self.rule('Bax_associates_with_mito',
-             Bax(loc='c', lipo=1) ** ves % Vesicles(bax=1) ** solution >>
-             Bax(loc='m', lipo=None) ** ves + Vesicles(bax=None) ** solution,
-             Bax_transloc_kcat)
-        self.rule('Bax_dissociates_ves_to_sol',
-             Bax(loc='m', lipo=None) ** ves >>
-             Bax(loc='c', lipo=None) ** solution,
-             Bax_dissoc_kr)
-
-    def basal_Bax_activation(self, reversible=False):
-        print "peri_lipo_sites: basal_Bax_activation, reversible=%s" % reversible
-
-        Bax = self['Bax']
-        Vesicles = self['Vesicles']
-        solution = self['solution']
-        ves = self['ves']
-
-        basal_Bax_kf = self.parameter('basal_Bax_kf', 2e-3)
-        self.rule('basal_Bax_activation',
-                  Bax(bh3=None, loc='m', lipo=1) ** ves %
-                  Vesicles(bax=1) ** solution >>
-                  Bax(bh3=None, loc='i', lipo=None) ** ves +
-                  Vesicles(bax=None) ** solution,
-                  basal_Bax_kf)
-
-    def secondary_translocation(self):
-        print("peri_lipo_sites: secondary_translocation()")
-
-        Bax_sec_transloc_kf = self.parameter('Bax_sec_transloc_kf', 1e-2)
-        Bax_sec_transloc_kr = self.parameter('Bax_sec_transloc_kr', 1e-1)
-
-        Bax = self['Bax']
-        Vesicles = self['Vesicles']
-        solution = self['solution']
-        ves = self['ves']
-
-        self.rule('Bax_sec_translocates_sol_to_ves',
-             Bax(loc='m', lipo=1) ** ves +
-             Bax(loc='c', lipo=None) ** solution >>
-             Bax(loc='m', lipo=1) ** ves +
-             Bax(loc='m', lipo=None) ** ves,
-             Bax_sec_transloc_kf,
-             Bax_sec_transloc_kr)
 
