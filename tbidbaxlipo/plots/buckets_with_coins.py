@@ -10,7 +10,7 @@ num_buckets = 100
 #num_coins = 1000
 max_time = 3
 num_reps = 20
-p = 0.1
+p = 0.2
 #avg_coins = num_coins / float(num_buckets)
 
 # Analytical integral
@@ -28,12 +28,26 @@ coins_interval = 10
 
 coin_arr = np.arange(min_coins, max_coins + 1, coins_interval)
 prob_arr = np.zeros(len(coin_arr))
+fmax_arr = np.zeros(len(coin_arr))
+k_arr_num = np.zeros(len(coin_arr))
+k_arr_anal = np.zeros(len(coin_arr))
+
+def k_func(avg_coins):
+    return np.exp(-avg_coins * p) * (-1 + np.exp(avg_coins * p))
+
 for i, coins in enumerate(coin_arr):
+    avg_coins = coins / float(num_buckets)
     prob_arr[i] = prob_perm(coins, num_buckets)
+    fmax_arr[i] = (1 - np.exp(-avg_coins))
+    k_arr_num[i] = prob_arr[i] / float(fmax_arr[i])
+    k_arr_anal[i] = k_func(avg_coins) / float(fmax_arr[i])
 
 plt.figure()
-plt.plot(coin_arr, prob_arr, marker='o')
-
+plt.plot(coin_arr, prob_arr, color='b', label='Initial prob')
+plt.plot(coin_arr, fmax_arr, color='r', label='Poisson Fmax')
+plt.plot(coin_arr, k_arr_num, color='g', label='Numerical k')
+plt.plot(coin_arr, k_arr_anal, color='m', label='Analytical k')
+plt.legend(loc='lower right')
 sys.exit()
 
 rep_matrix = np.zeros((num_reps, max_time))
