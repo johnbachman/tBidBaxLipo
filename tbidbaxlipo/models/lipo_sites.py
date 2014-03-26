@@ -25,7 +25,7 @@ class Builder(one_cpt.Builder):
         self.compartment('ves', dimension=2, parent=solution)
 
         # INITIAL CONDITIONS
-        self.parameter('Vesicles_0', 5, prior=Normal(1., 2.))
+        self.parameter('Vesicles_0', 20, prior=Normal(1., 2.))
         self.parameter('tBid_0', 20, estimate=False)
         self.parameter('Bax_0', 100, estimate=False)
 
@@ -57,8 +57,6 @@ class Builder(one_cpt.Builder):
         if nbd_sites is not None:
             self.declare_nbd_scaling_parameters(nbd_sites)
 
-
- 
     def translocate_Bax(self):
         print("lipo_sites: translocate_Bax()")
 
@@ -76,5 +74,12 @@ class Builder(one_cpt.Builder):
              Bax(loc='m', lipo=1) ** ves % Vesicles(bax=1) ** solution,
              Bax_transloc_kf, Bax_transloc_kr)
 
-
-
+    def basal_Bax_activation_nonsat(self, reversible=False):
+        print "lipo_sites: basal_Bax_activation=%s" % reversible
+        Bax = self['Bax']
+        Vesicles = self['Vesicles']
+        basal_Bax_kf = self.parameter('basal_Bax_kf', 2e-3)
+        self.rule('basal_Bax_activation',
+                  Bax(bh3=None, loc='m', lipo=1) % Vesicles(bax=1) >>
+                  Bax(bh3=None, loc='i', lipo=None) + Vesicles(bax=None),
+                  basal_Bax_kf)
