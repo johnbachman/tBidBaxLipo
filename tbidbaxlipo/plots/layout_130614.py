@@ -267,7 +267,8 @@ if __name__ == '__main__':
     #(fmax_arr, k1_arr, k2_arr, conc_list) = plot_two_exp_fits()
     #plot_fmax_curve(fmax_arr, conc_list)
 
-    from tbidbaxlipo.plots.titration_fits import TwoExp, Linear
+    from tbidbaxlipo.plots import titration_fits
+    """
     fit = TwoExp()
     pore_df = to_dataframe(pores, bgsub_norm_stds)
     fit.plot_fits_from_dataframe(pore_df)
@@ -288,4 +289,35 @@ if __name__ == '__main__':
         return m()*x + b()
     fitting.fit(linear, [m, b], concentration_of_pores, concs)
     plt.plot(concs, linear(concs))
+    """
 
+    df = to_dataframe(norm_averages, norm_stds)
+    concs = np.array(df.columns.values, dtype='float')
+    fit = titration_fits.TwoExp()
+
+    # Get background average
+    background_time = norm_averages['Bax 0 nM'][TIME]
+    background = norm_averages['Bax 0 nM'][VALUE]
+
+    bg_rate = fit.fit_timecourse(background_time, background)
+
+    plt.ion()
+    plt.plot(background_time, background)
+    plt.plot(background_time, fit.fit_func(background_time, bg_rate))
+    t = np.linspace(0, 100000, 1000)
+    plt.plot(t, fit.fit_func(t, bg_rate))
+    import pdb; pdb.set_trace()
+
+    fit = titration_fits.TwoExp()
+    #fit.plot_fits_from_dataframe(subset_df)
+    #p = fit.fit_from_dataframe(subset_df)
+    fit.plot_fits_from_dataframe(df)
+    p = fit.fit_from_dataframe(df)
+
+    # With fitting of bg
+    #print "bg_rate %f" % bg_rate
+    fit = titration_fits.TwoExpWithBackground(bg_rate)
+    #fit.plot_fits_from_dataframe(subset_df)
+    #p = fit.fit_from_dataframe(subset_df)
+    fit.plot_fits_from_dataframe(df)
+    p = fit.fit_from_dataframe(df)
