@@ -2,6 +2,7 @@ from openpyxl import load_workbook
 import pandas as pd
 from itertools import product
 import numpy as np
+import tbidbaxlipo.data
 
 import os
 import sys
