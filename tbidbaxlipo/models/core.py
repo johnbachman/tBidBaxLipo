@@ -475,6 +475,41 @@ class Builder(pysb.builder.Builder):
              Bax(loc='c', bh3=None, a6=None, lipo=None) ** sol,
              krev)
 
+    def Bax_nmerizes(self, n, bax_loc_state='i'):
+        Bax_nmerization_kf = self.parameter(
+                'Bax_%s_%dmerization_kf' % (bax_loc_state, n),
+                1e-2, factor=self.within_compartment_rsf())
+        Bax_nmerization_kr = self.parameter(
+                'Bax_%s_%dmerization_kr' % (bax_loc_state, n),
+                1e-2, factor=self.within_compartment_rsf())
+        Bax = self['Bax']
+
+        free_Bax = Bax(loc=bax_loc_state, bh3=None, a6=None)
+        lhs = free_Bax
+        rhs = Bax(loc=bax_loc_state, bh3=0, a6=n-1)
+        for i in range(n-1):
+            lhs += free_Bax
+            rhs = rhs % Bax(loc=bax_loc_state, bh3=i+1, a6=i)
+
+        self.rule('Bax_%s_forms_%dmers' % (bax_loc_state, n),
+             lhs <> rhs, Bax_nmerization_kf, Bax_nmerization_kr)
+        self.observable('Bax%d_%s' % (n, bax_loc_state), rhs)
+
+    def pores_from_Bax_nmers(self, n, bax_loc_state='i'):
+        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3)
+
+        Bax = self['Bax']
+        Pores = self['Pores']
+
+        lhs = Bax(loc=bax_loc_state, bh3=0, a6=n-1)
+        rhs = Bax(loc='p', bh3=0, a6=n-1)
+        for i in range(n-1):
+            lhs = lhs % Bax(loc=bax_loc_state, bh3=i+1, a6=i)
+            rhs = rhs % Bax(loc='p', bh3=i+1, a6=i)
+
+        self.rule('pores_from_Bax_%s_%dmers' % (bax_loc_state, n),
+             lhs >> rhs + Pores(), pore_formation_rate_k)
+
     def Bax_dimerizes(self, bax_loc_state='i'):
         """
         Notes
