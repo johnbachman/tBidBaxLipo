@@ -104,6 +104,7 @@ class Builder(core.Builder):
         tBid = self['tBid']
         Bax = self['Bax']
         Vesicles = self['Vesicles']
+        Pores = self['Pores']
 
         self.initial(tBid(loc='c', bh3=None) ** solution, self['tBid_0'])
         self.initial(Bax(loc='c', bh3=None, a6=None, lipo=None,
@@ -124,6 +125,9 @@ class Builder(core.Builder):
         self.observable('Bax4',
              MatchOnce(Bax(loc='i', bh3=1, a6=3) % Bax(loc='i', bh3=1, a6=4) % 
                        Bax(loc='i', bh3=2, a6=3) % Bax(loc='i', bh3=2, a6=4)))
+        # Pore formation
+        self.observable('pBax', Bax(loc='p'))
+        self.observable('pores', Pores())
 
         # SCALING PARAMETERS
         if nbd_sites is not None:
@@ -320,43 +324,6 @@ class Builder(core.Builder):
                 Bax(loc='c', bh3=1, a6=4) ** solution %
                 Bax(loc='c', bh3=2, a6=3) ** solution %
                 Bax(loc='c', bh3=2, a6=4) ** solution),
-                pore_reverse_rate_k)
-
-        # Pore formation
-        self.observable('pBax', Bax(loc='p'))
-        self.observable('pores', Pores())
-
-    def pores_from_Bax_nmers(self, n, bax_loc_state='m', reversible=False):
-        """Basically a way of counting the time-integrated amount of
-           forward pore formation."""
-        print("one_cpt: pores_from_Bax_nmers(n=%d, reversible=%s)" %
-              (n, reversible))
-
-        Bax = self['Bax']
-        Pores = self['Pores']
-        ves = self['ves']
-        solution = self['solution']
-
-        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3)
-
-        bax_pre_oligo = Bax(loc=bax_loc_state)
-        bax_post_oligo = Bax(loc='p')
-        bax_sol_oligo = Bax(loc='c')
-
-        for i in range(n - 1):
-            bax_pre_oligo += Bax(loc=bax_loc_state)
-            bax_post_oligo += Bax(loc='p')
-            bax_sol_oligo += Bax(loc='c')
-
-        self.rule('Pores_From_Bax_%dmers' % n,
-                bax_pre_oligo >> bax_post_oligo + Pores(),
-                pore_formation_rate_k)
-
-        if reversible:
-            pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-2)
-
-            self.rule('Pores_reverse',
-                bax_post_oligo >> bax_sol_oligo,
                 pore_reverse_rate_k)
 
         # Pore formation
