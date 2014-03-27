@@ -53,6 +53,7 @@ def plot_all():
 plt.figure()
 params_dict = {'c1_to_c2_k': 1e-4, 'c1_scaling': 2,
                'c0_to_c1_k': 2e-3}
+plt.ion()
 
 for i in range(1, 4):
     rt = df[('Bid', 'Release', '68', i, 'TIME')].values
@@ -63,7 +64,6 @@ for i in range(1, 4):
     """
     import titration_fits as tf
 
-    plt.ion()
 
     plt.figure()
     plt.plot(rt, ry)
@@ -85,11 +85,17 @@ for i in range(1, 4):
     #builder.model.parameters['c1_scaling'].value = 2.
     #builder.model.parameters['c0_to_c1_k'].value = 2e-3
 
-    (params, best_fit) = fitting.fit_pysb_builder(builder, 'NBD', nt, ny)
-    print params[k1_index]
-    print params[k2_index]
+    pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', nt, ny)
+    #print params[k1_index]
+    #print params[k2_index]
     plt.plot(nt, ny)
-    plt.plot(nt, best_fit)
+    plt.plot(nt, pysb_fit.ypred)
+    cov_x = pysb_fit.result[1]
+    sd = np.sqrt(cov_x[k1_index, k1_index] * np.var(pysb_fit.residuals))
+    print sd
+
+plt.figure()
+plt.hist(pysb_fit.residuals)
 
 """
 print "Lag phase from dye release: %f" % params[2]
