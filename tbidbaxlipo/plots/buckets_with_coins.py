@@ -67,7 +67,8 @@ def exp_fits():
             num_perm = num_buckets - np.sum(bucket_status)
             for bucket_index in np.where(bucket_status == 1)[0]:
                 prob_intact = stats.binom.pmf(0, buckets[bucket_index], p)
-                # If our random number is greater than prob intact, we permeabilize
+                # If our random number is greater than prob intact, we
+                # permeabilize
                 if np.random.rand() > prob_intact:
                     bucket_status[bucket_index] = 0
                     num_perm += 1
@@ -86,7 +87,7 @@ def exp_fits():
 
     print rep_avgs[1]
 
-def scaling_of_average():
+def scaling_of_average(model='poisson'):
     """Goal is to look at scaling of average coins per bucket when the
     distribution of coins among buckets is Poisson vs. when it is more likely
     that coins go to buckets that already have coins.
@@ -98,50 +99,65 @@ def scaling_of_average():
     coin increases with the number of coins already in that bucket. If the
     coin is heads, you assign the coin to that bucket.
 
-    Old algorithm:
-
-    For each coin, a probability that it stays undistributed or it goes to a
-    bucket. If it goes to a bucket, it is randomly assigned to a bucket.  If no
-    coins in any buckets, you choose a number from 1 to n (buckets).  Imagine a
-    list of 1...100. Now, imagine that bucket number 3 has a coin.  Suppose it
-    is now twice as likely to go that bucket: you could put 1, 2, 3, 3, 4,
-    ...100. In the bucket list so that 3 is twice as likely to be chosen. Then,
-    for every additional coin, you update the bucket list accordingly. This can
-    be done by simply appending to the end.
-
     Algorithm stops once all coins have been distributed. At the end, you count
-    the number of entries in the bucket list, and subtract 1 from all the counts.
-    This gives you the number of coins in that bucket.
+    the number of coins in the buckets.
     """
-    coin_arr = np.arange(0, 600, 4)
-    num_avgs = coin_arr.shape[0]
+    # The different amounts of total coins that we will try
+    total_coin_arr = np.arange(0, 2000, 10)
+    # The number of different experiments with different total coins
+    num_coin_totals = total_coin_arr.shape[0]
+    # Number of rounds (replicates) for each coin number to establish estimate
     num_rounds = 10
-    averages = np.zeros((num_avgs, num_rounds))
-    num_buckets = 100.
+    # Array for storing the calculated averages
+    averages = np.zeros((num_coin_totals, num_rounds))
+    # The number of buckets into which we distribute coins
+    num_buckets = 100
 
-    for i, num_coins in enumerate(coin_arr):
+    # Try each coin total
+    for i, num_coins in enumerate(total_coin_arr):
+        # For each coin total do num_rounds replicates
         for j in range(num_rounds):
-            coin_status = np.zeros(num_coins, dtype='int')
-            p_bind = 0.2
-            while np.count_nonzero(coin_status) < num_coins:
-                for coin_index in np.where(coin_status == 0)[0]:
-                    bucket_index = np.random.randint(1, num_buckets+1)
+            coin_status = np.zeros(num_coins)
+            coin_status[:] = np.nan
+            # Baseline probability of binding
+            p_bind_base = 0.1
+            p_nobind_base = 1 - p_bind_base
+            bucket_counts = np.zeros(num_buckets)
+            while np.isnan(coin_status).sum() > 0:
+                for coin_index in np.where(np.isnan(coin_status))[0]:
+                    bucket_index = np.random.randint(num_buckets)
+                    num_coins_in_bucket = bucket_counts[bucket_index]
+                    # Choose our model, either autoactivation or
+                    # poisson (default).
+                    # Autoactivation model: we make it such that for every
+                    # additional coins that there is in the bucket, the
+                    # probability of NOT binding goes down by half (relative to
+                    # baseline). So the first coin will obviously make a much
+                    # bigger difference in absolute terms than the 10th coin.
+                    if model == 'auto':
+                        p_bind = 1 - (p_nobind_base *
+                                      (0.5) ** num_coins_in_bucket)
+                    else:
+                        p_bind = p_bind_base
+                    # Decide whether the coin "inserts" or not
                     p = np.random.rand()
                     if p < p_bind:
                         coin_status[coin_index] = bucket_index
-            bucket_counts = np.bincount(coin_status)
+                        bucket_counts[bucket_index] += 1
+            # Calculate the average of the nonzero entries
             avg_nonzero = np.mean(bucket_counts[np.nonzero(bucket_counts)])
             averages[i, j] = avg_nonzero
+    # Plot average
     plt.figure()
-    plt.errorbar(coin_arr,
+    plt.errorbar(total_coin_arr,
                  np.mean(averages, axis=1),
                  yerr=np.std(averages, axis=1) / np.sqrt(num_rounds))
-    plt.plot(coin_arr, coin_arr/num_buckets)
+    plt.plot(total_coin_arr, total_coin_arr/float(num_buckets))
     plt.xlabel('Number of total coins')
     plt.ylabel('Average coins in non-empty buckets')
     plt.title('Poisson distribution')
     import ipdb; ipdb.set_trace()
 
 if __name__ == '__main__':
-    scaling_of_average()
+    scaling_of_average(model='auto')
 
