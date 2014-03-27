@@ -3,6 +3,9 @@ import pandas as pd
 import matplotlib
 from matplotlib import pyplot as plt
 import numpy as np
+from tbidbaxlipo.util import fitting
+from tbidbaxlipo.models.nbd.multiconf import Builder
+from pysb.integrate import Solver
 
 font = {'size': 8}
 matplotlib.rc('font', **font)
@@ -47,59 +50,50 @@ def plot_all():
         plt.tight_layout()
         plt.show()
 
-rt = df[('Bid', 'Release', '68', 3, 'TIME')].values
-ry = df[('Bid', 'Release', '68', 3, 'VALUE')].values
-nt = df[('Bid', 'NBD', '68', 3, 'TIME')].values
-ny = df[('Bid', 'NBD', '68', 3, 'VALUE')].values
-
-import titration_fits as tf
-
-plt.ion()
-
 plt.figure()
-plt.plot(rt, ry)
+params_dict = {'c1_to_c2_k': 1e-4, 'c1_scaling': 2,
+               'c0_to_c1_k': 2e-3}
 
-twoexp = tf.TwoExp()
-params = twoexp.fit_timecourse(rt, ry)
+for i in range(1, 4):
+    rt = df[('Bid', 'Release', '68', i, 'TIME')].values
+    ry = df[('Bid', 'Release', '68', i, 'VALUE')].values
+    nt = df[('Bid', 'NBD', '68', i, 'TIME')].values
+    ny = df[('Bid', 'NBD', '68', i, 'VALUE')].values
 
-plt.plot(rt, twoexp.fit_func(rt, params))
+    """
+    import titration_fits as tf
 
-# Pores
-#plt.figure()
-#pores = -np.log(1 - (ry/100.))
-#plt.plot(rt, pores)
+    plt.ion()
 
-# NBD
-#twoexp = tf.TwoExp()
-#params = twoexp.fit_timecourse(nt, ny)
-#plt.plot(nt, twoexp.fit_func(nt, params))
+    plt.figure()
+    plt.plot(rt, ry)
 
-from tbidbaxlipo.models.nbd.multiconf import Builder
-from pysb.integrate import Solver
-from tbidbaxlipo.util import fitting
-b = Builder()
-b.build_model_multiconf(3, ny[0], normalized_data=True)
-Bax_0 = 1.
-c0_scaling = fitting.Parameter(1)
-c0_to_c1_k = fitting.Parameter(2e-3)
-c1_scaling = fitting.Parameter(2.)
-c1_to_c2_k = fitting.Parameter(1e-4)
-c2_scaling = fitting.Parameter(1)
+    twoexp = tf.TwoExp()
+    params = twoexp.fit_timecourse(rt, ry)
 
-s = Solver(b.model, nt)
-def model_func(t):
-    s.run(param_values=[Bax_0, c0_scaling(), c0_to_c1_k(), c1_scaling(),
-                        c1_to_c2_k(), c2_scaling()])
-    return s.yexpr['NBD']
-fitting.fit(model_func,
-            [c0_scaling, c0_to_c1_k, c1_scaling, c1_to_c2_k, c2_scaling],
-            ny, nt)
+    plt.plot(rt, twoexp.fit_func(rt, params))
+    """
+    builder = Builder(params_dict=params_dict)
+    builder.build_model_multiconf(3, ny[0], normalized_data=True)
 
-plt.figure()
-plt.plot(nt, ny)
-plt.plot(nt, model_func(nt))
+    k1_index = builder.model.parameters.index(
+                        builder.model.parameters['c0_to_c1_k'])
+    k2_index = builder.model.parameters.index(
+                        builder.model.parameters['c1_to_c2_k'])
 
+    #builder.model.parameters['c1_to_c2_k'].value = 1e-4
+    #builder.model.parameters['c1_scaling'].value = 2.
+    #builder.model.parameters['c0_to_c1_k'].value = 2e-3
+
+    (params, best_fit) = fitting.fit_pysb_builder(builder, 'NBD', nt, ny)
+    print params[k1_index]
+    print params[k2_index]
+    plt.plot(nt, ny)
+    plt.plot(nt, best_fit)
+
+"""
 print "Lag phase from dye release: %f" % params[2]
 print "Main phase from dye release: %f" % params[0]
 print "c0_to_c1_k, NBD: %f" % c0_to_c1_k()
 print "c1_to_c2_k, NBD: %f" % c1_to_c2_k()
+"""
