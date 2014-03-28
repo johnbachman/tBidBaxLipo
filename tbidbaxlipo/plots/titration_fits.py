@@ -302,6 +302,26 @@ class TwoExp(TitrationFit):
         """Two-exponential fitting function."""
         return (k_arr[1]* (1 - np.exp(-k_arr[0] *
                                       (1 - np.exp(-k_arr[2]*t)) * t)))
+
+class TwoExpLinear(TitrationFit):
+    r"""Fit timecourses to a three-parameter, two-phase exponential with
+        a linear term.
+
+    .. math::
+
+        y(t) = F_{max} \left(1 - e^{-k_1 (1 - e^{-k_2 t}) t} \right) + k_3 t
+    """
+    def __init__(self):
+        super(TwoExpLinear, self).__init__(
+                    param_names=['$k_1$', '$F_{max}$', '$k_2$', '$k_3$'],
+                    initial_guesses=[1e-5, 0.5, 1e-3, 1e-6])
+
+    def fit_func(self, t, k_arr):
+        """Two-exponential fitting function."""
+        return (k_arr[1]* (1 - np.exp(-k_arr[0] *
+                                      (1 - np.exp(-k_arr[2]*t)) * t)) +
+                (k_arr[3] * t))
+
 class TwoExpNoFmax(TitrationFit):
     def __init__(self):
         super(TwoExpNoFmax, self).__init__(
