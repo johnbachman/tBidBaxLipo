@@ -6,12 +6,14 @@ import numpy as np
 from tbidbaxlipo.util import fitting
 from tbidbaxlipo.models.nbd.multiconf import Builder
 from pysb.integrate import Solver
+import itertools
 
 font = {'size': 8}
 matplotlib.rc('font', **font)
 
 line_colors = {'Bid': 'r', 'Bim': 'b'}
 line_styles = {1:':', 2:'-', 3:'--'}
+rep_colos = {1:'r', 2:'g', 3:'b'}
 
 def plot_all():
     for mutant in nbd_residues:
@@ -50,52 +52,74 @@ def plot_all():
         plt.tight_layout()
         plt.show()
 
-plt.figure()
 params_dict = {'c1_to_c2_k': 1e-4, 'c1_scaling': 2,
                'c0_to_c1_k': 2e-3}
 plt.ion()
+nbd_sites = ['3', '5', '15', '36', '47', '54', '62', '68', '79', '120',
+             '122', '126', '138', '151', '175', '179', '184', '188']
+replicates = range(1, 4)
+count = 0
 
-for i in range(1, 4):
-    rt = df[('Bid', 'Release', '68', i, 'TIME')].values
-    ry = df[('Bid', 'Release', '68', i, 'VALUE')].values
-    nt = df[('Bid', 'NBD', '68', i, 'TIME')].values
-    ny = df[('Bid', 'NBD', '68', i, 'VALUE')].values
-
-    """
-    import titration_fits as tf
-
-
+plt.figure("Fitted K1")
+for nbd_index, nbd_site in enumerate(nbd_sites):
     plt.figure()
-    plt.plot(rt, ry)
+    k1_means = []
+    k2_means = []
+    k1_sds = []
+    k2_sds = []
+    for rep_index in replicates:
+        rt = df[('Bid', 'Release', nbd_site, rep_index, 'TIME')].values
+        ry = df[('Bid', 'Release', nbd_site, rep_index, 'VALUE')].values
+        nt = df[('Bid', 'NBD', nbd_site, rep_index, 'TIME')].values
+        ny = df[('Bid', 'NBD', nbd_site, rep_index, 'VALUE')].values
 
-    twoexp = tf.TwoExp()
-    params = twoexp.fit_timecourse(rt, ry)
+        """
+        import titration_fits as tf
+        plt.figure()
+        plt.plot(rt, ry)
+        twoexp = tf.TwoExp()
+        params = twoexp.fit_timecourse(rt, ry)
+        plt.plot(rt, twoexp.fit_func(rt, params))
+        """
+        builder = Builder(params_dict=params_dict)
+        builder.build_model_multiconf(3, ny[0], normalized_data=True)
 
-    plt.plot(rt, twoexp.fit_func(rt, params))
-    """
-    builder = Builder(params_dict=params_dict)
-    builder.build_model_multiconf(3, ny[0], normalized_data=True)
+        k1 = builder.model.parameters['c0_to_c1_k']
+        k2 = builder.model.parameters['c1_to_c2_k']
+        k1_index = builder.model.parameters.index(k1)
+        k2_index = builder.model.parameters.index(k2)
+        k1_est_index = builder.estimate_params.index(k1)
+        k2_est_index = builder.estimate_params.index(k2)
 
-    k1_index = builder.model.parameters.index(
-                        builder.model.parameters['c0_to_c1_k'])
-    k2_index = builder.model.parameters.index(
-                        builder.model.parameters['c1_to_c2_k'])
+        pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', nt, ny)
+        plt.plot(nt, ny)
+        plt.plot(nt, pysb_fit.ypred)
+        cov_x = pysb_fit.result[1]
+        # Calculate stderr of parameters (doesn't account for covariance)
+        k1_means.append(pysb_fit.params[k1_index])
+        k2_means.append(pysb_fit.params[k2_index])
+        k1_sds.append(np.sqrt(cov_x[k1_est_index, k1_est_index] *
+                      np.var(pysb_fit.residuals)))
+        k2_sds.append(np.sqrt(cov_x[k2_est_index, k2_est_index] *
+                      np.var(pysb_fit.residuals)))
 
-    #builder.model.parameters['c1_to_c2_k'].value = 1e-4
-    #builder.model.parameters['c1_scaling'].value = 2.
-    #builder.model.parameters['c0_to_c1_k'].value = 2e-3
+        count += 1
+    plt.title(nbd_site)
+    plt.xlabel('Time (sec)')
+    plt.ylabel('$F/F_0$')
 
-    pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', nt, ny)
-    #print params[k1_index]
-    #print params[k2_index]
-    plt.plot(nt, ny)
-    plt.plot(nt, pysb_fit.ypred)
-    cov_x = pysb_fit.result[1]
-    sd = np.sqrt(cov_x[k1_index, k1_index] * np.var(pysb_fit.residuals))
-    print sd
+    plt.figure("Fitted K1")
+    plt.bar(range(nbd_index*7, (nbd_index*7) + 3), k1_means,
+            yerr=k1_sds, width=1, color='r')
+    plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6), k2_means,
+            yerr=k2_sds, width=1, color='g')
 
-plt.figure()
-plt.hist(pysb_fit.residuals)
+num_sites = len(nbd_sites)
+plt.figure("Fitted K1")
+ax = plt.gca()
+ax.set_xticks(np.arange(3, 3 + num_sites * 7, 7))
+ax.set_xticklabels(nbd_sites)
+
 
 """
 print "Lag phase from dye release: %f" % params[2]
