@@ -126,8 +126,8 @@ class Builder(core.Builder):
              MatchOnce(Bax(loc='i', bh3=1, a6=3) % Bax(loc='i', bh3=1, a6=4) % 
                        Bax(loc='i', bh3=2, a6=3) % Bax(loc='i', bh3=2, a6=4)))
         # Pore formation
-        self.observable('pBax', Bax(loc='p'))
-        self.observable('pores', Pores())
+        #self.observable('pBax', Bax(loc='p'))
+        #self.observable('pores', Pores())
 
         # SCALING PARAMETERS
         if nbd_sites is not None:
@@ -246,7 +246,7 @@ class Builder(core.Builder):
              pore_formation_rate_k)
 
         if reversible:
-            pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-3)
+            pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-5)
 
             self.rule('Pores_reverse',
                  Bax(loc='p') ** ves >> Bax(loc='c') ** solution,
