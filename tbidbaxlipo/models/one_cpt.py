@@ -78,6 +78,7 @@ from tbidbaxlipo.util import color_iter
 from tbidbaxlipo.models import core
 from matplotlib.font_manager import FontProperties
 from pysb.integrate import odesolve, Solver
+from bayessb.priors import Normal
 
 Solver._use_inline = True
 
@@ -181,8 +182,10 @@ class Builder(core.Builder):
                                           estimate=False)
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-2)
         """
-        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2)
-        Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1)
+        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
+                            prior=Normal(-3, 1))
+        Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1,
+                            prior=Normal(-1, 1))
 
         ves = self['ves']
         solution = self['solution']
@@ -234,7 +237,8 @@ class Builder(core.Builder):
         """
         print("one_cpt: pores_from_Bax_monomers()")
 
-        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3)
+        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-4,
+                prior=Normal(-4, 1))
 
         Bax = self['Bax']
         Pores = self['Pores']
@@ -246,7 +250,8 @@ class Builder(core.Builder):
              pore_formation_rate_k)
 
         if reversible:
-            pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-5)
+            pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-5,
+                    prior=Normal(-5,2))
 
             self.rule('Pores_reverse',
                  Bax(loc='p') ** ves >> Bax(loc='c') ** solution,

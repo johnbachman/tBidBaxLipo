@@ -248,6 +248,7 @@ __author__ = 'johnbachman'
 from pysb import *
 import numpy as np
 import pysb.builder
+from bayessb.priors import Normal
 
 class Builder(pysb.builder.Builder):
 
@@ -496,7 +497,8 @@ class Builder(pysb.builder.Builder):
         self.observable('Bax%d_%s' % (n, bax_loc_state), rhs)
 
     def pores_from_Bax_nmers(self, n, bax_loc_state='i'):
-        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3)
+        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-4,
+                prior=Normal(-4,1))
 
         Bax = self['Bax']
         Pores = self['Pores']
@@ -710,7 +712,8 @@ class Builder(pysb.builder.Builder):
         # Implies average time is 10000 seconds???
         Bax = self['Bax']
 
-        basal_Bax_kf = self.parameter('basal_Bax_kf', 2e-3)
+        basal_Bax_kf = self.parameter('basal_Bax_kf', 2e-3,
+                    prior=Normal(-3,1))
         self.rule('basal_Bax_activation',
                   Bax(bh3=None, loc='m') >> Bax(bh3=None, loc='i'),
                   basal_Bax_kf)
@@ -850,6 +853,24 @@ class Builder(pysb.builder.Builder):
         self.Bax_dimerizes()
         self.Bax_tetramerizes()
         self.model.name = 'tardt'
+
+    # Model for NBD/Terbium data
+    def build_model_nbd_terbium(self):
+        self.build_model_bax_heat_reversible()
+        # Additional parameters
+        pore_scaling = self.parameter('pore_scaling', 100., estimate=True,
+                                prior=Normal(2, 1))
+        c0_scaling = self.parameter('c0_scaling', 1, estimate=False)
+        c1_scaling = self.parameter('c1_scaling', 1.5,
+                                prior=Normal(0, 0.5))
+        c2_scaling = self.parameter('c2_scaling', 2,
+                                prior=Normal(0, 0.5))
+        # Get observables
+        self.expression('ScaledPores', self['pores'] / pore_scaling)
+        self.expression('NBD', (c0_scaling * self['cBax'] +
+                               c1_scaling * self['iBax'] +
+                               c2_scaling * self['pBax']) / self['Bax_0'])
+        self.model.name = 'nbd_terbium'
 
     # Models incorporating dye release
     def build_model_bax_heat(self):
