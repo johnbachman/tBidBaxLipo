@@ -58,7 +58,7 @@ params_dict = {'c1_to_c2_k': 1e-4, 'c1_scaling': 2,
 
 def plot_3conf_fits():
     plt.ion()
-    nbd_sites = ['15']
+    nbd_sites = ['122']
     #nbd_sites = ['3', '5', '15', '36', '47', '54', '62', '68', '79', '120',
     #             '122', '126', '138', '151', '175', '179', '184', '188']
     replicates = range(1, 4)
@@ -76,16 +76,26 @@ def plot_3conf_fits():
             nt = df[('Bid', 'NBD', nbd_site, rep_index, 'TIME')].values
             ny = df[('Bid', 'NBD', nbd_site, rep_index, 'VALUE')].values
 
-            #deriv = np.diff(ry)
-            #plt.figure()
-            #plt.plot(rt[1:], deriv)
-            #print rt[np.argmax(deriv)]
-            #continue
+            plt.figure()
+            plt.plot(rt, ry)
+
+            plt.figure()
+            plt.plot(nt, ny)
+
+            plt.figure()
+            plt.plot(nt, ry / ny)
+
+            ry_norm = (ry - np.min(ry)) / (np.max(ry) - np.min(ry))
+            ny_norm = (ny - np.min(ny)) / (np.max(ny) - np.min(ny))
+
+            plt.figure()
+            plt.plot(rt, ry_norm, color='g')
+            plt.plot(rt, ny_norm, color='b')
 
             plt.figure()
             plt.plot(rt, ry)
-            #twoexp = tf.TwoExpLinear()
-            twoexp = tf.TwoExp()
+            twoexp = tf.TwoExpLinear()
+            #twoexp = tf.TwoExp()
             params = twoexp.fit_timecourse(rt, ry)
             plt.plot(rt, twoexp.fit_func(rt, params))
             print params[2]
@@ -136,3 +146,6 @@ def plot_3conf_fits():
     ax = plt.gca()
     ax.set_xticks(np.arange(3, 3 + num_sites * 7, 7))
     ax.set_xticklabels(nbd_sites)
+
+if __name__ == '__main__':
+    plot_3conf_fits()
