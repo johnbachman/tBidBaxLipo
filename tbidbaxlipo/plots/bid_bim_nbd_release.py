@@ -8,6 +8,8 @@ from tbidbaxlipo.models.nbd.multiconf import Builder
 from pysb.integrate import Solver
 import itertools
 import titration_fits as tf
+import scipy.stats
+from tbidbaxlipo.util.error_propagation import calc_ratio_sd
 
 font = {'size': 8}
 matplotlib.rc('font', **font)
@@ -147,5 +149,70 @@ def plot_3conf_fits():
     ax.set_xticks(np.arange(3, 3 + num_sites * 7, 7))
     ax.set_xticklabels(nbd_sites)
 
+def plot_initial_rates(activator):
+    plt.ion()
+    #nbd_sites = ['15', '79']
+    nbd_sites = ['3', '5', '15', '36', '47', '54', '62', '68', '79', '120',
+                 '122', '126', '138', '151', '175', '179', '184', '188']
+    replicates = range(1, 4)
+    count = 0
+    num_pts = 4
+    for nbd_index, nbd_site in enumerate(nbd_sites):
+        rn_ratios = []
+        rn_errs = []
+        for rep_index in replicates:
+            rt = df[(activator, 'Release', nbd_site, rep_index, 'TIME')].values
+            ry = df[(activator, 'Release', nbd_site, rep_index, 'VALUE')].values
+            nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
+            ny = df[(activator, 'NBD', nbd_site, rep_index, 'VALUE')].values
+            # Fit line to first 10 pts
+            r_lin = scipy.stats.linregress(rt[0:num_pts], ry[0:num_pts])
+            n_lin = scipy.stats.linregress(nt[0:num_pts], ny[0:num_pts])
+            r_int = r_lin[1]
+            r_max = np.max(ry)
+            n_max = np.max(ny)
+            r_slope = r_lin[0] / r_max
+            n_int = n_lin[1]
+            n_slope = n_lin[0] / n_max
+
+            print "%s, rep %d, Tb slope: %f" % (nbd_site, rep_index, r_slope)
+            print "%s, rep %d, NBD slope: %f" % (nbd_site, rep_index, n_slope)
+            rn_ratio = r_slope / n_slope
+            rn_err = calc_ratio_sd(r_slope, r_lin[4], n_slope, n_lin[4])
+            rn_ratios.append(rn_ratio)
+            rn_errs.append(rn_err)
+
+            """
+            plt.figure()
+            plt.plot(nt[0:num_pts], ny[0:num_pts])
+            plt.plot(nt[0:num_pts], n_int + n_slope * nt[0:num_pts])
+            plt.title('%s, rep %d, NBD initial rate' % (nbd_site, rep_index))
+
+            plt.figure()
+            plt.plot(rt[0:num_pts], ry[0:num_pts])
+            plt.plot(rt[0:num_pts], r_int + r_slope * rt[0:num_pts])
+            plt.title('%s, rep %d, Tb initial rate' % (nbd_site, rep_index))
+            """
+
+        plt.figure("Tb/NBD ratio")
+        if activator == 'Bid':
+            plt.bar(range(nbd_index*7, (nbd_index*7) + 3), rn_ratios,
+                    width=1, color='r')
+                    #yerr=rn_errs,
+        else:
+            plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6), rn_ratios,
+                    width=1, color='g')
+                    #yerr=rn_errs,
+
+    num_sites = len(nbd_sites)
+    plt.figure("Tb/NBD ratio")
+    ax = plt.gca()
+    ax.set_xticks(np.arange(3, 3 + num_sites * 7, 7))
+    ax.set_xticklabels(nbd_sites)
+
+
 if __name__ == '__main__':
-    plot_3conf_fits()
+    #plot_3conf_fits()
+    plot_initial_rates('Bid')
+    plot_initial_rates('Bim')
+
