@@ -175,7 +175,7 @@ def plot_initial_rates(activator):
             n_int = n_lin[1]
             n_slope = n_lin[0] / n_max
 
-            print "%s, rep %d, Tb slope: %f" % (nbd_site, rep_index, r_slope)
+            print "%s, rep %Vd, Tb slope: %f" % (nbd_site, rep_index, r_slope)
             print "%s, rep %d, NBD slope: %f" % (nbd_site, rep_index, n_slope)
             rn_ratio = r_slope / n_slope
             rn_err = calc_ratio_sd(r_slope, r_lin[4], n_slope, n_lin[4])
@@ -210,9 +210,101 @@ def plot_initial_rates(activator):
     ax.set_xticks(np.arange(3, 3 + num_sites * 7, 7))
     ax.set_xticklabels(nbd_sites)
 
+def plot_derivatives(activator):
+    plt.ion()
+    #nbd_sites = ['15', '79']
+    nbd_sites = ['WT', '3', '5', '15', '36', '40', '47', '54', '62', '68',
+                 '79', '120', '122', '126', '138', '151', '175', '179',
+                 '184', '188']
+    replicates = range(1, 4)
+    count = 0
+    num_pts = 4
+    window = 5 # For moving average
+    for nbd_index, nbd_site in enumerate(nbd_sites):
+        rn_ratios = []
+        r_maxs = []
+        n_maxs = []
+        #rn_errs = []
+        for rep_index in replicates:
+
+            rt = df[(activator, 'Release', nbd_site, rep_index, 'TIME')].values
+            ry = df[(activator, 'Release', nbd_site, rep_index, 'VALUE')].values
+            r_diff = np.diff(ry)
+            r_avg = moving_average(r_diff, n=window)
+            r_max = np.max(np.abs(r_avg))
+            r_maxs.append(r_max)
+
+            if nbd_site == 'WT':
+                n_maxs.append(0)
+                rn_ratios.append(0)
+            else:
+                nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
+                ny = df[(activator, 'NBD', nbd_site, rep_index, 'VALUE')].values
+                n_diff = np.diff(ny)
+                n_avg = moving_average(n_diff, n=window)
+                n_max = np.max(np.abs(n_avg))
+                n_maxs.append(n_max)
+
+                rn_ratio = np.max(r_avg) / np.max(n_avg)
+                rn_ratios.append(rn_ratio)
+            #rn_err = calc_ratio_sd(r_slope, r_lin[4], n_slope, n_lin[4])
+            #rn_errs.append(rn_err)
+
+            """
+            plt.figure()
+            plt.plot(nt[1:], n_diff, linestyle='', marker='.')
+            plt.plot(nt[1+window-1:], n_avg)
+            plt.xlabel('Time (sec)')
+            plt.ylabel('dNBD/dt (F/F0 sec^-1)')
+            plt.title('%s, rep %d, NBD derivative' % (nbd_site, rep_index))
+
+            plt.figure()
+            plt.plot(rt[1:], r_diff, linestyle='', marker='.')
+            plt.plot(rt[1+window-1:], r_avg)
+            plt.ylabel('dRel/dt (%rel sec^-1)')
+            plt.title('%s, rep %d, Tb derivative' % (nbd_site, rep_index))
+            """
+        plt.figure("Tb/NBD peak slope ratio")
+        if activator == 'Bid':
+            plt.bar(range(nbd_index*7, (nbd_index*7) + 3), rn_ratios,
+                    width=1, color='r')
+                    #yerr=rn_errs,
+        else:
+            plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6), rn_ratios,
+                    width=1, color='g')
+                    #yerr=rn_errs,
+        plt.figure("Tb peak slope")
+        if activator == 'Bid':
+            plt.bar(range(nbd_index*7, (nbd_index*7) + 3), r_maxs,
+                    width=1, color='r')
+        else:
+            plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6), r_maxs,
+                    width=1, color='g')
+        plt.figure("NBD peak slope")
+        if activator == 'Bid':
+            plt.bar(range(nbd_index*7, (nbd_index*7) + 3), n_maxs,
+                    width=1, color='r')
+        else:
+            plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6), n_maxs,
+                    width=1, color='g')
+
+    num_sites = len(nbd_sites)
+    fig_names = ["Tb/NBD peak slope ratio", "Tb peak slope", "NBD peak slope"]
+    for fig_name in fig_names:
+        plt.figure(fig_name)
+        ax = plt.gca()
+        ax.set_xticks(np.arange(3, 3 + num_sites * 7, 7))
+        ax.set_xticklabels(nbd_sites)
+
+
+def moving_average(a, n=3) :
+    ret = np.cumsum(a, dtype=float)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret[n - 1:] / n
 
 if __name__ == '__main__':
     #plot_3conf_fits()
-    plot_initial_rates('Bid')
-    plot_initial_rates('Bim')
-
+    #plot_initial_rates('Bid')
+    #plot_initial_rates('Bim')
+    plot_derivatives('Bid')
+    plot_derivatives('Bim')
