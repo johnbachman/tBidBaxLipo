@@ -9,6 +9,7 @@ from pysb.integrate import Solver
 import itertools
 import titration_fits as tf
 import scipy.stats
+import scipy.signal
 from tbidbaxlipo.util.error_propagation import calc_ratio_sd
 
 font = {'size': 10}
@@ -386,13 +387,45 @@ def plot_peak_slopes(activator):
         ax.set_xticklabels(nbd_sites)
     """
 
+def plot_filtered_data(activator):
+    plt.ion()
+    nbd_sites = ['15', '54']
+    #nbd_sites = ['WT', '3', '5', '15', '36', '40', '47', '54', '62', '68',
+    #             '79', '120', '122', '126', '138', '151', '175', '179',
+    #             '184', '188']
+    replicates = range(1, 4)
+    count = 0
+    num_pts = 4
+    window = 5 # For moving average
+    # Create an order 3 lowpass butterworth filter.
+    b, a = scipy.signal.butter(1, 0.2)
+
+    for nbd_index, nbd_site in enumerate(nbd_sites):
+        for rep_index in replicates:
+            """
+            rt = df[(activator, 'Release', nbd_site, rep_index, 'TIME')].values
+            ry = df[(activator, 'Release', nbd_site, rep_index, 'VALUE')].values
+            r_filt = scipy.signal.filtfilt(b, a, ry)
+            plt.figure()
+            plt.plot(rt, ry, linestyle='', marker='.')
+            plt.plot(rt, r_filt)
+            """
+            nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
+            ny = df[(activator, 'NBD', nbd_site, rep_index, 'VALUE')].values
+            n_filt = scipy.signal.filtfilt(b, a, ny)
+            plt.figure()
+            plt.plot(nt, ny, linestyle='', marker='.')
+            plt.plot(nt, n_filt)
+
+
 def moving_average(a, n=3) :
     ret = np.cumsum(a, dtype=float)
     ret[n:] = ret[n:] - ret[:-n]
     return ret[n - 1:] / n
 
 if __name__ == '__main__':
-    plot_2conf_fits('Bid')
+    #plot_filtered_data('Bid')
+    #plot_2conf_fits('Bid')
     #plot_3conf_fits('Bim')
     #plot_initial_rates('Bid')
     #plot_initial_rates('Bim')
