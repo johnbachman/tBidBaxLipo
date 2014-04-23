@@ -13,6 +13,7 @@ Contents:
     :maxdepth: 3
 
     raw_data
+    initial_rates
     peak_slopes
     two_conf_fits
     three_conf_fits

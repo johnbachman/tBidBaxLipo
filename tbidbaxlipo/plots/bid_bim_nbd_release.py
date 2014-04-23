@@ -231,64 +231,120 @@ def plot_3conf_fits(activator):
 
 def plot_initial_rates(activator):
     plt.ion()
-    #nbd_sites = ['15', '79']
-    nbd_sites = ['3', '5', '15', '36', '47', '54', '62', '68', '79', '120',
+    #nbd_sites = ['WT', '15', '79']
+    nbd_sites = ['WT', '3', '5', '15', '36', '47', '54', '62', '68', '79', '120',
                  '122', '126', '138', '151', '175', '179', '184', '188']
     replicates = range(1, 4)
     count = 0
     num_pts = 4
     for nbd_index, nbd_site in enumerate(nbd_sites):
         rn_ratios = []
+        r_maxs = []
+        n_maxs = []
         rn_errs = []
+        r_errs = []
+        n_errs = []
+
         for rep_index in replicates:
             rt = df[(activator, 'Release', nbd_site, rep_index, 'TIME')].values
             ry = df[(activator, 'Release', nbd_site, rep_index, 'VALUE')].values
-            nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
-            ny = df[(activator, 'NBD', nbd_site, rep_index, 'VALUE')].values
-            # Fit line to first 10 pts
             r_lin = scipy.stats.linregress(rt[0:num_pts], ry[0:num_pts])
-            n_lin = scipy.stats.linregress(nt[0:num_pts], ny[0:num_pts])
             r_int = r_lin[1]
             r_max = np.max(ry)
-            n_max = np.max(ny)
-            r_slope = r_lin[0] / r_max
-            n_int = n_lin[1]
-            n_slope = n_lin[0] / n_max
+            r_slope = r_lin[0]
+            r_maxs.append(r_slope)
+            r_slope_err = r_lin[4]
+            r_errs.append(r_slope_err)
 
-            print "%s, rep %Vd, Tb slope: %f" % (nbd_site, rep_index, r_slope)
-            print "%s, rep %d, NBD slope: %f" % (nbd_site, rep_index, n_slope)
-            rn_ratio = r_slope / n_slope
-            rn_err = calc_ratio_sd(r_slope, r_lin[4], n_slope, n_lin[4])
-            rn_ratios.append(rn_ratio)
-            rn_errs.append(rn_err)
+            if nbd_site == 'WT':
+                n_maxs.append(0)
+                n_errs.append(0)
+                rn_ratios.append(0)
+                rn_errs.append(0)
+            else:
+                nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
+                ny = df[(activator, 'NBD', nbd_site, rep_index, 'VALUE')].values
+                # Fit line to first 10 pts
+                n_lin = scipy.stats.linregress(nt[0:num_pts], ny[0:num_pts])
+                n_max = np.max(ny)
+                n_int = n_lin[1]
+                n_slope = n_lin[0]
+                n_maxs.append(n_slope)
+                n_slope_err = n_lin[4]
+                n_errs.append(n_slope_err)
 
-            """
-            plt.figure()
-            plt.plot(nt[0:num_pts], ny[0:num_pts])
-            plt.plot(nt[0:num_pts], n_int + n_slope * nt[0:num_pts])
-            plt.title('%s, rep %d, NBD initial rate' % (nbd_site, rep_index))
+                rn_ratio = r_slope / n_slope
+                rn_err = calc_ratio_sd(r_slope, r_slope_err, n_slope, n_slope_err)
+                rn_ratios.append(rn_ratio)
+                rn_errs.append(rn_err)
 
-            plt.figure()
-            plt.plot(rt[0:num_pts], ry[0:num_pts])
-            plt.plot(rt[0:num_pts], r_int + r_slope * rt[0:num_pts])
-            plt.title('%s, rep %d, Tb initial rate' % (nbd_site, rep_index))
-            """
 
-        plt.figure("Tb/NBD ratio")
+            #print "%s, rep %d, Tb slope: %f" % (nbd_site, rep_index, r_slope)
+            #print "%s, rep %d, NBD slope: %f" % (nbd_site, rep_index, n_slope)
+
+            plt.figure('%s, NBD-%s-Bax initial rates' % (activator, nbd_site),
+                       figsize=(12, 5))
+            plt.subplot(1, 2, 1)
+            plt.plot(rt[0:num_pts], ry[0:num_pts], linestyle='', marker='.',
+                     color=rep_colors[rep_index])
+            plt.plot(rt[0:num_pts], r_int + r_slope * rt[0:num_pts],
+                     color=rep_colors[rep_index],
+                     label='%s Rep %d' % (activator, rep_index))
+            plt.title('NBD-%s-Bax, Tb initial rate' % (nbd_site))
+            plt.legend(loc='lower right')
+
+            if nbd_site != 'WT':
+                plt.subplot(1, 2, 2)
+                plt.plot(nt[0:num_pts], ny[0:num_pts], linestyle='', marker='.',
+                         color=rep_colors[rep_index])
+                plt.plot(nt[0:num_pts], n_int + n_slope * nt[0:num_pts],
+                         color=rep_colors[rep_index],
+                         label='%s Rep %d' % (activator, rep_index))
+                plt.xlabel('$F/F_0$')
+                plt.ylabel('Time (sec)')
+                plt.title('NBD-%s-Bax, NBD initial rate' % (nbd_site))
+                plt.legend(loc='lower right')
+
+        plt.figure("Tb/NBD initial rate ratio", figsize=(12,6))
+        plt.title("Tb/NBD initial rate ratio")
+        plt.ylim((-100, 120))
         if activator == 'Bid':
             plt.bar(range(nbd_index*7, (nbd_index*7) + 3), rn_ratios,
-                    width=1, color='r', ecolor='k')
-                    #yerr=rn_errs,
+                    width=1, color='r', ecolor='k',
+                    yerr=rn_errs)
         else:
             plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6), rn_ratios,
-                    width=1, color='g', ecolor='k')
-                    #yerr=rn_errs,
+                    width=1, color='g', ecolor='k',
+                    yerr=rn_errs)
+        plt.figure("Tb initial rate", figsize=(12, 6))
+        plt.title('Tb initial rate')
+        if activator == 'Bid':
+            plt.bar(range(nbd_index*7, (nbd_index*7) + 3), r_maxs,
+                    width=1, color='r', ecolor='k',
+                    yerr=r_errs)
+        else:
+            plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6), r_maxs,
+                    width=1, color='g', ecolor='k',
+                    yerr=r_errs)
+        plt.figure("NBD initial rate", figsize=(12, 6))
+        plt.title('NBD initial rate')
+        if activator == 'Bid':
+            plt.bar(range(nbd_index*7, (nbd_index*7) + 3), n_maxs,
+                    width=1, color='r', ecolor='k',
+                    yerr=n_errs)
+        else:
+            plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6), n_maxs,
+                    width=1, color='g', ecolor='k',
+                    yerr=n_errs)
 
     num_sites = len(nbd_sites)
-    plt.figure("Tb/NBD ratio")
-    ax = plt.gca()
-    ax.set_xticks(np.arange(3, 3 + num_sites * 7, 7))
-    ax.set_xticklabels(nbd_sites)
+    fig_names = ["Tb/NBD initial rate ratio", "Tb initial rate",
+                 "NBD initial rate"]
+    for fig_name in fig_names:
+        plt.figure(fig_name)
+        ax = plt.gca()
+        ax.set_xticks(np.arange(3, 3 + num_sites * 7, 7))
+        ax.set_xticklabels(nbd_sites)
 
 def plot_peak_slopes(activator):
     plt.ion()
@@ -424,10 +480,10 @@ def moving_average(a, n=3) :
     return ret[n - 1:] / n
 
 if __name__ == '__main__':
+    plot_initial_rates('Bid')
+    plot_initial_rates('Bim')
     #plot_filtered_data('Bid')
     #plot_2conf_fits('Bid')
     #plot_3conf_fits('Bim')
-    #plot_initial_rates('Bid')
-    #plot_initial_rates('Bim')
     #plot_peak_slopes('Bid')
     #plot_derivatives('Bim')
