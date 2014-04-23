@@ -20,4 +20,4 @@ Contents:
     c126_titration
     130911_c126_bax_titration
     140318_c126_bax_lipo_titration
-    bid_bim_terbium_nbd
+    bid_bim_terbium_nbd/index

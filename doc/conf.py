@@ -32,6 +32,7 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
               'sphinx.ext.viewcode', 'numpydoc', 'citations']
 
 extensions.extend( ['matplotlib.sphinxext.plot_directive',
+                    'sphinx.ext.autosummary',
                     #'matplotlib.sphinxext.inheritance_diagram',
                     'sphinx.ext.doctest',
                     'IPython.sphinxext.ipython_directive',

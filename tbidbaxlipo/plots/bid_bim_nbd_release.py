@@ -11,12 +11,12 @@ import titration_fits as tf
 import scipy.stats
 from tbidbaxlipo.util.error_propagation import calc_ratio_sd
 
-font = {'size': 8}
+font = {'size': 10}
 matplotlib.rc('font', **font)
 
 line_colors = {'Bid': 'r', 'Bim': 'b'}
 line_styles = {1:':', 2:'-', 3:'--'}
-rep_colos = {1:'r', 2:'g', 3:'b'}
+rep_colors = {1:'r', 2:'g', 3:'b'}
 
 def plot_all():
     for mutant in nbd_residues:
@@ -58,32 +58,32 @@ def plot_all():
 params_dict = {'c1_to_c2_k': 1e-4, 'c1_scaling': 2,
                'c0_to_c1_k': 2e-3}
 
-def plot_3conf_fits():
+def plot_3conf_fits(activator):
     plt.ion()
-    nbd_sites = ['122']
-    #nbd_sites = ['3', '5', '15', '36', '47', '54', '62', '68', '79', '120',
-    #             '122', '126', '138', '151', '175', '179', '184', '188']
+    #nbd_sites = ['15', '79', '122']
+    nbd_sites = ['3', '5', '15', '36', '47', '54', '62', '68', '79', '120',
+                 '122', '126', '138', '151', '175', '179', '184', '188']
     replicates = range(1, 4)
     count = 0
 
-    plt.figure("Fitted K1")
+    plt.figure("Fitted k1/k2")
     for nbd_index, nbd_site in enumerate(nbd_sites):
         k1_means = []
         k2_means = []
         k1_sds = []
         k2_sds = []
-        for rep_index in replicates:
-            rt = df[('Bid', 'Release', nbd_site, rep_index, 'TIME')].values
-            ry = df[('Bid', 'Release', nbd_site, rep_index, 'VALUE')].values
-            nt = df[('Bid', 'NBD', nbd_site, rep_index, 'TIME')].values
-            ny = df[('Bid', 'NBD', nbd_site, rep_index, 'VALUE')].values
 
+        for rep_index in replicates:
+            rt = df[(activator, 'Release', nbd_site, rep_index, 'TIME')].values
+            ry = df[(activator, 'Release', nbd_site, rep_index, 'VALUE')].values
+            nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
+            ny = df[(activator, 'NBD', nbd_site, rep_index, 'VALUE')].values
+
+            """
             plt.figure()
             plt.plot(rt, ry)
-
             plt.figure()
             plt.plot(nt, ny)
-
             plt.figure()
             plt.plot(nt, ry / ny)
 
@@ -93,13 +93,23 @@ def plot_3conf_fits():
             plt.figure()
             plt.plot(rt, ry_norm, color='g')
             plt.plot(rt, ny_norm, color='b')
-
-            plt.figure()
-            plt.plot(rt, ry)
+            """
+            plt.figure('%s, NBD-%s-Bax Fits' % (activator, nbd_site),
+                       figsize=(12, 5))
+            plt.subplot(1, 2, 1)
+            plt.plot(rt, ry,
+                     linestyle='', marker='.',
+                     color=rep_colors[rep_index])
             twoexp = tf.TwoExpLinear()
             #twoexp = tf.TwoExp()
             params = twoexp.fit_timecourse(rt, ry)
-            plt.plot(rt, twoexp.fit_func(rt, params))
+            plt.plot(rt, twoexp.fit_func(rt, params),
+                     label='%s Rep %d' % (activator, rep_index),
+                     color=rep_colors[rep_index])
+            plt.xlabel('Time (sec)')
+            plt.ylabel('% Tb release')
+            plt.title('%% Tb release fits, NBD-%s-Bax' % nbd_site)
+            plt.legend(loc='lower right')
             print params[2]
 
             builder = Builder(params_dict=params_dict)
@@ -113,9 +123,16 @@ def plot_3conf_fits():
             k2_est_index = builder.estimate_params.index(k2)
 
             pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', nt, ny)
-            plt.figure()
-            plt.plot(nt, ny)
-            plt.plot(nt, pysb_fit.ypred)
+            plt.subplot(1, 2, 2)
+            plt.plot(nt, ny, linestyle='', marker='.',
+                    color=rep_colors[rep_index])
+            plt.plot(nt, pysb_fit.ypred,
+                     label='%s Rep %d' % (activator, rep_index),
+                     color=rep_colors[rep_index])
+            plt.xlabel('Time (sec)')
+            plt.ylabel('$F/F_0$')
+            plt.title('NBD $F/F_0$ fits, NBD-%s-Bax' % nbd_site)
+            plt.legend(loc='lower right')
             cov_x = pysb_fit.result[1]
             # Calculate stderr of parameters (doesn't account for covariance)
             k1_means.append(pysb_fit.params[k1_index])
@@ -125,26 +142,30 @@ def plot_3conf_fits():
             k2_sds.append(np.sqrt(cov_x[k2_est_index, k2_est_index] *
                           np.var(pysb_fit.residuals)))
 
+            """
             plt.figure()
             s = Solver(builder.model, nt)
             s.run(param_values=pysb_fit.params)
             plt.plot(nt, s.yobs['Bax_c0'])
             plt.plot(nt, s.yobs['Bax_c1'])
             plt.plot(nt, s.yobs['Bax_c2'])
-
+            """
             count += 1
-        plt.title(nbd_site)
-        plt.xlabel('Time (sec)')
-        plt.ylabel('$F/F_0$')
+        #plt.title(nbd_site)
+        #plt.xlabel('Time (sec)')
+        #plt.ylabel('$F/F_0$')
+        plt.figure('%s, NBD-%s-Bax Fits' % (activator, nbd_site))
+        plt.tight_layout()
 
-        plt.figure("Fitted K1")
+        plt.figure("Fitted k1/k2")
         plt.bar(range(nbd_index*7, (nbd_index*7) + 3), k1_means,
-                yerr=k1_sds, width=1, color='r')
+                yerr=k1_sds, width=1, color='r', ecolor='k')
         plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6), k2_means,
-                yerr=k2_sds, width=1, color='g')
+                yerr=k2_sds, width=1, color='g', ecolor='k')
 
     num_sites = len(nbd_sites)
-    plt.figure("Fitted K1")
+    plt.figure("Fitted k1/k2")
+    plt.ylabel('Fitted k1/k2 ($sec^{-1}$)')
     ax = plt.gca()
     ax.set_xticks(np.arange(3, 3 + num_sites * 7, 7))
     ax.set_xticklabels(nbd_sites)
@@ -197,11 +218,11 @@ def plot_initial_rates(activator):
         plt.figure("Tb/NBD ratio")
         if activator == 'Bid':
             plt.bar(range(nbd_index*7, (nbd_index*7) + 3), rn_ratios,
-                    width=1, color='r')
+                    width=1, color='r', ecolor='k')
                     #yerr=rn_errs,
         else:
             plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6), rn_ratios,
-                    width=1, color='g')
+                    width=1, color='g', ecolor='k')
                     #yerr=rn_errs,
 
     num_sites = len(nbd_sites)
@@ -210,9 +231,9 @@ def plot_initial_rates(activator):
     ax.set_xticks(np.arange(3, 3 + num_sites * 7, 7))
     ax.set_xticklabels(nbd_sites)
 
-def plot_derivatives(activator):
+def plot_peak_slopes(activator):
     plt.ion()
-    #nbd_sites = ['15', '79']
+    #nbd_sites = ['WT', '15', '79']
     nbd_sites = ['WT', '3', '5', '15', '36', '40', '47', '54', '62', '68',
                  '79', '120', '122', '126', '138', '151', '175', '179',
                  '184', '188']
@@ -229,9 +250,9 @@ def plot_derivatives(activator):
 
             rt = df[(activator, 'Release', nbd_site, rep_index, 'TIME')].values
             ry = df[(activator, 'Release', nbd_site, rep_index, 'VALUE')].values
-            r_diff = np.diff(ry)
-            r_avg = moving_average(r_diff, n=window)
-            r_max = np.max(np.abs(r_avg))
+            r_avg = moving_average(ry, n=window)
+            r_diff = np.diff(r_avg)
+            r_max = np.max(np.abs(r_diff))
             r_maxs.append(r_max)
 
             if nbd_site == 'WT':
@@ -240,30 +261,39 @@ def plot_derivatives(activator):
             else:
                 nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
                 ny = df[(activator, 'NBD', nbd_site, rep_index, 'VALUE')].values
-                n_diff = np.diff(ny)
-                n_avg = moving_average(n_diff, n=window)
-                n_max = np.max(np.abs(n_avg))
+                n_avg = moving_average(ny, n=window)
+                n_diff = np.diff(n_avg)
+                n_max = np.max(np.abs(n_diff))
                 n_maxs.append(n_max)
 
-                rn_ratio = np.max(r_avg) / np.max(n_avg)
+                rn_ratio = r_max / n_max
                 rn_ratios.append(rn_ratio)
             #rn_err = calc_ratio_sd(r_slope, r_lin[4], n_slope, n_lin[4])
             #rn_errs.append(rn_err)
 
-            """
-            plt.figure()
-            plt.plot(nt[1:], n_diff, linestyle='', marker='.')
-            plt.plot(nt[1+window-1:], n_avg)
-            plt.xlabel('Time (sec)')
-            plt.ylabel('dNBD/dt (F/F0 sec^-1)')
-            plt.title('%s, rep %d, NBD derivative' % (nbd_site, rep_index))
+            plt.figure('%s, NBD-%s-Bax Fits' % (activator, nbd_site),
+                       figsize=(12, 5))
+            plt.subplot(1, 2, 1)
+            plt.plot(rt[1+window-1:], r_diff, color=rep_colors[rep_index],
+                     label='%s Rep %d' % (activator, rep_index))
+            #plt.plot(rt[1+window-1:], r_avg)
+            plt.ylabel('dRel/dt (% rel $sec^{-1}$)')
+            plt.title('NBD-%s-Bax, Tb derivative' % nbd_site)
+            plt.legend(loc='upper right')
 
-            plt.figure()
-            plt.plot(rt[1:], r_diff, linestyle='', marker='.')
-            plt.plot(rt[1+window-1:], r_avg)
-            plt.ylabel('dRel/dt (%rel sec^-1)')
-            plt.title('%s, rep %d, Tb derivative' % (nbd_site, rep_index))
-            """
+            if nbd_site != 'WT':
+                plt.subplot(1, 2, 2)
+                plt.plot(nt[1+window-1:], n_diff, color=rep_colors[rep_index],
+                         label='%s Rep %d' % (activator, rep_index))
+                #plt.plot(nt[1+window-1:], n_avg)
+                plt.xlabel('Time (sec)')
+                plt.ylabel('dNBD/dt ($F/F_0\ sec^{-1}$)')
+                plt.title('NBD-%s-Bax, NBD derivative' % nbd_site)
+                plt.legend(loc='upper right')
+
+        plt.tight_layout()
+        plt.show()
+        """
         plt.figure("Tb/NBD peak slope ratio")
         if activator == 'Bid':
             plt.bar(range(nbd_index*7, (nbd_index*7) + 3), rn_ratios,
@@ -287,7 +317,8 @@ def plot_derivatives(activator):
         else:
             plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6), n_maxs,
                     width=1, color='g')
-
+        """
+    """
     num_sites = len(nbd_sites)
     fig_names = ["Tb/NBD peak slope ratio", "Tb peak slope", "NBD peak slope"]
     for fig_name in fig_names:
@@ -295,7 +326,7 @@ def plot_derivatives(activator):
         ax = plt.gca()
         ax.set_xticks(np.arange(3, 3 + num_sites * 7, 7))
         ax.set_xticklabels(nbd_sites)
-
+    """
 
 def moving_average(a, n=3) :
     ret = np.cumsum(a, dtype=float)
@@ -303,8 +334,9 @@ def moving_average(a, n=3) :
     return ret[n - 1:] / n
 
 if __name__ == '__main__':
-    #plot_3conf_fits()
+    #plot_3conf_fits('Bid')
+    #plot_3conf_fits('Bim')
     #plot_initial_rates('Bid')
     #plot_initial_rates('Bim')
-    plot_derivatives('Bid')
-    plot_derivatives('Bim')
+    plot_peak_slopes('Bid')
+    #plot_derivatives('Bim')
