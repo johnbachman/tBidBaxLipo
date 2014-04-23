@@ -24,7 +24,7 @@ class Builder(one_cpt.Builder):
         self.compartment('ves', dimension=2, parent=solution)
 
         # INITIAL CONDITIONS
-        self.parameter('Vesicles_0', 1, estimate=False)
+        self.parameter('Vesicles_0', 1.9, estimate=False)
         #self.parameter('tBid_0', 20, estimate=False)
         self.parameter('Bax_0', 100, estimate=False)
 
@@ -44,6 +44,8 @@ class Builder(one_cpt.Builder):
         self.observable('mBax', Bax(loc='m'))
         self.observable('iBax', Bax(loc='i'))
         self.observable('aBax', Bax(loc='a'))
+        self.observable('pBax', Bax(loc='p'))
+        self.observable('eVes', Vesicles(dye='e'))
         # self.observable('tBidBax', tBid(bh3=1) % Bax(bh3=1))
         # self.observable('Bax2', Bax(bh3=1) % Bax(bh3=1))
         #self.observable('Baxbh3', Bax(bh3=1))
@@ -51,7 +53,6 @@ class Builder(one_cpt.Builder):
         #     MatchOnce(Bax(loc='i', bh3=1, a6=3) % Bax(loc='i', bh3=1, a6=4) % 
         #               Bax(loc='i', bh3=2, a6=3) % Bax(loc='i', bh3=2, a6=4)))
         # Pore formation
-        #self.observable('pBax', Bax(loc='p'))
         #self.observable('pores', Pores())
 
         # SCALING PARAMETERS
@@ -67,7 +68,7 @@ class Builder(one_cpt.Builder):
         Bax = self['Bax']
         Vesicles = self['Vesicles']
         # Bax catalytically permeabilizes vesicles
-        self.parameter('iBax_enz_release_k', 1e-2,
+        self.parameter('iBax_enz_release_k', 1e-4,
                        prior=Normal(-2, 3))
         self.rule('iBax_enz_release',
                   Bax(loc='i') + Vesicles(dye='f') >>
@@ -82,4 +83,33 @@ class Builder(one_cpt.Builder):
         self.rule('iBax_to_pBax',
                   Bax(loc='i') <> Bax(loc='p'),
                   self['iBax_to_pBax_kf'], self['iBax_to_pBax_kr'])
+        # The observable: fraction released
+        c0_scaling = self.parameter('c0_scaling', 1, estimate=False)
+        c1_scaling = self.parameter('c1_scaling', 1.5,
+                                prior=Normal(0, 0.5))
+        c2_scaling = self.parameter('c2_scaling', 2,
+                                prior=Normal(0, 0.5))
+        # Get observables
+        self.expression('NBD', (c0_scaling * (self['cBax'] + self['mBax']) +
+                               c1_scaling * self['iBax'] +
+                               c2_scaling * self['pBax']) / self['Bax_0'])
+        self.expression('Tb', self['eVes'] / self['Vesicles_0'])
+        self.model.name = 'nbd_terbium'
 
+
+if __name__ == '__main__':
+    from pysb.integrate import Solver
+    from matplotlib import pyplot as plt
+    import numpy as np
+
+    b = Builder()
+    b.build_model_nbd_terbium()
+    t = np.linspace(0, 1e5)
+    s = Solver(b.model, t)
+    s.run()
+    plt.ion()
+    plt.figure()
+    plt.plot(t, s.yexpr['NBD'])
+    plt.figure()
+    plt.plot(t, s.yexpr['Tb'])
+    

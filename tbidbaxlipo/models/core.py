@@ -719,7 +719,8 @@ class Builder(pysb.builder.Builder):
                   basal_Bax_kf)
 
         if reversible:
-            basal_Bax_kr = self.parameter('basal_Bax_kr', 1e-2)
+            basal_Bax_kr = self.parameter('basal_Bax_kr', 1e-4,
+                                          prior=Normal(-5, 1))
             self.rule('basal_Bax_activation_rev',
                       Bax(bh3=None, loc='i') >> Bax(bh3=None, loc='m'),
                       basal_Bax_kr)
