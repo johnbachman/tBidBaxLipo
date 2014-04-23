@@ -58,6 +58,64 @@ def plot_all():
 params_dict = {'c1_to_c2_k': 1e-4, 'c1_scaling': 2,
                'c0_to_c1_k': 2e-3}
 
+def plot_2conf_fits(activator):
+    plt.ion()
+    #nbd_sites = ['15', '79', '122']
+    nbd_sites = ['3', '5', '15', '36', '47', '54', '62', '68', '79', '120',
+                 '122', '126', '138', '151', '175', '179', '184', '188']
+    replicates = range(1, 4)
+    count = 0
+
+    plt.figure("Fitted k1")
+    for nbd_index, nbd_site in enumerate(nbd_sites):
+        k1_means = []
+        k1_sds = []
+
+        for rep_index in replicates:
+            nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
+            ny = df[(activator, 'NBD', nbd_site, rep_index, 'VALUE')].values
+
+            plt.figure('%s, NBD-%s-Bax Fits' % (activator, nbd_site),
+                       figsize=(6, 5))
+
+            builder = Builder(params_dict=params_dict)
+            builder.build_model_multiconf(2, ny[0], normalized_data=True)
+
+            k1 = builder.model.parameters['c0_to_c1_k']
+            k1_index = builder.model.parameters.index(k1)
+            k1_est_index = builder.estimate_params.index(k1)
+
+            pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', nt, ny)
+            plt.plot(nt, ny, linestyle='', marker='.',
+                    color=rep_colors[rep_index])
+            plt.plot(nt, pysb_fit.ypred,
+                     label='%s Rep %d' % (activator, rep_index),
+                     color=rep_colors[rep_index])
+            plt.xlabel('Time (sec)')
+            plt.ylabel('$F/F_0$')
+            plt.title('NBD $F/F_0$ fits, NBD-%s-Bax' % nbd_site)
+            plt.legend(loc='lower right')
+            cov_x = pysb_fit.result[1]
+            # Calculate stderr of parameters (doesn't account for covariance)
+            k1_means.append(pysb_fit.params[k1_index])
+            k1_sds.append(np.sqrt(cov_x[k1_est_index, k1_est_index] *
+                          np.var(pysb_fit.residuals)))
+            count += 1
+
+        plt.figure('%s, NBD-%s-Bax Fits' % (activator, nbd_site))
+        plt.tight_layout()
+
+        plt.figure("Fitted k1")
+        plt.bar(range(nbd_index*4, (nbd_index*4) + 3), k1_means,
+                yerr=k1_sds, width=1, color='r', ecolor='k')
+
+    num_sites = len(nbd_sites)
+    plt.figure("Fitted k1")
+    plt.ylabel('Fitted k1 ($sec^{-1}$)')
+    ax = plt.gca()
+    ax.set_xticks(np.arange(1.5, 1.5 + num_sites * 4, 4))
+    ax.set_xticklabels(nbd_sites)
+
 def plot_3conf_fits(activator):
     plt.ion()
     #nbd_sites = ['15', '79', '122']
@@ -334,9 +392,9 @@ def moving_average(a, n=3) :
     return ret[n - 1:] / n
 
 if __name__ == '__main__':
-    #plot_3conf_fits('Bid')
+    plot_2conf_fits('Bid')
     #plot_3conf_fits('Bim')
     #plot_initial_rates('Bid')
     #plot_initial_rates('Bim')
-    plot_peak_slopes('Bid')
+    #plot_peak_slopes('Bid')
     #plot_derivatives('Bim')

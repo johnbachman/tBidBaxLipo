@@ -14,4 +14,5 @@ Contents:
 
     raw_data
     peak_slopes
+    two_conf_fits
     three_conf_fits
