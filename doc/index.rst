@@ -22,6 +22,7 @@ Contents:
    modules/index
    references
    todo
+   outline
 
 Indices and tables
 ==================
