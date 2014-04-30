@@ -23,7 +23,8 @@ if __name__ == '__main__':
             '140429_Bax_DPX_3_4uL.txt',
             '140429_Bax_DPX_4_6uL.txt',
             '140429_Bax_DPX_5_8uL.txt',
-            '140429_Bax_DPX_6_10uL.txt']
+            '140429_Bax_DPX_6_10uL.txt',
+            '140429_Bax_DPX_7_10uL.txt']
     dpx_std_file_list = [os.path.abspath(os.path.join(data_path, filename))
                          for filename in dpx_std_file_list]
 
@@ -32,7 +33,7 @@ if __name__ == '__main__':
     dpx_std_wells = ['A%d' % well_num for well_num in range(1, 13)]
 
     # The list of DPX volumes added at each step
-    dpx_vol_steps = [0., 1., 2., 4., 6., 8., 10.]
+    dpx_vol_steps = [0., 1., 2., 4., 6., 8., 10., 10.]
 
     # We know how much of the stock DPX we added at each quenching step, but we
     # have to calculate the actual concentrations:
@@ -70,8 +71,8 @@ if __name__ == '__main__':
             '140429_Bax_reDPX_3_2uL.txt',
             '140429_Bax_reDPX_4_4uL.txt',
             '140429_Bax_reDPX_5_6uL.txt',
-            '140429_Bax_reDPX_6_8uL.txt'
-            #'140429_Bax_reDPX_7_10uL.txt'
+            '140429_Bax_reDPX_6_8uL.txt',
+            '140429_Bax_reDPX_7_10uL.txt'
             ]
     requench_file_list = [os.path.abspath(os.path.join(data_path, filename))
                           for filename in requench_file_list]
@@ -79,8 +80,8 @@ if __name__ == '__main__':
     # The wells containing the Bid/Bax treated liposomes
     requench_wells = [row + col for (col, row) in itertools.product(
                                 [str(i) for i in range(1, 13)],
-                                ['C'])]
-                                #['D', 'E'])]
+                                #['C'])]
+                                ['D', 'E'])]
 
     # The list of DPX volumes added at each step
     requench_vol_steps = [0., 1., 2., 4., 6., 8., 10.]
@@ -97,5 +98,4 @@ if __name__ == '__main__':
                                          requench_dpx_concs[-1])
 
     requenching_analysis(requench_file_list, requench_wells,
-                         requench_dpx_concs[:-1], fmax_avgs, fmax_sds, ka, kd, 5)
-    # FIXME
+                         requench_dpx_concs, fmax_avgs, fmax_sds, ka, kd, 5)
