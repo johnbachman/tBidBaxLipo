@@ -1,5 +1,5 @@
 Bax Titration at 43C (9/24/13)
-=============================
+==============================
 
 In this experiment I used more liposomes (2 mL + 500 uL buffer, for an
 80% solution) and less protein (dilution series down from 126 nM Bax.
@@ -98,5 +98,4 @@ Two-exponential fits, active subset
     from tbidbaxlipo.plots.titration_fits import TwoExp
     fit = TwoExp()
     fit.plot_fits_from_dataframe(subset_df)
-
 
