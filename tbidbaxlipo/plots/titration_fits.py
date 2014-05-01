@@ -40,8 +40,8 @@ class TitrationFit(object):
     ----------
     k_arr : numpy.array
         Array containing the fitted parameters. The array has shape
-        (num_params, num_concentrations), i.e., there is a set of parameters
-        from every fitted concentration timecourse.
+        (num_params, num_concentrations), i.e., there is a
+        set of parameters from every fitted concentration timecourse.
     concs : numpy.array
         The list of concentrations used in the titration. Serves as the
         x-coordinate when plotting the parameter values as a function of
