@@ -20,6 +20,9 @@ sys.path.insert(0, os.path.abspath('..'))
 sys.path.append(os.path.abspath('ext'))
 
 # -- General configuration -----------------------------------------------------
+# Added this to get rid of autosummary warnings,
+# see https://github.com/phn/pytpm/issues/3
+numpydoc_show_class_members = False
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.0'
@@ -29,14 +32,13 @@ sys.path.append(os.path.abspath('ext'))
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
               'sphinx.ext.intersphinx', 'sphinx.ext.todo',
               'sphinx.ext.coverage', 'sphinx.ext.mathjax',
-              'sphinx.ext.viewcode', 'numpydoc', 'citations']
-
-extensions.extend( ['matplotlib.sphinxext.plot_directive',
-                    'sphinx.ext.autosummary',
-                    #'matplotlib.sphinxext.inheritance_diagram',
-                    'sphinx.ext.doctest',
-                    'IPython.sphinxext.ipython_directive',
-                    'IPython.sphinxext.ipython_console_highlighting'])
+              'sphinx.ext.viewcode', 'numpydoc', 'citations',
+              'matplotlib.sphinxext.plot_directive',
+              #'sphinx.ext.autosummary',
+              #'matplotlib.sphinxext.inheritance_diagram',
+              'sphinx.ext.doctest',
+              'IPython.sphinxext.ipython_directive',
+              'IPython.sphinxext.ipython_console_highlighting']
 
 todo_include_todos=True
 autodoc_member_order = 'bysource'
