@@ -39,7 +39,7 @@ First, the raw data, showing pretty good stability with a handful of outliers:
     close('all')
     [timecourse_wells, timecourse_averages, timecourse_stds,
      conc_list, means, stds, log_concs, log_means, log_stds] = \
-                    get_wells('131030_Fluorescein_Flex_Med_6read.txt')
+                    get_wells('131030_Fluorescein_Flex_Med_6read.txt', layout)
     plot_data(timecourse_wells, timecourse_averages, timecourse_stds)
 
 The bar plot shows that the within-read well variability is small relative
@@ -85,7 +85,7 @@ The correlation coefficient is very good:
     from tbidbaxlipo.plots.layout_131030 import *
     [timecourse_wells, timecourse_averages, timecourse_stds,
      conc_list, means, stds, log_concs, log_means, log_stds] = \
-                    get_wells('131030_Fluorescein_Flex_Med_6read.txt')
+                    get_wells('131030_Fluorescein_Flex_Med_6read.txt', layout)
     plot_fits(means, log_means, conc_list, log_concs)
 
 High sensitivity, 22 reads
@@ -100,7 +100,7 @@ saturated.
     close('all')
     [timecourse_wells, timecourse_averages, timecourse_stds,
      conc_list, means, stds, log_concs, log_means, log_stds] = \
-                    get_wells('131030_Fluorescein_Flex_High_22read.txt')
+                    get_wells('131030_Fluorescein_Flex_High_22read.txt', layout)
     plot_data(timecourse_wells, timecourse_averages, timecourse_stds)
 
 .. plot::
@@ -133,7 +133,7 @@ The CVs appeared to be the lowest for these read parameters:
 
     [timecourse_wells, timecourse_averages, timecourse_stds,
      conc_list, means, stds, log_concs, log_means, log_stds] = \
-                    get_wells('131030_Fluorescein_Flex_High_22read.txt')
+                    get_wells('131030_Fluorescein_Flex_High_22read.txt', layout)
     plot_fits(means, log_means, conc_list, log_concs)
 
 Medium sensitivity, 100 reads
@@ -148,7 +148,7 @@ improvement in the CVs at low concentrations.
     close('all')
     [timecourse_wells, timecourse_averages, timecourse_stds,
      conc_list, means, stds, log_concs, log_means, log_stds] = \
-                    get_wells('131030_Fluorescein_Flex_Med_100read.txt')
+                    get_wells('131030_Fluorescein_Flex_Med_100read.txt', layout)
     plot_data(timecourse_wells, timecourse_averages, timecourse_stds)
 
 .. plot::
@@ -179,6 +179,6 @@ improvement in the CVs at low concentrations.
 
     [timecourse_wells, timecourse_averages, timecourse_stds,
      conc_list, means, stds, log_concs, log_means, log_stds] = \
-                    get_wells('131030_Fluorescein_Flex_Med_100read.txt')
+                    get_wells('131030_Fluorescein_Flex_Med_100read.txt', layout)
     plot_fits(means, log_means, conc_list, log_concs)
 
