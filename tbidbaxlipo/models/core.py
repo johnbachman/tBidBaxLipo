@@ -249,6 +249,8 @@ from pysb import *
 import numpy as np
 import pysb.builder
 from bayessb.priors import Normal
+import sympy
+import math
 
 class Builder(pysb.builder.Builder):
 
@@ -857,7 +859,8 @@ class Builder(pysb.builder.Builder):
 
     # Model for NBD/Terbium data
     def build_model_nbd_terbium(self):
-        self.build_model_bax_heat_reversible()
+        #self.build_model_bax_heat_reversible()
+        self.build_model_bax_heat()
         # Additional parameters
         pore_scaling = self.parameter('pore_scaling', 100., estimate=True,
                                 prior=Normal(2, 1))
@@ -868,10 +871,31 @@ class Builder(pysb.builder.Builder):
                                 prior=Normal(0, 0.5))
         # Get observables
         self.expression('ScaledPores', self['pores'] / pore_scaling)
-        self.expression('NBD', (c0_scaling * self['cBax'] +
+        self.expression('NBD', (c0_scaling * (self['cBax'] + self['mBax']) +
                                c1_scaling * self['iBax'] +
                                c2_scaling * self['pBax']) / self['Bax_0'])
         self.model.name = 'nbd_terbium'
+
+    # Model for NBD/Terbium data
+    def build_model_nbd_terbium_c2_pores(self):
+        #self.build_model_bax_heat_reversible()
+        self.build_model_bax_heat_reversible()
+        # Additional parameters
+        pore_scaling = self.parameter('pore_scaling', 100., estimate=True,
+                                prior=Normal(2, 2))
+        c0_scaling = self.parameter('c0_scaling', 1, estimate=False)
+        c1_scaling = self.parameter('c1_scaling', 1.5,
+                                prior=Normal(0, 0.5))
+        c2_scaling = self.parameter('c2_scaling', 2,
+                                prior=Normal(0, 0.5))
+        # Get observables
+        self.expression('Tb_sympy', 1 - sympy.exp(-self['pBax'] / pore_scaling))
+        self.expression('Tb_math', 1 - math.e ** (-self['pBax'] / pore_scaling))
+        #self.expression('Tb', self['pBax'] / pore_scaling)
+        self.expression('NBD', (c0_scaling * (self['cBax'] + self['mBax']) +
+                               c1_scaling * self['iBax'] +
+                               c2_scaling * self['pBax']) / self['Bax_0'])
+        self.model.name = 'nbd_terbium_c2_reversible_pores_exp'
 
     # Models incorporating dye release
     def build_model_bax_heat(self):
@@ -1071,4 +1095,5 @@ class Builder(pysb.builder.Builder):
                   Bax(bh3=1, loc='c', **bax_args)**solution, Bax2_0)
         self.initial(Bax(bh3=None, loc='c', **bax_args)**solution, Bax1_0)
         self.initial(self['Vesicles'](bax=None) **solution, self['Vesicles_0'])
+
 

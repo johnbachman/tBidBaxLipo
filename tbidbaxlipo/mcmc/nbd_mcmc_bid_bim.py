@@ -29,8 +29,6 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
         mcmc.simulate(position=position)
         #sigma = mcmc.cur_params(position)[-1]
         nbd = mcmc.solver.yexpr['NBD']
-        #dr = 1 - np.exp(-mcmc.solver.yexpr['ScaledPores'])
-        #dr = mcmc.solver.yexpr['ScaledPores']
         dr = mcmc.solver.yexpr['Tb']
         dr_sd = mcmc.dr_data * 0.03
         nbd_sd = mcmc.nbd_data * 0.03
@@ -48,12 +46,16 @@ class NBDPlateMCMC(tbidbaxlipo.mcmc.MCMC):
         self.simulate(position=position)
         predicted_nbd = self.solver.yexpr['NBD']
         #predicted_release = 1 - np.exp(-self.solver.yexpr['ScaledPores'])
-        predicted_release = self.solver.yexpr['Tb']
+        if self.builder.model.name == 'nbd_terbium_c2_pores_exp' or \
+           self.builder.model.name == 'nbd_terbium_c2_reversible_pores_exp':
+            dr = 1 - np.exp(-self.solver.yexpr['Tb'])
+        else:
+            dr = self.solver.yexpr['Tb']
         #predicted_release = self.solver.yexpr['ScaledPores']
         timecourses['Predicted NBD Signal'] = [self.options.tspan,
                                                predicted_nbd]
         timecourses['Predicted Dye Release'] = [self.options.tspan,
-                                                predicted_release]
+                                                dr]
         return timecourses
 
     def get_residuals(self, position):
@@ -220,9 +222,9 @@ if __name__ == '__main__':
     #args = parse_command_line_args(sys.argv)
 
     # Get the data
-    nbd_site = '68'
+    nbd_site = '47'
     activator = 'Bid'
-    rep_index = 2
+    rep_index = 1
     rt = df[(activator, 'Release', nbd_site, rep_index, 'TIME')].values
     ry = df[(activator, 'Release', nbd_site, rep_index, 'VALUE')].values
     nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
@@ -233,10 +235,11 @@ if __name__ == '__main__':
 
     # Build the MCMCOpts
     # ==================
-    #from tbidbaxlipo.models.one_cpt import Builder
-    from tbidbaxlipo.models.enz_cpt import Builder
+    from tbidbaxlipo.models.one_cpt import Builder
+    #from tbidbaxlipo.models.enz_cpt import Builder
     builder = Builder()
-    builder.build_model_nbd_terbium()
+    #builder.build_model_nbd_terbium()
+    builder.build_model_nbd_terbium_c2_pores()
 
     # We set the random_seed here because it affects our choice of initial
     # values
@@ -251,7 +254,7 @@ if __name__ == '__main__':
     #                        if not p.name.endswith('_0')]
     #opts.initial_values = [p.value for p in b.estimate_params]
     opts.initial_values = builder.random_initial_values()
-    opts.nsteps = 10000
+    opts.nsteps = 5000
     opts.norm_step_size = 0.1
     opts.sigma_step = 0
     #opts.sigma_max = 50
@@ -262,7 +265,7 @@ if __name__ == '__main__':
     opts.anneal_length = 0
     opts.use_hessian = True # CHECK
     opts.hessian_scale = 1
-    opts.hessian_period = opts.nsteps / 5 #10
+    opts.hessian_period = opts.nsteps / 10 #10
     opts.seed = random_seed
     opts.T_init = 1
 
