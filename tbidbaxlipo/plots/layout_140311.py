@@ -86,7 +86,7 @@ reset_bgsub_sds = reset_first_timepoint_to_zero(bgsub_norm_stds)
 
 # Pore timecourses
 #pores = get_average_pore_timecourses(bgsub_norm_averages)
-pores = get_average_pore_timecourses(bgsub_norm_wells)
+pores = get_average_pore_timecourses(bgsub_norm_averages)
 """Average pores derived by taking -log(1 - data)."""
 
 def plot_data():
@@ -176,6 +176,7 @@ def plot_pore_fits(plot=True):
     #return (fmax_arr, k1_arr, conc_list)
 
 def plot_linear_fits(plot=True, max_time=50):
+    """Fit initial slopes to a line and return values."""
     data = bgsub_norm_wells
     k1_arr = np.zeros((3, len(layout.keys())))
     conc_list = np.zeros(len(layout.keys()))
@@ -200,8 +201,8 @@ def plot_linear_fits(plot=True, max_time=50):
             if plot:
                 plt.plot(time, y, 'b')
                 plt.plot(time, fit.fit_func(time, [k1]), 'r')
-                plt.title(well_conc)
-                plt.xticks([0, 2000, 4000, 6000, 8000])
+                plt.title('%s nM Bax' % well_conc)
+                #plt.xticks([0, 2000, 4000, 6000, 8000])
                 plt.ylabel('% Release')
                 plt.xlabel('Time (sec)')
 
@@ -210,8 +211,8 @@ def plot_linear_fits(plot=True, max_time=50):
     return (k1_arr, conc_list)
 
 def plot_two_exp_fits(plot=True):
-    data = pores
-    #data = bgsub_norm_wells
+    #data = pores
+    data = bgsub_norm_wells
     fmax_arr = np.zeros((3, len(layout.keys())))
     k1_arr = np.zeros((3, len(layout.keys())))
     k2_arr = np.zeros((3, len(layout.keys())))
@@ -335,6 +336,8 @@ def plot_fmax_curve(fmax_arr, conc_list):
     fitting.fit(exp_func, [exp_fmax, exp_k], fmax_means[1:], conc_list[1:])
     plt.plot(conc_list, exp_func(conc_list), 'g', linewidth=2,
              label='Exp fit')
+    print exp_fmax()
+    print exp_k()
 
     # Try fitting the fmax values to a double-exponential
     exp_fmax1 = fitting.Parameter(1.)
@@ -344,7 +347,8 @@ def plot_fmax_curve(fmax_arr, conc_list):
     def two_exp(s):
         return exp_fmax1()*(1 - np.exp(-exp_k1()*s)) + \
                exp_fmax2()*(1 - np.exp(-exp_k2()*s))
-    fitting.fit(two_exp, [exp_fmax1, exp_fmax2, exp_k1, exp_k2], fmax_means[1:], conc_list[1:])
+    fitting.fit(two_exp, [exp_fmax1, exp_fmax2, exp_k1, exp_k2],
+                fmax_means[1:], conc_list[1:])
     plt.plot(conc_list, two_exp(conc_list), 'm', linewidth=2,
             label='Two-exp fit')
 
@@ -354,9 +358,9 @@ def plot_fmax_curve(fmax_arr, conc_list):
     hill_exp_k = fitting.Parameter(0.01)
     def hill_exp(s):
         return hill_exp_fmax()*(1 - np.exp(
-                                           ((-hill_exp_k() * s) / (hill_exp_kd() + s)) * s
-                                          ))
-    fitting.fit(hill_exp, [hill_exp_kd, hill_exp_k], fmax_means[1:], conc_list[1:])
+                             ((-hill_exp_k() * s) / (hill_exp_kd() + s)) * s))
+    fitting.fit(hill_exp, [hill_exp_kd, hill_exp_k],
+                fmax_means[1:], conc_list[1:])
     plt.plot(conc_list, hill_exp(conc_list), color='k', linewidth=2,
             label='Hill-exp fit')
 
@@ -370,17 +374,29 @@ def plot_fmax_curve(fmax_arr, conc_list):
 
     # Pores per liposome at endpoint, hill fit
     plt.figure()
-    import ipdb; ipdb.set_trace()
     pores_per_lipo = -np.log(1 - fmax_means[1:])
     plt.plot(conc_list[1:], pores_per_lipo, marker='o')
     plt.title('Pores per liposome at endpoint')
 
-    hill_vmax = fitting.Parameter(1)
-    kd = fitting.Parameter(100)
-    def hill(s):
-        return ((hill_vmax() * s) / (kd() + s))
-    fitting.fit(hill, [kd, hill_vmax], pores_per_lipo, conc_list[1:])
-    plt.plot(conc_list[1:], hill(conc_list[1:]), color='r')
+    exp_fmax = fitting.Parameter(1.0)
+    exp_k = fitting.Parameter(0.01)
+    m = fitting.Parameter(0.01)
+    def exp_func(s):
+        return exp_fmax() * (1 - np.exp(-exp_k()*s)) + m()*s
+    fitting.fit(exp_func, [exp_fmax, exp_k, m], pores_per_lipo,
+                conc_list[1:])
+    plt.plot(conc_list, exp_func(conc_list), 'g', linewidth=2,
+             label='Exp fit')
+    print exp_fmax()
+    print exp_k()
+    print m()
+
+    #hill_vmax = fitting.Parameter(1)
+    #kd = fitting.Parameter(100)
+    #def hill(s):
+    #    return ((hill_vmax() * s) / (kd() + s))
+    #fitting.fit(hill, [kd, hill_vmax], pores_per_lipo, conc_list[1:])
+    #plt.plot(conc_list[1:], hill(conc_list[1:]), color='r')
 
 def estimate_background_residuals():
     """Perform a fit of each background trajectory separately and then
@@ -582,52 +598,61 @@ def plot_k_curves(k_arr, conc_list):
     plt.ylabel('$k\ (\mathrm{sec}^{-1})$')
 
 def plot_initial_slope_curves(k_arr, conc_list):
+    """Plots the initial slopes as a function of concentration."""
     k_means = np.mean(k_arr, axis=0)
     k_sds = np.std(k_arr, axis=0)
 
     plt.figure()
     plt.errorbar(conc_list, k_means, yerr= k_sds / np.sqrt(3), color='r',
                  linestyle='', linewidth=2)
-    plt.title('$k$')
+    plt.title('Initial permeabilization rate')
     plt.xlabel('[Bax] (nM)')
-    plt.ylabel('$k\ (\mathrm{sec}^{-1})$')
+    plt.ylabel('Rate $(\mathrm{sec}^{-1})$')
 
     fmax = fitting.Parameter(1e-3)
     k = fitting.Parameter(np.log(2)/300.)
     def exp_func(s):
         return fmax()*(1 - np.exp(-k()*s))
     fitting.fit(exp_func, [fmax, k], k_means, conc_list)
-    plt.plot(conc_list, exp_func(conc_list))
+    plt.plot(conc_list, exp_func(conc_list), color='g', label='Exponential')
 
     k_linear = fitting.Parameter(4e-7)
+    num_concs = 7
     def linear(s):
         return k_linear()*s
-    fitting.fit(linear, [k_linear], k_means[0:7], conc_list[0:7])
-    plt.plot(conc_list, linear(conc_list), color='b')
+    fitting.fit(linear, [k_linear], k_means[0:num_concs],
+                conc_list[0:num_concs])
+    plt.plot(conc_list, linear(conc_list), color='b',
+             label='Linear (first %d concs)' % num_concs)
+    plt.legend(loc='lower right')
+    plt.ylim([0, np.max(k_means) * 1.05])
+
     return k_linear()
 
 if __name__ == '__main__':
     plt.ion()
+    plt.close('all')
     #approach_2(bgsub_norm_averages, bgsub_norm_stds, layout)
-    plot_data()
-    sys.exit()
+
     #(k1_arr, k2_arr, tau_arr, conc_list) = plot_pore_fits(plot=True)
     #plot_k_curves(k1_arr, conc_list)
     #plot_k_curves(k2_arr, conc_list)
     #plot_k_curves(tau_arr, conc_list)
 
-    #(k1_arr, conc_list) = plot_linear_fits(plot=False)
-    #bax_rate_slope = plot_initial_slope_curves(k1_arr, conc_list)
+    # == Initial rates ==
+    (k1_arr, conc_list) = plot_linear_fits(plot=False)
+    bax_rate_slope = plot_initial_slope_curves(k1_arr, conc_list)
 
+    # == Two exponential fits ==
     (fmax_arr, k1_arr, k2_arr, conc_list) = plot_two_exp_fits(plot=False)
     plot_fmax_curve(fmax_arr, conc_list)
-    plot_k1_curve(k1_arr, conc_list)
-    plot_k2_curve(k2_arr, conc_list)
+    #plot_k1_curve(k1_arr[:,1:], conc_list[1:])
+    #plot_k2_curve(k2_arr, conc_list)
+    sys.exit()
 
-    fmax_means = np.mean(fmax_arr, axis=0)
-    k1_means = np.mean(k1_arr, axis=0)
-    k2_means = np.mean(k2_arr, axis=0)
-
+    # == Weird stuff here ==
+    conc_lipos = 5.16
+    """
     def two_exp_deriv(t, k1, fmax, k2):
         return np.exp(-(k1 - np.exp(-k2*t)*k1 + k2)*t) * \
                 fmax * k1 * \
@@ -645,11 +670,13 @@ if __name__ == '__main__':
     plt.figure()
     plt.plot(t, y)
     plt.plot(t, te.fit_func(t, params))
+    plt.title('Fit of OneExpFmax to lowest conc')
 
     #plt.figure()
     #plt.plot(t, one_exp_deriv(t, *params))
     plt.figure()
     plt.plot(t, one_exp_deriv(t, *params) / bax_rate_slope)
+    plt.title("Derivative of one_exp fit, normalized by bax_rate")
 
     t_start = 0
     t_end = 100
@@ -657,41 +684,70 @@ if __name__ == '__main__':
                    one_exp_deriv(t_end, *params) / bax_rate_slope
     amt_permeabilized = te.fit_func(t_end, params) - \
                         te.fit_func(t_start, params)
-    conc_lipos = 5.16
     k_lambda = amt_bax_lost / conc_lipos
     pore_size = stats.poisson.isf(amt_permeabilized, k_lambda)
     print pore_size
-    sys.exit()
 
     plt.figure()
     plt.plot(t, one_exp_deriv(t, 1e-4, 4e-2))
+    plt.title('One_exp_deriv, 1e-4, 4e-2')
     #plt.plot(t, two_exp_deriv(t, 1e-4, 4e-2, 1), color='r')
+    """
 
     fmax_means = np.mean(fmax_arr, axis=0)
     fmax_stds = np.std(fmax_arr, axis=0)
-    ratios = conc_list / 5.16
+    ratios = conc_list / conc_lipos
 
     derivs = np.zeros(len(fmax_means)-1)
+    deriv_sds = np.zeros(len(fmax_means)-1)
     for i in np.arange(1, len(fmax_means)):
         if i == 1:
             prev_mean = 0
+            prev_sd = 0
         else:
             prev_mean = fmax_means[i-1]
+            prev_sd = fmax_stds[i-1]
 
         fmax_diff = fmax_means[i] - prev_mean
         conc_diff = conc_list[i] - conc_list[i-1]
         derivs[i-1] = fmax_diff / float(conc_diff)
+        deriv_sds[i-1] = np.sqrt(fmax_stds[i] ** 2 + prev_sd ** 2)
     plt.figure()
-    plt.plot(conc_list[1:], derivs, marker='o')
-
+    #plt.errorbar(conc_list[1:], derivs, yerr=deriv_sds, marker='o', )
+    plt.errorbar(conc_list[1:], derivs, marker='o', )
+    plt.title('d[Fmax]/d[Bax]')
+    # Fit with exp dist?
     exp_lambda = fitting.Parameter(1/20.)
     def exp_dist(x):
         return exp_lambda() * np.exp(-exp_lambda() * x)
-    (residuals, result) = fitting.fit(exp_dist, [exp_lambda], derivs, conc_list[1:])
-    plt.plot(conc_list[1:], exp_dist(conc_list[1:]))
+    (residuals, result) = fitting.fit(exp_dist, [exp_lambda], derivs,
+                                      conc_list[1:])
+    plt.plot(conc_list[1:], exp_dist(conc_list[1:]), color='g')
+    print "exp_lambda: %f" % exp_lambda()
+
+    # Fit with exp decay
+    exp_c0 = fitting.Parameter(0.005)
+    exp_k = fitting.Parameter(1/50.)
+    def exp_decay(x):
+        return exp_c0() * np.exp(-exp_k() * x)
+    (residuals, result) = fitting.fit(exp_decay, [exp_c0, exp_k],
+                                      derivs, conc_list[1:])
+    plt.plot(conc_list[1:], exp_decay(conc_list[1:]), color='r')
+    print "exp_c0: %f" % exp_c0()
+    print "exp_k: %f" % exp_k()
+    # We want to estimate Bax per pore, or pores per Bax, if Bax
+    # holes didn't exist. Basically we want to know the fraction release
+    # we would get if the amount of Bax approached 0. In the case of
+    # the exponential decay, this is the value of exp_c0.
+    # We convert exp_c0 from % release to number of pores:
+    # The derivative dfmax/dBax tells us how much more permeabilization we get
+    # per Bax. At low concentrations, we get a certain amount of release
+    # per Bax that is relatively unaffected by the Bax hole phenomenon.
+    print "exp_c0 * conc_lipos: %f" % (exp_c0() * conc_lipos)
+    # According to this, we get only 0.03 pores per Bax??? So ~30 Baxes
+    # per pore??? No way.
     sys.exit()
 
-    """
     k_max = 20
     for i, ratio in enumerate(ratios):
         if i == 0:
@@ -699,22 +755,24 @@ if __name__ == '__main__':
         # Probability of permeabilization is
         # 1 - poisson.cdf(pore_size, ratio)
         pore_sizes = np.arange(1, k_max)
-        probs = [1 - stats.poisson.cdf(pore_size, ratio) for pore_size in pore_sizes]
+        probs = [1 - stats.poisson.cdf(pore_size, ratio)
+                 for pore_size in pore_sizes]
         plt.figure()
-        plt.plot(pore_sizes, probs)
+        plt.plot(pore_sizes, probs, marker='o')
         plt.xlabel('Pore size')
         plt.ylim([-0.05, 1.05])
         plt.title('Ratio of %f' % ratio)
-        sd_lines = [fmax_means[i] + fmax_stds[i]*num_sds for num_sds in np.arange(-2, 3)]
+        sd_lines = [fmax_means[i] + fmax_stds[i]*num_sds
+                    for num_sds in np.arange(-2, 3)]
         plt.hlines(sd_lines, 0, k_max, color='r')
-    """
 
     # Predicted Fmax curve for fixed pore size
     pore_size = 1
-    probs = [1 - stats.poisson.cdf(pore_size, ratio/10.) for ratio in ratios]
+    probs = [1 - stats.poisson.cdf(pore_size, ratio) for ratio in ratios]
     plt.figure()
     plt.errorbar(conc_list[1:], fmax_means[1:], yerr=fmax_stds[1:])
     plt.plot(conc_list, probs)
+    plt.title("Predicted Fmax curve for fixed pore size of %d" % pore_size)
     sys.exit()
 
     cov_matrix = result[1] * res_var
