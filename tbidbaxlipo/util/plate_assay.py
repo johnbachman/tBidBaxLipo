@@ -49,7 +49,6 @@ This can be done using the function :py:func:`reset_well_times`.
 
 import csv
 import datetime as dt
-#from pylab import *
 from matplotlib.pyplot import *
 from matplotlib.font_manager import FontProperties
 import numpy as np

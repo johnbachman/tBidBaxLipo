@@ -1,6 +1,28 @@
 Outline
 =======
 
+Two questions:
+
+* what is the conformational pathway of Bax as it inserts into the membrane?
+  Does it depend on the mechanism of activation?
+
+* what determines kinetics of pore formation by Bax.
+    In particular, what are the relative roles of membrane binding, activation
+    by BH3-only proteins, and auto-activation by Bax itself
+
+* what is the nature of the pore? Lipidic vs. proteinaceous, stable vs. transient
+
+Bax insertion pathway
+---------------------
+
+* 
+
+Bax recruitment kinetics
+------------------------
+
+* Satsoura et al. previously described saturation of liposomes by Bax at
+  numbers as low as 20. Surpri
+
 Motivation: to understand mechanistic basis of Bax pore formation kinetics.
 
 1. Experimental system, data, phenomenological model
