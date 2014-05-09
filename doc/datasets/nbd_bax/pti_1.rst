@@ -30,7 +30,7 @@ fold-change increase.
 
 .. plot::
 
-    from tbidbaxlipo.nbd_analysis import *
+    from tbidbaxlipo.plots.nbd_analysis import *
     plot_raw()
 
 Normalized to [0, 1]
@@ -47,7 +47,7 @@ reproducible, even if the magnitudes (and fold-change magnitudes) are not.
 
 .. plot::
 
-    from tbidbaxlipo.nbd_analysis import *
+    from tbidbaxlipo.plots.nbd_analysis import *
     plot_normalized()
 
 Averaged across replicates
@@ -55,7 +55,7 @@ Averaged across replicates
 
 .. plot::
 
-    from tbidbaxlipo.nbd_analysis import *
+    from tbidbaxlipo.plots.nbd_analysis import *
     plot_avg(normalize=False)
 
 Normalized and averaged across replicates
@@ -63,7 +63,7 @@ Normalized and averaged across replicates
 
 .. plot::
 
-    from tbidbaxlipo.nbd_analysis import *
+    from tbidbaxlipo.plots.nbd_analysis import *
     plot_avg(normalize=True)
 
 Fits with mathematical functions
@@ -80,7 +80,7 @@ Fits to the equation
 
 .. plot::
 
-    from tbidbaxlipo.nbd_analysis import *
+    from tbidbaxlipo.plots.nbd_analysis import *
     plot_fit(fittype='single_exp')
 
 
@@ -93,7 +93,7 @@ Exponential-linear model
 
 .. plot::
 
-    from tbidbaxlipo.nbd_analysis import *
+    from tbidbaxlipo.plots.nbd_analysis import *
     plot_fit(fittype='exp_lin')
 
 Two-exponential model
@@ -106,7 +106,7 @@ Two-exponential model
 
 .. plot::
 
-    from tbidbaxlipo.nbd_analysis import *
+    from tbidbaxlipo.plots.nbd_analysis import *
     plot_fit(fittype='double_exp')
 
 
