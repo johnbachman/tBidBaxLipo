@@ -162,8 +162,8 @@ pore state. Also note that it cannot dissociate from the membrane unless it is
 in the 'm' (peripherally bound) state.
 
 There is a cycle in that Bax can go from m to m via
+
 mtBid + mBax <-> mtBid:mBax (<)-> mtBid + iBax (<)-> pBax
-              K1               K2                 K3
 
 Therefore we need to have
 tBid_Bax_kf * tBid_Bax_kc * k_pore = tBid_Bax_kr * (tBid_iBax_kf) * k_pore_rev
@@ -240,7 +240,6 @@ To-do list
 .. todo:: Make it so macros can be invoked from within the motifs in this
 
 paradigm.
-
 """
 
 __author__ = 'johnbachman'
