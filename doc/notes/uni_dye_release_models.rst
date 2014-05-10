@@ -170,7 +170,7 @@ below:
 
 .. plot::
 
-    from tbidbaxlipo.plots.bax_heat_stoch_det_comparison import plot
+    from tbidbaxlipo.plots.stoch_det_comparison.bax_heat import plot
     plot()
 
 Of course, this also means that whenever liposomes are in excess on a molar
