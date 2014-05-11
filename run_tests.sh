@@ -1,1 +1,2 @@
-nosetests tbidbaxlipo.nbd_analysis tbidbaxlipo.grid_analysis
+nosetests tbidbaxlipo.plots.nbd_analysis tbidbaxlipo.plots.grid_analysis
+nosetests --with-doctest tbidbaxlipo.util.plate_assay
