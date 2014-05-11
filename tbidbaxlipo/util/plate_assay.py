@@ -729,3 +729,30 @@ def dose_series_labels(reagent_name=None, initial_dose=None,
         dose_labels.reverse()
 
     return dose_labels
+
+def replicate_well_list(start_row=None, end_row=None, start_col=None,
+                        end_col=None, group_by_col=True):
+    if None in [start_row, end_row, start_col, end_col]:
+        raise ValueError('Non-default values must be provided for row/col '
+                         'arguments.')
+    replicate_wells = []
+    for row_char_num in range(ord(start_row), ord(end_row)+1):
+        well_list = tuple(['%s%d' % (chr(row_char_num), col)
+                     for col in range(start_col, end_col+1)])
+        replicate_wells.append(well_list)
+    if group_by_col:
+        replicate_wells = zip(*replicate_wells)
+    return replicate_wells
+
+def dose_series_replicate_list(reagent_name=None, initial_dose=None,
+                               dilution_ratio=(2/3.),
+                               num_doses=12, last_dose_zero=True,
+                               units='nM', lowest_first=True,
+                               start_row=None, end_row=None, start_col=None,
+                               end_col=None, group_by_col=True):
+    return zip(
+            dose_series_labels(reagent_name, initial_dose, dilution_ratio,
+                               num_doses, last_dose_zero, units, lowest_first),
+            replicate_well_list(start_row, end_row, start_col, end_col,
+                                group_by_col))
+
