@@ -87,6 +87,8 @@ bax_lipo_wells = extract([layout[cond][0] for cond in bax_lipo_conditions],
 # Normalized and background subtracted
 bgsub_wells = subtract_background_set(bax_lipo_wells, lipo_bg_wells)
 
+(bgsub_averages, bgsub_sds) = averages(bgsub_wells, bax_lipo_layout)
+
 #bgsub_norm_wells = subtract_background(norm_wells, background)
 
 # Normalized, background subtracted, averaged

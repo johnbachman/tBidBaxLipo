@@ -100,3 +100,19 @@ subtract these wells from the Bax-liposome wells to control for these effects.
 .. image:: ../../_static/140318_c126_bax_lipo_titration_2.png
     :width: 6 in
 
+.. ipython::
+
+    In [2]: figure(figsize=(12, 8))
+
+    In [3]: plot_all(bgsub_averages)
+
+    In [4]: plt.ylabel('NBD signal (RFU)')
+
+    In [5]: title("Background-subtracted Bax/lipo timecourses, avg")
+
+    @suppress
+    In [6]: plt.savefig('_static/140318_c126_bax_lipo_titration_3.png')
+
+.. image:: ../../_static/140318_c126_bax_lipo_titration_3.png
+    :width: 6 in
+
