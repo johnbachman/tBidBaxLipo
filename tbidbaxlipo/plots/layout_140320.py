@@ -88,8 +88,9 @@ nbd_conditions = [
         'Bax 0 nM, NBD-Bax 96 nM',]
 
 nbd_layout = extract(nbd_conditions, layout)
-nbd_wells = extract([layout[cond][0] for cond in nbd_conditions],
-                         timecourse_wells)
+nbd_wells = extract(nbd_conditions, timecourse_averages)
+#nbd_wells = extract([layout[cond][0] for cond in nbd_conditions],
+#                         timecourse_wells)
 
 # Background subtracted
 bgsub_wells = subtract_background_set(nbd_wells, bax_bg_wells)
