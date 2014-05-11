@@ -10,19 +10,51 @@ import collections
 
 data_path = os.path.dirname(sys.modules['tbidbaxlipo.data'].__file__)
 
-bax_labels = dose_series_labels('Bax', 800., 2/3., num_doses=12)
-bax_layout_tuples = []
-for i, bl in enumerate(bax_labels):
-    bax_layout_tuples.append((bl, ['D%d' % (12 - i), 'E%d' % (12 - i)]))
-bax_layout = collections.OrderedDict(bax_layout_tuples)
+bax_labels1 = dose_series_replicate_list('Bax', 1000., 2/3., num_doses=12,
+                                        start_row='D', end_row='D',
+                                        start_col=1, end_col=12)
+bax_labels2 = dose_series_replicate_list('Bax', 800., 2/3., num_doses=12,
+                                        start_row='E', end_row='E',
+                                        start_col=1, end_col=12)
+bax_layout = collections.OrderedDict(bax_labels1 + bax_labels2)
+
+cec_layout = collections.OrderedDict(dose_series_replicate_list(
+                    'CecropinA', 50000, 2/3., num_doses=12,
+                    start_row='C', end_row='C', start_col=1, end_col=12))
 
 timecourse_file = abspath(join(data_path, '140429_Bax_DPX_timecourse.txt'))
 timecourse_wells = read_flexstation_kinetics(timecourse_file)
 bax_wells = extract(wells_from_layout(bax_layout), timecourse_wells)
+cec_wells = extract(wells_from_layout(cec_layout), timecourse_wells)
+
+# Averages of raw timecourses across replicates
+(bax_averages, bax_stds) = averages(timecourse_wells, bax_layout)
+(cec_averages, cec_stds) = averages(timecourse_wells, cec_layout)
+
+def plot_endpoints_vs_dose(wells, layout):
+    endpoints = []
+    conc_list = []
+    for conc_str in layout.keys():
+        conc = float(conc_str.split(' ')[1])
+        conc_list.append(conc)
+        endpoint = wells[conc_str][VALUE][-1]
+        endpoints.append(endpoint)
+    plt.figure()
+    plt.plot(conc_list, endpoints, linestyle='', marker='o')
+    plt.xlabel('Dose')
+    plt.ylabel('RFU')
+
+    return (conc_list, endpoints)
 
 if __name__ == '__main__':
     plt.ion()
-
+    plt.figure()
+    plot_all(bax_wells)
+    plt.figure()
+    plot_all(cec_wells)
+    plot_endpoints_vs_dose(bax_averages, bax_layout)
+    plot_endpoints_vs_dose(cec_averages, cec_layout)
+    sys.exit()
 
     # In this experiment, we first prepare liposomes at the same final
     # concentration as our wells that will contain Bid and Bax; lyse them with

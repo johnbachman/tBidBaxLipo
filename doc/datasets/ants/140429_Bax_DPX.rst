@@ -13,4 +13,30 @@ Raw Timecourses
     plt.close('all')
     plt.figure()
     plot_all(bax_wells)
+    plt.title('Bax timecourses')
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    plt.figure()
+    plot_all(cec_wells)
+    plt.title('Cecropin A timecourses')
+
+Endpoints vs. dose
+------------------
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    plot_endpoints_vs_dose(bax_averages, bax_layout)
+    plt.title('Bax endpoints')
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    plot_endpoints_vs_dose(cec_averages, cec_layout)
+    plt.title('Cecropin A endpoints')
 
