@@ -788,7 +788,11 @@ def dose_series_replicate_list(reagent_name=None, initial_dose=None,
     the plate layout.
 
     Expects that replicate wells occupy a rectangular block of contiguous wells
-    in the plate.
+    in the plate. Note also that dilutions are expected to run from left to
+    right in the plate, so the highest dose will be associated with the lowest
+    row or column index. In this context the lowest_first argument merely
+    specifies how the list is sorted, rather than the association of the labels
+    to the wells.
 
     Parameters
     ----------
@@ -834,14 +838,17 @@ def dose_series_replicate_list(reagent_name=None, initial_dose=None,
     >>> import collections
     >>> layout_dict = dose_series_replicate_list('Bax', 590, (2/3.), num_doses=3, start_row='A', end_row='C', start_col=1, end_col=3)
     >>> collections.OrderedDict(layout_dict)
-    OrderedDict([('Bax 0.0 nM', ('A1', 'B1', 'C1')), ('Bax 393.3 nM', ('A2', 'B2', 'C2')), ('Bax 590.0 nM', ('A3', 'B3', 'C3'))])
+    OrderedDict([('Bax 0.0 nM', ('A3', 'B3', 'C3')), ('Bax 393.3 nM', ('A2', 'B2', 'C2')), ('Bax 590.0 nM', ('A1', 'B1', 'C1'))])
     """
 
     if group_by_col and num_doses != end_col - start_col + 1:
         raise ValueError('The number of doses does not match the column range '
                          'in the plate layout.')
-    return zip(
-            dose_series_labels(reagent_name, initial_dose, dilution_ratio,
-                               num_doses, last_dose_zero, units, lowest_first),
-            replicate_well_list(start_row, end_row, start_col, end_col,
-                                group_by_col))
+
+    rep_list = zip(dose_series_labels(reagent_name, initial_dose,
+                                      dilution_ratio, num_doses, last_dose_zero,                                      units, lowest_first=False),
+                   replicate_well_list(start_row, end_row, start_col, end_col,
+                                       group_by_col))
+    if lowest_first:
+        rep_list.reverse()
+    return rep_list
