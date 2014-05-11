@@ -1,0 +1,16 @@
+Bax DPX Requenching Assay
+=========================
+
+See Excel spreadsheet for experimental details.
+
+Raw Timecourses
+---------------
+
+.. plot::
+    :context:
+
+    from tbidbaxlipo.plots.layout_140429 import *
+    plt.close('all')
+    plt.figure()
+    plot_all(bax_wells)
+

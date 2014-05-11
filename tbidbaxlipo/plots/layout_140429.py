@@ -4,11 +4,25 @@ import numpy as np
 import os
 import sys
 import tbidbaxlipo.data
+from tbidbaxlipo.util.plate_assay import *
+from os.path import abspath, join
+import collections
 
 data_path = os.path.dirname(sys.modules['tbidbaxlipo.data'].__file__)
 
+bax_labels = dose_series_labels('Bax', 800., 2/3., num_doses=12)
+bax_layout_tuples = []
+for i, bl in enumerate(bax_labels):
+    bax_layout_tuples.append((bl, ['D%d' % (12 - i), 'E%d' % (12 - i)]))
+bax_layout = collections.OrderedDict(bax_layout_tuples)
+
+timecourse_file = abspath(join(data_path, '140429_Bax_DPX_timecourse.txt'))
+timecourse_wells = read_flexstation_kinetics(timecourse_file)
+bax_wells = extract(wells_from_layout(bax_layout), timecourse_wells)
+
 if __name__ == '__main__':
     plt.ion()
+
 
     # In this experiment, we first prepare liposomes at the same final
     # concentration as our wells that will contain Bid and Bax; lyse them with
@@ -25,7 +39,7 @@ if __name__ == '__main__':
             '140429_Bax_DPX_5_8uL.txt',
             '140429_Bax_DPX_6_10uL.txt',
             '140429_Bax_DPX_7_10uL.txt']
-    dpx_std_file_list = [os.path.abspath(os.path.join(data_path, filename))
+    dpx_std_file_list = [abspath(join(data_path, filename))
                          for filename in dpx_std_file_list]
 
     # These are the wells in the plate that contain the liposome-only solution

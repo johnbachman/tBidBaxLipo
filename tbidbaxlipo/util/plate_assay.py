@@ -636,3 +636,96 @@ def extract(keys, dict):
         extracted_dict[key] = dict[key]
     return extracted_dict
 
+def wells_from_layout(layout):
+    """Takes a layout dictionary and returns a list of the wells it contains.
+
+    Examples
+    --------
+
+        >>> from collections import OrderedDict
+        >>> layout = OrderedDict([('Bax 0 nM', ['A1', 'B1']),
+        ...                       ('Bax 100 nM', ['A2', 'B2'])])
+        >>> wells_from_layout(layout)
+        ['A1', 'B1', 'A2', 'B2']
+    """
+
+    all_wells = []
+    for label in layout.keys():
+        cur_wells = layout[label]
+        all_wells += cur_wells
+    return all_wells
+
+def dose_series_labels(reagent_name=None, initial_dose=None,
+                       dilution_ratio=(2/3.),
+                       num_doses=12, last_dose_zero=True,
+                       units='nM', lowest_first=True):
+    """Returns a list of strings describing dose-response conditions.
+
+    Given a reagent name, and initial dose, a dilution ratio, and other
+    parameters, returns a list of strings identifying the concentrations in
+    each se of wells in the dilution series, e.g. ['Bax 400 nM', 'Bax 200 nM',
+    'Bax 100 nM' ...] etc. This streamlines specifying the concentration
+    conditions in different wells when plotting or analyzing data from
+    plate-based assays.
+
+    Parameters
+    ----------
+    reagent_name : string
+        Name of the protein/compound in the dose series.
+    initial_dose : float
+        The highest dose in the dilution series.
+    dilution_rate : float
+        The scaling on the concentration going from the higher to lower
+        concenrations in the series. So a 1:2 dilution series is 0.5;
+        a 2:3 dilution series is 0.666.
+    num_doses : int
+        The number of doses in the dilution series, including the zero
+        dose if present.
+    last_dose_zero : boolean
+        If True, the dilution series runs from the first to the (num_doses -
+        1)th well, and the num_doses well is set to 0. If False, the dilution
+        series span all num_doses wells.
+    units : string
+        The units identifier to be appended to the label, e.g. 'nM' or 'ng/mL'.
+    lowest_first : boolean
+        If True, the lowest concentration dose in the series is first in the
+        list. If False, the highest concentration is first.
+
+    Returns
+    -------
+    list of strings
+        A list of labels identifying the concentrations of each dose in the
+        series.
+
+    Examples
+    --------
+
+    Getting a list of Bax concentrations:
+
+        >>> dose_series_labels('Bax', 590., 1/2., num_doses=4)
+        ['Bax 0.0 nM', 'Bax 147.5 nM', 'Bax 295.0 nM', 'Bax 590.0 nM']
+    """
+
+    if reagent_name is None or initial_dose is None:
+        raise ValueError('Please specify values for the reagent_name '
+                         'and initial_dose arguments!')
+    dose_labels = []
+    # Fill in the doses from highest concentration to lowest
+    for i in range(num_doses):
+        # If the last dose is zero, specify that here
+        if last_dose_zero and i == num_doses - 1:
+            dose = 0.
+        # Otherwise, specify the diluted dose
+        else:
+            dose = initial_dose * (dilution_ratio ** i)
+        # Format the label
+        dose_label = '%s %.1f %s' % (reagent_name, dose, units)
+        # Add it to the list
+        dose_labels.append(dose_label)
+    # Right now, the highest dose is the first in the list. If we want the
+    # lowest (e.g., 0) dose first in the list (which is the default) we reverse
+    # the list here:
+    if lowest_first:
+        dose_labels.reverse()
+
+    return dose_labels
