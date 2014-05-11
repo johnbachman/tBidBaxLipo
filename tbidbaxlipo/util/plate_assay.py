@@ -732,6 +732,38 @@ def dose_series_labels(reagent_name=None, initial_dose=None,
 
 def replicate_well_list(start_row=None, end_row=None, start_col=None,
                         end_col=None, group_by_col=True):
+    """Returns groups of well names for replicate wells.
+
+    Expects that replicate wells occupy a rectangular block of contiguous wells
+    in the plate.
+
+    Parameters
+    ----------
+    start_row : string
+        The first row in the replicate well area, e.g. 'A'.
+    end_row : string
+        The first row in the replicate well area, e.g. 'C'.
+    start_col : int
+        The first column in the replicate well area, e.g. 1.
+    end_col : int
+        The last column in the replicate well area, e.g. 12.
+    group_by_col : boolean
+        If True (default), wells with the same column index but different row
+        indicies represent replicates of the same condition, with conditions
+        varying from column to column. If False, replicates are grouped by row.
+
+    Returns
+    -------
+    list of tuples of strings
+        Each tuple in the outer list represents a group of wells with
+        the same condition, e.g. [('A1', 'B1', 'C1'), ('A2', 'B2', 'C2')]
+
+    Examples
+    --------
+    >>> replicate_well_list('A', 'C', 1, 3)
+    [('A1', 'B1', 'C1'), ('A2', 'B2', 'C2'), ('A3', 'B3', 'C3')]
+    """
+
     if None in [start_row, end_row, start_col, end_col]:
         raise ValueError('Non-default values must be provided for row/col '
                          'arguments.')
@@ -750,9 +782,66 @@ def dose_series_replicate_list(reagent_name=None, initial_dose=None,
                                units='nM', lowest_first=True,
                                start_row=None, end_row=None, start_col=None,
                                end_col=None, group_by_col=True):
+    """Returns strings/tuples specifying a conditions in a plate.
+
+    The strings/tuples can be used to construct an OrderedDict specifying
+    the plate layout.
+
+    Expects that replicate wells occupy a rectangular block of contiguous wells
+    in the plate.
+
+    Parameters
+    ----------
+    reagent_name : string
+        Name of the protein/compound in the dose series.
+    initial_dose : float
+        The highest dose in the dilution series.
+    dilution_rate : float
+        The scaling on the concentration going from the higher to lower
+        concenrations in the series. So a 1:2 dilution series is 0.5;
+        a 2:3 dilution series is 0.666.
+    num_doses : int
+        The number of doses in the dilution series, including the zero
+        dose if present.
+    last_dose_zero : boolean
+        If True, the dilution series runs from the first to the (num_doses -
+        1)th well, and the num_doses well is set to 0. If False, the dilution
+        series span all num_doses wells.
+    units : string
+        The units identifier to be appended to the label, e.g. 'nM' or 'ng/mL'.
+    lowest_first : boolean
+        If True, the lowest concentration dose in the series is first in the
+        list. If False, the highest concentration is first.
+    start_row : string
+        The first row in the replicate well area, e.g. 'A'.
+    end_row : string
+        The first row in the replicate well area, e.g. 'C'.
+    start_col : int
+        The first column in the replicate well area, e.g. 1.
+    end_col : int
+        The last column in the replicate well area, e.g. 12.
+    group_by_col : boolean
+        If True (default), wells with the same column index but different row
+        indicies represent replicates of the same condition, with conditions
+        varying from column to column. If False, replicates are grouped by row.
+
+    Returns
+    -------
+    list of tuples of type (string, (tuple of strings))
+
+    Examples
+    --------
+    >>> import collections
+    >>> layout_dict = dose_series_replicate_list('Bax', 590, (2/3.), num_doses=3, start_row='A', end_row='C', start_col=1, end_col=3)
+    >>> collections.OrderedDict(layout_dict)
+    OrderedDict([('Bax 0.0 nM', ('A1', 'B1', 'C1')), ('Bax 393.3 nM', ('A2', 'B2', 'C2')), ('Bax 590.0 nM', ('A3', 'B3', 'C3'))])
+    """
+
+    if group_by_col and num_doses != end_col - start_col + 1:
+        raise ValueError('The number of doses does not match the column range '
+                         'in the plate layout.')
     return zip(
             dose_series_labels(reagent_name, initial_dose, dilution_ratio,
                                num_doses, last_dose_zero, units, lowest_first),
             replicate_well_list(start_row, end_row, start_col, end_col,
                                 group_by_col))
-
