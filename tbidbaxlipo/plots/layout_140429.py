@@ -10,10 +10,10 @@ import collections
 
 data_path = os.path.dirname(sys.modules['tbidbaxlipo.data'].__file__)
 
-bax_labels1 = dose_series_replicate_list('Bax', 1000., 2/3., num_doses=12,
+bax_labels1 = dose_series_replicate_list('Bax', 900., 2/3., num_doses=12,
                                         start_row='D', end_row='D',
                                         start_col=1, end_col=12)
-bax_labels2 = dose_series_replicate_list('Bax', 800., 2/3., num_doses=12,
+bax_labels2 = dose_series_replicate_list('Bax', 750., 2/3., num_doses=12,
                                         start_row='E', end_row='E',
                                         start_col=1, end_col=12)
 bax_layout = collections.OrderedDict(bax_labels1 + bax_labels2)
