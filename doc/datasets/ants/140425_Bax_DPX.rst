@@ -1,0 +1,58 @@
+Bax DPX Requenching Assay (4/25/14)
+===================================
+
+Experimental details
+--------------------
+
+.. ipython:: python
+
+    from tbidbaxlipo.plots.layout_140425 import *
+    # The wells containing liposomes only:
+    print str(dpx_std_wells)
+    # The list of DPX volumes added at each std. curve step
+    print dpx_vol_steps
+    # The list of concentrations at each std. curve step (in Molar)
+    print str(dpx_concs)
+    # The list of DPX volumes added at each requenching step
+    print requench_vol_steps
+    # The list of dpx concentrations at each requenching step (in Molar)
+    print str(requench_dpx_concs)
+
+Raw Timecourses
+---------------
+
+.. plot::
+    :context:
+
+    from tbidbaxlipo.plots.layout_140425 import *
+    plt.close('all')
+    plt.figure()
+    plot_all(timecourse_wells)
+
+Quenching standard curve
+------------------------
+
+For the standard curve, the quenching is calculated by well. That is, the I/I_0
+values are calculated for each well based on that well's starting fluorescence
+(before DPX titration). The I/I_0 values from each well are then averaged to
+get the mean and standard deviation values shown in the calibration curve.
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    (i_avgs_by_well, i_sds_by_well, fmax_avg, fmax_sd) = \
+            quenching_std_curve_by_well(dpx_std_file_list,
+                                        dpx_std_wells, dpx_concs)
+    (ka, kd) = fit_std_curve(i_avgs_by_well, i_sds_by_well, dpx_concs)
+
+Requenching analysis
+--------------------
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    requenching_analysis(requench_file_list, requench_wells,
+                         requench_dpx_concs, fmax_avg, fmax_sd, ka, kd, 45)
+
