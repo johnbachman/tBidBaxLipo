@@ -391,11 +391,11 @@ def requenching_analysis(requench_file_list, requench_wells,
         # Calculate the internal quenching
         (q_in_avg, q_in_sd) = calc_ratio_mean_sd(intercept, sd_intercept,
                                                  1 - f_out, sd_slope)
-        plt.text(0.55, 0.4, '$F_{out}\ \mathrm{(slope)}\ = %f$' % f_out)
-        plt.text(0.55, 0.3, '$Q_{in}(1 - F_{out})\ \mathrm{(intercept)}\ = %f$'
+        plt.text(0.05, 0.9, '$F_{out}\ \mathrm{(slope)}\ = %f$' % f_out)
+        plt.text(0.05, 0.8, '$Q_{in}(1 - F_{out})\ \mathrm{(intercept)}\ = %f$'
                             % intercept)
-        plt.text(0.55, 0.2, '$Q_{in} = %f$' % q_in_avg)
-        plt.text(0.55, 0.1, '$R^2 = %f$' % linfit[2])
+        plt.text(0.05, 0.7, '$Q_{in} = %f$' % q_in_avg)
+        plt.text(0.05, 0.6, '$R^2 = %f$' % linfit[2])
         # Save the results for this well
         f_outs[well_index] = f_out
         f_out_errs[well_index] = sd_slope
@@ -411,8 +411,8 @@ def requenching_analysis(requench_file_list, requench_wells,
     #plt.plot(f_outs[24:36], q_ins[24:36], marker='o', color='b', linestyle='')
     plt.xlabel('$F_{out}$')
     plt.ylabel('$Q_{in}$')
-    #plt.xlim([-0.5, 1.5])
-    #plt.ylim([-0.5, 1.5])
+    plt.xlim([-0.2, 1.1])
+    plt.ylim([-0.2, 1.1])
     plt.title('$Q_{in}$ vs. $F_{out}$')
 
     #linfit = scipy.stats.linregress(f_outs, q_ins)

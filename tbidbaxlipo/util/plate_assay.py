@@ -861,10 +861,10 @@ def plot_endpoints_vs_dose(wells, layout):
         conc_list.append(conc)
         endpoint = wells[conc_str][VALUE][-1]
         endpoints.append(endpoint)
-    plt.figure()
-    plt.plot(conc_list, endpoints, linestyle='', marker='o')
-    plt.xlabel('Dose')
-    plt.ylabel('RFU')
+    figure()
+    plot(conc_list, endpoints, linestyle='', marker='o')
+    xlabel('Dose')
+    ylabel('RFU')
 
     return (conc_list, endpoints)
 
