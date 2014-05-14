@@ -31,21 +31,6 @@ cec_wells = extract(wells_from_layout(cec_layout), timecourse_wells)
 (bax_averages, bax_stds) = averages(timecourse_wells, bax_layout)
 (cec_averages, cec_stds) = averages(timecourse_wells, cec_layout)
 
-def plot_endpoints_vs_dose(wells, layout):
-    endpoints = []
-    conc_list = []
-    for conc_str in layout.keys():
-        conc = float(conc_str.split(' ')[1])
-        conc_list.append(conc)
-        endpoint = wells[conc_str][VALUE][-1]
-        endpoints.append(endpoint)
-    plt.figure()
-    plt.plot(conc_list, endpoints, linestyle='', marker='o')
-    plt.xlabel('Dose')
-    plt.ylabel('RFU')
-
-    return (conc_list, endpoints)
-
 # In this experiment, we first prepare liposomes at the same final
 # concentration as our wells that will contain Bid and Bax; lyse them with
 # Triton; then sequentially add back DPX and measure the quenching at each
@@ -84,7 +69,7 @@ requench_file_list = [
         '140429_Bax_reDPX_6_8uL.txt',
         '140429_Bax_reDPX_7_10uL.txt'
         ]
-requench_file_list = [os.path.abspath(os.path.join(data_path, filename))
+requench_file_list = [abspath(join(data_path, filename))
                       for filename in requench_file_list]
 
 # The wells containing the Bid/Bax treated liposomes
@@ -105,7 +90,7 @@ requench_vol_steps = [0., 1., 2., 4., 6., 8., 10.]
 requench_dpx_concs = calc_dpx_concs(requench_vol_steps,
                                     starting_well_vol=100.)
 
-fmax_filename = os.path.abspath(os.path.join(data_path,
+fmax_filename = abspath(join(data_path,
                                 '140429_Bax_reDPX_final_triton.txt'))
 
 if __name__ == '__main__':
