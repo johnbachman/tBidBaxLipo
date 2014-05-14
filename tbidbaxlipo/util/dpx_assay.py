@@ -319,7 +319,10 @@ def requenching_analysis(requench_file_list, requench_wells,
     # Now calculate the total quenching, I / F_max, for each well
     q_tot_by_well_avgs = np.zeros((num_dilutions, num_wells))
     q_tot_by_well_sds = np.zeros((num_dilutions, num_wells))
-    for well_index in range(num_wells):
+    for well_index, well_name in enumerate(requench_wells):
+        # If we've been given a list of fmax avgs/sds for each well, use the
+        # one for this well; otherwise, assume we've been given a single value
+        # for all wells and use that
         try:
             cur_fmax_avg = fmax_avg[well_index]
             cur_fmax_sd = fmax_sd[well_index]
@@ -327,6 +330,9 @@ def requenching_analysis(requench_file_list, requench_wells,
             cur_fmax_avg = fmax_avg
             cur_fmax_sd = fmax_sd
 
+        # The error associated with the total quenching depends on the
+        # error of the reads for this well/dilution, and the error of the
+        # maximum fluorescence
         for dilution_index in range(num_dilutions):
             (q_tot_avg, q_tot_sd) = calc_ratio_mean_sd(
                         requench_well_avgs[dilution_index, well_index],
@@ -346,7 +352,7 @@ def requenching_analysis(requench_file_list, requench_wells,
     f_outs = np.zeros(num_wells)
     f_out_errs = np.zeros(num_wells)
     #plt.figure()
-    for well_index in range(num_wells):
+    for well_index, well_name in enumerate(requench_wells):
         #if well_index < 30:
         #    continue
         plt.figure()
@@ -354,22 +360,25 @@ def requenching_analysis(requench_file_list, requench_wells,
         plt.errorbar(q_outs, q_tot_by_well_avgs[:, well_index],
                      q_tot_by_well_sds[:, well_index],
                      linestyle='', color='k', linewidth=2)
-        #plt.title('$Q_{total}$ vs. $Q_{out}$')
+        plt.title('$Q_{total}$ vs. $Q_{out}$ for well %s' % well_name)
         plt.xlim((0, 1))
         plt.ylim((0, 1))
+        plt.xlabel('$Q_{out}$')
+        plt.ylabel('$Q_{total}$')
         # Add tickmarks only to the plots on the edges
-        if well_index + 1 > 30:
-            plt.xticks([0, 0.5, 1.0])
-            plt.xlabel('$Q_{out}$')
-        else:
-            plt.xticks([])
-        if well_index % 6 == 0:
-            plt.yticks([0, 0.5, 1.0])
-            plt.ylabel('$Q_{total}$')
-        else:
-            plt.yticks([])
+        #if well_index + 1 > 30 
+        #    plt.xticks([0, 0.5, 1.0])
+        #    plt.xlabel('$Q_{out}$')
+        #else:
+        #    plt.xticks([])
+        #if well_index % 6 == 0:
+        #    plt.yticks([0, 0.5, 1.0])
+        #    plt.ylabel('$Q_{total}$')
+        #else:
+        #    plt.yticks([])
 
-        linfit = scipy.stats.linregress(q_outs, q_tot_by_well_avgs[:, well_index])
+        linfit = scipy.stats.linregress(q_outs,
+                                        q_tot_by_well_avgs[:, well_index])
         f_out = linfit[0]
         intercept = linfit[1]
         std_err = linfit[4]
@@ -379,18 +388,20 @@ def requenching_analysis(requench_file_list, requench_wells,
         sd_slope = std_err * np.sqrt(1./sx2)
         plt.plot(q_outs, (q_outs * f_out) + intercept, color='r',
                  linewidth=1)
-        plt.text(0.7, 0.1, '$R^2 = %f$' % linfit[2])
         # Calculate the internal quenching
         (q_in_avg, q_in_sd) = calc_ratio_mean_sd(intercept, sd_intercept,
                                                  1 - f_out, sd_slope)
-        plt.text(0.7, 0.2, '$Q_{in} = %f$' % q_in_avg)
-        plt.text(0.7, 0.3, '$F_{out} = %f$' % f_out)
+        plt.text(0.5, 0.4, '$F_{out}\ \mathrm{(slope)}\ = %f$' % f_out)
+        plt.text(0.5, 0.3, '$Q_{in}(1 - F_{out})\ \mathrm{(intercept)}\ = %f$'
+                            % intercept)
+        plt.text(0.5, 0.2, '$Q_{in} = %f$' % q_in_avg)
+        plt.text(0.5, 0.1, '$R^2 = %f$' % linfit[2])
         # Save the results for this well
         f_outs[well_index] = f_out
         f_out_errs[well_index] = sd_slope
         q_ins[well_index] = q_in_avg
         q_in_errs[well_index] = q_in_sd
-    plt.tight_layout()
+    #plt.tight_layout()
 
     plt.figure()
     plt.errorbar(f_outs, q_ins, xerr=f_out_errs, yerr=q_in_errs,
@@ -400,8 +411,8 @@ def requenching_analysis(requench_file_list, requench_wells,
     #plt.plot(f_outs[24:36], q_ins[24:36], marker='o', color='b', linestyle='')
     plt.xlabel('$F_{out}$')
     plt.ylabel('$Q_{in}$')
-    plt.xlim([0, 1])
-    plt.ylim([0, 1])
+    plt.xlim([-0.5, 1.5])
+    plt.ylim([-0.5, 1.5])
     plt.title('$Q_{in}$ vs. $F_{out}$')
 
     #linfit = scipy.stats.linregress(f_outs, q_ins)
@@ -422,7 +433,8 @@ def requenching_analysis(requench_file_list, requench_wells,
     #print "dpx_0: %f" % dpx_0()
     #print "alpha: %f" % alpha()
 
-    #for (dpx_val, alpha_val) in itertools.product((0.005, 0.002), (alpha(), 0)):
+    #for (dpx_val, alpha_val) in itertools.product((0.005, 0.002),
+    #                                              (alpha(), 0)):
     #    alpha.set(alpha_val)
     #    dpx_0.set(dpx_val)
     #    plt.plot(f_out_pred, q_in_func(f_out_pred), linewidth=2, color='b')

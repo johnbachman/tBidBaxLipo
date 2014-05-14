@@ -852,3 +852,19 @@ def dose_series_replicate_list(reagent_name=None, initial_dose=None,
     if lowest_first:
         rep_list.reverse()
     return rep_list
+
+def plot_endpoints_vs_dose(wells, layout):
+    endpoints = []
+    conc_list = []
+    for conc_str in layout.keys():
+        conc = float(conc_str.split(' ')[1])
+        conc_list.append(conc)
+        endpoint = wells[conc_str][VALUE][-1]
+        endpoints.append(endpoint)
+    plt.figure()
+    plt.plot(conc_list, endpoints, linestyle='', marker='o')
+    plt.xlabel('Dose')
+    plt.ylabel('RFU')
+
+    return (conc_list, endpoints)
+
