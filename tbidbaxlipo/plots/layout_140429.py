@@ -112,7 +112,7 @@ if __name__ == '__main__':
     (ka, kd) = fit_std_curve(i_avgs_by_well, i_sds_by_well, dpx_concs)
 
     # The quenching ratio at the highest concentration
-    final_q = quenching_func(ka, kd, requench_dpx_concs[-1])
+    final_q = 1. / quenching_func(ka, kd, requench_dpx_concs[-1])
 
     (fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, requench_wells, final_q)
 

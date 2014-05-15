@@ -451,13 +451,13 @@ def fmax_by_well(fmax_file, requench_wells, final_q):
     # the read average for each one and add it to a list
     for well_index, well_name in enumerate(requench_wells):
         quenched_vals = timecourse_wells[well_name][VALUE]
-        fmax_vals = final_q * quenched_vals
+        fmax_vals = quenched_vals / final_q
         fmax_avgs[well_index] = np.mean(fmax_vals)
         fmax_sds[well_index] = np.std(fmax_vals)
 
     return (fmax_avgs, fmax_sds)
 
 def get_quenching_dict(i_avgs, i_sds, dpx_vols_added):
-    return dict([(dpx_vols_added[i], (i_avgs[i], i_sds[i]))
+    return dict([(dpx_vols_added[i], 1/i_avgs[i])
                  for i in range(len(dpx_vols_added))])
 

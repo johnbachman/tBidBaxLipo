@@ -86,7 +86,7 @@ Requenching analysis for Bid/Bax
     :context:
 
     plt.close('all')
-    final_q = quenching_func(ka, kd, requench_dpx_concs[-1])
+    final_q = 1. / quenching_func(ka, kd, requench_dpx_concs[-1])
     (fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, bax_requench_wells,
                                          final_q)
     q_outs = np.array([1. / quenching_func(ka, kd, dpx_conc)
@@ -102,7 +102,6 @@ Requenching analysis for Cecropin A
     :context:
 
     plt.close('all')
-    final_q = quenching_func(ka, kd, requench_dpx_concs[-1])
     (fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, cec_requench_wells,
                                          final_q)
     requenching_analysis(requench_file_list, cec_requench_wells,
