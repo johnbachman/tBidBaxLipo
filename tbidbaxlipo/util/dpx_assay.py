@@ -439,14 +439,12 @@ def requenching_analysis(requench_file_list, requench_wells,
     #    dpx_0.set(dpx_val)
     #    plt.plot(f_out_pred, q_in_func(f_out_pred), linewidth=2, color='b')
 
-def fmax_by_well(fmax_file, requench_wells, ka, kd, final_dpx_conc):
+def fmax_by_well(fmax_file, requench_wells, final_q):
     num_wells = len(requench_wells)
 
     # We'll store the means and SDs for the fluorescence intensities here
     fmax_avgs = np.zeros(num_wells)
     fmax_sds = np.zeros(num_wells)
-
-    final_q = quenching_func(ka, kd, final_dpx_conc)
 
     timecourse_wells = read_flexstation_kinetics(fmax_file)
     # Iterate over all the wells used in the standard curve, calculate
@@ -458,4 +456,8 @@ def fmax_by_well(fmax_file, requench_wells, ka, kd, final_dpx_conc):
         fmax_sds[well_index] = np.std(fmax_vals)
 
     return (fmax_avgs, fmax_sds)
+
+def get_quenching_dict(i_avgs, i_sds, dpx_vols_added):
+    return dict([(dpx_vols_added[i], (i_avgs[i], i_sds[i]))
+                 for i in range(len(dpx_vols_added))])
 
