@@ -1,0 +1,113 @@
+Bax 43C DPX Requenching Assay (5/14/14)
+=======================================
+
+Experimental details
+--------------------
+
+.. ipython:: python
+
+    from tbidbaxlipo.plots.layout_140514 import *
+    # The first Bax dilution series
+    print '\n'.join([str(l) for l in bax_labels1])
+    # The second Bax dilution series
+    print '\n'.join([str(l) for l in bax_labels2])
+    # The Cecropin A dilution series
+    print '\n'.join(['%s: %s' % (str(k), str(v))
+                     for k, v in cec_layout.iteritems()])
+    # The wells containing liposomes only:
+    print str(dpx_std_wells)
+    # The list of DPX volumes added at each std. curve step
+    print dpx_vol_steps
+    # The list of concentrations at each std. curve step (in Molar)
+    print str(dpx_concs)
+    # The list of DPX volumes added at each requenching step
+    print requench_vol_steps
+    # The list of dpx concentrations at each requenching step (in Molar)
+    print str(requench_dpx_concs)
+
+Raw Timecourses
+---------------
+
+.. plot::
+    :context:
+
+    from tbidbaxlipo.plots.layout_140514 import *
+    plt.close('all')
+    plt.figure()
+    plot_all(bax_wells)
+    plt.title('Bax timecourses')
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    plt.figure()
+    plot_all(cec_wells)
+    plt.title('Cecropin A timecourses')
+
+Endpoints vs. dose
+------------------
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    plot_endpoints_vs_dose(bax_averages, bax_layout)
+    plt.title('Bax endpoints')
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    plot_endpoints_vs_dose(cec_averages, cec_layout)
+    plt.title('Cecropin A endpoints')
+
+Quenching standard curve
+------------------------
+
+For the standard curve, the quenching is calculated by well. That is, the I/I_0
+values are calculated for each well based on that well's starting fluorescence
+(before DPX titration). The I/I_0 values from each well are then averaged to
+get the mean and standard deviation values shown in the calibration curve.
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    (i_avgs_by_well, i_sds_by_well, fmax_avg, fmax_sd) = \
+            quenching_std_curve_by_well(dpx_std_file_list,
+                                        dpx_std_wells, dpx_concs)
+    (ka, kd) = fit_std_curve(i_avgs_by_well, i_sds_by_well, dpx_concs)
+
+Requenching analysis for Bid/Bax
+--------------------------------
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    qd = get_quenching_dict(i_avgs_by_well, i_sds_by_well, dpx_vols_added)
+    final_q = qd[dpx_vols_added[-1]]
+    (fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, bax_requench_wells,
+                                         final_q)
+    q_outs = np.array(qd.values())
+    requenching_analysis(requench_file_list, bax_requench_wells,
+                         requench_dpx_concs, q_outs, fmax_avgs, fmax_sds,
+                         None, None, 15)
+
+Requenching analysis for Cecropin A
+-----------------------------------
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    qd = get_quenching_dict(i_avgs_by_well, i_sds_by_well, dpx_vols_added)
+    final_q = qd[dpx_vols_added[-1]]
+    (fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, cec_requench_wells,
+                                         final_q)
+    q_outs = np.array(qd.values())
+    requenching_analysis(requench_file_list, cec_requench_wells,
+                         requench_dpx_concs, q_outs, fmax_avgs, fmax_sds,
+                         None, None, 15)
+

@@ -15,8 +15,8 @@ bax_stock_conc = 5900. # nM
 total_vol = 150. # uL
 bax_stock1 = 50. # uL
 bax_stock2 = 41.5 # uL
-bax_start_conc1 = (bax_stock_conc * bax_stock1)/total_vol
-bax_start_conc2 = (bax_stock_conc * bax_stock2)/total_vol
+bax_start_conc1 = ((bax_stock_conc * bax_stock1)/total_vol) * 0.5
+bax_start_conc2 = ((bax_stock_conc * bax_stock2)/total_vol) * 0.5
 
 bax_labels1 = dose_series_replicate_list('Bax', bax_start_conc1, 2/3.,
                                          num_doses=12,
