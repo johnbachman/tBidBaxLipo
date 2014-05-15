@@ -269,7 +269,7 @@ def fit_std_curve_by_pymc(i_vals, i_sds, dpx_concs):
     return (ka_vals, kd_vals)
 
 def requenching_analysis(requench_file_list, requench_wells,
-                         requench_dpx_concs, fmax_avg, fmax_sd,
+                         requench_dpx_concs, q_outs, fmax_avg, fmax_sd,
                          ka, kd, dpx_0):
     """Calculates and plots the quenching std curve from the raw ANTS data.
 
@@ -342,8 +342,8 @@ def requenching_analysis(requench_file_list, requench_wells,
             q_tot_by_well_sds[dilution_index, well_index] = q_tot_sd
 
     # Calculate the (predicted) Q_out for each of the DPX concentrations used
-    q_outs = np.array([1. / quenching_func(ka, kd, dpx_conc)
-              for dpx_conc in requench_dpx_concs])
+    #q_outs = np.array([1. / quenching_func(ka, kd, dpx_conc)
+    #          for dpx_conc in requench_dpx_concs])
     # FIXME have q_out get associated error by sampling from ka/kd dists
 
     # Plot the Q_total / Q_out curves (should be straight lines)

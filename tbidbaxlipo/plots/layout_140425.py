@@ -80,6 +80,9 @@ if __name__ == '__main__':
                                             dpx_std_wells, dpx_concs)
     (ka, kd) = fit_std_curve(i_avgs_by_well, i_sds_by_well, dpx_concs)
 
+    q_outs = np.array([1. / quenching_func(ka, kd, dpx_conc)
+              for dpx_conc in requench_dpx_concs])
+
     requenching_analysis(requench_file_list, requench_wells,
-                         requench_dpx_concs, f_max_avg, f_max_sd,
+                         requench_dpx_concs, q_outs, f_max_avg, f_max_sd,
                          ka, kd, 45)

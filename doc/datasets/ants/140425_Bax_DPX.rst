@@ -53,6 +53,9 @@ Requenching analysis
     :context:
 
     plt.close('all')
+    q_outs = np.array([1. / quenching_func(ka, kd, dpx_conc)
+                       for dpx_conc in requench_dpx_concs])
     requenching_analysis(requench_file_list, requench_wells,
-                         requench_dpx_concs, fmax_avg, fmax_sd, ka, kd, 45)
+                         requench_dpx_concs, q_outs, fmax_avg, fmax_sd,
+                         ka, kd, 45)
 

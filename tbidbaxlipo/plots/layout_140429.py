@@ -116,6 +116,10 @@ if __name__ == '__main__':
 
     (fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, requench_wells, final_q)
 
+    q_outs = np.array([1. / quenching_func(ka, kd, dpx_conc)
+              for dpx_conc in requench_dpx_concs])
+
     requenching_analysis(requench_file_list, requench_wells,
-                         requench_dpx_concs, fmax_avgs, fmax_sds, ka, kd, 5)
+                         requench_dpx_concs, q_outs, fmax_avgs, fmax_sds,
+                         ka, kd, 5)
 
