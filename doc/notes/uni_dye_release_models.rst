@@ -166,12 +166,13 @@ get 100% dye release. You will, however, reach 1 pore ver vesicle (on average)
 at completion.** This is due to the uneven (Poisson) distribution of the pores
 among liposomes. The ``one_cpt`` model actually captures this quite nicely, and
 its results are validated by the ``n_cpt`` model, as shown in the figure
-below:
+below (EXCEPT THAT THEY'RE NOT!!):
 
 .. plot::
 
-    from tbidbaxlipo.plots.stoch_det_comparison.bax_heat import plot
-    plot()
+    from tbidbaxlipo.plots.stoch_det_comparison.bax_heat import jobs, data
+    from tbidbaxlipo.plots.stoch_det_comparison.plots import *
+    plot_bax_timecourse_comparison(jobs, data, 0)
 
 Of course, this also means that whenever liposomes are in excess on a molar
 basis, it is impossible to get 100% permeabilization. This is because in this
