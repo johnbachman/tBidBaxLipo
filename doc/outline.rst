@@ -12,6 +12,42 @@ Two questions:
 
 * what is the nature of the pore? Lipidic vs. proteinaceous, stable vs. transient
 
+Bid/Bax/Liposomes paper
+-----------------------
+
+- Introduction
+
+  - Cells need to be able to reliably execute apoptosis, not dying when they
+    don't mean to, but also able to execute apoptosis when needed.
+
+  - The measured concentrations of Bcl-2 family proteins is highly variable.
+    How is the apoptosis network able to execute the decision over such a wide
+    variation of concentrations?
+
+  - Suggests concept of apoptotic phase space, in which Bid (activator) and
+    Bax (effector) represent the protein axes; lipid axis is also important.
+    Anti-apoptotic axis is also clearly important, but important to first
+    define in the absence of anti-apoptotics.
+
+  - So goal: measure a two-d dose response for Bid and Bax.
+
+  - The Bax dose response has been measured in a variety of fashions, with
+    differing conclusions: cooperative, saturating, and linear.
+
+- Results
+
+  - Bid/Bax titration at a single concentration of liposomes
+
+    - Nature of the curves: two exponential equation?
+
+    - Mechanistic model?
+
+    - Bax sets the amount of permeabilization?
+
+    - Bid sets rate?
+
+  - 
+
 Bax insertion pathway
 ---------------------
 
