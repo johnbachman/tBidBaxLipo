@@ -357,10 +357,10 @@ class TwoExpWithBackground(TitrationFit):
 # Plotting and analysis functions        #
 ##########################################
 
-def plot_two_exp_fits(data, layout, conc_str_index=1, plot=True):
-    fmax_arr = np.zeros((3, len(layout.keys())))
-    k1_arr = np.zeros((3, len(layout.keys())))
-    k2_arr = np.zeros((3, len(layout.keys())))
+def plot_two_exp_fits(data, layout, num_reps=3, conc_str_index=1, plot=True):
+    fmax_arr = np.zeros((num_reps, len(layout.keys())))
+    k1_arr = np.zeros((num_reps, len(layout.keys())))
+    k2_arr = np.zeros((num_reps, len(layout.keys())))
     conc_list = np.zeros(len(layout.keys()))
 
     for i, conc_str in enumerate(layout.keys()):
