@@ -53,8 +53,10 @@ Now we fit with the two-exponential equation from Kushnareva et al.:
     :context:
 
     plt.close('all')
-    (fmax_arr, k1_arr, k2_arr, conc_list) = plot_two_exp_fits(plot=True)
-    plot_fmax_curve(fmax_arr, conc_list)
-    plot_k1_curve(k1_arr[:,1:], conc_list[1:])
-    plot_k2_curve(k2_arr[:,1:], conc_list[1:])
+    (fmax_arr, k1_arr, k2_arr, conc_list) = \
+           titration_fits.plot_two_exp_fits(bgsub_norm_wells, layout, plot=True)
+    titration_fits.plot_fmax_curve(fmax_arr, conc_list)
+    titration_fits.plot_k1_curve(k1_arr[:,1:], conc_list[1:])
+    titration_fits.plot_k2_curve(k2_arr[:,1:], conc_list[1:])
+
 
