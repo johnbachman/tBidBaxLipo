@@ -29,8 +29,86 @@ on to permeabilize other liposomes? But then why was there no unbinding signal
 in the octet experiment? Perhaps tBid can only unbind when Bax is present?
 
 .. plot::
+    :context:
 
-    from tbidbaxlipo.plots.layout_130731 import plot_data
+    from tbidbaxlipo.plots.layout_130731 import *
     plot_data()
 
+Two-exponential fits
+--------------------
+
+For 63 nM Bax only:
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    bax63_layout = extract(bax63_wells, layout)
+    (fmax_arr, k1_arr, k2_arr, conc_list) = \
+          titration_fits.plot_two_exp_fits(norm_wells, bax63_layout,
+                                           num_reps=1, conc_str_index=4,
+                                           plot=True)
+    plt.figure()
+    plt.semilogx(conc_list, fmax_arr[0], marker='o')
+    plt.xlabel('[cBid] (nM)')
+    plt.ylabel('$F_{max}$')
+
+    plt.figure()
+    plt.semilogx(conc_list, k1_arr[0], marker='o')
+    plt.xlabel('[cBid] (nM)')
+    plt.ylabel('$k_1$')
+
+    plt.figure()
+    plt.semilogx(conc_list, k2_arr[0], marker='o')
+    plt.xlabel('[cBid] (nM)')
+    plt.ylabel('$k_2$')
+
+For 252 nM Bax only:
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    bax252_layout = extract(bax252_wells, layout)
+    (fmax_arr, k1_arr, k2_arr, conc_list) = \
+          titration_fits.plot_two_exp_fits(norm_wells, bax252_layout,
+                                           num_reps=1, conc_str_index=4,
+                                           plot=True)
+    plt.figure()
+    plt.semilogx(conc_list, fmax_arr[0], marker='o')
+    plt.xlabel('[cBid] (nM)')
+    plt.ylabel('$F_{max}$')
+
+    plt.figure()
+    plt.semilogx(conc_list, k1_arr[0], marker='o')
+    plt.xlabel('[cBid] (nM)')
+    plt.ylabel('$k_1$')
+
+    plt.figure()
+    plt.semilogx(conc_list, k2_arr[0], marker='o')
+    plt.xlabel('[cBid] (nM)')
+    plt.ylabel('$k_2$')
+
+Discussion
+----------
+
+The conclusion appears to be that the Fmax value is set by the amount of Bax,
+and is relatively insensitive (though not completely insensitive, as seen in
+the cBid titration with 252 nM Bax) to the amount of cBid.
+
+In addition, the kinetic increase (in k1) appears to scale roughly log-linearly
+with the amount of Bid, with the increase in rate proportional to the
+fold-change in the amount of cBid.
+
+One thing that is interesting is that there is no evidence of saturation of the
+cBid activity--that is, if the addition of cBid above some stoichiometric level
+leads to a plateau in the amount of cBid at liposomes, one might expect that
+the Bax activation kinetics might also plateau. However, this appears to not be
+the case, with increases in Bax permeabilization activity that increases even
+with Bid concentrations of 2 uM!
+
+However, it's important to note that these fits do not take into account the
+basal activity of the Bax with no cBid added. If this were taken into account,
+the "threshold" level of cBid required to get appreciable Bax activity (above
+background) would be more apparent.
 

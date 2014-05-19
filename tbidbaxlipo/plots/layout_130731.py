@@ -5,6 +5,8 @@ import collections
 import sys
 import os
 import tbidbaxlipo.data
+from tbidbaxlipo.plots import titration_fits
+from matplotlib import pyplot as plt
 
 def extract(keys, dict):
     extracted_dict = collections.OrderedDict([])
@@ -32,6 +34,22 @@ layout = collections.OrderedDict([
         ('Bax 252 nM, tBid 235 nM', ['G05']),
         ('Bax 252 nM, tBid 2350 nM', ['G06']),
         ])
+
+# Just the Bax 63 nM wells
+bax63_wells = ['Bax 63 nM, tBid 0 nM',
+               'Bax 63 nM, tBid 0.24 nM',
+               'Bax 63 nM, tBid 2.35 nM',
+               'Bax 63 nM, tBid 23.5 nM',
+               'Bax 63 nM, tBid 235 nM',
+               'Bax 63 nM, tBid 2350 nM',]
+
+# Just the Bax 252 nM wells
+bax252_wells = ['Bax 252 nM, tBid 0 nM',
+               'Bax 252 nM, tBid 0.24 nM',
+               'Bax 252 nM, tBid 2.35 nM',
+               'Bax 252 nM, tBid 23.5 nM',
+               'Bax 252 nM, tBid 235 nM',
+               'Bax 252 nM, tBid 2350 nM',]
 
 data_path = os.path.dirname(sys.modules['tbidbaxlipo.data'].__file__)
 timecourse_file = os.path.abspath(os.path.join(data_path,
@@ -94,25 +112,11 @@ def plot_data():
     plot_all(norm_averages, legend_position=0.7)
     title("Normalized timecourses, averaged")
 
-    # Plot just the Bax 63 nM wells
-    bax63_wells = ['Bax 63 nM, tBid 0 nM',
-                   'Bax 63 nM, tBid 0.24 nM',
-                   'Bax 63 nM, tBid 2.35 nM',
-                   'Bax 63 nM, tBid 23.5 nM',
-                   'Bax 63 nM, tBid 235 nM',
-                   'Bax 63 nM, tBid 2350 nM',]
     figure()
     plot_all(extract(bax63_wells, norm_averages), legend_position=0.7)
     ylim((0, 1))
     title("63 nM Bax timecourses")
 
-    # Plot just the Bax 252 nM wells
-    bax252_wells = ['Bax 252 nM, tBid 0 nM',
-                   'Bax 252 nM, tBid 0.24 nM',
-                   'Bax 252 nM, tBid 2.35 nM',
-                   'Bax 252 nM, tBid 23.5 nM',
-                   'Bax 252 nM, tBid 235 nM',
-                   'Bax 252 nM, tBid 2350 nM',]
     figure()
     plot_all(extract(bax252_wells, norm_averages), legend_position=0.7)
     ylim((0, 1))
@@ -127,4 +131,27 @@ def plot_data():
     title("Avg. pores per liposome")
 
 if __name__ == '__main__':
-    plot_data()
+    #plot_data()
+    plt.ion()
+    bax63_layout = extract(bax63_wells, layout)
+    (fmax_arr, k1_arr, k2_arr, conc_list) = \
+          titration_fits.plot_two_exp_fits(norm_wells, bax63_layout,
+                                           num_reps=1, conc_str_index=4,
+                                           plot=True)
+    plt.figure()
+    plt.semilogx(conc_list, fmax_arr[0], marker='o')
+    plt.xlabel('[cBid] (nM)')
+    plt.ylabel('$F_{max}$')
+
+    plt.figure()
+    plt.semilogx(conc_list, k1_arr[0], marker='o')
+    plt.xlabel('[cBid] (nM)')
+    plt.ylabel('$k_1$')
+
+    plt.figure()
+    plt.semilogx(conc_list, k2_arr[0], marker='o')
+    plt.xlabel('[cBid] (nM)')
+    plt.ylabel('$k_2$')
+
+
+
