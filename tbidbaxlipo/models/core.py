@@ -47,8 +47,7 @@ tBid Dissociation/Bax conformational Change
 -------------------------------------------
 
 - tBid binding at the rear triggers a conformational change in Bax that makes
-  the BH3 exposed but inhibits further binding by tBid at that site. References:
-  [Gavathiotis2008]_, [Kim2009]_.
+  the BH3 exposed but inhibits further binding by tBid at that site.
 
 - tBid binding at the rear triggers a conformational change that exposes the
   BH3 but allows tBid to stay bound
