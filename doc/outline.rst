@@ -34,7 +34,64 @@ Bid/Bax/Liposomes paper
   - The Bax dose response has been measured in a variety of fashions, with
     differing conclusions: cooperative, saturating, and linear.
 
+  - In addition, the response surface tells us about the underlying biochemical
+    mechanism. Can we use models to explain the underlying response surface
+    in terms of the mechanism?
+
 - Results
+
+  - Evaluation of permeabilization models for individual perm. curves
+
+    - Phenomenology: a delay; nearly exponential activity; maximal activity
+      below 100% permeabilization; slow rise;
+
+    - At start, you have no pores nucleated, auto-activation helps
+      get pores nucleated, hence the acceleration. However, this
+      starts to fight against the depletion of Bax due to recruitment
+      to existing pores, and eventually depletion wins out.
+
+    - Three velocities: initial, intermediate, final; pore production is
+      linear at each one? dp/dt = k
+
+    - Exponential model (1 and 2 and 3 sum exponentials)
+
+    - Schwarz: log transform the data to estimate "number of pores"
+
+    - Almeida
+
+    - Schlesinger model
+
+    - Kushnareva - 3 parameter model
+
+    - Various mechanistic models
+
+      - Enzymatic vs. pore forming styles
+
+    - European group paper?
+
+    - Various means of representing permeabilization?
+
+
+  - Bax titration at single liposome concentration, Bid titration, Bim BH3
+    titration, ANTS
+
+    - Saturation of initial rate? Saturation of kinetics? difference between
+      cBid and Bid BH3?
+
+    - Choose a model and show scaling of parameters (e.g., Kushnareva model)
+
+    - Permeabilization kinetics saturate for cBid but not for Bim BH3
+
+
+  - Effect of liposome concentration on Bid and Bax binding
+
+    - Bid binding, FRET?
+
+    - Bax binding, BH3 peptide
+
+
+  - Bax titration at single liposome concentration ANTS
+
 
   - Bid/Bax titration at a single concentration of liposomes
 
