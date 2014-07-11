@@ -41,7 +41,8 @@ def calc_dpx_concs(dpx_vol_steps, dpx_stock_conc=0.1, starting_well_vol=102.):
         dpx_concs[i] = (dpx_stock_conc * dpx_vols_added[i]) / total_vol
     return dpx_concs
 
-def quenching_std_curve(dpx_std_file_list, dpx_std_wells, dpx_concs):
+def quenching_std_curve(dpx_std_file_list, dpx_std_wells, dpx_concs,
+                        bg_avgs=None):
     """Calculates and plots the quenching std curve from the raw ANTS data.
 
     Parameters
@@ -95,16 +96,24 @@ def quenching_std_curve(dpx_std_file_list, dpx_std_wells, dpx_concs):
     plt.ylabel('ANTS Fluorescence (RFU)')
     plt.title('ANTS Fluorescence vs. [DPX]')
 
+    # If we have background values, subtract them here
+    if bg_avgs is not None:
+        if not len(bg_avgs) == num_dilutions:
+            return ValueError("The background array must have as many entries "
+                              "as there are DPX concentraitons.")
+        dpx_intensity_avgs = dpx_intensity_avgs - bg_avgs
+
     # Now calculate the intensity ratios, I_0 / I
     # To get the standard error of the ratio, we have to account for the
     # error in both the numerator and the denominator:
     i_vals = np.zeros(num_dilutions)
     i_sds = np.zeros(num_dilutions)
     for i in range(num_dilutions):
-        (i_vals[i], i_sds[i]) = calc_ratio_mean_sd(dpx_intensity_avgs[0],
-                                              dpx_intensity_sds[0],
+        (i_vals[i], i_sds[i]) = calc_ratio_mean_sd(
                                               dpx_intensity_avgs[i],
-                                              dpx_intensity_sds[i])
+                                              dpx_intensity_sds[i],
+                                              dpx_intensity_avgs[0],
+                                              dpx_intensity_sds[0])
     return (i_vals, i_sds, dpx_intensity_avgs[0], dpx_intensity_sds[0])
 
 def quenching_std_curve_by_well(dpx_std_file_list, dpx_std_wells,
@@ -211,7 +220,7 @@ def fit_std_curve(i_vals, i_sds, dpx_concs):
     kd = fitting.Parameter(0.05)
     ka = fitting.Parameter(0.490)
     def eq2(dpx):
-        return (1 + kd()*dpx) * (1 + ka()*dpx)
+        return 1. / ((1 + kd()*dpx) * (1 + ka()*dpx))
     fitting.fit(eq2, [kd, ka], i_vals, dpx_concs)
     # Plot curve fit
     dpx_interp = np.linspace(dpx_concs[0], dpx_concs[-1], 100)
