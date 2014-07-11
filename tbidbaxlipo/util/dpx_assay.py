@@ -279,7 +279,7 @@ def fit_std_curve_by_pymc(i_vals, i_sds, dpx_concs):
 
 def requenching_analysis(requench_file_list, requench_wells,
                          requench_dpx_concs, q_outs, fmax_avg, fmax_sd,
-                         ka, kd, dpx_0):
+                         ka, kd, dpx_0, bg_avgs=None):
     """Calculates and plots the quenching std curve from the raw ANTS data.
 
     Parameters
@@ -308,13 +308,19 @@ def requenching_analysis(requench_file_list, requench_wells,
     # Iterate over the files containing the intensity data
     for dilution_index, requench_file in enumerate(requench_file_list):
         timecourse_wells = read_flexstation_kinetics(requench_file)
-        # Iterate over all the wells used in the standard curve, calculate
-        # the read average for each one and add it to a list
+        # Iterate over all the wells, calculate the read average for each one
+        # and add it to a list
         for well_index, well_name in enumerate(requench_wells):
+            if bg_avgs is not None:
+                well_values = (timecourse_wells[well_name][VALUE] -
+                               bg_avgs[dilution_index])
+            else:
+                well_values = timecourse_wells[well_name][VALUE]
+
             requench_well_avgs[dilution_index, well_index] = \
-                            np.mean(timecourse_wells[well_name][VALUE])
+                            np.mean(well_values)
             requench_well_sds[dilution_index, well_index] = \
-                            np.std(timecourse_wells[well_name][VALUE])
+                            np.std(well_values)
 
     # Plot the intensity values at each DPX concentration
     plt.figure()
@@ -390,11 +396,16 @@ def requenching_analysis(requench_file_list, requench_wells,
                                         q_tot_by_well_avgs[:, well_index])
         f_out = linfit[0]
         intercept = linfit[1]
-        std_err = linfit[4]
-        mean_x = np.mean(q_outs)
-        sx2 =  np.sum((q_outs - mean_x)**2)
-        sd_intercept = std_err * np.sqrt(1. / len(q_outs) + mean_x*mean_x/sx2)
-        sd_slope = std_err * np.sqrt(1./sx2)
+        #std_err = linfit[4]
+        n = float(len(q_outs))
+        sd_slope = linfit[4]
+        sd_intercept = np.sqrt((sd_slope ** 2) * np.sum(q_outs ** 2) / n)
+
+        # THIS IS ALL WRONG!
+        #mean_x = np.mean(q_outs)
+        #sx2 =  np.sum((q_outs - mean_x)**2)
+        #sd_intercept = std_err * np.sqrt(1. / len(q_outs) + mean_x*mean_x/sx2)
+        #sd_slope = std_err * np.sqrt(1./sx2)
         plt.plot(q_outs, (q_outs * f_out) + intercept, color='r',
                  linewidth=1)
         # Calculate the internal quenching
@@ -424,10 +435,15 @@ def requenching_analysis(requench_file_list, requench_wells,
     plt.ylim([-0.2, 1.1])
     plt.title('$Q_{in}$ vs. $F_{out}$')
 
-    #linfit = scipy.stats.linregress(f_outs, q_ins)
-    #f_out_pred = np.linspace(0, 1, 100)
-    #plt.plot(f_out_pred, (f_out_pred * linfit[0]) + linfit[1], color='k')
-    #plt.text(0.5, 0.24, '$R^2 = %f$' % linfit[2])
+    # This error is not meaningful because it doesn't account for errorbars!
+    # FIXME FIXME FIXME
+    linfit = scipy.stats.linregress(f_outs, q_ins)
+    f_out_pred = np.linspace(0, 1, 100)
+    plt.plot(f_out_pred, (f_out_pred * linfit[0]) + linfit[1], color='r')
+    plt.text(0.1, 0.6, 'Slope = %f' % linfit[0])
+    plt.text(0.1, 0.48, 'Intercept = %f' % linfit[1])
+    plt.text(0.1, 0.36, '$R^2 = %f$' % linfit[2])
+    plt.text(0.1, 0.24, 'p = %f' % linfit[3])
 
     #alpha = fitting.Parameter(1.)
     #dpx_0 = fitting.Parameter(18.1)
@@ -448,7 +464,7 @@ def requenching_analysis(requench_file_list, requench_wells,
     #    dpx_0.set(dpx_val)
     #    plt.plot(f_out_pred, q_in_func(f_out_pred), linewidth=2, color='b')
 
-def fmax_by_well(fmax_file, requench_wells, final_q):
+def fmax_by_well(fmax_file, requench_wells, final_q, final_bg=None):
     num_wells = len(requench_wells)
 
     # We'll store the means and SDs for the fluorescence intensities here
@@ -456,10 +472,14 @@ def fmax_by_well(fmax_file, requench_wells, final_q):
     fmax_sds = np.zeros(num_wells)
 
     timecourse_wells = read_flexstation_kinetics(fmax_file)
-    # Iterate over all the wells used in the standard curve, calculate
-    # the read average for each one and add it to a list
+    # Iterate over all the wells, calculate the read average for each one
+    # and add it to a list
     for well_index, well_name in enumerate(requench_wells):
         quenched_vals = timecourse_wells[well_name][VALUE]
+        # First, if possible, subtract the background from the raw value
+        if final_bg is not None:
+            quenched_vals -= final_bg
+        # Now we calculate what the values would be if they were unquenched
         fmax_vals = quenched_vals / final_q
         fmax_avgs[well_index] = np.mean(fmax_vals)
         fmax_sds[well_index] = np.std(fmax_vals)
@@ -467,6 +487,6 @@ def fmax_by_well(fmax_file, requench_wells, final_q):
     return (fmax_avgs, fmax_sds)
 
 def get_quenching_dict(i_avgs, i_sds, dpx_vols_added):
-    return dict([(dpx_vols_added[i], 1/i_avgs[i])
+    return dict([(dpx_vols_added[i], i_avgs[i])
                  for i in range(len(dpx_vols_added))])
 
