@@ -1,0 +1,224 @@
+.. _140710_Bax_43C_DPX:
+
+Bax 43C DPX Requenching Assay (7/10/14)
+=======================================
+
+Experimental details
+--------------------
+
+.. ipython:: python
+
+    from tbidbaxlipo.plots.layout_140710 import *
+    # The first Bax dilution series
+    print '\n'.join([str(l) for l in bax_labels1])
+    # The second Bax dilution series
+    print '\n'.join([str(l) for l in bax_labels2])
+    # The Cecropin A dilution series
+    print '\n'.join(['%s: %s' % (str(k), str(v))
+                     for k, v in cec_layout.iteritems()])
+    # The wells containing liposomes only:
+    print str(dpx_std_wells)
+    # The list of DPX volumes added at each std. curve step
+    print dpx_vol_steps
+    # The list of concentrations at each std. curve step (in Molar)
+    print str(dpx_concs)
+
+Raw Timecourses
+---------------
+
+In taking these measurements there were a few very pronounced outliers. I
+wondered if these might be due to dust or debris on the surface of the plate
+(since this was done as bottom read). After noting the three wells which
+were strong outliers, I wiped the bottom gently with a Kimwipe, re-read the
+plate and found that fluorescence values came back within a normal range.
+So it appears that small amounts of dust/lint etc. can give dramatically
+high fluorescence reads for this assay.
+
+.. plot::
+    :context:
+
+    from tbidbaxlipo.plots.layout_140710 import *
+    plt.close('all')
+    plt.figure()
+    plot_all(bax_wells)
+    plt.title('Bax timecourses')
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    plt.figure()
+    plot_all(cec_wells)
+    plt.title('Cecropin A timecourses')
+
+
+
+Endpoints vs. dose
+------------------
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    plot_endpoints_vs_dose(bax_averages, bax_layout)
+    plt.title('Bax endpoints')
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    plot_endpoints_vs_dose(cec_averages, cec_layout)
+    plt.title('Cecropin A endpoints')
+
+
+DPX Background fluorescence
+---------------------------
+
+Here again we see the presence of outliers most likely due to
+contamination/dirt.  To deal with this, the outliers (RFU > 70) are removed and
+ignored when taking the mean background fluorescence.
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    ## DPX BACKGROUND FLUORESCENCE
+    # These are the wells in the plate that contain buffer only but to which
+    # DPX is also added; used for background subtraction
+    bg_wells = ['A%d' % well_num for well_num in range(1, 13)]
+    # Iterate over the DPX files, collecting bg values
+    bg_matrix = np.zeros((len(dpx_std_file_list), len(bg_wells)))
+    for file_index, file in enumerate(dpx_std_file_list):
+        wells = read_flexstation_kinetics(file)
+        for well_index, bg_well in enumerate(bg_wells):
+            bg_matrix[file_index, well_index] = np.mean(wells[bg_well][VALUE])
+    # If we plot the BG values as a function of DPX concentration, we can identify
+    # the outliers (probably a result of a piece of lint/debris on the surface of
+    # the plate)
+    plt.figure()
+    plt.plot(dpx_concs, bg_matrix)
+    plt.title('DPX background fluorescence')
+    plt.xlabel('DPX concentration')
+    plt.ylabel('ANTS (RFU)')
+    # We set the outlier values to NaN
+    bg_matrix[bg_matrix > 70] = np.nan
+    # Now, we take the mean at each DPX concentration. These are the values we
+    # will subtract from every well before calculating quenching.
+    bg_avgs = np.nanmean(bg_matrix, axis=1)
+    # We replot, with means and error bars
+    plt.figure()
+    plt.errorbar(dpx_concs, np.nanmean(bg_matrix, axis=1),
+                 yerr=np.nanstd(bg_matrix, axis=1), color='k', linewidth=2)
+    plt.title('DPX background fluorescence, average')
+    plt.xlabel('DPX concentration')
+    plt.ylabel('ANTS (RFU)')
+
+Effect of dilution on requenching fluorescence
+----------------------------------------------
+
+Note that dilution curve first goes up slightly before it goes down.  Since it
+is unlikely that this is due to the 1 uL of buffer that is added, it seems
+likely that since the liposomes were lysed immediately before the plate was
+read, the Triton hadn't yet finished lysing all of the liposomes.
+
+I'm also not sure it's necessary to break up the dilution effect and the
+quenching effect into separate components?
+
+For now I will proceed just by doing the background subtraction, and will set
+aside the dilution issue.
+
+Background subtraction: subtract the background for that DPX concentration from
+each well, so that the baseline fluorescence will be due only to the unquenched
+ANTS fluorescence.
+
+Need to look for outliers in the standard curve!
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    ## DILUTION
+    # How much is the signal affected by the simple dilution of the wells?
+    # To address this, added a row (F) to the plate that had liposomes lysed with
+    # Triton, to which buffer (no DPX) was added at the same volumes as the DPX.
+
+    dilution_wells = ['F%d' % well_num for well_num in range(1, 13)]
+
+    # Iterate over the DPX files, collecting bg values
+    dilution_matrix = np.zeros((len(dpx_std_file_list), len(dilution_wells)))
+    for file_index, file in enumerate(dpx_std_file_list):
+        wells = read_flexstation_kinetics(file)
+        for well_index, d_well in enumerate(dilution_wells):
+            dilution_matrix[file_index, well_index] = \
+                        np.mean(wells[d_well][VALUE])
+
+    # Normalize each value on a well-by-well basis according to the value with
+    # no dilution.
+    # The no dilution wells are in the first row (first file):
+    no_dilution_wells = dilution_matrix[0, :]
+    # Divide all wells by the values in the no dilution wells
+    dilution_matrix = dilution_matrix / no_dilution_wells
+
+    # Look for outliers
+    plt.figure()
+    plt.plot(dpx_vols_added, dilution_matrix)
+    plt.title('Effect of dilution on fluorescence')
+    plt.xlabel('Volume added')
+    plt.ylabel('ANTS (RFU)')
+
+    # No real outliers here.
+    # Plot means with error bars:
+    plt.figure()
+    plt.errorbar(dpx_vols_added, np.mean(dilution_matrix, axis=1),
+                 yerr=np.std(dilution_matrix, axis=1), color='k', linewidth=2)
+    plt.title('Effect of dilution on fluorescence, average')
+    plt.xlabel('Volume added')
+    plt.ylabel('ANTS (RFU)')
+
+
+Quenching standard curve
+------------------------
+
+Here the quenching values are calculated as averages (i.e., the average across
+wells at each quenching step, vs. the average of the Triton-only (no DPX)
+wells), since there was no Triton in the quenching wells when taking the 0 DPX
+measurement.
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    (i_avgs, i_sds, fmax_avg, fmax_sd) = \
+            quenching_std_curve(dpx_std_file_list, dpx_std_wells, dpx_concs,
+                                bg_avgs=bg_avgs)
+    (ka, kd) = fit_std_curve(i_avgs, i_sds, dpx_concs)
+    qd = get_quenching_dict(i_avgs, i_sds, dpx_vols_added)
+    final_q = qd[dpx_vols_added[-1]]
+    q_outs = np.array(qd.values())
+
+Requenching analysis for Bid/Bax
+--------------------------------
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    (fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, bax_requench_wells,
+                                         final_q, final_bg=bg_avgs[-1])
+    requenching_analysis(dpx_std_file_list, bax_requench_wells, dpx_concs,
+                         q_outs, fmax_avgs, fmax_sds, None, None, None, bg_avgs)
+
+
+Requenching analysis for Cecropin A
+-----------------------------------
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    (fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, cec_requench_wells,
+                                         final_q, final_bg=bg_avgs[-1])
+    requenching_analysis(dpx_std_file_list, cec_requench_wells, dpx_concs,
+                         q_outs, fmax_avgs, fmax_sds, None, None, None, bg_avgs)
+
+

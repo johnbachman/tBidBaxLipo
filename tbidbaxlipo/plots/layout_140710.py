@@ -62,7 +62,6 @@ dpx_std_file_list = [
 dpx_std_file_list = [abspath(join(data_path, filename))
                      for filename in dpx_std_file_list]
 
-
 # These are the wells in the plate that contain the liposome-only solution
 # used to calculate the standard curve:
 dpx_std_wells = ['B%d' % well_num for well_num in range(1, 13)]
@@ -89,99 +88,51 @@ cec_requench_wells = [row + col for (col, row) in itertools.product(
 
 fmax_filename = abspath(join(data_path, '140710_Bax_43C_DPX_triton.txt'))
 
-## DPX BACKGROUND FLUORESCENCE
 
-# These are the wells in the plate that contain buffer only but to which
-# DPX is also added; used for background subtraction
-bg_wells = ['A%d' % well_num for well_num in range(1, 13)]
+def main():
+    plt.close('all')
+    ## DPX BACKGROUND FLUORESCENCE
+    # These are the wells in the plate that contain buffer only but to which
+    # DPX is also added; used for background subtraction
+    bg_wells = ['A%d' % well_num for well_num in range(1, 13)]
+    # Iterate over the DPX files, collecting bg values
+    bg_matrix = np.zeros((len(dpx_std_file_list), len(bg_wells)))
+    for file_index, file in enumerate(dpx_std_file_list):
+        wells = read_flexstation_kinetics(file)
+        for well_index, bg_well in enumerate(bg_wells):
+            bg_matrix[file_index, well_index] = np.mean(wells[bg_well][VALUE])
+    # If we plot the BG values as a function of DPX concentration, we can
+    # identify the outliers (probably a result of a piece of lint/debris on the
+    # surface of the plate)
+    plt.figure()
+    plt.plot(dpx_concs, bg_matrix)
+    plt.title('DPX background fluorescence')
+    plt.xlabel('DPX concentration')
+    plt.ylabel('ANTS (RFU)')
+    # We set the outlier values to NaN
+    bg_matrix[bg_matrix > 70] = np.nan
+    # Now, we take the mean at each DPX concentration. These are the values we
+    # will subtract from every well before calculating quenching.
+    bg_avgs = np.nanmean(bg_matrix, axis=1)
+    # We replot, with means and error bars
+    plt.figure()
+    plt.errorbar(dpx_concs, np.nanmean(bg_matrix, axis=1),
+                 yerr=np.nanstd(bg_matrix, axis=1), color='k', linewidth=2)
+    plt.title('DPX background fluorescence, average')
+    plt.xlabel('DPX concentration')
+    plt.ylabel('ANTS (RFU)')
 
-# Iterate over the DPX files, collecting bg values
-bg_matrix = np.zeros((len(dpx_std_file_list), len(bg_wells)))
-for file_index, file in enumerate(dpx_std_file_list):
-    wells = read_flexstation_kinetics(file)
-    for well_index, bg_well in enumerate(bg_wells):
-        bg_matrix[file_index, well_index] = np.mean(wells[bg_well][VALUE])
-
-# If we plot the BG values as a function of DPX concentration, we can identify
-# the outliers (probably a result of a piece of lint/debris on the surface of
-# the plate)
-plt.figure()
-plt.plot(dpx_concs, bg_matrix)
-plt.title('DPX background fluorescence')
-plt.xlabel('DPX concentration')
-plt.ylabel('ANTS (RFU)')
-
-# We set the outlier values to NaN
-bg_matrix[bg_matrix > 70] = np.nan
-
-# Now, we take the mean at each DPX concentration. These are the values we will
-# subtract from every well before calculating quenching.
-bg_avgs = np.nanmean(bg_matrix, axis=1)
-
-# We replot, with means and error bars
-plt.figure()
-plt.errorbar(dpx_concs, np.nanmean(bg_matrix, axis=1),
-             yerr=np.nanstd(bg_matrix, axis=1), color='k', linewidth=2)
-plt.title('DPX background fluorescence')
-plt.xlabel('DPX concentration')
-plt.ylabel('ANTS (RFU)')
-
-## DILUTION
-
-# How much is the signal affected by the simple dilution of the wells?
-# To address this, added a row (F) to the plate that had liposomes lysed with
-# Triton, to which buffer (no DPX) was added at the same volumes as the DPX.
-
-dilution_wells = ['F%d' % well_num for well_num in range(1, 13)]
-
-# Iterate over the DPX files, collecting bg values
-dilution_matrix = np.zeros((len(dpx_std_file_list), len(dilution_wells)))
-for file_index, file in enumerate(dpx_std_file_list):
-    wells = read_flexstation_kinetics(file)
-    for well_index, d_well in enumerate(dilution_wells):
-        dilution_matrix[file_index, well_index] = np.mean(wells[d_well][VALUE])
-
-# Normalize each value on a well-by-well basis according to the value with
-# no dilution.
-# The no dilution wells are in the first row (first file):
-no_dilution_wells = dilution_matrix[0, :]
-# Divide all wells by the values in the no dilution wells
-dilution_matrix = dilution_matrix / no_dilution_wells
-
-# Look for outliers
-plt.figure()
-plt.plot(dpx_vols_added, dilution_matrix)
-plt.title('Effect of dilution on fluorescence')
-plt.xlabel('Volume added')
-plt.ylabel('ANTS (RFU)')
-
-# No real outliers here.
-# Plot means with error bars:
-plt.figure()
-plt.errorbar(dpx_vols_added, np.mean(dilution_matrix, axis=1),
-             yerr=np.std(dilution_matrix, axis=1), color='k', linewidth=2)
-plt.title('Effect of dilution on fluorescence')
-plt.xlabel('Volume added')
-plt.ylabel('ANTS (RFU)')
-
-# Note that dilution curve first goes up slightly before it goes down.
-# Since it is unlikely that this is due to the 1 uL of buffer that is added,
-# it seems likely that since the liposomes were lysed immediately before the
-# plate was read, the Triton hadn't yet finished lysing all of the liposomes.
-
-# I'm also not sure it's necessary to break up the dilution effect and the
-# quenching effect into separate components?
-
-# For now I will proceed just by doing the background subtraction, and will set
-# aside the dilution issue.
-
-# Background subtraction: subtract the background for that DPX concentration
-# from each well, so that the baseline fluorescence will be due only to the
-# unquenched ANTS fluorescence.
-
-# Need to look for outliers in the standard curve!
-
-
+    (i_avgs, i_sds, fmax_avg, fmax_sd) = \
+            quenching_std_curve(dpx_std_file_list, dpx_std_wells, dpx_concs,
+                                bg_avgs=bg_avgs)
+    (ka, kd) = fit_std_curve(i_avgs, i_sds, dpx_concs)
+    qd = get_quenching_dict(i_avgs, i_sds, dpx_vols_added)
+    final_q = qd[dpx_vols_added[-1]]
+    (fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, bax_requench_wells,
+                                         final_q, final_bg=bg_avgs[-1])
+    q_outs = np.array(qd.values())
+    requenching_analysis(dpx_std_file_list, bax_requench_wells, dpx_concs,
+            q_outs, fmax_avgs, fmax_sds, None, None, None, bg_avgs)
 
 
 # But the question remains, how much of the 
@@ -189,6 +140,7 @@ plt.ylabel('ANTS (RFU)')
 #plot_endpoints_vs_dose(bax_averages, bax_layout)
 #plot_endpoints_vs_dose(cec_averages, cec_layout)
 
+"""
 (i_avgs, i_sds, fmax_avg, fmax_sd) = \
         quenching_std_curve(dpx_std_file_list,
                                     dpx_std_wells, dpx_concs, bg_avgs=bg_avgs)
@@ -205,3 +157,7 @@ q_outs = np.array(qd.values())
 
 requenching_analysis(dpx_std_file_list, bax_requench_wells, dpx_concs, q_outs,
                      fmax_avgs, fmax_sds, None, None, None, bg_avgs)
+
+"""
+if __name__ == '__main__':
+    main()
