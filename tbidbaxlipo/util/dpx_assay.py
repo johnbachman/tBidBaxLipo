@@ -60,12 +60,11 @@ def quenching_std_curve(dpx_std_file_list, dpx_std_wells, dpx_concs,
     -------
     tuple : (i_avgs, i_sds, fmax_avg)
         A tuple; the first element in the tuple is the array of mean quenching
-        values, given as I_0/I, that is, the ratio of the unquenched
-        fluorescence to the fluorescence at a givena amount of DPX. The second
-        element contains the standard deviations of this ratio at each
-        concentration. The third element is the average fluorescence intensity
-        of the lysed, unquenched liposomes (liposomes after Triton but before
-        DPX addition.
+        values, given as I / I_0, that is, the ratio of the fluorescence at a
+        given amount of DPX to the unquenched fluorescence. The second element
+        contains the standard deviations of this ratio at each concentration.
+        The third element is the average fluorescence intensity of the lysed,
+        unquenched liposomes (liposomes after Triton but before DPX addition.
     """
     num_dilutions = len(dpx_concs)
 
@@ -103,7 +102,7 @@ def quenching_std_curve(dpx_std_file_list, dpx_std_wells, dpx_concs,
                               "as there are DPX concentraitons.")
         dpx_intensity_avgs = dpx_intensity_avgs - bg_avgs
 
-    # Now calculate the intensity ratios, I_0 / I
+    # Now calculate the intensity ratios, I / I_0
     # To get the standard error of the ratio, we have to account for the
     # error in both the numerator and the denominator:
     i_vals = np.zeros(num_dilutions)
@@ -135,10 +134,10 @@ def quenching_std_curve_by_well(dpx_std_file_list, dpx_std_wells,
     -------
     (i_avgs, i_sds)
         A tuple of arrays; the first element in the tuple is the array of mean
-        quenching values, given as I_0/I, that is, the ratio of the unquenched
-        fluorescence to the fluorescence at a givena amount of DPX. The
-        second element contains the standard deviations of this ratio at each
-        concentration.
+        quenching values, given as I / I_0, that is, the ratio of the
+        fluorescence at a given amount of DPX to the unquenched fluorescence.
+        The second element contains the standard deviations of this ratio at
+        each concentration.
     """
     # We know how much of the stock DPX we added at each quenching step, but we
     # have to calculate the actual concentrations:
@@ -172,30 +171,31 @@ def quenching_std_curve_by_well(dpx_std_file_list, dpx_std_wells,
     plt.ylabel('ANTS Fluorescence (RFU)')
     plt.title('ANTS Fluorescence vs. [DPX]')
 
-    # Now calculate the intensity ratios, I_0 / I, **for each well**
+    # Now calculate the intensity ratios, I / I_0, **for each well**
     i_avgs_by_well = np.zeros((num_dilutions, num_wells))
     i_sds_by_well = np.zeros((num_dilutions, num_wells))
     for well_index in range(num_wells):
         for dilution_index in range(num_dilutions):
             # To get the standard error of the ratio, we have to account for
             # the error in both the numerator and the denominator:
-            (avg, sd) = calc_ratio_mean_sd(dpx_well_avgs[0, well_index],
-                                      dpx_well_sds[0, well_index],
+            (avg, sd) = calc_ratio_mean_sd(
                                       dpx_well_avgs[dilution_index, well_index],
-                                      dpx_well_sds[dilution_index, well_index])
+                                      dpx_well_sds[dilution_index, well_index],
+                                      dpx_well_avgs[0, well_index],
+                                      dpx_well_sds[0, well_index])
             i_avgs_by_well[dilution_index, well_index] = avg
             i_sds_by_well[dilution_index, well_index] = sd
 
-    # Plot the individual I_0 / I curves
+    # Plot the individual I / I_0 curves
     plt.figure()
     for well_index in range(num_wells):
         plt.errorbar(dpx_concs, i_avgs_by_well[:, well_index],
                      yerr=i_sds_by_well[:, well_index])
     plt.xlabel('[DPX] (M)')
-    plt.ylabel('$I_0 / I$')
+    plt.ylabel('$I / I_0$')
     plt.title('Quenching vs. [DPX]')
 
-    # Now calculate the I_0 / I curve averaged over all replicates NOTE: we're
+    # Now calculate the I / I_0 curve averaged over all replicates NOTE: we're
     # not taking into account the individual variances at each well (which are
     # relatively small) when we are calculate these means/sds. Doing so
     # could represent a slight improvement.
@@ -213,7 +213,7 @@ def fit_std_curve(i_vals, i_sds, dpx_concs):
     plt.errorbar(dpx_concs, i_vals, yerr=i_sds, linestyle='', marker='o',
                  color='k', linewidth=2)
     plt.xlabel('[DPX] (M)')
-    plt.ylabel('$I_0 / I$')
+    plt.ylabel('$I / I_0$')
     plt.title('Quenching vs. [DPX]')
 
     # Fit the curve using scipy least squares
@@ -226,7 +226,7 @@ def fit_std_curve(i_vals, i_sds, dpx_concs):
     dpx_interp = np.linspace(dpx_concs[0], dpx_concs[-1], 100)
     plt.plot(dpx_interp, eq2(dpx_interp), color='r', linewidth=2)
     plt.xlabel('[DPX] (mM)')
-    plt.ylabel('$I_0/I$')
+    plt.ylabel('$I / I_0$')
     plt.title('DPX quenching, standard curve')
     print "kd: %f" % kd()
     print "ka: %f" % ka()
@@ -250,10 +250,10 @@ def fit_std_curve_by_pymc(i_vals, i_sds, dpx_concs):
         assert dpx_concs[0] == 0
         # The reason this is necessary is that in the likelihood calculation
         # we skip the error for the first point, since (when the std. err
-        # is calculated by well) the error is 0 (the I_0 / I_0 ratio is
+        # is calculated by well) the error is 0 (the I / I_0 ratio is
         # always 1 for each well, the the variance/SD across the wells is 0).
         # If we don't skip this first point, we get nan for the likelihood.
-        # In addition, the model always predicts 1 for the I_0/I ratio
+        # In addition, the model always predicts 1 for the I / I_0 ratio
         # when the DPX concentration is 0, so it contributes nothing to
         # the overall fit.
         return -np.sum((value[1:] - pred_i[1:])**2 / (2 * i_sds[1:]**2))
@@ -440,10 +440,10 @@ def requenching_analysis(requench_file_list, requench_wells,
     linfit = scipy.stats.linregress(f_outs, q_ins)
     f_out_pred = np.linspace(0, 1, 100)
     plt.plot(f_out_pred, (f_out_pred * linfit[0]) + linfit[1], color='r')
-    plt.text(0.1, 0.6, 'Slope = %f' % linfit[0])
-    plt.text(0.1, 0.48, 'Intercept = %f' % linfit[1])
-    plt.text(0.1, 0.36, '$R^2 = %f$' % linfit[2])
-    plt.text(0.1, 0.24, 'p = %f' % linfit[3])
+    plt.text(0.1, 0.9, 'Slope = %f' % linfit[0])
+    plt.text(0.1, 0.85, 'Intercept = %f' % linfit[1])
+    plt.text(0.1, 0.8, '$R^2 = %f$' % linfit[2])
+    plt.text(0.1, 0.75, 'p = %f' % linfit[3])
 
     #alpha = fitting.Parameter(1.)
     #dpx_0 = fitting.Parameter(18.1)
