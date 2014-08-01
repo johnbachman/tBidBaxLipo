@@ -4,6 +4,10 @@ doc/_build
 doc/_static
 doc/sphinxreport.log
 
+thesis/_build
+thesis/_static
+thesis/sphinxreport.log
+
 *.net
 *.gdat
 *.cdat
