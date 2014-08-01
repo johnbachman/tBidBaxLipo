@@ -98,9 +98,9 @@ class Builder(core.Builder):
         self.compartment('ves', dimension=2, parent=solution)
 
         # INITIAL CONDITIONS
-        self.parameter('Vesicles_0', 5, estimate=False)
-        self.parameter('tBid_0', 20, estimate=False)
-        self.parameter('Bax_0', 100, estimate=False)
+        self.parameter('Vesicles_0', 5, prior=None)
+        self.parameter('tBid_0', 20, prior=None)
+        self.parameter('Bax_0', 100, prior=None)
 
         tBid = self['tBid']
         Bax = self['Bax']
@@ -151,8 +151,9 @@ class Builder(core.Builder):
         print("one_cpt: translocate_tBid()")
 
         tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
-                                          estimate=False)
-        tBid_transloc_kr = self.parameter('tBid_transloc_kr', 1e-1)
+                                          prior=None)
+        tBid_transloc_kr = self.parameter('tBid_transloc_kr', 1e-1,
+                                          prior=Normal(-1, 2))
 
         ves = self['ves']
         solution = self['solution']
@@ -171,17 +172,6 @@ class Builder(core.Builder):
     def translocate_Bax(self):
         print("one_cpt: translocate_Bax()")
 
-        """
-        tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
-                                          factor=self['Vesicles_0'].value,
-                                          estimate=False)
-        #tBid_transloc_kr = self.parameter('tBid_transloc_kr', 0)
-
-        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
-                                          factor=self['Vesicles_0'].value,
-                                          estimate=False)
-        Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-2)
-        """
         Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
                             prior=Normal(-3, 1))
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1,
@@ -271,7 +261,8 @@ class Builder(core.Builder):
         ves = self['ves']
         solution = self['solution']
 
-        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3)
+        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3,
+                                               prior=Normal(-3, 2))
 
         self.rule('Pores_From_Bax_Dimers',
              Bax(loc=bax_loc_state, bh3=1, a6=None) %
@@ -281,7 +272,8 @@ class Builder(core.Builder):
              pore_formation_rate_k)
 
         if reversible:
-            pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-2)
+            pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-2,
+                                                 prior=Normal(-2, 2))
             self.rule('Pores_reverse',
                  Bax(loc='p', bh3=1, a6=None) ** ves %
                  Bax(loc='p', bh3=1, a6=None) ** ves >>
@@ -303,7 +295,8 @@ class Builder(core.Builder):
         ves = self['ves']
         solution = self['solution']
 
-        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3)
+        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3,
+                                               prior=Normal(-3, 2))
 
         self.rule('Pores_From_Bax_Tetramers', 
              MatchOnce(Bax(loc=bax_loc_state, bh3=1, a6=3) %
@@ -318,7 +311,8 @@ class Builder(core.Builder):
              pore_formation_rate_k)
 
         if reversible:
-            pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-2)
+            pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-2,
+                                                 prior=Normal(-2, 2))
 
             self.rule('Pores_reverse',
                 MatchOnce(Bax(loc='p', bh3=1, a6=3) ** ves %

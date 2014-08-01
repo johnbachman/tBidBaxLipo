@@ -311,24 +311,24 @@ class Builder(pysb.builder.Builder):
         site_set = False
 
         if 'c3' in nbd_sites: 
-            self.parameter('c3_scaling', 0.8,
-                           mean=np.log10(0.8), variance=0.04)
+            self.parameter('c3_scaling', 0.8, mean=np.log10(0.8), variance=0.04,
+                           prior=Normal(0, 2))
             site_set = True
         if 'c62' in nbd_sites:
-            self.parameter('c62_scaling', 0.9204,
-                   mean=np.log10(0.9204), variance=0.04)
+            self.parameter('c62_scaling', 0.9204, mean=np.log10(0.9204),
+                           variance=0.04, prior=Normal(0, 2))
             site_set = True
         if 'c120' in nbd_sites:
-            self.parameter('c120_scaling', 0.975,
-                   mean=np.log10(0.975), variance=0.04)
+            self.parameter('c120_scaling', 0.975, mean=np.log10(0.975),
+                           variance=0.04, prior=Normal(0, 2))
             site_set = True
         if 'c122' in nbd_sites:
-            self.parameter('c122_scaling', 0.952,
-                   mean=np.log10(0.952), variance=0.04)
+            self.parameter('c122_scaling', 0.952, mean=np.log10(0.952),
+                           variance=0.04, prior=Normal(0, 2))
             site_set = True
         if 'c126' in nbd_sites:
-            self.parameter('c126_scaling', 0.966,
-                   mean=np.log10(0.966), variance=0.04)
+            self.parameter('c126_scaling', 0.966, mean=np.log10(0.966),
+                           variance=0.04, prior=Normal(0, 2))
             site_set = True
 
         if not site_set:
@@ -430,11 +430,12 @@ class Builder(pysb.builder.Builder):
 
         # Forward rate of tBid binding to Bax (E + S -> ES)
         kf = self.parameter('tBid_mBax_kf', 1e-2,
-                            factor=self.within_compartment_rsf())
+                            factor=self.within_compartment_rsf(),
+                            prior=Normal(-2, 2))
         # Reverse rate of tBid binding to Bax (ES -> E + S)
-        kr = self.parameter('tBid_mBax_kr', 1.5)
+        kr = self.parameter('tBid_mBax_kr', 1.5, prior=Normal(0, 2))
         # Dissociation of tBid from iBax (EP -> E + P)
-        kc = self.parameter('tBid_iBax_kc', 1e-1)
+        kc = self.parameter('tBid_iBax_kc', 1e-1, prior=Normal(-1, 2))
 
         # Create the dicts to parameterize the site that tBid binds to
         bax_site_bound = {bax_site:1}
@@ -468,7 +469,7 @@ class Builder(pysb.builder.Builder):
         ves = self['ves']
 
         # Reversion of active Bax (P -> S)
-        krev = self.parameter('iBax_reverse_k', 1e-3)
+        krev = self.parameter('iBax_reverse_k', 1e-3, prior=Normal(-3, 2))
 
         # iBax reverses back to mBax
         self.rule('iBax_reverses',
@@ -479,10 +480,12 @@ class Builder(pysb.builder.Builder):
     def Bax_nmerizes(self, n, bax_loc_state='i'):
         Bax_nmerization_kf = self.parameter(
                 'Bax_%s_%dmerization_kf' % (bax_loc_state, n),
-                1e-2, factor=self.within_compartment_rsf())
+                1e-2, factor=self.within_compartment_rsf(),
+                prior=Normal(-2, 2))
         Bax_nmerization_kr = self.parameter(
                 'Bax_%s_%dmerization_kr' % (bax_loc_state, n),
-                1e-2, factor=self.within_compartment_rsf())
+                1e-2, factor=self.within_compartment_rsf()
+                prior=Normal(-2, 2))
         Bax = self['Bax']
 
         free_Bax = Bax(loc=bax_loc_state, bh3=None, a6=None)
@@ -527,9 +530,11 @@ class Builder(pysb.builder.Builder):
         # Rate of dimerization formation/oligomerization of activated Bax (s^-1)
         Bax_dimerization_kf = self.parameter(
                'Bax_%s_dimerization_kf' % bax_loc_state, 1e-2,
-               factor=self.within_compartment_rsf())
+               factor=self.within_compartment_rsf(),
+               prior=Normal(-2, 2))
         Bax_dimerization_kr = self.parameter(
-               'Bax_%s_dimerization_kr' % bax_loc_state, 1e-2)
+               'Bax_%s_dimerization_kr' % bax_loc_state, 1e-2,
+               prior=Normal(-2, 2))
 
         Bax = self['Bax']
 
@@ -557,8 +562,10 @@ class Builder(pysb.builder.Builder):
 
         # Rate of dimerization formation/oligomerization of activated Bax (s^-1)
         Bax_tetramerization_kf = self.parameter('Bax_tetramerization_kf', 1e-2,
-               factor=self.within_compartment_rsf())
-        Bax_tetramerization_kr = self.parameter('Bax_tetramerization_kr', 1e-2)
+               factor=self.within_compartment_rsf(),
+               prior=Normal(-2, 2))
+        Bax_tetramerization_kr = self.parameter('Bax_tetramerization_kr',
+                1e-2, prior=Normal(-2, 2))
 
         Bax = self['Bax']
 
@@ -598,9 +605,9 @@ class Builder(pysb.builder.Builder):
 
         # INHIBITION OF TBID BY BAX
         # Rate of tBid binding to iBax (E + P -> EP)
-        kf = self.parameter('tBid_iBax_kf', 1e-1)
+        kf = self.parameter('tBid_iBax_kf', 1e-1, prior=Normal(-1, 2))
         # Rate of tBid binding to iBax (E + P -> EP)
-        kr = self.parameter('tBid_iBax_kr', 2.5)
+        kr = self.parameter('tBid_iBax_kr', 2.5, prior=Normal(0, 2))
 
         tBid = self['tBid']
         Bax = self['Bax']
@@ -720,7 +727,7 @@ class Builder(pysb.builder.Builder):
 
         if reversible:
             basal_Bax_kr = self.parameter('basal_Bax_kr', 1e-4,
-                                          prior=Normal(-5, 1))
+                                          prior=Normal(-4, 1))
             self.rule('basal_Bax_activation_rev',
                       Bax(bh3=None, loc='i') >> Bax(bh3=None, loc='m'),
                       basal_Bax_kr)
@@ -860,9 +867,10 @@ class Builder(pysb.builder.Builder):
         #self.build_model_bax_heat_reversible()
         self.build_model_bax_heat()
         # Additional parameters
-        pore_scaling = self.parameter('pore_scaling', 100., estimate=True,
+        pore_scaling = self.parameter('pore_scaling', 100.,
                                 prior=Normal(2, 1))
-        c0_scaling = self.parameter('c0_scaling', 1, estimate=False)
+        c0_scaling = self.parameter('c0_scaling', 1,
+                                prior=None)
         c1_scaling = self.parameter('c1_scaling', 1.5,
                                 prior=Normal(0, 0.5))
         c2_scaling = self.parameter('c2_scaling', 2,
@@ -879,9 +887,10 @@ class Builder(pysb.builder.Builder):
         #self.build_model_bax_heat_reversible()
         self.build_model_bax_heat_reversible()
         # Additional parameters
-        pore_scaling = self.parameter('pore_scaling', 100., estimate=True,
+        pore_scaling = self.parameter('pore_scaling', 100.,
                                 prior=Normal(2, 2))
-        c0_scaling = self.parameter('c0_scaling', 1, estimate=False)
+        c0_scaling = self.parameter('c0_scaling', 1,
+                                prior=None)
         c1_scaling = self.parameter('c1_scaling', 1.5,
                                 prior=Normal(0, 0.5))
         c2_scaling = self.parameter('c2_scaling', 2,

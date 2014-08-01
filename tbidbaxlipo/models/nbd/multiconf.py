@@ -16,11 +16,11 @@ class Builder(core.Builder):
         # Initialize monomer and initial condition
         Bax = self.monomer('Bax', ['conf'],
                            {'conf': ['c%d' % i for i in range(num_confs)]})
-        Bax_0 = self.parameter('Bax_0', 1, estimate=False)
+        Bax_0 = self.parameter('Bax_0', 1, prior=None)
         self.initial(Bax(conf='c0'), Bax_0)
 
         # Scaling for initial conformation
-        scaling = self.parameter('c0_scaling', c0_scaling, estimate=False)
+        scaling = self.parameter('c0_scaling', c0_scaling, prior=None)
         obs = self.observable('Bax_c0', Bax(conf='c0'))
         sympy_expr = (scaling * obs)
 

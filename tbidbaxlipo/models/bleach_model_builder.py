@@ -18,8 +18,8 @@ class Builder(core.Builder):
         Vesicles = self.monomer('Vesicles', ['bax'])
 
         # Initial conditions for Bax
-        Bax_NBD_0 = self.parameter('Bax_NBD_0', 184, estimate=False)
-        Bax_unlab_0 = self.parameter('Bax_unlab_0', 0, estimate=False)
+        Bax_NBD_0 = self.parameter('Bax_NBD_0', 184, prior=None)
+        Bax_unlab_0 = self.parameter('Bax_unlab_0', 0, prior=None)
 
         # Initial conditions
         self.initial(Bax(bleached='n', plate=None, ves=None, mem='n', ins='n', nbd='y'),
@@ -31,11 +31,11 @@ class Builder(core.Builder):
         Bax = self['Bax']
         Plate = self['Plate']
 
-        Plate_0 = self.parameter('Plate_0', 20, prior=Uniform(0, 2), estimate=False)
-        k_bleach = self.parameter('k_bleach', 1e-5, prior=Normal(-5, 2), estimate=False)
-        k_plate_bind = self.parameter('k_plate_bind', 1e-5, prior=Normal(-5, 2), estimate=False)
-        cBax_NBD = self.parameter('cBax_NBD', 5.5/185., estimate=False,
-                prior=Normal(np.log10(5.5/185), np.log10((0.15/185.)**2)))
+        Plate_0 = self.parameter('Plate_0', 20, prior=Uniform(0, 2))
+        k_bleach = self.parameter('k_bleach', 1e-5, prior=Normal(-5, 2))
+        k_plate_bind = self.parameter('k_plate_bind', 1e-5, prior=Normal(-5, 2))
+        cBax_NBD = self.parameter('cBax_NBD', 5.5/185.,
+                                prior=Normal(np.log10(5.5/185), np.log10((0.15/185.)**2)))
 
         # Rules
         self.rule('Bax_sticks_to_plate',
@@ -55,12 +55,11 @@ class Builder(core.Builder):
 
         # Parameters for insertion mechanism
         iBax_NBD = self.parameter('iBax_NBD', 4,
-                                  prior=Uniform(np.log10(0.9),
-                                                np.log10(6)))
+                                  prior=Uniform(np.log10(0.9), np.log10(6)))
         kf_Bax_binding = self.parameter('kf_Bax_binding', 1e-4, prior=Normal(-4, 3))
         kr_Bax_binding = self.parameter('kr_Bax_binding', 1e-1, prior=Normal(-1, 4))
         k_Bax_insertion = self.parameter('k_Bax_insertion', 1e-4, prior=Normal(-4, 3))
-        Vesicles_0 = self.parameter('Vesicles_0', 0.015, estimate=False)
+        Vesicles_0 = self.parameter('Vesicles_0', 0.015, prior=None)
 
         self.rule('Bax_binds_vesicles',
                   Bax(plate=None, ves=None, ins='n') + Vesicles(bax=None) <>
@@ -85,12 +84,11 @@ class Builder(core.Builder):
 
         # Parameters for insertion mechanism
         iBax_NBD = self.parameter('iBax_NBD', 4,
-                                  prior=Uniform(np.log10(0.9),
-                                                np.log10(6)))
+                                  prior=Uniform(np.log10(0.9), np.log10(6)))
         kf_Bax_binding = self.parameter('kf_Bax_binding', 1e-4, prior=Normal(-4, 3))
         kr_Bax_binding = self.parameter('kr_Bax_binding', 1e-1, prior=Normal(-1, 4))
         k_Bax_insertion = self.parameter('k_Bax_insertion', 1e-4, prior=Normal(-4, 3))
-        Vesicles_0 = self.parameter('Vesicles_0', 0.015, estimate=False)
+        Vesicles_0 = self.parameter('Vesicles_0', 0.015, prior=None)
 
         self.rule('Bax_binds_vesicles',
                   Bax(plate=None, mem='n', ins='n') + Vesicles(bax=None) >>

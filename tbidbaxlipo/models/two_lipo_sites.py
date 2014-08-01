@@ -26,15 +26,15 @@ class Builder(one_cpt.Builder):
         self.compartment('ves', dimension=2, parent=solution)
 
         # INITIAL CONDITIONS
-        Vesicles_0 = self.parameter('Vesicles_0', 5, estimate=False)
-        Lipo_sat_factor = self.parameter('Lipo_sat_factor', 10, estimate=True)
+        Vesicles_0 = self.parameter('Vesicles_0', 5, prior=None)
+        Lipo_sat_factor = self.parameter('Lipo_sat_factor', 10, prior=None)
         #Lipo_nonsat_factor = self.parameter('Lipo_nonsat_factor', 0.5,
         #                                  estimate=True)
         Lipo_sat_0 = self.expression('Lipo_sat_0', Vesicles_0 * Lipo_sat_factor)
         #Lipo_nonsat_0 = self.expression('Lipo_nonsat_0',
         #                               Vesicles_0 * Lipo_nonsat_factor)
-        self.parameter('tBid_0', 20, estimate=False)
-        self.parameter('Bax_0', 100, estimate=False)
+        self.parameter('tBid_0', 20, prior=None)
+        self.parameter('Bax_0', 100, prior=None)
 
         tBid = self['tBid']
         Bax = self['Bax']
@@ -68,10 +68,14 @@ class Builder(one_cpt.Builder):
     def translocate_Bax(self):
         print("two_lipo_sites: translocate_Bax()")
 
-        Bax_transloc_sat_kf = self.parameter('Bax_transloc_sat_kf', 1e-2)
-        Bax_transloc_sat_kr = self.parameter('Bax_transloc_sat_kr', 1e-1)
-        Bax_transloc_nonsat_kf = self.parameter('Bax_transloc_nonsat_kf', 1e-2)
-        Bax_transloc_nonsat_kr = self.parameter('Bax_transloc_nonsat_kr', 1e-1)
+        Bax_transloc_sat_kf = self.parameter('Bax_transloc_sat_kf', 1e-2,
+                                prior=Normal(-2, 2))
+        Bax_transloc_sat_kr = self.parameter('Bax_transloc_sat_kr', 1e-1,
+                                prior=Normal(-1, 2))
+        Bax_transloc_nonsat_kf = self.parameter('Bax_transloc_nonsat_kf', 1e-2,
+                                prior=Normal(-2, 2))
+        Bax_transloc_nonsat_kr = self.parameter('Bax_transloc_nonsat_kr', 1e-1,
+                                prior=Normal(-1, 2))
 
         Bax = self['Bax']
         Lipo_sat = self['Lipo_sat']
@@ -94,8 +98,10 @@ class Builder(one_cpt.Builder):
     def basal_Bax_activation(self, reversible=False):
         print("two_lipo_sites: basal_Bax_activation, reversible=%s" % reversible)
         Bax = self['Bax']
-        basal_Bax_sat_kf = self.parameter('basal_Bax_sat_kf', 2e-3)
-        basal_Bax_nonsat_kf = self.parameter('basal_Bax_nonsat_kf', 2e-3)
+        basal_Bax_sat_kf = self.parameter('basal_Bax_sat_kf', 2e-3,
+                                          prior=Normal(-3, 2))
+        basal_Bax_nonsat_kf = self.parameter('basal_Bax_nonsat_kf', 2e-3,
+                                          prior=Normal(-3, 2))
 
         self.rule('basal_Bax_activation_sat',
                 Bax(bh3=None, loc='m', lipo=1) >>
@@ -107,8 +113,10 @@ class Builder(one_cpt.Builder):
                 basal_Bax_nonsat_kf)
 
         if reversible:
-            basal_Bax_sat_kr = self.parameter('basal_Bax_sat_kr', 1e-2)
-            basal_Bax_nonsat_kr = self.parameter('basal_Bax_nonsat_kr', 1e-2)
+            basal_Bax_sat_kr = self.parameter('basal_Bax_sat_kr', 1e-2,
+                                        prior=Normal(-2, 2))
+            basal_Bax_nonsat_kr = self.parameter('basal_Bax_nonsat_kr', 1e-2,
+                                        prior=Normal(-2, 2))
 
             self.rule('basal_Bax_activation_sat',
                     Bax(bh3=None, loc='i', lipo=1) >>

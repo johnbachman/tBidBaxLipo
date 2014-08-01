@@ -26,8 +26,8 @@ class Builder(one_cpt.Builder):
 
         # INITIAL CONDITIONS
         self.parameter('Vesicles_0', 20, prior=Normal(1., 2.))
-        self.parameter('tBid_0', 20, estimate=False)
-        self.parameter('Bax_0', 100, estimate=False)
+        self.parameter('tBid_0', 20, prior=None)
+        self.parameter('Bax_0', 100, prior=None)
 
         tBid = self['tBid']
         Bax = self['Bax']
@@ -60,8 +60,10 @@ class Builder(one_cpt.Builder):
     def translocate_Bax(self):
         print("lipo_sites: translocate_Bax()")
 
-        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2)
-        Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1)
+        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
+                            prior=Normal(-2, 2))
+        Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1,
+                            prior=Normal(-1, 2))
 
         Bax = self['Bax']
         Vesicles = self['Vesicles']
@@ -78,7 +80,8 @@ class Builder(one_cpt.Builder):
         print "lipo_sites: basal_Bax_activation=%s" % reversible
         Bax = self['Bax']
         Vesicles = self['Vesicles']
-        basal_Bax_kf = self.parameter('basal_Bax_kf', 2e-3)
+        basal_Bax_kf = self.parameter('basal_Bax_kf', 2e-3,
+                            prior=Normal(-3, 2))
         self.rule('basal_Bax_activation',
                   Bax(bh3=None, loc='m', lipo=1) % Vesicles(bax=1) >>
                   Bax(bh3=None, loc='i', lipo=None) + Vesicles(bax=None),

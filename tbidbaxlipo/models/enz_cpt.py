@@ -24,9 +24,9 @@ class Builder(one_cpt.Builder):
         self.compartment('ves', dimension=2, parent=solution)
 
         # INITIAL CONDITIONS
-        self.parameter('Vesicles_0', 1.9, estimate=False)
-        #self.parameter('tBid_0', 20, estimate=False)
-        self.parameter('Bax_0', 100, estimate=False)
+        self.parameter('Vesicles_0', 1.9, prior=None)
+        #self.parameter('tBid_0', 20, prior=None)
+        self.parameter('Bax_0', 100, prior=None)
 
         tBid = self['tBid']
         Bax = self['Bax']
@@ -69,7 +69,7 @@ class Builder(one_cpt.Builder):
         Vesicles = self['Vesicles']
         # Bax catalytically permeabilizes vesicles
         self.parameter('iBax_enz_release_k', 1e-4,
-                       prior=Normal(-2, 3))
+                       prior=Normal(-4, 3))
         self.rule('iBax_enz_release',
                   Bax(loc='i') + Vesicles(dye='f') >>
                   Bax(loc='i') + Vesicles(dye='e'),
@@ -84,7 +84,7 @@ class Builder(one_cpt.Builder):
                   Bax(loc='i') <> Bax(loc='p'),
                   self['iBax_to_pBax_kf'], self['iBax_to_pBax_kr'])
         # The observable: fraction released
-        c0_scaling = self.parameter('c0_scaling', 1, estimate=False)
+        c0_scaling = self.parameter('c0_scaling', 1, prior=None)
         c1_scaling = self.parameter('c1_scaling', 1.5,
                                 prior=Normal(0, 0.5))
         c2_scaling = self.parameter('c2_scaling', 2,

@@ -13,10 +13,10 @@ class Builder(core.Builder):
         self.num_exponentials = num_exponentials
 
         # All initial conditions are 1
-        Bax_0 = self.parameter('Bax_0', 1, estimate=False)
+        Bax_0 = self.parameter('Bax_0', 1, prior=None)
 
         # Scaling for initial signal
-        f0_param = self.parameter('f0', f0, estimate=False)
+        f0_param = self.parameter('f0', f0, prior=None)
         sympy_expr = f0_param
 
         # Initialize monomer and initial condition
