@@ -373,6 +373,34 @@ class Builder(pysb.builder.Builder):
         return 10 ** initial_values_log
 
     # -- MECHANISTIC MOTIFS ------------------------------------------------
+    def tBid_binds_Bax(self, bax_site):
+
+        print('core: tBid_binds_Bax(bax_site=%s)' % bax_site)
+
+        # Forward rate of tBid binding to Bax (E + S -> ES)
+        kf = self.parameter('tBid_mBax_%s_kf' % bax_site, 1e-2,
+                            factor=self.within_compartment_rsf(),
+                            prior=Normal(-2, 2))
+        # Reverse rate of tBid binding to Bax (ES -> E + S)
+        kr = self.parameter('tBid_mBax_%s_kr' % bax_site, 1.5,
+                            prior=Normal(0, 2))
+
+        # Create the dicts to parameterize the site that tBid binds to
+        bax_site_bound = {bax_site:1}
+        bax_site_unbound = {bax_site:None}
+
+        tBid = self['tBid']
+        Bax = self['Bax']
+
+        self.rule('tBid_Bax_%s_bind' % bax_site,
+             tBid(loc='m', bh3=None) + Bax(loc='m', **bax_site_unbound) >>
+             tBid(loc='m', bh3=1) % Bax(loc='m', **bax_site_bound),
+             kf)
+        self.rule('tBid_Bax_%s_unbind' % bax_site,
+             tBid(loc='m', bh3=1) % Bax(loc='m', **bax_site_bound) >>
+             tBid(loc='m', bh3=None) + Bax(loc='m', **bax_site_unbound),
+             kr)
+
     def tBid_activates_Bax(self, bax_site='bh3'):
         """Default implementation of Bax activation by tBid.
 
@@ -428,14 +456,11 @@ class Builder(pysb.builder.Builder):
 
         print('core: tBid_activates_Bax(bax_site=%s)' % bax_site)
 
-        # Forward rate of tBid binding to Bax (E + S -> ES)
-        kf = self.parameter('tBid_mBax_kf', 1e-2,
-                            factor=self.within_compartment_rsf(),
-                            prior=Normal(-2, 2))
-        # Reverse rate of tBid binding to Bax (ES -> E + S)
-        kr = self.parameter('tBid_mBax_kr', 1.5, prior=Normal(0, 2))
+        self.tBid_binds_Bax(bax_site)
+
         # Dissociation of tBid from iBax (EP -> E + P)
-        kc = self.parameter('tBid_iBax_kc', 1e-1, prior=Normal(-1, 2))
+        kc = self.parameter('tBid_iBax_%s_kc' % bax_site, 1e-1,
+                            prior=Normal(-1, 2))
 
         # Create the dicts to parameterize the site that tBid binds to
         bax_site_bound = {bax_site:1}
@@ -444,17 +469,8 @@ class Builder(pysb.builder.Builder):
         tBid = self['tBid']
         Bax = self['Bax']
 
-        self.rule('tBid_Bax_bind',
-             tBid(loc='m', bh3=None) + Bax(loc='m', **bax_site_unbound) >>
-             tBid(loc='m', bh3=1) % Bax(loc='m', **bax_site_bound),
-             kf)
-        self.rule('tBid_Bax_unbind',
-             tBid(loc='m', bh3=1) % Bax(loc='m', **bax_site_bound) >>
-             tBid(loc='m', bh3=None) + Bax(loc='m', **bax_site_unbound),
-             kr)
-
         # tBid dissociates from iBax after activation
-        self.rule('tBid_unbinds_iBax',
+        self.rule('tBid_unbinds_iBax_%s' % bax_site,
              tBid(bh3=1) % Bax(loc='m', **bax_site_bound) >>
              tBid(bh3=None) + Bax(loc='i', **bax_site_unbound),
              kc)
@@ -903,6 +919,11 @@ class Builder(pysb.builder.Builder):
                                c1_scaling * self['iBax'] +
                                c2_scaling * self['pBax']) / self['Bax_0'])
         self.model.name = 'nbd_terbium_c2_reversible_pores_exp'
+
+    # Model for NBD + Bid/Bax FRET data
+    def build_model_bid_bax_fret(self):
+        self.translocate_tBid_Bax()
+        self.tBid_binds_Bax('bh3')
 
     # Models incorporating dye release
     def build_model_bax_heat(self):
