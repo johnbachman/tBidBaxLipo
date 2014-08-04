@@ -484,7 +484,7 @@ class Builder(pysb.builder.Builder):
                 prior=Normal(-2, 2))
         Bax_nmerization_kr = self.parameter(
                 'Bax_%s_%dmerization_kr' % (bax_loc_state, n),
-                1e-2, factor=self.within_compartment_rsf()
+                1e-2, factor=self.within_compartment_rsf(),
                 prior=Normal(-2, 2))
         Bax = self['Bax']
 
