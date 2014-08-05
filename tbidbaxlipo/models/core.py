@@ -263,20 +263,19 @@ class Builder(pysb.builder.Builder):
         raise NotImplementedError()
 
     def declare_monomers(self):
-        """Declares signatures for tBid and Bax."""
-        self.monomer('tBid', ['bh3', 'loc'],
-                {'loc': ['c', 'm']})
+        """Declares signatures for tBid, Bax, and Vesicles."""
+        self.monomer('tBid', ['bh3', 'conf', 'cpt'],
+                {'conf': ['aq', 'ins'],
+                 'cpt':  ['sol', 'ves']})
+
         self.monomer('Bax',
-                        ['bh3', 'a6', 'loc', 'lipo',
-                         'c3', 'c62', 'c120', 'c122', 'c126', 'c184'],
-                        {'loc':  ['c', 'm', 'i', 'a', 'p', 'bh3expos'],
-                         'c3':   ['s', 'm'],
-                         'c62':  ['s', 'm'],
-                         'c120': ['s', 'm'],
-                         'c122': ['s', 'm'],
-                         'c126': ['s', 'm'],
-                         'c184': ['s', 'm']})
+                        ['bh3', 'a6', 'lipo', 'conf', 'cpt', 'pore'],
+                        {'conf':  ['aq', 'ins'],
+                         'cpt': ['sol', 'ves'],
+                         'pore': ['y', 'n']})
+
         self.monomer('Vesicles', ['bax'])
+
         self.monomer('Pores', [])
 
     def get_module(self):
@@ -374,6 +373,7 @@ class Builder(pysb.builder.Builder):
 
     # -- MECHANISTIC MOTIFS ------------------------------------------------
     def tBid_binds_Bax(self, bax_site):
+        """Bax binding occurs only at membranes."""
 
         print('core: tBid_binds_Bax(bax_site=%s)' % bax_site)
 
@@ -393,8 +393,8 @@ class Builder(pysb.builder.Builder):
         Bax = self['Bax']
 
         self.rule('tBid_Bax_%s_bind' % bax_site,
-             tBid(loc='m', bh3=None) + Bax(loc='m', **bax_site_unbound) >>
-             tBid(loc='m', bh3=1) % Bax(loc='m', **bax_site_bound),
+             tBid(cpt='ves', bh3=None) + Bax(cpt='ves', **bax_site_unbound) >>
+             tBid(cpt='ves', bh3=1) % Bax(cpt='ves', **bax_site_bound),
              kf)
         self.rule('tBid_Bax_%s_unbind' % bax_site,
              tBid(loc='m', bh3=1) % Bax(loc='m', **bax_site_bound) >>
@@ -1119,9 +1119,10 @@ class Builder(pysb.builder.Builder):
         self.model.initial_conditions = []
         bax_args = {'a6':None, 'lipo':None, 'c3':'s', 'c62':'s', 'c120':'s',
                 'c122':'s', 'c126':'s', 'c184':'s'}
-        self.initial(Bax(bh3=1, loc='c', **bax_args)**solution %
-                  Bax(bh3=1, loc='c', **bax_args)**solution, Bax2_0)
+        self.initial(Bax(bh3=1, loc='c', **bax_args) %
+                  Bax(bh3=1, loc='c', **bax_args), Bax2_0)
         self.initial(Bax(bh3=None, loc='c', **bax_args)**solution, Bax1_0)
         self.initial(self['Vesicles'](bax=None) **solution, self['Vesicles_0'])
+
 
 

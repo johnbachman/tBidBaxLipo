@@ -93,10 +93,6 @@ class Builder(core.Builder):
 
         self.declare_monomers()
 
-        # COMPARTMENTS
-        solution = self.compartment('solution', dimension=3, parent=None)
-        self.compartment('ves', dimension=2, parent=solution)
-
         # INITIAL CONDITIONS
         self.parameter('Vesicles_0', 5, prior=None)
         self.parameter('tBid_0', 20, prior=None)
@@ -107,32 +103,26 @@ class Builder(core.Builder):
         Vesicles = self['Vesicles']
         Pores = self['Pores']
 
-        self.initial(tBid(loc='c', bh3=None) ** solution, self['tBid_0'])
-        self.initial(Bax(loc='c', bh3=None, a6=None, lipo=None,
-                     c3='s', c62='s', c120='s', c122='s', c126='s', c184='s')
-                     ** solution, self['Bax_0'])
-        self.initial(Vesicles(bax=None) ** solution, self['Vesicles_0'])
+        self.initial(tBid(cpt='sol', conf='aq', bh3=None), self['tBid_0'])
+        self.initial(Bax(cpt='sol', conf='aq', bh3=None, a6=None,
+                         lipo=None, pore='n'),
+                     self['Bax_0'])
+        self.initial(Vesicles(bax=None), self['Vesicles_0'])
 
         # OBSERVABLES
-        self.observable('ctBid', tBid(loc='c'))
-        self.observable('mtBid', tBid(loc='m'))
-        self.observable('cBax', Bax(loc='c'))
-        self.observable('mBax', Bax(loc='m'))
-        self.observable('iBax', Bax(loc='i'))
-        self.observable('aBax', Bax(loc='a'))
+        self.observable('ctBid', tBid(cpt='sol'))
+        self.observable('mtBid', tBid(cpt='ves'))
+        self.observable('cBax', Bax(cpt='sol'))
+        self.observable('mBax', Bax(cpt='ves'))
+        self.observable('iBax', Bax(conf='ins'))
         self.observable('tBidBax', tBid(bh3=1) % Bax(bh3=1))
         self.observable('Bax2', Bax(bh3=1) % Bax(bh3=1))
         self.observable('Baxbh3', Bax(bh3=1))
         self.observable('Bax4',
-             MatchOnce(Bax(loc='i', bh3=1, a6=3) % Bax(loc='i', bh3=1, a6=4) % 
-                       Bax(loc='i', bh3=2, a6=3) % Bax(loc='i', bh3=2, a6=4)))
-        # Pore formation
-        #self.observable('pBax', Bax(loc='p'))
-        #self.observable('pores', Pores())
-
-        # SCALING PARAMETERS
-        if nbd_sites is not None:
-            self.declare_nbd_scaling_parameters(nbd_sites)
+             MatchOnce(Bax(conf='ins', bh3=1, a6=3) %
+                       Bax(conf='ins', bh3=1, a6=4) %
+                       Bax(conf='ins', bh3=2, a6=3) %
+                       Bax(conf='ins', bh3=2, a6=4)))
 
     # MODEL MACROS
     def dye_release_one_step_catalytic(self):
@@ -155,18 +145,16 @@ class Builder(core.Builder):
         tBid_transloc_kr = self.parameter('tBid_transloc_kr', 1e-1,
                                           prior=Normal(-1, 2))
 
-        ves = self['ves']
-        solution = self['solution']
         Vesicles = self['Vesicles']
         tBid = self['tBid']
 
-        self.rule('tBid_translocates_sol_to_%s' % ves.name,
-             tBid(loc='c') ** solution + Vesicles() ** solution >>
-             tBid(loc='m') ** ves + Vesicles() ** solution,
+        self.rule(
+             'tBid_translocates_sol_to_ves',
+             tBid(cpt='sol') + Vesicles() >> tBid(cpt='ves') + Vesicles(),
              tBid_transloc_kf)
-        self.rule('tBid_translocates_%s_to_sol' % ves.name,
-             tBid(loc='m', bh3=None) ** ves >>
-             tBid(loc='c', bh3=None) ** solution,
+        self.rule(
+             'tBid_translocates_ves_to_sol',
+             tBid(cpt='ves', bh3=None) >> tBid(cpt='sol', bh3=None),
              tBid_transloc_kr)
 
     def translocate_Bax(self):
@@ -177,18 +165,15 @@ class Builder(core.Builder):
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1,
                             prior=Normal(-1, 1))
 
-        ves = self['ves']
-        solution = self['solution']
         Bax_mono = self['Bax'](bh3=None, a6=None)
         Vesicles = self['Vesicles']
 
-        self.rule('Bax_mono_translocates_sol_to_%s' % ves.name,
-             Bax_mono(loc='c') ** solution + Vesicles() ** solution >>
-             Bax_mono(loc='m') ** ves + Vesicles() ** solution,
+        self.rule('Bax_mono_translocates_sol_to_ves',
+             Bax_mono(cpt='sol') + Vesicles() >>
+             Bax_mono(cpt='ves') + Vesicles(),
              Bax_transloc_kf)
-        self.rule('Bax_mono_translocates_%s_to_sol' % ves.name,
-             Bax_mono(loc='m') ** ves >>
-             Bax_mono(loc='c') ** solution,
+        self.rule('Bax_mono_translocates_ves_to_sol',
+             Bax_mono(cpt='ves') >> Bax_mono(cpt='sol'),
              Bax_transloc_kr)
 
     def translocate_Bax_dimers(self):
