@@ -6,7 +6,9 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   outline
    intro
+   uni_dye_release_models
    reconciling_rates
    translocation
    tbid_bax_activation

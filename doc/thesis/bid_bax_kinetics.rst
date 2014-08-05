@@ -1,5 +1,5 @@
-Kinetic analysis of Bax pore formation
-======================================
+Kinetics of liposome permeabilization by Bid/Bax
+================================================
 
 Possible title: "Bax recruitment is kinetically limited by Bid, while Bid
 recruitment is stoichiometrically limited by membranes"
@@ -83,7 +83,7 @@ in an aqueous (polar) environment, but fluoresces more strongly in a membrane
 liposomes and cBid constant, titrating the concentration of unlabeled Bax
 slowed the fractional recruitment of the NBD-Bax (Figure 1A).
 
-.. figure:: ../doc/_static/130911_c126_bax_titration_9.png
+.. figure:: ../_static/130911_c126_bax_titration_9.png
     :width: 6in
     :align: center
 
@@ -107,14 +107,14 @@ shown as the black lines in Figure 1A. In this equation the parameter
 dose-dependent fashion with Bax concentration (Figure 1B), while the predicted
 fraction of Bax inserted is invariant to Bax.
 
-.. figure:: ../doc/_static/130911_c126_bax_titration_10.png
+.. figure:: ../_static/130911_c126_bax_titration_10.png
     :width: 6in
     :figwidth: 6in
     :align: center
 
     **Figure 1B**. Fitted k1 values vs. Bax concentration.
 
-.. figure:: ../doc/_static/130911_c126_bax_titration_11.png
+.. figure:: ../_static/130911_c126_bax_titration_11.png
     :width: 6in
     :figwidth: 6in
     :align: center
@@ -156,6 +156,131 @@ also saturate since they are composed.
 
 cBid determines the rate, and Bax the extent, of membrane permeabilization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Outline
+-------
+
+- Introduction
+
+  - Cells need to be able to reliably execute apoptosis, not dying when they
+    don't mean to, but also able to execute apoptosis when needed.
+
+  - The measured concentrations of Bcl-2 family proteins is highly variable.
+    How is the apoptosis network able to execute the decision over such a wide
+    variation of concentrations?
+
+  - Suggests concept of apoptotic phase space, in which Bid (activator) and
+    Bax (effector) represent the protein axes; lipid axis is also important.
+    Anti-apoptotic axis is also clearly important, but important to first
+    define in the absence of anti-apoptotics.
+
+  - So goal: measure a two-d dose response for Bid and Bax.
+
+  - The Bax dose response has been measured in a variety of fashions, with
+    differing conclusions: cooperative, saturating, and linear.
+
+  - In addition, the response surface tells us about the underlying biochemical
+    mechanism. Can we use models to explain the underlying response surface
+    in terms of the mechanism?
+
+- Results
+
+  - **Pore formation kinetics, and Bax insertion, plateau at high Bax/liposome ratios when Bid is the activator.**
+
+    - Satsoura et al. previously described saturation of liposomes by Bax at
+      numbers as low as 20.
+
+    - Bax titration at single liposome concentration, Bid titration, Bim BH3
+      titration, ANTS
+
+    - Saturation of initial rate? Saturation of kinetics? difference between
+      cBid and Bid BH3?
+
+    - Choose a model and show scaling of parameters (e.g., Kushnareva model)
+
+    - Permeabilization kinetics saturate for cBid but not for Bim BH3
+
+    - H1: due to stoichiometric limitation of Bax insertion sites
+
+    - H2: due to saturation of the Bax:liposome complex (Bax
+      encounter sites)
+
+    - H3: due to saturation of the activator cBid.
+
+  - **Liposome concentration affects the rate of Bax insertion, but is not
+    stoichiometrically limiting**
+
+    - Liposome titration experiment shows that the amount of liposomes affects
+      the efficiency of Bax recruitment, as predicted by simple model; it
+      affects the forward rate of Bax insertion, and maybe also the equilibrium
+      amount, harder to say, but this could be due to the Bax off-rate.
+
+    - Bax competition experiment shows that H1 and H2 are not true--addition of
+      Bax in a Bim BH3 activation scenario does not limit the rate or extent
+      of Bax insertion.
+
+  - **Bax saturation is due to the saturation of the activator Bid.**
+
+    - *In Bax insertion assay with Bax titration, adding more Bid increases
+      critical concentration of Bax inhibition*
+
+  - **Effect of liposome concentration on Bid and Bax binding**
+
+    - Bid binding, FRET?
+
+    - Bax binding, BH3 peptide
+
+  - **Bid binding to membranes saturates at low stoichiometries**
+
+    - Bid-membrane FRET experiments show competitive binding, however
+      the results are not well-fit by single-site competitive binding!
+      Linear, rather than hyperbolic competition curve
+
+    - *Bid-membrane gel filtration*
+
+    - *Bid-647 membrane FCS to estimate fraction bound*
+
+    - *Bid488-mito binding by fluorescence*
+
+  - **The extent of liposomes permeabilized is determined exclusively by
+    the Bax/liposome ratio, not by the amount of activator.**
+
+    - *Result from Bid titration*
+
+    - *Result from Bax-NBD insertion curves that show that there is no late
+      linear phase, as would be expected with product inhibition.*
+
+    - This rules out the possiblity that Bid inhibits Bax at high concentration
+      by occupying its BH3 groove.
+
+  - **Incomplete permeabilization is due to ???** 
+
+    - Due to exponential nature of pore formation (i.e., read only first event)
+
+    - Due to progressive, irreversible depletion of the Bax and hence a
+      slowdown in rate
+
+    - Due to transient binding of the activated Bax to the soluble Bax that
+      effectively competes it away.
+
+  - **Role of auto-activation**
+
+    - From model: relevance of auto-activation is dependent on the baseline
+      insertion activity: if baseline probability of insertion is low, then
+      auto-activation plays a relatively larger role, but it's role is local.
+      On the other hand, if baseline activation is higher, it plays a minimal
+      role.
+
+    - and in Bax-limited regimes, auto-activation can actually decrease the
+      overall extent of permeabilization(?)
+
+    - Indeed, if there is a Bax-hole, the auto-activation activity of Bax may
+      actually limit the overall capability.
+
+    - To test the Bax-hole: do a liposome assay, come to steady-state, then
+      add more Bax; if the fractional permeabilization you get is less then
+      what you would have gotten at the start, then you have a Bax hole.
+      Do this with varying levels of starter Bax.
 
 Experiment todo list
 --------------------

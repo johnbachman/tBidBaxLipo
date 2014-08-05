@@ -9,8 +9,6 @@ Contents:
    :maxdepth: 2
 
    conclusions
-   stochastic_models/index
    lipo_titration
-   uni_dye_release_models
    nbd_notes
 

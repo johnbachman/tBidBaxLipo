@@ -20,9 +20,9 @@ Contents:
    notes/index
    technotes/index
    modules/index
+   thesis/index
    references
    todo
-   outline
 
 Indices and tables
 ==================
