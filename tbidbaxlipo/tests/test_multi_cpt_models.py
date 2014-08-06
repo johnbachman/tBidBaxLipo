@@ -1,12 +1,37 @@
 from tbidbaxlipo.models.multi_cpt import Builder
 from nose.tools import ok_
+from pysb import bng, kappa
+from matplotlib import pyplot as plt
+
+t_end = 100
+n_steps = 100
+
+plt.ion()
 
 def test_build_model_t():
     b = Builder()
     b.build_model_t()
-    b.make_multi_compartment()
+    #b.make_multi_compartment()
     ok_(check_monomer_and_parameter_refs(b.model),
         "Monomer reference check failed.")
+    plot_bng_and_kappa_sims(b.model, t_end, n_steps, "build_model_t")
+
+def plot_bng_and_kappa_sims(model, t_end, n_steps, title):
+    # BNG
+    x = bng.run_ssa(model, t_end=t_end, n_steps=n_steps)
+    plt.figure()
+    for name in x.dtype.names:
+        if not name == 'time':
+            plt.plot(x['time'], x[name], label="B:"+name)
+    # Kappa
+    x = kappa.run_simulation(model, time=t_end, points=n_steps)
+    for name in x.dtype.names:
+        if not name == 'time':
+            plt.plot(x['time'], x[name], label="K:"+name)
+    plt.title(title)
+    plt.ylabel("Number")
+    plt.xlabel("Time")
+    plt.legend(loc='upper right')
 
 def check_monomer_and_parameter_refs(model):
     # Check rules

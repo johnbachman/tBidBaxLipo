@@ -117,7 +117,6 @@ class Builder(core.Builder):
         self.observable('iBax', Bax(conf='ins'))
         self.observable('tBidBax', tBid(bh3=1) % Bax(bh3=1))
         self.observable('Bax2', Bax(bh3=1) % Bax(bh3=1))
-        self.observable('Baxbh3', Bax(bh3=1))
         self.observable('Bax4',
              MatchOnce(Bax(conf='ins', bh3=1, a6=3) %
                        Bax(conf='ins', bh3=1, a6=4) %
