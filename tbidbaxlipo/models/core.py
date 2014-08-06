@@ -877,46 +877,34 @@ class Builder(pysb.builder.Builder):
         Bax_mono = self['Bax'](bh3=None, a6=None)
         Pores = self['Pores']
 
-        self.rule('Pores_From_Bax_Monomers', 
+        self.rule('pores_from_Bax_monomers',
                   Bax_mono(cpt='ves', conf=bax_conf, pore='n') >>
                   Bax_mono(cpt='ves', conf=bax_conf, pore='y') +
                   Pores(cpt='ves'),
                   pore_formation_rate_k)
 
 
-    def pores_from_Bax_dimers(self, bax_loc_state='i', reversible=False):
+    def pores_from_Bax_dimers(self, bax_conf='ins'):
         """Basically a way of counting the time-integrated amount of
-           forward pore formation."""
-        print("one_cpt: pores_from_Bax_dimers()")
+           forward pore formation.
+
+        See notes for pores_from_Bax_monomers, above.
+        """
+        print("one_cpt: pores_from_Bax_dimers(bax_conf=%s)" % bax_conf)
 
         Bax = self['Bax']
         Pores = self['Pores']
-        ves = self['ves']
-        solution = self['solution']
 
         pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3,
                                                prior=Normal(-3, 2))
 
-        self.rule('Pores_From_Bax_Dimers',
-             Bax(loc=bax_loc_state, bh3=1, a6=None) %
-             Bax(loc=bax_loc_state, bh3=1, a6=None) >>
-             Bax(loc='p', bh3=1, a6=None) % Bax(loc='p', bh3=1, a6=None) +
-             Pores(),
+        self.rule('pores_from_Bax_dimers',
+             Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None, pore='n') %
+             Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None, pore='n') >>
+             Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None, pore='y') %
+             Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None, pore='y') +
+             Pores(cpt='ves'),
              pore_formation_rate_k)
-
-        if reversible:
-            pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-2,
-                                                 prior=Normal(-2, 2))
-            self.rule('Pores_reverse',
-                 Bax(loc='p', bh3=1, a6=None) ** ves %
-                 Bax(loc='p', bh3=1, a6=None) ** ves >>
-                 Bax(loc='c', bh3=None, a6=None) ** solution +
-                 Bax(loc='c', bh3=None, a6=None) ** solution,
-                 pore_reverse_rate_k)
-
-        # Pore formation
-        self.observable('pBax', Bax(loc='p'))
-        self.observable('pores', Pores())
 
     def pores_from_Bax_tetramers(self, bax_loc_state='m', reversible=False):
         """Basically a way of counting the time-integrated amount of
@@ -1007,7 +995,7 @@ class Builder(pysb.builder.Builder):
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.tBid_binds_Bax(bax_site='bh3', bax_conf='ins')
-        self.Bax_dimerizes()
+        self.Bax_dimerizes(bax_conf='ins')
         self.model.name = 'taid'
 
     def build_model_taidt(self):
@@ -1016,7 +1004,7 @@ class Builder(pysb.builder.Builder):
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.tBid_binds_Bax(bax_site='bh3', bax_conf='ins')
-        self.Bax_dimerizes()
+        self.Bax_dimerizes(bax_conf='ins')
         self.Bax_tetramerizes()
         self.model.name = 'taidt'
 
@@ -1036,7 +1024,7 @@ class Builder(pysb.builder.Builder):
         self.tBid_activates_Bax(bax_site='bh3')
         self.tBid_binds_Bax(bax_site='bh3', bax_conf='ins')
         self.Bax_reverses()
-        self.Bax_dimerizes()
+        self.Bax_dimerizes(bax_conf='ins')
         self.model.name = 'taird'
 
     def build_model_tairdt(self):
@@ -1046,7 +1034,7 @@ class Builder(pysb.builder.Builder):
         self.tBid_activates_Bax(bax_site='bh3')
         self.tBid_binds_Bax(bax_site='bh3', bax_conf='ins')
         self.Bax_reverses()
-        self.Bax_dimerizes()
+        self.Bax_dimerizes(bax_conf='ins')
         self.Bax_tetramerizes()
         self.model.name = 'tairdt'
 
@@ -1055,7 +1043,7 @@ class Builder(pysb.builder.Builder):
         print "core: Building model tad:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
-        self.Bax_dimerizes()
+        self.Bax_dimerizes(bax_conf='ins')
         self.model.name = 'tad'
 
     def build_model_tadt(self):
@@ -1063,7 +1051,7 @@ class Builder(pysb.builder.Builder):
         print "core: Building model tadt:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
-        self.Bax_dimerizes()
+        self.Bax_dimerizes(bax_conf='ins')
         self.Bax_tetramerizes()
         self.model.name = 'tadt'
 
@@ -1081,7 +1069,7 @@ class Builder(pysb.builder.Builder):
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.Bax_reverses()
-        self.Bax_dimerizes()
+        self.Bax_dimerizes(bax_conf='ins')
         self.model.name = 'tard'
 
     def build_model_tardt(self):
@@ -1090,7 +1078,7 @@ class Builder(pysb.builder.Builder):
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.Bax_reverses()
-        self.Bax_dimerizes()
+        self.Bax_dimerizes(bax_conf='ins')
         self.Bax_tetramerizes()
         self.model.name = 'tardt'
 
@@ -1165,15 +1153,16 @@ class Builder(pysb.builder.Builder):
     def build_model_bax_heat_reversible_aggregation(self):
         self.translocate_Bax()
         self.basal_Bax_activation()
+        self.Bax_reverses()
         self.Bax_aggregates_at_pores()
-        self.pores_from_Bax_monomers(bax_loc_state='i', reversible=True)
+        self.pores_from_Bax_monomers(bax_conf='ins')
         self.model.name = 'bax_heat_reversible_aggregation'
 
     def build_model_bax_heat_dimer(self):
         self.translocate_Bax()
         self.basal_Bax_activation()
-        self.Bax_dimerizes(bax_loc_state='i')
-        self.pores_from_Bax_dimers(bax_loc_state='i', reversible=False)
+        self.Bax_dimerizes(bax_conf='ins')
+        self.pores_from_Bax_dimers(bax_conf='ins')
         self.model.name = 'bax_heat_dimer'
 
     def build_model_bax_heat_dimer_reversible(self):

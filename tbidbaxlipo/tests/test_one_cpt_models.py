@@ -13,10 +13,10 @@ def test_build_models():
                    #'bax_heat',
                    #'bax_heat_aggregation',
                    #'bax_heat_reversible',
-                    #---
                    #'bax_heat_reversible_aggregation',
                    #'bax_heat_dimer',
-                   #'bax_heat_dimer_reversible',
+                    #---
+                   'bax_heat_dimer_reversible',
                    #'bax_heat_auto1',
                    #'bax_heat_auto2',
                    #'bax_heat_bh3_auto2',
