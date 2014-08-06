@@ -457,18 +457,41 @@ class Builder(pysb.builder.Builder):
              Bax_transloc_kr)
 
     def tBid_binds_Bax(self, bax_site, bax_conf):
-        """Bax binding occurs only at membranes."""
+        """
+        Can be used for binding to mem or ins state, at any site on Bax.
+
+        Notes
+        -----
+        When iBax binds tBid at BH3: THERE IS A PROBLEM WITH THIS!!!
+
+        When tBid is bound to Bax, it is prevented from recirculating back to
+        the solution.  Therefore you get a sequence of events like:
+
+        - tBid + Bax (full liposome) -> tBid + Bax(i) (full liposome)
+        - Bax(p) (full) -> Bax(p) (empty) THIS HAPPENS VERY FAST
+        - But also: Bax(i) + tBid (full liposome).
+
+        When complexed in this way, tBid does not recycle back to the solution.
+        Therefore tBid catalyses the creation of a species Bax(i) which over
+        time shifts the equilibrium of tBid from c to full liposomes.
+
+        However, if you are not interested in the permeabilization status of
+        liposomes (e.g., if you are using the model only for looking at
+        insertion rates) then this could be OK.
+
+        Rates used in old version, iBax_binds_tBid_at_bh3: kf 1e-1, kr 2.5
+        """
 
         print('core: tBid_binds_Bax(bax_site=%s, bax_conf=%s)' %
               (bax_site, bax_conf))
 
-        # Forward rate of tBid binding to Bax (E + S -> ES)
-        kf = self.parameter('tBid_mBax_%s_%s_kf' % (bax_conf, bax_site),
+        # Forward rate of tBid binding to Bax
+        kf = self.parameter('tBid_Bax_%s_%s_kf' % (bax_conf, bax_site),
                             1e-2,
                             factor=self.within_compartment_rsf(),
                             prior=Normal(-2, 2))
-        # Reverse rate of tBid binding to Bax (ES -> E + S)
-        kr = self.parameter('tBid_mBax_%s_%s_kr' % (bax_conf, bax_site),
+        # Reverse rate of tBid binding to Bax
+        kr = self.parameter('tBid_Bax_%s_%s_kr' % (bax_conf, bax_site),
                             1.5,
                             prior=Normal(0, 2))
 
@@ -692,44 +715,6 @@ class Builder(pysb.builder.Builder):
              Bax(loc=bax_loc_state, bh3=2, a6=4), 
              Bax_tetramerization_kf, Bax_tetramerization_kr)
 
-    def iBax_binds_tBid_at_bh3(self):
-        """
-        Notes
-        -----
-        THERE IS A PROBLEM WITH THIS!!!
-
-        When tBid is bound to Bax, it is prevented from recirculating back to
-        the solution.  Therefore you get a sequence of events like:
-
-        - tBid + Bax (full liposome) -> tBid + Bax(i) (full liposome)
-        - Bax(p) (full) -> Bax(p) (empty) THIS HAPPENS VERY FAST
-        - But also: Bax(i) + tBid (full liposome).
-
-        When complexed in this way, tBid does not recycle back to the solution.
-        Therefore tBid catalyses the creation of a species Bax(i) which over
-        time shifts the equilibrium of tBid from c to full liposomes.
-
-        However, if you are not interested in the permeabilization status of
-        liposomes (e.g., if you are using the model only for looking at
-        insertion rates) then this could be OK.
-        """
-        print("core: iBax_binds_tBid_at_bh3()")
-
-        # INHIBITION OF TBID BY BAX
-        # Rate of tBid binding to iBax (E + P -> EP)
-        kf = self.parameter('tBid_iBax_kf', 1e-1, prior=Normal(-1, 2))
-        # Rate of tBid binding to iBax (E + P -> EP)
-        kr = self.parameter('tBid_iBax_kr', 2.5, prior=Normal(0, 2))
-
-        tBid = self['tBid']
-        Bax = self['Bax']
-
-        # Binding between mtBid and iBax
-        self.rule('tBid_iBax_bind_at_bh3',
-             tBid(loc='m', bh3=None) + Bax(loc='i', bh3=None, a6=None) <>
-             tBid(loc='m', bh3=1) % Bax(loc='i', bh3=1, a6=None),
-             kf, kr)
-
     # -- OTHER MOTIFS --------------------------------------------------------
     def Bax_auto_activates(self, target_bax_site='a6'):
         print "core: Bax_auto_activates"
@@ -879,7 +864,7 @@ class Builder(pysb.builder.Builder):
         print "core: Building model tai:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
-        self.iBax_binds_tBid_at_bh3()
+        self.tBid_binds_Bax(bax_site='bh3', bax_conf='ins')
         self.model.name = 'tai'
 
     def build_model_taid(self):

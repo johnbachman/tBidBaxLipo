@@ -24,6 +24,15 @@ def test_build_model_ta():
         "Monomer reference check failed.")
     plot_bng_and_kappa_sims(b.model, 8000, n_steps, "build_model_ta")
 
+def test_build_model_tai():
+    b = Builder()
+    b.build_model_tai()
+    #b.make_multi_compartment()
+    b.model.parameters['tBid_Bax_ins_bh3_kr'].value = 1e-3
+    ok_(check_monomer_and_parameter_refs(b.model),
+        "Monomer reference check failed.")
+    plot_bng_and_kappa_sims(b.model, 8000, n_steps, "build_model_tai")
+
 def plot_bng_and_kappa_sims(model, t_end, n_steps, title):
     # BNG
     x = bng.run_ssa(model, t_end=t_end, n_steps=n_steps)

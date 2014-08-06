@@ -3,7 +3,7 @@ from pysb.integrate import odesolve
 import numpy as np
 from matplotlib import pyplot as plt
 
-t = np.linspace(0, 100, 100)
+t = np.linspace(0, 8000, 100)
 plt.ion()
 
 def test_build_model_t():
@@ -17,6 +17,13 @@ def test_build_model_ta():
     b.build_model_ta()
     x = odesolve(b.model, t)
     plot_model(t, x, 'build_model_ta')
+
+def test_build_model_tai():
+    b = Builder()
+    b.build_model_tai()
+    b.model.parameters['tBid_Bax_ins_bh3_kr'].value = 1e-3
+    x = odesolve(b.model, t)
+    plot_model(t, x, 'build_model_tai')
 
 def plot_model(t, x, title):
     plt.figure()
