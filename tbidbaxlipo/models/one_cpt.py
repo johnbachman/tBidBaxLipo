@@ -124,13 +124,6 @@ class Builder(core.Builder):
                        Bax(conf='ins', bh3=2, a6=4)))
 
     # MODEL MACROS
-    def dye_release_one_step_catalytic(self):
-        """Activated Bax acts as an enzyme that converts liposomes F->E.
-
-        There is no binding assumed--it's a catalytic mechanism.
-        """
-        pass
-
     def translocate_tBid_Bax(self):
         print("one_cpt: translocate_tBid_Bax()")
         self.translocate_tBid()
