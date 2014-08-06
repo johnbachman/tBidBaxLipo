@@ -249,6 +249,7 @@ import pysb.builder
 from bayessb.priors import Normal
 import sympy
 import math
+import itertools
 
 class Builder(pysb.builder.Builder):
     """
@@ -712,78 +713,52 @@ class Builder(pysb.builder.Builder):
              Bax_tetramerization_kf, Bax_tetramerization_kr)
 
     # -- OTHER MOTIFS --------------------------------------------------------
-    def Bax_auto_activates(self, target_bax_site='a6'):
-        print "core: Bax_auto_activates"
-        # Andrews suggests that tBid/Bax Kd should work out to 25nM
-        # Forward rate of iBax binding to Bax (E + S -> ES)
-        iBax_mBax_kf = self.parameter('iBax_mBax_kf', 1e-3)
-        # Reverse rate of iBax binding to Bax (ES -> E + S)
-        iBax_mBax_kr = self.parameter('iBax_mBax_kr', 10)
-        # Dissociation of iBax from iBax (EP -> E + P)
-        iBaxmBax_to_iBax_iBax_k = self.parameter('iBaxmBax_to_iBax_iBax_k', 100) 
-
-        Bax = self['Bax']
-
-        self.rule('iBax_binds_mBax',
-                Bax(loc='i', a6=None, bh3=None) +
-                Bax(loc='m', a6=None, bh3=None) <>
-                Bax(loc='i', a6=None, bh3=1) % Bax(loc='m', a6=1, bh3=None),
-                iBax_mBax_kf, iBax_mBax_kr)
-        self.rule('iBaxmBax_to_iBax_iBax',
-                Bax(loc='i', a6=None, bh3=1) %
-                Bax(loc='m', a6=1, bh3=None) >>
-                Bax(loc='i', a6=None, bh3=None) +
-                Bax(loc='i', a6=None, bh3=None),
-                iBaxmBax_to_iBax_iBax_k)
-
-    def Bax_auto_activates_one_step(self):
-        print "core: Bax_auto_activates_one_step"
-        # Andrews suggests that tBid/Bax Kd should work out to 25nM
-        # Forward rate of iBax binding to Bax (E + S -> ES)
-        iBax_activates_mBax_k = self.parameter('iBax_activates_mBax_k', 1e-4)
-        # Reverse rate of iBax binding to Bax (ES -> E + S)
-        #self.parameter('iBax_mBax_kr', 1e-2)
-        #self.parameter('mBaxiBax_to_iBaxiBax_k', 1) 
-        # Dissociation of iBax from iBax (EP -> E + P)
-        #Parameter('iBax_iBax_kr', 2.5e-3)
-        Bax = self['Bax']
-
-        # Conformational change of Bax (ES -> EP)
-        self.rule('iBax_activates_mBax',
-            Bax(loc='i') + Bax(loc='m') >> Bax(loc='i') + Bax(loc='i'),
-            iBax_activates_mBax_k)
-
-    def Bax_aggregates_at_pores(self):
-        """To account for the slowdown of pore formation with the excess
-        of Bax over liposomes.
-
-        This ultimately is a way of implementing Bax auto-activation at
-        at liposomes that have already been permeabilized. It's not to say
-        that Bax can only auto-activate once it's in a pore, but it's a way
-        of saying that if a Bax is recruited to a vesicle by a Bax that has
-        already formed a pore, then that recruited Bax cannot itself form a
-        pore.
-
-        However, this approach is not really satisfactory. It seems to confuse
-        the issue of binding to vesicles that have already been permeabilized
-        with the issue of auto-activation. In general, the ability of Bax to
-        permeabilize vesicles should go down as a result of the re-binding of
-        permeabilized vesicles, whether or not Bax is present on that vesicle.
-
-        However, as this refactoring of the function is true to the original
-        (though possibly flawed) implementation, I will keep it as is for now.
+    def Bax_auto_activates(self, activator_site='bh3', target_site='bh3'):
+        """If this rule is ultimately going to be used in cases where
+        polymerization is actually allowed, the fact that the product
+        (activated) Bax is specified as fully unbound may be a problem.
         """
 
+        print "core: Bax_auto_activates"
+
+        iBax_mBax_kf = self.parameter('iBax_mBax_kf', 1e-3)
+        iBax_mBax_kr = self.parameter('iBax_mBax_kr', 10)
+        iBaxmBax_to_iBax_iBax_k = self.parameter('iBaxmBax_to_iBax_iBax_k', 100)
+
+        # Some useful aliases
+        Bax = self['Bax']
+        Bax_act_free = Bax(cpt='ves', conf='ins', **{activator_site:None})
+        Bax_act_bound = Bax(cpt='ves', conf='ins', **{activator_site:1})
+        Bax_tgt_mem_free = Bax(cpt='ves', conf='mem', **{target_site:None})
+        Bax_tgt_mem_bound = Bax(cpt='ves', conf='mem', **{target_site:1})
+        Bax_tgt_ins_free = Bax(cpt='ves', conf='ins', **{target_site:None})
+
+        self.rule('iBax_binds_mBax',
+                  Bax_act_free + Bax_tgt_mem_free <>
+                  Bax_act_bound % Bax_tgt_mem_bound,
+                  iBax_mBax_kf, iBax_mBax_kr)
+        self.rule('iBax_activates_mBax',
+                  Bax_act_bound % Bax_tgt_mem_bound >>
+                  Bax_act_free + Bax_tgt_ins_free,
+                  iBaxmBax_to_iBax_iBax_k)
+
+    def Bax_auto_activates_one_step(self):
+        """In the simplest case, Bax can only auto-activate another Bax if it
+        is monomeric--this implies that it is not only bound to tBid, but also
+        implies that it cannot be in a pore."""
+
+        print "core: Bax_auto_activates_one_step"
+
+        iBax_activates_mBax_k = self.parameter('iBax_activates_mBax_k', 1e-4)
+
         Bax = self['Bax']
 
-        aggregation_rate_k = self.parameter('aggregation_rate_k', 1e-4)
-
-        self.rule('Bax_aggregates_at_pores',
-                  Bax(cpt='ves', conf='ins', pore='y', bh3=None, a6=None) +
-                  Bax(cpt='ves', conf='mem', pore='n', bh3=None, a6=None) >>
-                  Bax(cpt='ves', conf='ins', pore='y', bh3=None, a6=None) +
-                  Bax(cpt='ves', conf='ins', pore='y', bh3=None, a6=None),
-                  aggregation_rate_k)
+        self.rule('iBax_activates_mBax',
+                  Bax(cpt='ves', conf='ins', bh3=None, a6=None) +
+                  Bax(cpt='ves', conf='mem', bh3=None, a6=None) >>
+                  Bax(cpt='ves', conf='ins', bh3=None, a6=None) +
+                  Bax(cpt='ves', conf='ins', bh3=None, a6=None),
+                  iBax_activates_mBax_k)
 
     def tBid_reverses_Bax():
         # Rate of the EP->ES transition # FIXME
@@ -1136,27 +1111,12 @@ class Builder(pysb.builder.Builder):
         self.pores_from_Bax_monomers(bax_conf='ins')
         self.model.name = 'bax_heat'
 
-    def build_model_bax_heat_aggregation(self):
-        self.translocate_Bax()
-        self.basal_Bax_activation()
-        self.pores_from_Bax_monomers(bax_conf='ins')
-        self.Bax_aggregates_at_pores()
-        self.model.name = 'bax_heat_aggregation'
-
     def build_model_bax_heat_reversible(self):
         self.translocate_Bax()
         self.basal_Bax_activation()
         self.Bax_reverses()
         self.pores_from_Bax_monomers(bax_conf='ins')
         self.model.name = 'bax_heat_reversible'
-
-    def build_model_bax_heat_reversible_aggregation(self):
-        self.translocate_Bax()
-        self.basal_Bax_activation()
-        self.Bax_reverses()
-        self.Bax_aggregates_at_pores()
-        self.pores_from_Bax_monomers(bax_conf='ins')
-        self.model.name = 'bax_heat_reversible_aggregation'
 
     def build_model_bax_heat_dimer(self):
         self.translocate_Bax()
@@ -1168,56 +1128,59 @@ class Builder(pysb.builder.Builder):
     def build_model_bax_heat_dimer_reversible(self):
         self.translocate_Bax()
         self.basal_Bax_activation()
-        self.Bax_dimerizes(bax_loc_state='i')
-        self.pores_from_Bax_dimers(bax_loc_state='i', reversible=True)
+        self.Bax_reverses()
+        self.Bax_dimerizes(bax_conf='ins')
+        self.pores_from_Bax_dimers(bax_conf='ins')
         self.model.name = 'bax_heat_dimer_reversible'
 
     def build_model_bax_heat_auto1(self):
         self.translocate_Bax()
         self.basal_Bax_activation()
         self.Bax_auto_activates_one_step()
-        self.pores_from_Bax_monomers(bax_loc_state='i', reversible=False)
+        self.pores_from_Bax_monomers(bax_conf='ins')
         self.model.name = 'bax_heat_auto1'
 
     def build_model_bax_heat_auto2(self):
         self.translocate_Bax()
         self.basal_Bax_activation()
         self.Bax_auto_activates()
-        self.pores_from_Bax_monomers(bax_loc_state='i', reversible=False)
+        self.pores_from_Bax_monomers(bax_conf='ins')
         self.model.name = 'bax_heat_auto2'
 
     def build_model_bax_heat_bh3_auto2(self):
         self.translocate_Bax()
         self.bh3_exposure_auto2()
-        self.pores_from_Bax_monomers(bax_loc_state='i', reversible=False)
+        self.pores_from_Bax_monomers(bax_conf='ins')
         self.model.name = 'bax_heat_auto2'
 
     def build_model_bax_heat_auto1_reversible_activation(self):
         self.translocate_Bax()
         self.basal_Bax_activation(reversible=True)
         self.Bax_auto_activates_one_step()
-        self.pores_from_Bax_monomers(bax_loc_state='i', reversible=False)
+        self.pores_from_Bax_monomers(bax_conf='ins')
         self.model.name = 'bax_heat_auto1_reversible_activation'
 
     def build_model_bax_heat_auto2_reversible_activation(self):
         self.translocate_Bax()
         self.basal_Bax_activation(reversible=True)
         self.Bax_auto_activates()
-        self.pores_from_Bax_monomers(bax_loc_state='i', reversible=False)
+        self.pores_from_Bax_monomers(bax_conf='ins')
         self.model.name = 'bax_heat_auto2_reversible_activation'
 
     def build_model_bax_heat_auto1_reversible(self):
         self.translocate_Bax()
         self.basal_Bax_activation()
         self.Bax_auto_activates_one_step()
-        self.pores_from_Bax_monomers(bax_loc_state='i', reversible=True)
+        self.Bax_reverses()
+        self.pores_from_Bax_monomers(bax_conf='ins')
         self.model.name = 'bax_heat_auto1_reversible'
 
     def build_model_bax_heat_auto2_reversible(self):
         self.translocate_Bax()
         self.basal_Bax_activation()
         self.Bax_auto_activates()
-        self.pores_from_Bax_monomers(bax_loc_state='i', reversible=True)
+        self.Bax_reverses()
+        self.pores_from_Bax_monomers(bax_conf='ins')
         self.model.name = 'bax_heat_auto2_reversible'
 
     def build_model_bax_heat_auto1_dimer(self):
@@ -1225,7 +1188,7 @@ class Builder(pysb.builder.Builder):
         self.basal_Bax_activation()
         self.Bax_auto_activates_one_step()
         self.Bax_dimerizes()
-        self.pores_from_Bax_dimers(bax_loc_state='i', reversible=False)
+        self.pores_from_Bax_dimers(bax_conf='ins')
         self.model.name = 'bax_heat_auto1_dimer'
 
     def build_model_bax_heat_auto2_dimer(self):
@@ -1233,7 +1196,7 @@ class Builder(pysb.builder.Builder):
         self.basal_Bax_activation()
         self.Bax_auto_activates()
         self.Bax_dimerizes()
-        self.pores_from_Bax_dimers(bax_loc_state='i', reversible=False)
+        self.pores_from_Bax_dimers(bax_conf='ins')
         self.model.name = 'bax_heat_auto2_dimer'
 
     def build_model_bax_heat_auto1_dimer_reversible(self):
@@ -1241,7 +1204,8 @@ class Builder(pysb.builder.Builder):
         self.basal_Bax_activation()
         self.Bax_auto_activates_one_step()
         self.Bax_dimerizes()
-        self.pores_from_Bax_dimers(bax_loc_state='i', reversible=True)
+        self.Bax_reverses()
+        self.pores_from_Bax_dimers(bax_conf='ins')
         self.model.name = 'bax_heat_auto1_dimer_reversible'
 
     def build_model_bax_heat_auto2_dimer_reversible(self):
@@ -1249,14 +1213,15 @@ class Builder(pysb.builder.Builder):
         self.basal_Bax_activation()
         self.Bax_auto_activates()
         self.Bax_dimerizes()
-        self.pores_from_Bax_dimers(bax_loc_state='i', reversible=True)
+        self.Bax_reverses()
+        self.pores_from_Bax_dimers(bax_conf='ins')
         self.model.name = 'bax_heat_auto2_dimer_reversible'
 
     # Heat models in which the heating doesn't make Bax pore-competent
     def build_model_bax_heat_bh3_exposure_auto2(self):
         self.translocate_Bax()
         self.basal_bh3_exposure_auto2()
-        self.pores_from_Bax_monomers(bax_loc_state='i')
+        self.pores_from_Bax_monomers(bax_conf='ins')
         self.model.name = 'bax_heat_bh3_exposure_auto2'
 
     # Models incorporating dye release
