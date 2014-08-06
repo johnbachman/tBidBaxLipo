@@ -4,7 +4,7 @@ from pysb import bng, kappa
 from matplotlib import pyplot as plt
 
 t_end = 100
-n_steps = 100
+n_steps = 500
 
 plt.ion()
 
@@ -14,7 +14,15 @@ def test_build_model_t():
     #b.make_multi_compartment()
     ok_(check_monomer_and_parameter_refs(b.model),
         "Monomer reference check failed.")
-    plot_bng_and_kappa_sims(b.model, t_end, n_steps, "build_model_t")
+    plot_bng_and_kappa_sims(b.model, 100, n_steps, "build_model_t")
+
+def test_build_model_ta():
+    b = Builder()
+    b.build_model_ta()
+    #b.make_multi_compartment()
+    ok_(check_monomer_and_parameter_refs(b.model),
+        "Monomer reference check failed.")
+    plot_bng_and_kappa_sims(b.model, 8000, n_steps, "build_model_ta")
 
 def plot_bng_and_kappa_sims(model, t_end, n_steps, title):
     # BNG

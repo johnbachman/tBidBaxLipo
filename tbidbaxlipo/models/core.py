@@ -256,7 +256,7 @@ class Builder(pysb.builder.Builder):
     """
     def __init__(self, params_dict=None, nbd_sites=None, scaling_factor=None):
         # Sets self.model = Model(), and self.param_dict
-        core.Builder.__init__(self, params_dict=params_dict)
+        super(Builder, self).__init__(params_dict=params_dict)
 
         self.declare_monomers()
 
