@@ -8,30 +8,18 @@ n_steps = 500
 
 plt.ion()
 
-def test_build_model_t():
-    b = Builder()
-    b.build_model_t()
-    #b.make_multi_compartment()
-    ok_(check_monomer_and_parameter_refs(b.model),
-        "Monomer reference check failed.")
-    plot_bng_and_kappa_sims(b.model, 100, n_steps, "build_model_t")
-
-def test_build_model_ta():
-    b = Builder()
-    b.build_model_ta()
-    #b.make_multi_compartment()
-    ok_(check_monomer_and_parameter_refs(b.model),
-        "Monomer reference check failed.")
-    plot_bng_and_kappa_sims(b.model, 8000, n_steps, "build_model_ta")
-
-def test_build_model_tai():
-    b = Builder()
-    b.build_model_tai()
-    #b.make_multi_compartment()
-    b.model.parameters['tBid_Bax_ins_bh3_kr'].value = 1e-3
-    ok_(check_monomer_and_parameter_refs(b.model),
-        "Monomer reference check failed.")
-    plot_bng_and_kappa_sims(b.model, 8000, n_steps, "build_model_tai")
+def test_build_models():
+    model_names = ['t', 'ta', 'tai', 'taid', 'taidt', 'tair', 'taird',
+                   'tairdt', 'tad', 'tadt', 'tar', 'tard', 'tardt']
+    for model_name in model_names:
+        print "Running model %s" % model_name
+        b = Builder()
+        eval("b.build_model_%s()" % model_name)
+        #b.make_multi_compartment()
+        ok_(check_monomer_and_parameter_refs(b.model),
+            "Monomer reference check failed.")
+        plot_bng_and_kappa_sims(b.model, 8000, n_steps,
+                                'build_model_%s' % model_name)
 
 def plot_bng_and_kappa_sims(model, t_end, n_steps, title):
     # BNG

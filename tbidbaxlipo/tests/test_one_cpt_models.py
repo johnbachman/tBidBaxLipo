@@ -6,24 +6,15 @@ from matplotlib import pyplot as plt
 t = np.linspace(0, 8000, 100)
 plt.ion()
 
-def test_build_model_t():
-    b = Builder()
-    b.build_model_t()
-    x = odesolve(b.model, t)
-    plot_model(t, x, 'build_model_t')
-
-def test_build_model_ta():
-    b = Builder()
-    b.build_model_ta()
-    x = odesolve(b.model, t)
-    plot_model(t, x, 'build_model_ta')
-
-def test_build_model_tai():
-    b = Builder()
-    b.build_model_tai()
-    b.model.parameters['tBid_Bax_ins_bh3_kr'].value = 1e-3
-    x = odesolve(b.model, t)
-    plot_model(t, x, 'build_model_tai')
+def test_build_models():
+    model_names = ['t', 'ta', 'tai', 'taid', 'taidt', 'tair', 'taird',
+                   'tairdt', 'tad', 'tadt', 'tar', 'tard', 'tardt']
+    for model_name in model_names:
+        print "Running model %s" % model_name
+        b = Builder()
+        eval("b.build_model_%s()" % model_name)
+        x = odesolve(b.model, t)
+        plot_model(t, x, 'build_model_%s' % model_name)
 
 def plot_model(t, x, title):
     plt.figure()

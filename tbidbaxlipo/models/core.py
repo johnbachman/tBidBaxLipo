@@ -285,10 +285,10 @@ class Builder(pysb.builder.Builder):
         self.observable('tBidBax', tBid(bh3=1) % Bax(bh3=1))
         self.observable('Bax2', Bax(bh3=1) % Bax(bh3=1))
         self.observable('Bax4',
-             MatchOnce(Bax(conf='ins', bh3=1, a6=3) %
-                       Bax(conf='ins', bh3=1, a6=4) %
-                       Bax(conf='ins', bh3=2, a6=3) %
-                       Bax(conf='ins', bh3=2, a6=4)))
+                        Bax(conf='ins', bh3=1, a6=3) %
+                        Bax(conf='ins', bh3=1, a6=4) %
+                        Bax(conf='ins', bh3=2, a6=3) %
+                        Bax(conf='ins', bh3=2, a6=4))
 
     # -- VIRTUAL FUNCTIONS ----------------------------------------------------
     def within_compartment_rsf(self):
@@ -486,13 +486,11 @@ class Builder(pysb.builder.Builder):
               (bax_site, bax_conf))
 
         # Forward rate of tBid binding to Bax
-        kf = self.parameter('tBid_Bax_%s_%s_kf' % (bax_conf, bax_site),
-                            1e-2,
+        kf = self.parameter('tBid_Bax_%s_%s_kf' % (bax_conf, bax_site), 1e-2,
                             factor=self.within_compartment_rsf(),
                             prior=Normal(-2, 2))
         # Reverse rate of tBid binding to Bax
-        kr = self.parameter('tBid_Bax_%s_%s_kr' % (bax_conf, bax_site),
-                            1.5,
+        kr = self.parameter('tBid_Bax_%s_%s_kr' % (bax_conf, bax_site), 1.5,
                             prior=Normal(0, 2))
 
         # Create the dicts to parameterize the site that tBid binds to
@@ -595,21 +593,19 @@ class Builder(pysb.builder.Builder):
              kc)
 
     def Bax_reverses(self):
-        """Reversion of the inserted form of Bax to the solution."""
+        """Reversion of inserted Bax to the peripherally bound form."""
 
         print('core: Bax_reverses')
 
         Bax = self['Bax']
-        sol = self['solution']
-        ves = self['ves']
 
         # Reversion of active Bax (P -> S)
         krev = self.parameter('iBax_reverse_k', 1e-3, prior=Normal(-3, 2))
 
         # iBax reverses back to mBax
         self.rule('iBax_reverses',
-             Bax(loc='i', bh3=None, a6=None, lipo=ANY) ** ves >>
-             Bax(loc='c', bh3=None, a6=None, lipo=None) ** sol,
+             Bax(cpt='ves', conf='ins', bh3=None, a6=None) >>
+             Bax(cpt='ves', conf='mem', bh3=None, a6=None),
              krev)
 
     def Bax_nmerizes(self, n, bax_loc_state='i'):
@@ -650,7 +646,7 @@ class Builder(pysb.builder.Builder):
         self.rule('pores_from_Bax_%s_%dmers' % (bax_loc_state, n),
              lhs >> rhs + Pores(), pore_formation_rate_k)
 
-    def Bax_dimerizes(self, bax_loc_state='i'):
+    def Bax_dimerizes(self, bax_conf='ins'):
         """
         Notes
         -----
@@ -660,32 +656,30 @@ class Builder(pysb.builder.Builder):
           steady-state at around 12 minutes.
         """
 
-        print("core: Bax_dimerizes(bax_loc_state=%s)" % bax_loc_state)
+        print("core: Bax_dimerizes(bax_conf=%s)" % bax_conf)
 
         # Rate of dimerization formation/oligomerization of activated Bax (s^-1)
         Bax_dimerization_kf = self.parameter(
-               'Bax_%s_dimerization_kf' % bax_loc_state, 1e-2,
+               'Bax_%s_dimerization_kf' % bax_conf, 1e-2,
                factor=self.within_compartment_rsf(),
                prior=Normal(-2, 2))
         Bax_dimerization_kr = self.parameter(
-               'Bax_%s_dimerization_kr' % bax_loc_state, 1e-2,
+               'Bax_%s_dimerization_kr' % bax_conf, 1e-2,
                prior=Normal(-2, 2))
 
         Bax = self['Bax']
 
-        self.rule('Bax_%s_forms_dimers' % bax_loc_state,
-             Bax(loc=bax_loc_state, bh3=None, a6=None) +
-             Bax(loc=bax_loc_state, bh3=None, a6=None) <>
-             Bax(loc=bax_loc_state, bh3=1, a6=None) %
-             Bax(loc=bax_loc_state, bh3=1, a6=None),
+        self.rule('Bax_%s_forms_dimers' % bax_conf,
+             Bax(cpt='ves', conf=bax_conf, bh3=None, a6=None) +
+             Bax(cpt='ves', conf=bax_conf, bh3=None, a6=None) <>
+             Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None) %
+             Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None),
              Bax_dimerization_kf, Bax_dimerization_kr)
-        self.observable('Bax2_%s' % bax_loc_state,
-             Bax(loc=bax_loc_state, bh3=1, a6=None) %
-             Bax(loc=bax_loc_state, bh3=1, a6=None))
 
-    def Bax_tetramerizes(self, bax_loc_state='i'):
+    def Bax_tetramerizes(self, bax_conf='ins'):
         """
         This function depends on Bax_dimerization to be called as well.
+        It forms dimers of dimers.
 
         Notes
         -----
@@ -696,23 +690,25 @@ class Builder(pysb.builder.Builder):
         print("core: Bax_tetramerizes()")
 
         # Rate of dimerization formation/oligomerization of activated Bax (s^-1)
-        Bax_tetramerization_kf = self.parameter('Bax_tetramerization_kf', 1e-2,
-               factor=self.within_compartment_rsf(),
-               prior=Normal(-2, 2))
-        Bax_tetramerization_kr = self.parameter('Bax_tetramerization_kr',
-                1e-2, prior=Normal(-2, 2))
+        Bax_tetramerization_kf = \
+                self.parameter('Bax_%s_tetramerization_kf' % bax_conf, 1e-2,
+                               factor=self.within_compartment_rsf(),
+                               prior=Normal(-2, 2))
+        Bax_tetramerization_kr = \
+                self.parameter('Bax_%s_tetramerization_kr' % bax_conf, 1e-2,
+                               prior=Normal(-2, 2))
 
         Bax = self['Bax']
 
         self.rule('Bax_Forms_Tetramers',
-             MatchOnce(Bax(loc=bax_loc_state, bh3=1, a6=None) %
-                       Bax(loc=bax_loc_state, bh3=1, a6=None)) +
-             MatchOnce(Bax(loc=bax_loc_state, bh3=2, a6=None) %
-                       Bax(loc=bax_loc_state, bh3=2, a6=None)) <>
-             Bax(loc=bax_loc_state, bh3=1, a6=3) %
-             Bax(loc=bax_loc_state, bh3=1, a6=4) %
-             Bax(loc=bax_loc_state, bh3=2, a6=3) %
-             Bax(loc=bax_loc_state, bh3=2, a6=4), 
+             MatchOnce(Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None) %
+                       Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None)) +
+             MatchOnce(Bax(cpt='ves', conf=bax_conf, bh3=2, a6=None) %
+                       Bax(cpt='ves', conf=bax_conf, bh3=2, a6=None)) <>
+             MatchOnce(Bax(cpt='ves', conf=bax_conf, bh3=1, a6=3) %
+                       Bax(cpt='ves', conf=bax_conf, bh3=1, a6=4) %
+                       Bax(cpt='ves', conf=bax_conf, bh3=2, a6=3) %
+                       Bax(cpt='ves', conf=bax_conf, bh3=2, a6=4)),
              Bax_tetramerization_kf, Bax_tetramerization_kr)
 
     # -- OTHER MOTIFS --------------------------------------------------------
@@ -872,7 +868,7 @@ class Builder(pysb.builder.Builder):
         print "core: Building model taid:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
-        self.iBax_binds_tBid_at_bh3()
+        self.tBid_binds_Bax(bax_site='bh3', bax_conf='ins')
         self.Bax_dimerizes()
         self.model.name = 'taid'
 
@@ -881,7 +877,7 @@ class Builder(pysb.builder.Builder):
         print "core: Building model taidt:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
-        self.iBax_binds_tBid_at_bh3()
+        self.tBid_binds_Bax(bax_site='bh3', bax_conf='ins')
         self.Bax_dimerizes()
         self.Bax_tetramerizes()
         self.model.name = 'taidt'
@@ -891,7 +887,7 @@ class Builder(pysb.builder.Builder):
         print "core: Building model tair:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
-        self.iBax_binds_tBid_at_bh3()
+        self.tBid_binds_Bax(bax_site='bh3', bax_conf='ins')
         self.Bax_reverses()
         self.model.name = 'tair'
 
@@ -900,7 +896,7 @@ class Builder(pysb.builder.Builder):
         print "core: Building model taird:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
-        self.iBax_binds_tBid_at_bh3()
+        self.tBid_binds_Bax(bax_site='bh3', bax_conf='ins')
         self.Bax_reverses()
         self.Bax_dimerizes()
         self.model.name = 'taird'
@@ -910,7 +906,7 @@ class Builder(pysb.builder.Builder):
         print "core: Building model tairdt:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
-        self.iBax_binds_tBid_at_bh3()
+        self.tBid_binds_Bax(bax_site='bh3', bax_conf='ins')
         self.Bax_reverses()
         self.Bax_dimerizes()
         self.Bax_tetramerizes()
