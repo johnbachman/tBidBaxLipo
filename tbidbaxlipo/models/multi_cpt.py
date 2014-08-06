@@ -16,7 +16,7 @@ class Builder(one_cpt.Builder):
         # on n values, for the n possible vesicle compartments.
         mc_monomers = ComponentSet()
         monomer_map = {}
-        for m in self.model.monomers:
+        for m in mc_model.monomers:
             if 'cpt' in m.sites and \
                'ves' in m.site_states['cpt']:
                 mc_monomer = deepcopy(m)
@@ -33,14 +33,14 @@ class Builder(one_cpt.Builder):
 
         # RULES
         mc_rules = ComponentSet()
-        for rule in self.model.rules:
+        for rule in mc_model.rules:
             # Need to do a copy, rather than a deep copy, because otherwise we
             # replace all the monomer references with new copies that won't
             # sync with our monomer list
             mc_rule = copy(rule)
             lh_cps = mc_rule.rule_expression.reactant_pattern.complex_patterns
             rh_cps = mc_rule.rule_expression.product_pattern.complex_patterns
-            # For both the left and right hand sides, get the complex patterns...
+            # For both the left and right hand sides, get the complex patterns
             for side_cps in (lh_cps, rh_cps):
                 # For all the complex patterns on this side of the rule...
                 for cp in side_cps:
@@ -64,7 +64,7 @@ class Builder(one_cpt.Builder):
 
         # INITIAL CONDITIONS
         mc_ic_list = []
-        for (ic_cp, ic_value) in self.model.initial_conditions:
+        for (ic_cp, ic_value) in mc_model.initial_conditions:
             mc_ic_cp = copy(ic_cp)
             for mp in mc_ic_cp.monomer_patterns:
                 # Replace references to 'cpt=ves' with multiple
@@ -83,7 +83,7 @@ class Builder(one_cpt.Builder):
 
         # OBSERVABLES
         mc_obs_set = ComponentSet()
-        for obs in self.model.observables:
+        for obs in mc_model.observables:
             # Again, don't do deep copy (see note above for rules)
             mc_obs = copy(obs)
             ob_cps = mc_obs.reaction_pattern.complex_patterns
@@ -111,7 +111,6 @@ if __name__ == '__main__':
     b = Builder()
     b.build_model_t()
     b.make_multi_compartment()
-
     """
     t = np.linspace(0, 1e5)
     s = Solver(b.model, t)
