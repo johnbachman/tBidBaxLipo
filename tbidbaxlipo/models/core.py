@@ -251,6 +251,44 @@ import sympy
 import math
 
 class Builder(pysb.builder.Builder):
+    """
+    Class/constructor documentation here.
+    """
+    def __init__(self, params_dict=None, nbd_sites=None, scaling_factor=None):
+        # Sets self.model = Model(), and self.param_dict
+        core.Builder.__init__(self, params_dict=params_dict)
+
+        self.declare_monomers()
+
+        # INITIAL CONDITIONS
+        self.parameter('Vesicles_0', 5, prior=None)
+        self.parameter('tBid_0', 20, prior=None)
+        self.parameter('Bax_0', 100, prior=None)
+
+        tBid = self['tBid']
+        Bax = self['Bax']
+        Vesicles = self['Vesicles']
+        Pores = self['Pores']
+
+        self.initial(tBid(cpt='sol', conf='aq', bh3=None), self['tBid_0'])
+        self.initial(Bax(cpt='sol', conf='aq', bh3=None, a6=None,
+                         lipo=None, pore='n'),
+                     self['Bax_0'])
+        self.initial(Vesicles(bax=None), self['Vesicles_0'])
+
+        # OBSERVABLES
+        self.observable('ctBid', tBid(cpt='sol'))
+        self.observable('mtBid', tBid(cpt='ves'))
+        self.observable('cBax', Bax(conf='aq'))
+        self.observable('mBax', Bax(conf='mem'))
+        self.observable('iBax', Bax(conf='ins'))
+        self.observable('tBidBax', tBid(bh3=1) % Bax(bh3=1))
+        self.observable('Bax2', Bax(bh3=1) % Bax(bh3=1))
+        self.observable('Bax4',
+             MatchOnce(Bax(conf='ins', bh3=1, a6=3) %
+                       Bax(conf='ins', bh3=1, a6=4) %
+                       Bax(conf='ins', bh3=2, a6=3) %
+                       Bax(conf='ins', bh3=2, a6=4)))
 
     # -- VIRTUAL FUNCTIONS ----------------------------------------------------
     def within_compartment_rsf(self):
@@ -265,12 +303,12 @@ class Builder(pysb.builder.Builder):
     def declare_monomers(self):
         """Declares signatures for tBid, Bax, and Vesicles."""
         self.monomer('tBid', ['bh3', 'conf', 'cpt'],
-                {'conf': ['aq', 'ins'],
+                {'conf': ['aq', 'mem'],
                  'cpt':  ['sol', 'ves']})
 
         self.monomer('Bax',
                         ['bh3', 'a6', 'lipo', 'conf', 'cpt', 'pore'],
-                        {'conf':  ['aq', 'ins'],
+                        {'conf':  ['aq', 'mem', 'ins'],
                          'cpt': ['sol', 'ves'],
                          'pore': ['y', 'n']})
 
@@ -372,17 +410,66 @@ class Builder(pysb.builder.Builder):
         return 10 ** initial_values_log
 
     # -- MECHANISTIC MOTIFS ------------------------------------------------
-    def tBid_binds_Bax(self, bax_site):
+    def translocate_tBid_Bax(self):
+        print("one_cpt: translocate_tBid_Bax()")
+        self.translocate_tBid()
+        self.translocate_Bax()
+
+    def translocate_tBid(self):
+        print("one_cpt: translocate_tBid()")
+
+        tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
+                                          prior=None)
+        tBid_transloc_kr = self.parameter('tBid_transloc_kr', 1e-1,
+                                          prior=Normal(-1, 2))
+
+        Vesicles = self['Vesicles']
+        tBid = self['tBid']
+
+        self.rule(
+             'tBid_translocates_sol_to_ves',
+             tBid(cpt='sol', conf='aq') + Vesicles() >>
+             tBid(cpt='ves', conf='mem') + Vesicles(),
+             tBid_transloc_kf)
+        self.rule(
+             'tBid_translocates_ves_to_sol',
+             tBid(cpt='ves', conf='mem', bh3=None) >>
+             tBid(cpt='sol', conf='aq', bh3=None),
+             tBid_transloc_kr)
+
+    def translocate_Bax(self):
+        print("one_cpt: translocate_Bax()")
+
+        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
+                            prior=Normal(-3, 1))
+        Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1,
+                            prior=Normal(-1, 1))
+
+        Bax_mono = self['Bax'](bh3=None, a6=None)
+        Vesicles = self['Vesicles']
+
+        self.rule('Bax_mono_translocates_sol_to_ves',
+             Bax_mono(cpt='sol', conf='aq') + Vesicles() >>
+             Bax_mono(cpt='ves', conf='mem') + Vesicles(),
+             Bax_transloc_kf)
+        self.rule('Bax_mono_translocates_ves_to_sol',
+             Bax_mono(cpt='ves', conf='mem') >> Bax_mono(cpt='sol', conf='aq'),
+             Bax_transloc_kr)
+
+    def tBid_binds_Bax(self, bax_site, bax_conf):
         """Bax binding occurs only at membranes."""
 
-        print('core: tBid_binds_Bax(bax_site=%s)' % bax_site)
+        print('core: tBid_binds_Bax(bax_site=%s, bax_conf=%s)' %
+              (bax_site, bax_conf))
 
         # Forward rate of tBid binding to Bax (E + S -> ES)
-        kf = self.parameter('tBid_mBax_%s_kf' % bax_site, 1e-2,
+        kf = self.parameter('tBid_mBax_%s_%s_kf' % (bax_conf, bax_site),
+                            1e-2,
                             factor=self.within_compartment_rsf(),
                             prior=Normal(-2, 2))
         # Reverse rate of tBid binding to Bax (ES -> E + S)
-        kr = self.parameter('tBid_mBax_%s_kr' % bax_site, 1.5,
+        kr = self.parameter('tBid_mBax_%s_%s_kr' % (bax_conf, bax_site),
+                            1.5,
                             prior=Normal(0, 2))
 
         # Create the dicts to parameterize the site that tBid binds to
@@ -392,19 +479,24 @@ class Builder(pysb.builder.Builder):
         tBid = self['tBid']
         Bax = self['Bax']
 
-        self.rule('tBid_Bax_%s_bind' % bax_site,
-             tBid(cpt='ves', bh3=None) + Bax(cpt='ves', **bax_site_unbound) >>
-             tBid(cpt='ves', bh3=1) % Bax(cpt='ves', **bax_site_bound),
+        self.rule('tBid_Bax_%s_%s_bind' % (bax_conf, bax_site),
+             tBid(cpt='ves', bh3=None) +
+             Bax(cpt='ves', conf=bax_conf, **bax_site_unbound) >>
+             tBid(cpt='ves', bh3=1) %
+             Bax(cpt='ves', conf=bax_conf, **bax_site_bound),
              kf)
-        self.rule('tBid_Bax_%s_unbind' % bax_site,
-             tBid(loc='m', bh3=1) % Bax(loc='m', **bax_site_bound) >>
-             tBid(loc='m', bh3=None) + Bax(loc='m', **bax_site_unbound),
+        self.rule('tBid_Bax_%s_%s_unbind' % (bax_conf, bax_site),
+             tBid(cpt='ves', bh3=1) %
+             Bax(cpt='ves', conf=bax_conf, **bax_site_bound) >>
+             tBid(cpt='ves', bh3=None) +
+             Bax(cpt='ves', conf=bax_conf, **bax_site_unbound),
              kr)
 
-    def tBid_activates_Bax(self, bax_site='bh3'):
+    def tBid_activates_Bax(self, bax_site='bh3', bax_bind_conf='mem',
+                           bax_active_conf='ins'):
         """Default implementation of Bax activation by tBid.
 
-        Takes two arguments:
+        Takes arguments:
             - bax_site specifies the name of the site on Bax to which
               the bh3 site on tBid binds.
 
@@ -454,13 +546,15 @@ class Builder(pysb.builder.Builder):
         concentration.
         """
 
-        print('core: tBid_activates_Bax(bax_site=%s)' % bax_site)
+        print('core: tBid_activates_Bax(bax_site=%s, bax_bind_conf=%s, '
+              'bax_active_conf=%s)' %
+              (bax_site, bax_bind_conf, bax_active_conf))
 
-        self.tBid_binds_Bax(bax_site)
+        self.tBid_binds_Bax(bax_site, bax_bind_conf)
 
         # Dissociation of tBid from iBax (EP -> E + P)
-        kc = self.parameter('tBid_iBax_%s_kc' % bax_site, 1e-1,
-                            prior=Normal(-1, 2))
+        kc = self.parameter('tBid_Bax_%s_%s_kc' % (bax_active_conf, bax_site),
+                            1e-1, prior=Normal(-1, 2))
 
         # Create the dicts to parameterize the site that tBid binds to
         bax_site_bound = {bax_site:1}
@@ -470,9 +564,11 @@ class Builder(pysb.builder.Builder):
         Bax = self['Bax']
 
         # tBid dissociates from iBax after activation
-        self.rule('tBid_unbinds_iBax_%s' % bax_site,
-             tBid(bh3=1) % Bax(loc='m', **bax_site_bound) >>
-             tBid(bh3=None) + Bax(loc='i', **bax_site_unbound),
+        self.rule('tBid_unbinds_Bax_%s_%s' % (bax_active_conf, bax_site),
+             tBid(bh3=1) %
+             Bax(cpt='ves', conf=bax_bind_conf, **bax_site_bound) >>
+             tBid(bh3=None) +
+             Bax(cpt='ves', conf=bax_active_conf, **bax_site_unbound),
              kc)
 
     def Bax_reverses(self):
@@ -774,7 +870,8 @@ class Builder(pysb.builder.Builder):
         print "---------------------------"
         print "core: Building model ta:"
         self.translocate_tBid_Bax()
-        self.tBid_activates_Bax(bax_site='bh3')
+        self.tBid_activates_Bax(bax_site='bh3', bax_bind_conf='mem',
+                                bax_active_conf='ins')
         self.model.name = 'ta'
 
     def build_model_tai(self):

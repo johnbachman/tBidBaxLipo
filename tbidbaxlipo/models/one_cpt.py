@@ -87,87 +87,8 @@ class Builder(core.Builder):
     def within_compartment_rsf(self):
         return 1.0 / (self['Vesicles_0'].value)
 
-    def __init__(self, params_dict=None, nbd_sites=None, scaling_factor=None):
-        # Sets self.model = Model(), and self.param_dict
-        core.Builder.__init__(self, params_dict=params_dict)
-
-        self.declare_monomers()
-
-        # INITIAL CONDITIONS
-        self.parameter('Vesicles_0', 5, prior=None)
-        self.parameter('tBid_0', 20, prior=None)
-        self.parameter('Bax_0', 100, prior=None)
-
-        tBid = self['tBid']
-        Bax = self['Bax']
-        Vesicles = self['Vesicles']
-        Pores = self['Pores']
-
-        self.initial(tBid(cpt='sol', conf='aq', bh3=None), self['tBid_0'])
-        self.initial(Bax(cpt='sol', conf='aq', bh3=None, a6=None,
-                         lipo=None, pore='n'),
-                     self['Bax_0'])
-        self.initial(Vesicles(bax=None), self['Vesicles_0'])
-
-        # OBSERVABLES
-        self.observable('ctBid', tBid(cpt='sol'))
-        self.observable('mtBid', tBid(cpt='ves'))
-        self.observable('cBax', Bax(cpt='sol'))
-        self.observable('mBax', Bax(cpt='ves'))
-        self.observable('iBax', Bax(conf='ins'))
-        self.observable('tBidBax', tBid(bh3=1) % Bax(bh3=1))
-        self.observable('Bax2', Bax(bh3=1) % Bax(bh3=1))
-        self.observable('Bax4',
-             MatchOnce(Bax(conf='ins', bh3=1, a6=3) %
-                       Bax(conf='ins', bh3=1, a6=4) %
-                       Bax(conf='ins', bh3=2, a6=3) %
-                       Bax(conf='ins', bh3=2, a6=4)))
 
     # MODEL MACROS
-    def translocate_tBid_Bax(self):
-        print("one_cpt: translocate_tBid_Bax()")
-        self.translocate_tBid()
-        self.translocate_Bax()
-
-    def translocate_tBid(self):
-        print("one_cpt: translocate_tBid()")
-
-        tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
-                                          prior=None)
-        tBid_transloc_kr = self.parameter('tBid_transloc_kr', 1e-1,
-                                          prior=Normal(-1, 2))
-
-        Vesicles = self['Vesicles']
-        tBid = self['tBid']
-
-        self.rule(
-             'tBid_translocates_sol_to_ves',
-             tBid(cpt='sol') + Vesicles() >> tBid(cpt='ves') + Vesicles(),
-             tBid_transloc_kf)
-        self.rule(
-             'tBid_translocates_ves_to_sol',
-             tBid(cpt='ves', bh3=None) >> tBid(cpt='sol', bh3=None),
-             tBid_transloc_kr)
-
-    def translocate_Bax(self):
-        print("one_cpt: translocate_Bax()")
-
-        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
-                            prior=Normal(-3, 1))
-        Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1,
-                            prior=Normal(-1, 1))
-
-        Bax_mono = self['Bax'](bh3=None, a6=None)
-        Vesicles = self['Vesicles']
-
-        self.rule('Bax_mono_translocates_sol_to_ves',
-             Bax_mono(cpt='sol') + Vesicles() >>
-             Bax_mono(cpt='ves') + Vesicles(),
-             Bax_transloc_kf)
-        self.rule('Bax_mono_translocates_ves_to_sol',
-             Bax_mono(cpt='ves') >> Bax_mono(cpt='sol'),
-             Bax_transloc_kr)
-
     def translocate_Bax_dimers(self):
         print("one_cpt: translocate_Bax_dimers()")
 
