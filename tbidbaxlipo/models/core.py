@@ -289,6 +289,9 @@ class Builder(pysb.builder.Builder):
                         Bax(conf='ins', bh3=1, a6=4) %
                         Bax(conf='ins', bh3=2, a6=3) %
                         Bax(conf='ins', bh3=2, a6=4))
+        # Pore formation
+        self.observable('pBax', Bax(pore='y'))
+        self.observable('pores', Pores())
 
     # -- VIRTUAL FUNCTIONS ----------------------------------------------------
     def within_compartment_rsf(self):
@@ -303,18 +306,14 @@ class Builder(pysb.builder.Builder):
     def declare_monomers(self):
         """Declares signatures for tBid, Bax, and Vesicles."""
         self.monomer('tBid', ['bh3', 'conf', 'cpt'],
-                {'conf': ['aq', 'mem'],
-                 'cpt':  ['sol', 'ves']})
-
-        self.monomer('Bax',
-                        ['bh3', 'a6', 'lipo', 'conf', 'cpt', 'pore'],
-                        {'conf':  ['aq', 'mem', 'ins'],
-                         'cpt': ['sol', 'ves'],
-                         'pore': ['y', 'n']})
-
+                     {'conf': ['aq', 'mem'],
+                      'cpt':  ['sol', 'ves']})
+        self.monomer('Bax', ['bh3', 'a6', 'lipo', 'conf', 'cpt', 'pore'],
+                     {'conf':  ['aq', 'mem', 'ins'],
+                      'cpt': ['sol', 'ves'],
+                      'pore': ['y', 'n']})
         self.monomer('Vesicles', ['bax'])
-
-        self.monomer('Pores', [])
+        self.monomer('Pores', ['cpt'], {'cpt':['ves']})
 
     def get_module(self):
         return self.__module__.split('.')[-1]
@@ -453,7 +452,8 @@ class Builder(pysb.builder.Builder):
              Bax_mono(cpt='ves', conf='mem') + Vesicles(),
              Bax_transloc_kf)
         self.rule('Bax_mono_translocates_ves_to_sol',
-             Bax_mono(cpt='ves', conf='mem') >> Bax_mono(cpt='sol', conf='aq'),
+             Bax_mono(cpt='ves', conf='mem') >>
+             Bax_mono(cpt='sol', conf='aq', pore='n', lipo=None),
              Bax_transloc_kr)
 
     def tBid_binds_Bax(self, bax_site, bax_conf):
@@ -600,7 +600,7 @@ class Builder(pysb.builder.Builder):
         Bax = self['Bax']
 
         # Reversion of active Bax (P -> S)
-        krev = self.parameter('iBax_reverse_k', 1e-3, prior=Normal(-3, 2))
+        krev = self.parameter('iBax_reverse_k', 1e-4, prior=Normal(-3, 2))
 
         # iBax reverses back to mBax
         self.rule('iBax_reverses',
@@ -754,11 +754,36 @@ class Builder(pysb.builder.Builder):
             iBax_activates_mBax_k)
 
     def Bax_aggregates_at_pores(self):
+        """To account for the slowdown of pore formation with the excess
+        of Bax over liposomes.
+
+        This ultimately is a way of implementing Bax auto-activation at
+        at liposomes that have already been permeabilized. It's not to say
+        that Bax can only auto-activate once it's in a pore, but it's a way
+        of saying that if a Bax is recruited to a vesicle by a Bax that has
+        already formed a pore, then that recruited Bax cannot itself form a
+        pore.
+
+        However, this approach is not really satisfactory. It seems to confuse
+        the issue of binding to vesicles that have already been permeabilized
+        with the issue of auto-activation. In general, the ability of Bax to
+        permeabilize vesicles should go down as a result of the re-binding of
+        permeabilized vesicles, whether or not Bax is present on that vesicle.
+
+        However, as this refactoring of the function is true to the original
+        (though possibly flawed) implementation, I will keep it as is for now.
+        """
+
         Bax = self['Bax']
+
         aggregation_rate_k = self.parameter('aggregation_rate_k', 1e-4)
+
         self.rule('Bax_aggregates_at_pores',
-             Bax(loc='p') + Bax(loc='m') >> Bax(loc='p') + Bax(loc='p'),
-             aggregation_rate_k)
+                  Bax(cpt='ves', conf='ins', pore='y', bh3=None, a6=None) +
+                  Bax(cpt='ves', conf='mem', pore='n', bh3=None, a6=None) >>
+                  Bax(cpt='ves', conf='ins', pore='y', bh3=None, a6=None) +
+                  Bax(cpt='ves', conf='ins', pore='y', bh3=None, a6=None),
+                  aggregation_rate_k)
 
     def tBid_reverses_Bax():
         # Rate of the EP->ES transition # FIXME
@@ -805,25 +830,138 @@ class Builder(pysb.builder.Builder):
                 Bax(loc='i', a6=None, bh3=None),
                 bh3BaxmBax_to_bh3Bax_iBax_k)
 
-    def basal_Bax_activation(self, reversible=False):
-        print "core: basal_Bax_activation, reversible=%s" % reversible
+    def basal_Bax_activation(self):
+        print "core: basal_Bax_activation"
         # Spontaneous rate of transition of Bax from the mitochondrial to the
         # inserted state
-        # Implies average time is 10000 seconds???
         Bax = self['Bax']
 
-        basal_Bax_kf = self.parameter('basal_Bax_kf', 2e-3,
-                    prior=Normal(-3,1))
+        basal_Bax_kf = self.parameter('basal_Bax_kf', 2e-3, prior=Normal(-3,1))
         self.rule('basal_Bax_activation',
-                  Bax(bh3=None, loc='m') >> Bax(bh3=None, loc='i'),
+                  Bax(cpt='ves', conf='mem', bh3=None, a6=None) >>
+                  Bax(cpt='ves', conf='ins', bh3=None, a6=None),
                   basal_Bax_kf)
 
+    def pores_from_Bax_monomers(self, bax_conf='ins'):
+        """Basically a way of counting the time-integrated amount of
+        forward pore formation.
+
+        The problem is that you need to be able to register that a pore has
+        formed in the vesicle, but you don't want the same Bax to form more
+        than one pore on the vesicle. If the rule simply said that inserted
+        Bax produces pores at some rate, then there would be an accumulation
+        of pores even inserted Bax was not increasing.
+
+        So when a pore is formed, we set pore='y' do indicate that a particular
+        Bax has formed a pore. That works well until we consider reversibility.
+        If the pore is reversible, that is, if the Bax is to be able to revert
+        from the inserted state back to the solution, then we must have
+        it be able to return to a peripherally bound state without allowing it
+        to create another pore again.
+
+        If we keep pore='y' even when Bax is in the peripherally bound state,
+        and interpret the semantics of this state as saying that "this Bax
+        has formed a pore" rather than "this Bax is in a pore", then we could
+        only reset the pore back to pore='n' once the Bax had returned to
+        solution, which is addressed by the translocate_Bax macro.
+
+        With that approach, there's no such thing as "pore reversibility"--
+        only reversibility of Bax insertion, which is already encoded by
+        the macro Bax_reverses().
+        """
+        print("one_cpt: pores_from_Bax_monomers()")
+
+        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3,
+                                               prior=Normal(-4, 1))
+
+        Bax_mono = self['Bax'](bh3=None, a6=None)
+        Pores = self['Pores']
+
+        self.rule('Pores_From_Bax_Monomers', 
+                  Bax_mono(cpt='ves', conf=bax_conf, pore='n') >>
+                  Bax_mono(cpt='ves', conf=bax_conf, pore='y') +
+                  Pores(cpt='ves'),
+                  pore_formation_rate_k)
+
+
+    def pores_from_Bax_dimers(self, bax_loc_state='i', reversible=False):
+        """Basically a way of counting the time-integrated amount of
+           forward pore formation."""
+        print("one_cpt: pores_from_Bax_dimers()")
+
+        Bax = self['Bax']
+        Pores = self['Pores']
+        ves = self['ves']
+        solution = self['solution']
+
+        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3,
+                                               prior=Normal(-3, 2))
+
+        self.rule('Pores_From_Bax_Dimers',
+             Bax(loc=bax_loc_state, bh3=1, a6=None) %
+             Bax(loc=bax_loc_state, bh3=1, a6=None) >>
+             Bax(loc='p', bh3=1, a6=None) % Bax(loc='p', bh3=1, a6=None) +
+             Pores(),
+             pore_formation_rate_k)
+
         if reversible:
-            basal_Bax_kr = self.parameter('basal_Bax_kr', 1e-4,
-                                          prior=Normal(-4, 1))
-            self.rule('basal_Bax_activation_rev',
-                      Bax(bh3=None, loc='i') >> Bax(bh3=None, loc='m'),
-                      basal_Bax_kr)
+            pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-2,
+                                                 prior=Normal(-2, 2))
+            self.rule('Pores_reverse',
+                 Bax(loc='p', bh3=1, a6=None) ** ves %
+                 Bax(loc='p', bh3=1, a6=None) ** ves >>
+                 Bax(loc='c', bh3=None, a6=None) ** solution +
+                 Bax(loc='c', bh3=None, a6=None) ** solution,
+                 pore_reverse_rate_k)
+
+        # Pore formation
+        self.observable('pBax', Bax(loc='p'))
+        self.observable('pores', Pores())
+
+    def pores_from_Bax_tetramers(self, bax_loc_state='m', reversible=False):
+        """Basically a way of counting the time-integrated amount of
+           forward pore formation."""
+        print("one_cpt: pores_from_Bax_tetramers()")
+
+        Bax = self['Bax']
+        Pores = self['Pores']
+        ves = self['ves']
+        solution = self['solution']
+
+        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3,
+                                               prior=Normal(-3, 2))
+
+        self.rule('Pores_From_Bax_Tetramers', 
+             MatchOnce(Bax(loc=bax_loc_state, bh3=1, a6=3) %
+             Bax(loc=bax_loc_state, bh3=1, a6=4) %
+             Bax(loc=bax_loc_state, bh3=2, a6=3) %
+             Bax(loc=bax_loc_state, bh3=2, a6=4)) >>
+             MatchOnce(Bax(loc='p', bh3=1, a6=3) %
+             Bax(loc='p', bh3=1, a6=4) %
+             Bax(loc='p', bh3=2, a6=3) %
+             Bax(loc='p', bh3=2, a6=4)) +
+             Pores(),
+             pore_formation_rate_k)
+
+        if reversible:
+            pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-2,
+                                                 prior=Normal(-2, 2))
+
+            self.rule('Pores_reverse',
+                MatchOnce(Bax(loc='p', bh3=1, a6=3) ** ves %
+                Bax(loc='p', bh3=1, a6=4) ** ves %
+                Bax(loc='p', bh3=2, a6=3) ** ves %
+                Bax(loc='p', bh3=2, a6=4) ** ves) >>
+                MatchOnce(Bax(loc='c', bh3=1, a6=3) ** solution %
+                Bax(loc='c', bh3=1, a6=4) ** solution %
+                Bax(loc='c', bh3=2, a6=3) ** solution %
+                Bax(loc='c', bh3=2, a6=4) ** solution),
+                pore_reverse_rate_k)
+
+        # Pore formation
+        self.observable('pBax', Bax(loc='p'))
+        self.observable('pores', Pores())
+
 
     ## -- MODEL BUILDING FUNCTIONS -------------------------------------------
     """
@@ -1007,20 +1145,21 @@ class Builder(pysb.builder.Builder):
     def build_model_bax_heat(self):
         self.translocate_Bax()
         self.basal_Bax_activation()
-        self.pores_from_Bax_monomers(bax_loc_state='i', reversible=False)
+        self.pores_from_Bax_monomers(bax_conf='ins')
         self.model.name = 'bax_heat'
 
     def build_model_bax_heat_aggregation(self):
         self.translocate_Bax()
         self.basal_Bax_activation()
-        self.pores_from_Bax_monomers(bax_loc_state='i', reversible=False)
+        self.pores_from_Bax_monomers(bax_conf='ins')
         self.Bax_aggregates_at_pores()
         self.model.name = 'bax_heat_aggregation'
 
     def build_model_bax_heat_reversible(self):
         self.translocate_Bax()
         self.basal_Bax_activation()
-        self.pores_from_Bax_monomers(bax_loc_state='i', reversible=True)
+        self.Bax_reverses()
+        self.pores_from_Bax_monomers(bax_conf='ins')
         self.model.name = 'bax_heat_reversible'
 
     def build_model_bax_heat_reversible_aggregation(self):
