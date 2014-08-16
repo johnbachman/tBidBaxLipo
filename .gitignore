@@ -3,6 +3,7 @@
 doc/_build
 doc/_static
 doc/sphinxreport.log
+doc/_downloads
 
 thesis/_build
 thesis/_static
