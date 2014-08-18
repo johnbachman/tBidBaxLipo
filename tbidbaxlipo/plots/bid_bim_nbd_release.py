@@ -342,9 +342,9 @@ def plot_initial_rates(activator):
                 nr_errs.append(nr_err)
 
                 fit_results.append(FitResult(None, activator, nbd_site,
-                                             rep_index, 'NBD',
-                                             'Initial rate (first %d pts)',
-                                              n_slope, n_slope_err))
+                                        rep_index, 'NBD',
+                                        'Initial rate (first %d pts)' % num_pts,
+                                        n_slope, n_slope_err))
 
             #print "%s, rep %d, Tb slope: %f" % (nbd_site, rep_index, r_slope)
             #print "%s, rep %d, NBD slope: %f" % (nbd_site, rep_index, n_slope)
