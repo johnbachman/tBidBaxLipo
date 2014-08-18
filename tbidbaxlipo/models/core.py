@@ -255,16 +255,25 @@ class Builder(pysb.builder.Builder):
     """
     Class/constructor documentation here.
     """
-    def __init__(self, params_dict=None, nbd_sites=None, scaling_factor=None):
+    def __init__(self, params_dict=None, nbd_sites=None):
         # Sets self.model = Model(), and self.param_dict
         super(Builder, self).__init__(params_dict=params_dict)
 
-        self.declare_monomers()
+    def declare_components(self):
+        """Declares signatures for tBid, Bax, and Vesicles.
 
-        # INITIAL CONDITIONS
-        self.parameter('Vesicles_0', 5, prior=None)
-        self.parameter('tBid_0', 20, prior=None)
-        self.parameter('Bax_0', 100, prior=None)
+        Must be called after the child class constructor has initialized the
+        list of compartments.
+        """
+        self.monomer('tBid', ['bh3', 'conf', 'cpt'],
+                     {'conf': ['aq', 'mem'],
+                      'cpt':  ['sol'] + self.cpt_list})
+        self.monomer('Bax', ['bh3', 'a6', 'lipo', 'conf', 'cpt', 'pore'],
+                     {'conf':  ['aq', 'mem', 'ins'],
+                      'cpt': ['sol'] + self.cpt_list,
+                      'pore': ['y', 'n']})
+        self.monomer('Vesicles', ['bax'])
+        self.monomer('Pores', ['cpt'], {'cpt':self.cpt_list})
 
         tBid = self['tBid']
         Bax = self['Bax']
@@ -278,9 +287,10 @@ class Builder(pysb.builder.Builder):
         self.initial(Vesicles(bax=None), self['Vesicles_0'])
 
         # OBSERVABLES
-        self.observable('ctBid', tBid(cpt='sol'))
-        self.observable('mtBid', tBid(cpt='ves'))
-        self.observable('cBax', Bax(conf='aq'))
+        self.observable('ctBid', tBid(conf='aq'))
+        self.observable('mtBid', tBid(conf='mem'))
+
+        self.observable('cBax', Bax(cpt='sol', conf='aq'))
         self.observable('mBax', Bax(conf='mem'))
         self.observable('iBax', Bax(conf='ins'))
         self.observable('tBidBax', tBid(bh3=1) % Bax(bh3=1))
@@ -294,27 +304,35 @@ class Builder(pysb.builder.Builder):
         self.observable('pBax', Bax(pore='y'))
         self.observable('pores', Pores())
 
+        for cpt_name in self.cpt_list:
+            self.observable('mtBid_%s' % cpt_name,
+                            tBid(conf='mem', cpt=cpt_name))
+            self.observable('mBax_%s' % cpt_name,
+                            Bax(conf='mem', cpt=cpt_name))
+            self.observable('iBax_%s' % cpt_name,
+                            Bax(conf='ins', cpt=cpt_name))
+            self.observable('tBidBax_%s' % cpt_name,
+                            tBid(bh3=1, cpt=cpt_name) %
+                            Bax(bh3=1, cpt=cpt_name))
+            self.observable('Bax2_%s' % cpt_name,
+                            Bax(bh3=1, cpt=cpt_name) %
+                            Bax(bh3=1, cpt=cpt_name))
+            self.observable('Bax4_%s' % cpt_name,
+                            Bax(conf='ins', bh3=1, a6=3, cpt=cpt_name) %
+                            Bax(conf='ins', bh3=1, a6=4, cpt=cpt_name) %
+                            Bax(conf='ins', bh3=2, a6=3, cpt=cpt_name) %
+                            Bax(conf='ins', bh3=2, a6=4, cpt=cpt_name))
+            # Pore formation
+            self.observable('pBax_%s' % cpt_name, Bax(pore='y', cpt=cpt_name))
+            self.observable('pores_%s' % cpt_name, Pores(cpt=cpt_name))
+
+
     # -- VIRTUAL FUNCTIONS ----------------------------------------------------
     def within_compartment_rsf(self):
         raise NotImplementedError()
 
-    def translocate_tBid_Bax(self):
-        raise NotImplementedError()
-
     def run_model(self):
         raise NotImplementedError()
-
-    def declare_monomers(self):
-        """Declares signatures for tBid, Bax, and Vesicles."""
-        self.monomer('tBid', ['bh3', 'conf', 'cpt'],
-                     {'conf': ['aq', 'mem'],
-                      'cpt':  ['sol', 'ves']})
-        self.monomer('Bax', ['bh3', 'a6', 'lipo', 'conf', 'cpt', 'pore'],
-                     {'conf':  ['aq', 'mem', 'ins'],
-                      'cpt': ['sol', 'ves'],
-                      'pore': ['y', 'n']})
-        self.monomer('Vesicles', ['bax'])
-        self.monomer('Pores', ['cpt'], {'cpt':['ves']})
 
     def get_module(self):
         return self.__module__.split('.')[-1]
@@ -419,43 +437,47 @@ class Builder(pysb.builder.Builder):
         print("one_cpt: translocate_tBid()")
 
         tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
-                                          prior=None)
+                                          prior=None,
+                                          factor=(1/float(self.scaling_factor)))
         tBid_transloc_kr = self.parameter('tBid_transloc_kr', 1e-1,
                                           prior=Normal(-1, 2))
 
         Vesicles = self['Vesicles']
         tBid = self['tBid']
 
-        self.rule(
-             'tBid_translocates_sol_to_ves',
-             tBid(cpt='sol', conf='aq') + Vesicles() >>
-             tBid(cpt='ves', conf='mem') + Vesicles(),
-             tBid_transloc_kf)
-        self.rule(
-             'tBid_translocates_ves_to_sol',
-             tBid(cpt='ves', conf='mem', bh3=None) >>
-             tBid(cpt='sol', conf='aq', bh3=None),
-             tBid_transloc_kr)
+        for cpt_name in self.cpt_list:
+            self.rule(
+                 'tBid_translocates_sol_to_%s' % cpt_name,
+                 tBid(cpt='sol', conf='aq') + Vesicles() >>
+                 tBid(cpt=cpt_name, conf='mem') + Vesicles(),
+                 tBid_transloc_kf)
+            self.rule(
+                 'tBid_translocates_%s_to_sol' % cpt_name,
+                 tBid(cpt=cpt_name, conf='mem', bh3=None) >>
+                 tBid(cpt='sol', conf='aq', bh3=None),
+                 tBid_transloc_kr)
 
     def translocate_Bax(self):
         print("one_cpt: translocate_Bax()")
 
         Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
-                            prior=Normal(-3, 1))
+                                        prior=Normal(-3, 1),
+                                        factor=(1/float(self.scaling_factor)))
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1,
                             prior=Normal(-1, 1))
 
         Bax_mono = self['Bax'](bh3=None, a6=None)
         Vesicles = self['Vesicles']
 
-        self.rule('Bax_mono_translocates_sol_to_ves',
-             Bax_mono(cpt='sol', conf='aq') + Vesicles() >>
-             Bax_mono(cpt='ves', conf='mem') + Vesicles(),
-             Bax_transloc_kf)
-        self.rule('Bax_mono_translocates_ves_to_sol',
-             Bax_mono(cpt='ves', conf='mem') >>
-             Bax_mono(cpt='sol', conf='aq', pore='n', lipo=None),
-             Bax_transloc_kr)
+        for cpt_name in self.cpt_list:
+            self.rule('Bax_mono_translocates_sol_to_%s' % cpt_name,
+                 Bax_mono(cpt='sol', conf='aq') + Vesicles() >>
+                 Bax_mono(cpt=cpt_name, conf='mem') + Vesicles(),
+                 Bax_transloc_kf)
+            self.rule('Bax_mono_translocates_%s_to_sol' % cpt_name,
+                 Bax_mono(cpt=cpt_name, conf='mem') >>
+                 Bax_mono(cpt='sol', conf='aq', pore='n', lipo=None),
+                 Bax_transloc_kr)
 
     def tBid_binds_Bax(self, bax_site, bax_conf):
         """

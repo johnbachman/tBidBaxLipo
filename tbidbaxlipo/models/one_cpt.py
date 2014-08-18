@@ -84,9 +84,19 @@ Solver._use_inline = True
 
 class Builder(core.Builder):
 
+    def __init__(self, params_dict=None):
+        super(Builder, self).__init__(params_dict)
+        self.scaling_factor = 1.0
+        self.cpt_list = ['ves']
+
+        self.parameter('Vesicles_0', 5)
+        self.parameter('tBid_0', 20)
+        self.parameter('Bax_0', 100)
+
+        self.declare_components()
+
     def within_compartment_rsf(self):
         return 1.0 / (self['Vesicles_0'].value)
-
 
     # MODEL MACROS
     def translocate_Bax_dimers(self):

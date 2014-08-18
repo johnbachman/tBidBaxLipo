@@ -9,8 +9,10 @@ n_steps = 500
 plt.ion()
 
 def test_build_models():
-    model_names = ['t', 'ta', 'tai', 'taid', 'taidt', 'tair', 'taird',
-                   'tairdt', 'tad', 'tadt', 'tar', 'tard', 'tardt']
+    model_names = ['t',# 'ta',
+            #'tai', 'taid', 'taidt', 'tair', 'taird',
+            #       'tairdt', 'tad', 'tadt', 'tar', 'tard', 'tardt'
+            ]
     for model_name in model_names:
         print "Running model %s" % model_name
         b = Builder()

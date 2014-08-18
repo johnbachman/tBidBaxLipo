@@ -5,12 +5,21 @@ from copy import copy, deepcopy
 
 class Builder(core.Builder):
     def __init__(self, scaling_factor=10, params_dict=None):
+        # Call the super class constructor, which declares initial
+        # concentrations
         super(Builder, self).__init__(params_dict)
+
         self.scaling_factor = scaling_factor
+
+        self.parameter('Vesicles_0', 5, factor=self.scaling_factor)
+        self.parameter('tBid_0', 20, factor=self.scaling_factor)
+        self.parameter('Bax_0', 100, factor=self.scaling_factor)
+ 
         # List of all the compartments
         self.cpt_list = ['c%d' % cpt_num for cpt_num in
                          range(1, int(self['Vesicles_0'].value)+1)]
-        self.cpt_list.append('solution')
+
+        self.declare_components()
 
     def within_compartment_rsf(self):
         """Rate scaling factor for reactions between membrane proteins.
