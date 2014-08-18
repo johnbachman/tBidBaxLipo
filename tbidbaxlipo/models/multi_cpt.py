@@ -4,6 +4,24 @@ from pysb.core import Model, Monomer, ComponentSet
 from copy import copy, deepcopy
 
 class Builder(core.Builder):
+    def __init__(self, scaling_factor=10, params_dict=None):
+        super(Builder, self).__init__(params_dict)
+        self.scaling_factor = scaling_factor
+        # List of all the compartments
+        self.cpt_list = ['c%d' % cpt_num for cpt_num in
+                         range(1, int(self['Vesicles_0'].value)+1)]
+        self.cpt_list.append('solution')
+
+    def within_compartment_rsf(self):
+        """Rate scaling factor for reactions between membrane proteins.
+
+        Because the concentrations of proteins on each vesicle are explicitly
+        tracked in the multi-compartment models, the rates are not scaled
+        down to account for the reduced concentrations at high protein/lipid
+        ratios.
+        """
+        return 1.0
+
     def make_multi_compartment(self):
         # Multi-compartment model
         mc_model = Model(base=self.model)
@@ -20,8 +38,7 @@ class Builder(core.Builder):
             if 'cpt' in m.sites and \
                'ves' in m.site_states['cpt']:
                 mc_monomer = deepcopy(m)
-                # FIXME Need to make iterative, to cover all of the vesicles
-                mc_monomer.site_states['cpt'] = ['ves1']
+                mc_monomer.site_states['cpt'] = self.cpt_list
                 mc_monomers.add(mc_monomer)
                 monomer_map[m] = mc_monomer
             else:
