@@ -3,7 +3,7 @@ from bayessb.priors import Normal
 from pysb.core import Model, Monomer, ComponentSet
 from copy import copy, deepcopy
 
-class Builder(one_cpt.Builder):
+class Builder(core.Builder):
     def make_multi_compartment(self):
         # Multi-compartment model
         mc_model = Model(base=self.model)
