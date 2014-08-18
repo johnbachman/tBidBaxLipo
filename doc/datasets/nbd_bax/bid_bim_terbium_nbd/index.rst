@@ -17,3 +17,4 @@ Contents:
     peak_slopes
     two_conf_fits
     three_conf_fits
+    data_files

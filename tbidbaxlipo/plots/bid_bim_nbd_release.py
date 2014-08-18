@@ -19,6 +19,36 @@ line_colors = {'Bid': 'r', 'Bim': 'b'}
 line_styles = {1:':', 2:'-', 3:'--'}
 rep_colors = {1:'r', 2:'g', 3:'b'}
 
+class FitResult(object):
+    "A helper class for returning and displaying fit results."""
+    def __init__(self, builder, activator, nbd_site, rep_index,
+                 measurement, param_name, mean, se):
+        self.builder = builder
+        self.activator = activator
+        self.nbd_site = nbd_site
+        self.rep_index = rep_index
+        self.measurement = measurement
+        self.param_name = param_name
+        self.mean = mean
+        self.se = se
+
+    def as_string_list(self):
+        """Useful for making CSV files."""
+        return [self.activator, self.nbd_site, str(self.rep_index),
+                self.measurement, self.param_name, str(self.mean),
+                str(self.se)]
+
+def _mean_sd(p_name, builder, pysb_fit):
+    """Given the named parameter and the fit result, get mean and SE."""
+    p = builder.model.parameters[p_name]
+    p_index = builder.model.parameters.index(p)
+    p_est_index = builder.estimate_params.index(p)
+    p_mean = pysb_fit.params[p_index]
+    cov_x = pysb_fit.result[1]
+    p_sd = np.sqrt(cov_x[p_est_index, p_est_index] *
+                    np.var(pysb_fit.residuals))
+    return (p_mean, p_sd)
+
 def plot_all():
     for mutant in nbd_residues:
         plt.figure(figsize=(11, 5))
@@ -61,11 +91,12 @@ params_dict = {'c1_to_c2_k': 1e-4, 'c1_scaling': 2,
 
 def plot_2conf_fits(activator):
     plt.ion()
-    #nbd_sites = ['15', '79', '122']
+    #nbd_sites = ['15']
     nbd_sites = ['3', '5', '15', '36', '47', '54', '62', '68', '79', '120',
                  '122', '126', '138', '151', '175', '179', '184', '188']
     replicates = range(1, 4)
     count = 0
+    fit_results = []
 
     plt.figure("Fitted k1")
     for nbd_index, nbd_site in enumerate(nbd_sites):
@@ -82,10 +113,6 @@ def plot_2conf_fits(activator):
             builder = Builder(params_dict=params_dict)
             builder.build_model_multiconf(2, ny[0], normalized_data=True)
 
-            k1 = builder.model.parameters['c0_to_c1_k']
-            k1_index = builder.model.parameters.index(k1)
-            k1_est_index = builder.estimate_params.index(k1)
-
             pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', nt, ny)
             plt.plot(nt, ny, linestyle='', marker='.',
                     color=rep_colors[rep_index])
@@ -96,11 +123,18 @@ def plot_2conf_fits(activator):
             plt.ylabel('$F/F_0$')
             plt.title('NBD $F/F_0$ fits, NBD-%s-Bax' % nbd_site)
             plt.legend(loc='lower right')
-            cov_x = pysb_fit.result[1]
             # Calculate stderr of parameters (doesn't account for covariance)
-            k1_means.append(pysb_fit.params[k1_index])
-            k1_sds.append(np.sqrt(cov_x[k1_est_index, k1_est_index] *
-                          np.var(pysb_fit.residuals)))
+            (k1_mean, k1_sd) = _mean_sd('c0_to_c1_k', builder, pysb_fit)
+            k1_means.append(k1_mean)
+            k1_sds.append(k1_sd)
+            (c1_mean, c1_sd) = _mean_sd('c1_scaling', builder, pysb_fit)
+
+            fit_results.append(FitResult(builder, activator, nbd_site,
+                                         rep_index, 'NBD', 'c0_to_c1_k',
+                                         k1_mean, k1_sd))
+            fit_results.append(FitResult(builder, activator, nbd_site,
+                                         rep_index, 'NBD', 'c1_scaling',
+                                         c1_mean, c1_sd))
             count += 1
 
         plt.figure('%s, NBD-%s-Bax Fits' % (activator, nbd_site))
@@ -117,14 +151,16 @@ def plot_2conf_fits(activator):
     ax.set_xticks(np.arange(1.5, 1.5 + num_sites * 4, 4))
     ax.set_xticklabels(nbd_sites)
 
+    return fit_results
+
 def plot_3conf_fits(activator):
     plt.ion()
-    #nbd_sites = ['15', '79', '122']
+    #nbd_sites = ['15']
     nbd_sites = ['3', '5', '15', '36', '47', '54', '62', '68', '79', '120',
                  '122', '126', '138', '151', '175', '179', '184', '188']
     replicates = range(1, 4)
     count = 0
-
+    fit_results = []
     plt.figure("Fitted k1/k2")
     for nbd_index, nbd_site in enumerate(nbd_sites):
         k1_means = []
@@ -169,17 +205,9 @@ def plot_3conf_fits(activator):
             plt.ylabel('% Tb release')
             plt.title('%% Tb release fits, NBD-%s-Bax' % nbd_site)
             plt.legend(loc='lower right')
-            print params[2]
 
             builder = Builder(params_dict=params_dict)
             builder.build_model_multiconf(3, ny[0], normalized_data=True)
-
-            k1 = builder.model.parameters['c0_to_c1_k']
-            k2 = builder.model.parameters['c1_to_c2_k']
-            k1_index = builder.model.parameters.index(k1)
-            k2_index = builder.model.parameters.index(k2)
-            k1_est_index = builder.estimate_params.index(k1)
-            k2_est_index = builder.estimate_params.index(k2)
 
             pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', nt, ny)
             plt.subplot(1, 2, 2)
@@ -192,14 +220,29 @@ def plot_3conf_fits(activator):
             plt.ylabel('$F/F_0$')
             plt.title('NBD $F/F_0$ fits, NBD-%s-Bax' % nbd_site)
             plt.legend(loc='lower right')
-            cov_x = pysb_fit.result[1]
             # Calculate stderr of parameters (doesn't account for covariance)
-            k1_means.append(pysb_fit.params[k1_index])
-            k2_means.append(pysb_fit.params[k2_index])
-            k1_sds.append(np.sqrt(cov_x[k1_est_index, k1_est_index] *
-                          np.var(pysb_fit.residuals)))
-            k2_sds.append(np.sqrt(cov_x[k2_est_index, k2_est_index] *
-                          np.var(pysb_fit.residuals)))
+            (k1_mean, k1_sd) = _mean_sd('c0_to_c1_k', builder, pysb_fit)
+            (k2_mean, k2_sd) = _mean_sd('c1_to_c2_k', builder, pysb_fit)
+            (c1_mean, c1_sd) = _mean_sd('c1_scaling', builder, pysb_fit)
+            (c2_mean, c2_sd) = _mean_sd('c2_scaling', builder, pysb_fit)
+
+            fit_results.append(FitResult(builder, activator, nbd_site,
+                                         rep_index, 'NBD', 'c0_to_c1_k',
+                                         k1_mean, k1_sd))
+            fit_results.append(FitResult(builder, activator, nbd_site,
+                                         rep_index, 'NBD', 'c1_scaling',
+                                         c1_mean, c1_sd))
+            fit_results.append(FitResult(builder, activator, nbd_site,
+                                         rep_index, 'NBD', 'c1_to_c2_k',
+                                         k2_mean, k2_sd))
+            fit_results.append(FitResult(builder, activator, nbd_site,
+                                         rep_index, 'NBD', 'c2_scaling',
+                                         c2_mean, c2_sd))
+
+            k1_means.append(k1_mean)
+            k2_means.append(k2_mean)
+            k1_sds.append(k1_sd)
+            k2_sds.append(k2_sd)
 
             """
             plt.figure()
@@ -229,14 +272,18 @@ def plot_3conf_fits(activator):
     ax.set_xticks(np.arange(3, 3 + num_sites * 7, 7))
     ax.set_xticklabels(nbd_sites)
 
+    return fit_results
+
 def plot_initial_rates(activator):
     plt.ion()
     #nbd_sites = ['WT', '15']
-    nbd_sites = ['WT', '3', '5', '15', '36', '47', '54', '62', '68', '79', '120',
-                 '122', '126', '138', '151', '175', '179', '184', '188']
+    nbd_sites = ['WT', '3', '5', '15', '36', '47', '54', '62', '68', '79',
+                 '120', '122', '126', '138', '151', '175', '179', '184', '188']
     replicates = range(1, 4)
     count = 0
     num_pts = 4
+    fit_results =[]
+
     for nbd_index, nbd_site in enumerate(nbd_sites):
         rn_ratios = []
         nr_ratios = []
@@ -258,6 +305,11 @@ def plot_initial_rates(activator):
             r_slope_err = r_lin[4]
             r_errs.append(r_slope_err)
 
+            fit_results.append(FitResult(None, activator, nbd_site,
+                                        rep_index, 'Tb release',
+                                        'Initial rate (first %d pts)' % num_pts,
+                                        r_slope, r_slope_err))
+
             if nbd_site == 'WT':
                 n_maxs.append(0)
                 n_errs.append(0)
@@ -278,14 +330,21 @@ def plot_initial_rates(activator):
                 n_errs.append(n_slope_err)
 
                 rn_ratio = r_slope / n_slope
-                rn_err = calc_ratio_sd(r_slope, r_slope_err, n_slope, n_slope_err)
+                rn_err = calc_ratio_sd(r_slope, r_slope_err, n_slope,
+                                       n_slope_err)
                 rn_ratios.append(rn_ratio)
                 rn_errs.append(rn_err)
 
                 nr_ratio = n_slope / r_slope
-                nr_err = calc_ratio_sd(n_slope, n_slope_err, r_slope, r_slope_err)
+                nr_err = calc_ratio_sd(n_slope, n_slope_err, r_slope,
+                                       r_slope_err)
                 nr_ratios.append(nr_ratio)
                 nr_errs.append(nr_err)
+
+                fit_results.append(FitResult(None, activator, nbd_site,
+                                             rep_index, 'NBD',
+                                             'Initial rate (first %d pts)',
+                                              n_slope, n_slope_err))
 
             #print "%s, rep %d, Tb slope: %f" % (nbd_site, rep_index, r_slope)
             #print "%s, rep %d, NBD slope: %f" % (nbd_site, rep_index, n_slope)
@@ -308,8 +367,8 @@ def plot_initial_rates(activator):
                 plt.plot(nt[0:num_pts], n_int + n_slope * nt[0:num_pts],
                          color=rep_colors[rep_index],
                          label='%s Rep %d' % (activator, rep_index))
-                plt.xlabel('$F/F_0$')
-                plt.ylabel('Time (sec)')
+                plt.xlabel('Time (sec)')
+                plt.ylabel('$F/F_0$')
                 plt.title('NBD-%s-Bax, NBD initial rate' % (nbd_site))
                 plt.legend(loc='lower right')
 
@@ -368,6 +427,8 @@ def plot_initial_rates(activator):
         ax = plt.gca()
         ax.set_xticks(np.arange(3, 3 + num_sites * 7, 7))
         ax.set_xticklabels(nbd_sites)
+
+    return fit_results
 
 def plot_peak_slopes(activator):
     plt.ion()
@@ -524,6 +585,6 @@ if __name__ == '__main__':
     #plot_initial_rates('Bim')
     #plot_filtered_data('Bid')
     #plot_2conf_fits('Bid')
-    #plot_3conf_fits('Bim')
-    plot_peak_slopes('Bim')
+    plot_3conf_fits('Bid')
+    #plot_peak_slopes('Bim')
     #plot_derivatives('Bim')
