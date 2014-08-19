@@ -640,10 +640,12 @@ class Builder(pysb.builder.Builder):
         Bax = self['Bax']
 
         basal_Bax_kf = self.parameter('basal_Bax_kf', 2e-3, prior=Normal(-3,1))
-        self.rule('basal_Bax_activation',
-                  Bax(cpt='ves', conf='mem', bh3=None, a6=None) >>
-                  Bax(cpt='ves', conf='ins', bh3=None, a6=None),
-                  basal_Bax_kf)
+
+        for cpt_name in self.cpt_list:
+            self.rule('basal_Bax_activation_%s' % cpt_name,
+                      Bax(cpt=cpt_name, conf='mem', bh3=None, a6=None) >>
+                      Bax(cpt=cpt_name, conf='ins', bh3=None, a6=None),
+                      basal_Bax_kf)
 
     def Bax_reverses(self):
         """Reversion of inserted Bax to the peripherally bound form."""
@@ -801,11 +803,12 @@ class Builder(pysb.builder.Builder):
         Bax_mono = self['Bax'](bh3=None, a6=None)
         Pores = self['Pores']
 
-        self.rule('pores_from_Bax_monomers',
-                  Bax_mono(cpt='ves', conf=bax_conf, pore='n') >>
-                  Bax_mono(cpt='ves', conf=bax_conf, pore='y') +
-                  Pores(cpt='ves'),
-                  pore_formation_rate_k)
+        for cpt_name in self.cpt_list:
+            self.rule('pores_from_Bax_monomers_%s' % cpt_name,
+                      Bax_mono(cpt=cpt_name, conf=bax_conf, pore='n') >>
+                      Bax_mono(cpt=cpt_name, conf=bax_conf, pore='y') +
+                      Pores(cpt=cpt_name),
+                      pore_formation_rate_k)
 
     def pores_from_Bax_dimers(self, bax_conf='ins'):
         """Basically a way of counting the time-integrated amount of
