@@ -645,8 +645,8 @@ class Builder(pysb.builder.Builder):
 
         # iBax reverses back to mBax
         self.rule('iBax_reverses',
-             Bax(cpt='ves', conf='ins', bh3=None, a6=None) >>
-             Bax(cpt='ves', conf='mem', bh3=None, a6=None),
+             Bax(conf='ins', bh3=None, a6=None) >>
+             Bax(conf='mem', bh3=None, a6=None),
              krev)
 
     def Bax_nmerizes(self, n, bax_loc_state='i'):
