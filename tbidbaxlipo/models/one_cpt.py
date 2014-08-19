@@ -84,7 +84,9 @@ Solver._use_inline = True
 
 class Builder(core.Builder):
 
-    def __init__(self, params_dict=None):
+    def __init__(self, params_dict=None, scaling_factor=None):
+        """The scaling factor argument is ignored and is set explicitly to 1.
+        """
         super(Builder, self).__init__(params_dict)
         self.scaling_factor = 1.0
         self.cpt_list = ['ves']

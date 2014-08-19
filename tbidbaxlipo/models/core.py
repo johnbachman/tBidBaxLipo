@@ -265,20 +265,15 @@ class Builder(pysb.builder.Builder):
         Must be called after the child class constructor has initialized the
         list of compartments.
         """
-        self.monomer('tBid', ['bh3', 'conf', 'cpt'],
+        tBid = self.monomer('tBid', ['bh3', 'conf', 'cpt'],
                      {'conf': ['aq', 'mem'],
                       'cpt':  ['sol'] + self.cpt_list})
-        self.monomer('Bax', ['bh3', 'a6', 'lipo', 'conf', 'cpt', 'pore'],
+        Bax = self.monomer('Bax', ['bh3', 'a6', 'lipo', 'conf', 'cpt', 'pore'],
                      {'conf':  ['aq', 'mem', 'ins'],
                       'cpt': ['sol'] + self.cpt_list,
                       'pore': ['y', 'n']})
-        self.monomer('Vesicles', ['bax'])
-        self.monomer('Pores', ['cpt'], {'cpt':self.cpt_list})
-
-        tBid = self['tBid']
-        Bax = self['Bax']
-        Vesicles = self['Vesicles']
-        Pores = self['Pores']
+        Vesicles = self.monomer('Vesicles', ['bax'])
+        Pores = self.monomer('Pores', ['cpt'], {'cpt':self.cpt_list})
 
         self.initial(tBid(cpt='sol', conf='aq', bh3=None), self['tBid_0'])
         self.initial(Bax(cpt='sol', conf='aq', bh3=None, a6=None,
@@ -436,9 +431,20 @@ class Builder(pysb.builder.Builder):
     def translocate_tBid(self):
         print("one_cpt: translocate_tBid()")
 
-        tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
+        assert len(self.cpt_list) != 0
+        if len(self.cpt_list) > 1:
+            # In a multi-compartment situation, we to rescale the forward
+            # translocation rate by the stochastic scaling factor
+            tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
                                           prior=None,
                                           factor=(1/float(self.scaling_factor)))
+        else:
+            # In a single-compartment situation, we need to multiply the
+            # forward translocation rate by the concentration of Vesicles
+            tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
+                                          prior=Normal(-3, 1),
+                                          factor=self['Vesicles_0'].value)
+
         tBid_transloc_kr = self.parameter('tBid_transloc_kr', 1e-1,
                                           prior=Normal(-1, 2))
 
@@ -448,8 +454,8 @@ class Builder(pysb.builder.Builder):
         for cpt_name in self.cpt_list:
             self.rule(
                  'tBid_translocates_sol_to_%s' % cpt_name,
-                 tBid(cpt='sol', conf='aq') + Vesicles() >>
-                 tBid(cpt=cpt_name, conf='mem') + Vesicles(),
+                 tBid(cpt='sol', conf='aq') >>
+                 tBid(cpt=cpt_name, conf='mem'),
                  tBid_transloc_kf)
             self.rule(
                  'tBid_translocates_%s_to_sol' % cpt_name,
@@ -460,9 +466,20 @@ class Builder(pysb.builder.Builder):
     def translocate_Bax(self):
         print("one_cpt: translocate_Bax()")
 
-        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
-                                        prior=Normal(-3, 1),
-                                        factor=(1/float(self.scaling_factor)))
+        assert len(self.cpt_list) != 0
+        if len(self.cpt_list) > 1:
+            # In a multi-compartment situation, we to rescale the forward
+            # translocation rate by the stochastic scaling factor
+            Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
+                                          prior=Normal(-3, 1),
+                                          factor=(1/float(self.scaling_factor)))
+        else:
+            # In a single-compartment situation, we need to multiply the
+            # forward translocation rate by the concentration of Vesicles
+            Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
+                                          prior=Normal(-3, 1),
+                                          factor=self['Vesicles_0'].value)
+
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1,
                             prior=Normal(-1, 1))
 
@@ -471,8 +488,8 @@ class Builder(pysb.builder.Builder):
 
         for cpt_name in self.cpt_list:
             self.rule('Bax_mono_translocates_sol_to_%s' % cpt_name,
-                 Bax_mono(cpt='sol', conf='aq') + Vesicles() >>
-                 Bax_mono(cpt=cpt_name, conf='mem') + Vesicles(),
+                 Bax_mono(cpt='sol', conf='aq') >>
+                 Bax_mono(cpt=cpt_name, conf='mem'),
                  Bax_transloc_kf)
             self.rule('Bax_mono_translocates_%s_to_sol' % cpt_name,
                  Bax_mono(cpt=cpt_name, conf='mem') >>
