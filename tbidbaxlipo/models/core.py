@@ -540,18 +540,21 @@ class Builder(pysb.builder.Builder):
         tBid = self['tBid']
         Bax = self['Bax']
 
-        self.rule('tBid_Bax_%s_%s_bind' % (bax_conf, bax_site),
-             tBid(cpt='ves', bh3=None) +
-             Bax(cpt='ves', conf=bax_conf, **bax_site_unbound) >>
-             tBid(cpt='ves', bh3=1) %
-             Bax(cpt='ves', conf=bax_conf, **bax_site_bound),
-             kf)
-        self.rule('tBid_Bax_%s_%s_unbind' % (bax_conf, bax_site),
-             tBid(cpt='ves', bh3=1) %
-             Bax(cpt='ves', conf=bax_conf, **bax_site_bound) >>
-             tBid(cpt='ves', bh3=None) +
-             Bax(cpt='ves', conf=bax_conf, **bax_site_unbound),
-             kr)
+        for cpt_name in self.cpt_list:
+            self.rule('tBid_Bax_%s_%s_bind_%s' %
+                      (bax_conf, bax_site, cpt_name),
+                      tBid(cpt=cpt_name, bh3=None) +
+                      Bax(cpt=cpt_name, conf=bax_conf, **bax_site_unbound) >>
+                      tBid(cpt=cpt_name, bh3=1) %
+                      Bax(cpt=cpt_name, conf=bax_conf, **bax_site_bound),
+                      kf)
+            self.rule('tBid_Bax_%s_%s_unbind_%s' %
+                      (bax_conf, bax_site, cpt_name),
+                      tBid(cpt=cpt_name, bh3=1) %
+                      Bax(cpt=cpt_name, conf=bax_conf, **bax_site_bound) >>
+                      tBid(cpt=cpt_name, bh3=None) +
+                      Bax(cpt=cpt_name, conf=bax_conf, **bax_site_unbound),
+                      kr)
 
     def tBid_activates_Bax(self, bax_site='bh3', bax_bind_conf='mem',
                            bax_active_conf='ins'):
@@ -626,10 +629,8 @@ class Builder(pysb.builder.Builder):
 
         # tBid dissociates from iBax after activation
         self.rule('tBid_unbinds_Bax_%s_%s' % (bax_active_conf, bax_site),
-             tBid(bh3=1) %
-             Bax(cpt='ves', conf=bax_bind_conf, **bax_site_bound) >>
-             tBid(bh3=None) +
-             Bax(cpt='ves', conf=bax_active_conf, **bax_site_unbound),
+             tBid(bh3=1) % Bax(conf=bax_bind_conf, **bax_site_bound) >>
+             tBid(bh3=None) + Bax(conf=bax_active_conf, **bax_site_unbound),
              kc)
 
     def Bax_reverses(self):
