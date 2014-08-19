@@ -649,27 +649,35 @@ class Builder(pysb.builder.Builder):
              Bax(conf='mem', bh3=None, a6=None),
              krev)
 
-    def Bax_nmerizes(self, n, bax_loc_state='i'):
+    def Bax_nmerizes(self, n, bax_conf_state='ins'):
         Bax_nmerization_kf = self.parameter(
-                'Bax_%s_%dmerization_kf' % (bax_loc_state, n),
+                'Bax_%s_%dmerization_kf' % (bax_conf_state, n),
                 1e-2, factor=self.within_compartment_rsf(),
                 prior=Normal(-2, 2))
         Bax_nmerization_kr = self.parameter(
-                'Bax_%s_%dmerization_kr' % (bax_loc_state, n),
+                'Bax_%s_%dmerization_kr' % (bax_conf_state, n),
                 1e-2, factor=self.within_compartment_rsf(),
                 prior=Normal(-2, 2))
         Bax = self['Bax']
 
-        free_Bax = Bax(loc=bax_loc_state, bh3=None, a6=None)
-        lhs = free_Bax
-        rhs = Bax(loc=bax_loc_state, bh3=0, a6=n-1)
-        for i in range(n-1):
-            lhs += free_Bax
-            rhs = rhs % Bax(loc=bax_loc_state, bh3=i+1, a6=i)
+        for cpt_name in self.cpt_list:
+            free_Bax = Bax(cpt=cpt_name, conf=bax_conf_state,
+                           bh3=None, a6=None)
+            lhs = free_Bax
+            rhs = Bax(cpt=cpt_name, conf=bax_conf_state, bh3=0, a6=n-1)
+            for i in range(n-1):
+                lhs += free_Bax
+                rhs = rhs % Bax(cpt=cpt_name, conf=bax_conf_state,
+                                bh3=i+1, a6=i)
 
-        self.rule('Bax_%s_forms_%dmers' % (bax_loc_state, n),
-             lhs <> rhs, Bax_nmerization_kf, Bax_nmerization_kr)
-        self.observable('Bax%d_%s' % (n, bax_loc_state), rhs)
+            self.rule('Bax_%s_forms_%dmers_fwd_%s' %
+                      (bax_conf_state, n, cpt_name),
+                      lhs >> rhs, Bax_nmerization_kf)
+
+            self.observable('Bax%d_%s_%s' % (n, bax_conf_state, cpt_name), rhs)
+
+        self.rule('Bax_%s_forms_%dmers_rev' % (bax_conf_state, n),
+                  rhs >> lhs, Bax_nmerization_kr)
 
     def pores_from_Bax_nmers(self, n, bax_loc_state='i'):
         pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-4,
