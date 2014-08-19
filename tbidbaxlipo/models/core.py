@@ -928,51 +928,6 @@ class Builder(pysb.builder.Builder):
                 Bax(loc='i', a6=None, bh3=None),
                 bh3BaxmBax_to_bh3Bax_iBax_k)
 
-    def pores_from_Bax_tetramers(self, bax_loc_state='m', reversible=False):
-        """Basically a way of counting the time-integrated amount of
-           forward pore formation."""
-        print("one_cpt: pores_from_Bax_tetramers()")
-
-        Bax = self['Bax']
-        Pores = self['Pores']
-        ves = self['ves']
-        solution = self['solution']
-
-        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3,
-                                               prior=Normal(-3, 2))
-
-        self.rule('Pores_From_Bax_Tetramers', 
-             MatchOnce(Bax(loc=bax_loc_state, bh3=1, a6=3) %
-             Bax(loc=bax_loc_state, bh3=1, a6=4) %
-             Bax(loc=bax_loc_state, bh3=2, a6=3) %
-             Bax(loc=bax_loc_state, bh3=2, a6=4)) >>
-             MatchOnce(Bax(loc='p', bh3=1, a6=3) %
-             Bax(loc='p', bh3=1, a6=4) %
-             Bax(loc='p', bh3=2, a6=3) %
-             Bax(loc='p', bh3=2, a6=4)) +
-             Pores(),
-             pore_formation_rate_k)
-
-        if reversible:
-            pore_reverse_rate_k = self.parameter('pore_reverse_rate_k', 1e-2,
-                                                 prior=Normal(-2, 2))
-
-            self.rule('Pores_reverse',
-                MatchOnce(Bax(loc='p', bh3=1, a6=3) ** ves %
-                Bax(loc='p', bh3=1, a6=4) ** ves %
-                Bax(loc='p', bh3=2, a6=3) ** ves %
-                Bax(loc='p', bh3=2, a6=4) ** ves) >>
-                MatchOnce(Bax(loc='c', bh3=1, a6=3) ** solution %
-                Bax(loc='c', bh3=1, a6=4) ** solution %
-                Bax(loc='c', bh3=2, a6=3) ** solution %
-                Bax(loc='c', bh3=2, a6=4) ** solution),
-                pore_reverse_rate_k)
-
-        # Pore formation
-        self.observable('pBax', Bax(loc='p'))
-        self.observable('pores', Pores())
-
-
     ## -- MODEL BUILDING FUNCTIONS -------------------------------------------
     """
     Alternatives for activation: initial activation could occu
