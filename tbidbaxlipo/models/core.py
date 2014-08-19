@@ -633,6 +633,18 @@ class Builder(pysb.builder.Builder):
              tBid(bh3=None) + Bax(conf=bax_active_conf, **bax_site_unbound),
              kc)
 
+    def basal_Bax_activation(self):
+        print "core: basal_Bax_activation"
+        # Spontaneous rate of transition of Bax from the mitochondrial to the
+        # inserted state
+        Bax = self['Bax']
+
+        basal_Bax_kf = self.parameter('basal_Bax_kf', 2e-3, prior=Normal(-3,1))
+        self.rule('basal_Bax_activation',
+                  Bax(cpt='ves', conf='mem', bh3=None, a6=None) >>
+                  Bax(cpt='ves', conf='ins', bh3=None, a6=None),
+                  basal_Bax_kf)
+
     def Bax_reverses(self):
         """Reversion of inserted Bax to the peripherally bound form."""
 
@@ -649,51 +661,15 @@ class Builder(pysb.builder.Builder):
              Bax(conf='mem', bh3=None, a6=None),
              krev)
 
-    def Bax_nmerizes(self, n, bax_conf_state='ins'):
-        Bax_nmerization_kf = self.parameter(
-                'Bax_%s_%dmerization_kf' % (bax_conf_state, n),
-                1e-2, factor=self.within_compartment_rsf(),
-                prior=Normal(-2, 2))
-        Bax_nmerization_kr = self.parameter(
-                'Bax_%s_%dmerization_kr' % (bax_conf_state, n),
-                1e-2, factor=self.within_compartment_rsf(),
-                prior=Normal(-2, 2))
-        Bax = self['Bax']
+    def tBid_reverses_Bax():
+        # Rate of the EP->ES transition # FIXME
+        Parameter('iBaxtBid_to_mBaxtBid_k', 1e-3)
 
-        for cpt_name in self.cpt_list:
-            free_Bax = Bax(cpt=cpt_name, conf=bax_conf_state,
-                           bh3=None, a6=None)
-            lhs = free_Bax
-            rhs = Bax(cpt=cpt_name, conf=bax_conf_state, bh3=0, a6=n-1)
-            for i in range(n-1):
-                lhs += free_Bax
-                rhs = rhs % Bax(cpt=cpt_name, conf=bax_conf_state,
-                                bh3=i+1, a6=i)
-
-            self.rule('Bax_%s_forms_%dmers_fwd_%s' %
-                      (bax_conf_state, n, cpt_name),
-                      lhs >> rhs, Bax_nmerization_kf)
-
-            self.observable('Bax%d_%s_%s' % (n, bax_conf_state, cpt_name), rhs)
-
-        self.rule('Bax_%s_forms_%dmers_rev' % (bax_conf_state, n),
-                  rhs >> lhs, Bax_nmerization_kr)
-
-    def pores_from_Bax_nmers(self, n, bax_loc_state='i'):
-        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-4,
-                prior=Normal(-4,1))
-
-        Bax = self['Bax']
-        Pores = self['Pores']
-
-        lhs = Bax(loc=bax_loc_state, bh3=0, a6=n-1)
-        rhs = Bax(loc='p', bh3=0, a6=n-1)
-        for i in range(n-1):
-            lhs = lhs % Bax(loc=bax_loc_state, bh3=i+1, a6=i)
-            rhs = rhs % Bax(loc='p', bh3=i+1, a6=i)
-
-        self.rule('pores_from_Bax_%s_%dmers' % (bax_loc_state, n),
-             lhs >> rhs + Pores(), pore_formation_rate_k)
+        # REVERSIBILITY OF BAX ACTIVATION BY TBID (EP -> ES)
+        Rule('iBaxtBid_to_mBaxtBid',
+             tBid(loc='m', bh3=1) % Bax(loc='i', bh3=1) >>
+             tBid(loc='m', bh3=1) % Bax(loc='m', bh3=1),
+             iBaxtBid_to_mBaxtBid_k)
 
     def Bax_dimerizes(self, bax_conf='ins'):
         """
@@ -760,6 +736,115 @@ class Builder(pysb.builder.Builder):
                        Bax(cpt='ves', conf=bax_conf, bh3=2, a6=4)),
              Bax_tetramerization_kf, Bax_tetramerization_kr)
 
+    def Bax_nmerizes(self, n, bax_conf_state='ins'):
+        Bax_nmerization_kf = self.parameter(
+                'Bax_%s_%dmerization_kf' % (bax_conf_state, n),
+                1e-2, factor=self.within_compartment_rsf(),
+                prior=Normal(-2, 2))
+        Bax_nmerization_kr = self.parameter(
+                'Bax_%s_%dmerization_kr' % (bax_conf_state, n),
+                1e-2, factor=self.within_compartment_rsf(),
+                prior=Normal(-2, 2))
+        Bax = self['Bax']
+
+        for cpt_name in self.cpt_list:
+            free_Bax = Bax(cpt=cpt_name, conf=bax_conf_state,
+                           bh3=None, a6=None)
+            lhs = free_Bax
+            rhs = Bax(cpt=cpt_name, conf=bax_conf_state, bh3=0, a6=n-1)
+            for i in range(n-1):
+                lhs += free_Bax
+                rhs = rhs % Bax(cpt=cpt_name, conf=bax_conf_state,
+                                bh3=i+1, a6=i)
+
+            self.rule('Bax_%s_forms_%dmers_fwd_%s' %
+                      (bax_conf_state, n, cpt_name),
+                      lhs >> rhs, Bax_nmerization_kf)
+
+            self.observable('Bax%d_%s_%s' % (n, bax_conf_state, cpt_name), rhs)
+
+        self.rule('Bax_%s_forms_%dmers_rev' % (bax_conf_state, n),
+                  rhs >> lhs, Bax_nmerization_kr)
+
+    def pores_from_Bax_monomers(self, bax_conf='ins'):
+        """Basically a way of counting the time-integrated amount of
+        forward pore formation.
+
+        The problem is that you need to be able to register that a pore has
+        formed in the vesicle, but you don't want the same Bax to form more
+        than one pore on the vesicle. If the rule simply said that inserted
+        Bax produces pores at some rate, then there would be an accumulation
+        of pores even inserted Bax was not increasing.
+
+        So when a pore is formed, we set pore='y' do indicate that a particular
+        Bax has formed a pore. That works well until we consider reversibility.
+        If the pore is reversible, that is, if the Bax is to be able to revert
+        from the inserted state back to the solution, then we must have
+        it be able to return to a peripherally bound state without allowing it
+        to create another pore again.
+
+        If we keep pore='y' even when Bax is in the peripherally bound state,
+        and interpret the semantics of this state as saying that "this Bax
+        has formed a pore" rather than "this Bax is in a pore", then we could
+        only reset the pore back to pore='n' once the Bax had returned to
+        solution, which is addressed by the translocate_Bax macro.
+
+        With that approach, there's no such thing as "pore reversibility"--
+        only reversibility of Bax insertion, which is already encoded by
+        the macro Bax_reverses().
+        """
+        print("one_cpt: pores_from_Bax_monomers()")
+
+        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3,
+                                               prior=Normal(-4, 1))
+
+        Bax_mono = self['Bax'](bh3=None, a6=None)
+        Pores = self['Pores']
+
+        self.rule('pores_from_Bax_monomers',
+                  Bax_mono(cpt='ves', conf=bax_conf, pore='n') >>
+                  Bax_mono(cpt='ves', conf=bax_conf, pore='y') +
+                  Pores(cpt='ves'),
+                  pore_formation_rate_k)
+
+    def pores_from_Bax_dimers(self, bax_conf='ins'):
+        """Basically a way of counting the time-integrated amount of
+           forward pore formation.
+
+        See notes for pores_from_Bax_monomers, above.
+        """
+        print("one_cpt: pores_from_Bax_dimers(bax_conf=%s)" % bax_conf)
+
+        Bax = self['Bax']
+        Pores = self['Pores']
+
+        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3,
+                                               prior=Normal(-3, 2))
+
+        self.rule('pores_from_Bax_dimers',
+             Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None, pore='n') %
+             Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None, pore='n') >>
+             Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None, pore='y') %
+             Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None, pore='y') +
+             Pores(cpt='ves'),
+             pore_formation_rate_k)
+
+    def pores_from_Bax_nmers(self, n, bax_loc_state='i'):
+        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-4,
+                prior=Normal(-4,1))
+
+        Bax = self['Bax']
+        Pores = self['Pores']
+
+        lhs = Bax(loc=bax_loc_state, bh3=0, a6=n-1)
+        rhs = Bax(loc='p', bh3=0, a6=n-1)
+        for i in range(n-1):
+            lhs = lhs % Bax(loc=bax_loc_state, bh3=i+1, a6=i)
+            rhs = rhs % Bax(loc='p', bh3=i+1, a6=i)
+
+        self.rule('pores_from_Bax_%s_%dmers' % (bax_loc_state, n),
+             lhs >> rhs + Pores(), pore_formation_rate_k)
+
     # -- OTHER MOTIFS --------------------------------------------------------
     def Bax_auto_activates(self, activator_site='bh3', target_site='bh3'):
         """If this rule is ultimately going to be used in cases where
@@ -808,16 +893,6 @@ class Builder(pysb.builder.Builder):
                   Bax(cpt='ves', conf='ins', bh3=None, a6=None),
                   iBax_activates_mBax_k)
 
-    def tBid_reverses_Bax():
-        # Rate of the EP->ES transition # FIXME
-        Parameter('iBaxtBid_to_mBaxtBid_k', 1e-3)
-
-        # REVERSIBILITY OF BAX ACTIVATION BY TBID (EP -> ES)
-        Rule('iBaxtBid_to_mBaxtBid',
-             tBid(loc='m', bh3=1) % Bax(loc='i', bh3=1) >>
-             tBid(loc='m', bh3=1) % Bax(loc='m', bh3=1),
-             iBaxtBid_to_mBaxtBid_k)
-
     def basal_bh3_exposure_auto2(self):
         print "core: basal_bh3_exposure_auto2"
 
@@ -852,82 +927,6 @@ class Builder(pysb.builder.Builder):
                 Bax(loc='m', a6=None, bh3=None) +
                 Bax(loc='i', a6=None, bh3=None),
                 bh3BaxmBax_to_bh3Bax_iBax_k)
-
-    def basal_Bax_activation(self):
-        print "core: basal_Bax_activation"
-        # Spontaneous rate of transition of Bax from the mitochondrial to the
-        # inserted state
-        Bax = self['Bax']
-
-        basal_Bax_kf = self.parameter('basal_Bax_kf', 2e-3, prior=Normal(-3,1))
-        self.rule('basal_Bax_activation',
-                  Bax(cpt='ves', conf='mem', bh3=None, a6=None) >>
-                  Bax(cpt='ves', conf='ins', bh3=None, a6=None),
-                  basal_Bax_kf)
-
-    def pores_from_Bax_monomers(self, bax_conf='ins'):
-        """Basically a way of counting the time-integrated amount of
-        forward pore formation.
-
-        The problem is that you need to be able to register that a pore has
-        formed in the vesicle, but you don't want the same Bax to form more
-        than one pore on the vesicle. If the rule simply said that inserted
-        Bax produces pores at some rate, then there would be an accumulation
-        of pores even inserted Bax was not increasing.
-
-        So when a pore is formed, we set pore='y' do indicate that a particular
-        Bax has formed a pore. That works well until we consider reversibility.
-        If the pore is reversible, that is, if the Bax is to be able to revert
-        from the inserted state back to the solution, then we must have
-        it be able to return to a peripherally bound state without allowing it
-        to create another pore again.
-
-        If we keep pore='y' even when Bax is in the peripherally bound state,
-        and interpret the semantics of this state as saying that "this Bax
-        has formed a pore" rather than "this Bax is in a pore", then we could
-        only reset the pore back to pore='n' once the Bax had returned to
-        solution, which is addressed by the translocate_Bax macro.
-
-        With that approach, there's no such thing as "pore reversibility"--
-        only reversibility of Bax insertion, which is already encoded by
-        the macro Bax_reverses().
-        """
-        print("one_cpt: pores_from_Bax_monomers()")
-
-        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3,
-                                               prior=Normal(-4, 1))
-
-        Bax_mono = self['Bax'](bh3=None, a6=None)
-        Pores = self['Pores']
-
-        self.rule('pores_from_Bax_monomers',
-                  Bax_mono(cpt='ves', conf=bax_conf, pore='n') >>
-                  Bax_mono(cpt='ves', conf=bax_conf, pore='y') +
-                  Pores(cpt='ves'),
-                  pore_formation_rate_k)
-
-
-    def pores_from_Bax_dimers(self, bax_conf='ins'):
-        """Basically a way of counting the time-integrated amount of
-           forward pore formation.
-
-        See notes for pores_from_Bax_monomers, above.
-        """
-        print("one_cpt: pores_from_Bax_dimers(bax_conf=%s)" % bax_conf)
-
-        Bax = self['Bax']
-        Pores = self['Pores']
-
-        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3,
-                                               prior=Normal(-3, 2))
-
-        self.rule('pores_from_Bax_dimers',
-             Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None, pore='n') %
-             Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None, pore='n') >>
-             Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None, pore='y') %
-             Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None, pore='y') +
-             Pores(cpt='ves'),
-             pore_formation_rate_k)
 
     def pores_from_Bax_tetramers(self, bax_loc_state='m', reversible=False):
         """Basically a way of counting the time-integrated amount of
