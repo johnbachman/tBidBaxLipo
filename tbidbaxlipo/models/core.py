@@ -1232,7 +1232,7 @@ class Builder(pysb.builder.Builder):
     # Models incorporating dye release
     def build_model_bax_schwarz(self):
         self.translocate_Bax()
-        self.pores_from_Bax_monomers(bax_loc_state='m', reversible=False)
+        self.pores_from_Bax_monomers(bax_conf='mem')
         self.model.name = 'bax_schwarz'
 
     def build_model_bax_schwarz_reversible(self):
