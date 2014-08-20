@@ -21,7 +21,7 @@ class Job(simulation.Job):
     def build(self, module):
         builder = module.Builder(params_dict=self.params_dict,
                                  scaling_factor=self.scaling_factor)
-        builder.build_model_bax_heat()
+        builder.build_model_bax_schwarz()
         return builder
 
 # Create jobs for each condition
