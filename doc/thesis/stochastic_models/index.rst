@@ -12,6 +12,7 @@ Contents:
    reconciling_rates
    translocation
    tbid_bax_activation
+   bax_schwarz
    tbid_titration
    bax_heat
    bax_heat_auto
