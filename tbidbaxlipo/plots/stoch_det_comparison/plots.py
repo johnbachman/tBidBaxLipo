@@ -45,7 +45,7 @@ def plot_bax_timecourse_comparison(jobs, data, cond_index):
     errorbar(cpt_time,  data.means(cond_index, 'iBax') / n_cpt_Bax_0, \
              yerr=iBax_se, color='g', label='iBax');
     errorbar(cpt_time,  data.means(cond_index, 'pBax') / n_cpt_Bax_0, \
-             yerr=iBax_se, color='m', label='pBax');
+             yerr=pBax_se, color='m', label='pBax');
 
     plot(time, one_cpt_obs['mBax'] / one_cpt_Bax_0, color='r');
     plot(time, one_cpt_obs['cBax'] / one_cpt_Bax_0, color='b');
