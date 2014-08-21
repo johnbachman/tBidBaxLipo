@@ -1,8 +1,56 @@
 Outline
 =======
 
+The problem:
+
+* Permeabilization of membranes by peptides and proteins is important for
+  bacterial toxins, pore forming peptides used as therapeutics, and in the
+  processes of apoptosis and necroptosis.
+
+* We wish to understand the mechanism by which these PFPs permeabilize
+  membranes.
+
+* Often studied by measuring the kinetics of permeabilization of model
+  membranes using PFPs.
+
+* The problem: interpreting the leakage data in a way that informs us about the
+  pore formation mechanism.
+
+* There is current interest in using these kinetic studies to inform not just
+  about single peptide agents, but also regulated multi-protein systems such as
+  the Bcl-2 family of proteins.
+
+* The theoretical challenge associated with analyzing leakage data is that the
+  leakage measurement is not of a single large vesicle, but rather an ensemble
+  of discrete vesicles, each operating as a separate reaction compartment. This
+  is generally addressed by treating membrane as a single compartment and
+  having reactions proceed according to the relative molar concentrations of
+  the proteins there.
+
+* Here we develop a novel simulation approach that explicitly enumerates
+  hundreds of compartments and then uses that to simulate bulk observables
+  such as fraction of protein bound, fraction of leakage, etc. Using this
+  numerical simulation as a reference, we evaluate the previously described
+  single-compartment models for their ability to correctly identify the
+  underlying pore forming mechanism.
+
+* We find that while the models previously described for peptides work for the
+  mechanisms they were meant to address, extending them to new mechanisms of
+  interest leads to problems that must be addressed by the multi-compartment
+  approach. Such mechanisms include positive or negative regulation by other
+  proteins, or positive feedback in pore formation due to auto-activation or
+  aggregation. However, the one-compartment approximation can be effective even
+  in these cases when certain conditions are met.
+
+* Given that the Bcl-2 family protein network exhibits all of these features,
+  we conclude that the multi-compartment simulation is a necessary tool when
+  studying the mechanisms of pore-forming proteins with complex regulation.
+
+
+
 "Compartmentalization of reactions at membranes plays a critical role in the
 rate and extent of apoptotic pore formation by Bax"
+
 
 B + L <> BL >> BL*
 
