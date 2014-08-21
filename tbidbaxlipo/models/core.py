@@ -889,12 +889,13 @@ class Builder(pysb.builder.Builder):
 
         Bax = self['Bax']
 
-        self.rule('iBax_activates_mBax',
-                  Bax(cpt='ves', conf='ins', bh3=None, a6=None) +
-                  Bax(cpt='ves', conf='mem', bh3=None, a6=None) >>
-                  Bax(cpt='ves', conf='ins', bh3=None, a6=None) +
-                  Bax(cpt='ves', conf='ins', bh3=None, a6=None),
-                  iBax_activates_mBax_k)
+        for cpt_name in self.cpt_list:
+            self.rule('iBax_activates_mBax_%s' % cpt_name,
+                      Bax(cpt=cpt_name, conf='ins', bh3=None, a6=None) +
+                      Bax(cpt=cpt_name, conf='mem', bh3=None, a6=None) >>
+                      Bax(cpt=cpt_name, conf='ins', bh3=None, a6=None) +
+                      Bax(cpt=cpt_name, conf='ins', bh3=None, a6=None),
+                      iBax_activates_mBax_k)
 
     def basal_bh3_exposure_auto2(self):
         print "core: basal_bh3_exposure_auto2"
@@ -1160,14 +1161,16 @@ class Builder(pysb.builder.Builder):
 
     def build_model_bax_heat_auto1_reversible_activation(self):
         self.translocate_Bax()
-        self.basal_Bax_activation(reversible=True)
+        self.basal_Bax_activation()
+        self.Bax_reverses()
         self.Bax_auto_activates_one_step()
         self.pores_from_Bax_monomers(bax_conf='ins')
         self.model.name = 'bax_heat_auto1_reversible_activation'
 
     def build_model_bax_heat_auto2_reversible_activation(self):
         self.translocate_Bax()
-        self.basal_Bax_activation(reversible=True)
+        self.basal_Bax_activation()
+        self.Bax_reverses()
         self.Bax_auto_activates()
         self.pores_from_Bax_monomers(bax_conf='ins')
         self.model.name = 'bax_heat_auto2_reversible_activation'
