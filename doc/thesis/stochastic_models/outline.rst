@@ -1,7 +1,11 @@
 Outline
 =======
 
-The problem:
+"Compartmentalization of reactions at membranes plays a critical role in the
+rate and extent of apoptotic pore formation by Bax"
+
+Intro
+-----
 
 * Permeabilization of membranes by peptides and proteins is important for
   bacterial toxins, pore forming peptides used as therapeutics, and in the
@@ -42,14 +46,48 @@ The problem:
   aggregation. However, the one-compartment approximation can be effective even
   in these cases when certain conditions are met.
 
+* We also find that calculation of Hill coefficients, etc. are not accurate
+  determinants of stoichiometries of pore complexes, as previously suggested.
+
 * Given that the Bcl-2 family protein network exhibits all of these features,
   we conclude that the multi-compartment simulation is a necessary tool when
   studying the mechanisms of pore-forming proteins with complex regulation.
 
+Results
+-------
 
+* **The simulation approach, validation**
 
-"Compartmentalization of reactions at membranes plays a critical role in the
-rate and extent of apoptotic pore formation by Bax"
+* Figure 1A: the simulation approach works by enumerating individual reaction
+  compartments. For a given pore formation mechanism, we can enumerate a
+  multi-compartment version or a single-compartment version. This requires a
+  careful accounting for rates (see Methods).
+
+* Figure 1B: the multi-compartment approach validates the Poisson
+  assumption/pores approach described by Schwarz for unimolecular pore
+  formation mechanisms without complex regulation.
+
+* Figure 1C: the multi-compartment approach shows that the enzymatic approach
+  is wrong?
+
+* Figure 1D: the multi-compartment approach shows that Almeida et al., is
+  right?
+
+* **Adding a second protein breaks other methods when concentrations are
+  low, unless...**
+
+* Adding an activator protein, such as Bid,
+
+* **Adding auto-activation breaks other methods, unless...**
+
+* Bax is believed to auto-activate.
+
+* **Hill coefficient analysis is not a reliable indicator of stoichiometry**
+
+* Perturbation theory explanation?
+
+* **In fitting permeabilization curves with exponentials, it is essential to
+  account for Fmax as well as k**
 
 
 B + L <> BL >> BL*
