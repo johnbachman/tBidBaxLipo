@@ -9,7 +9,7 @@ Intro
 
 * Permeabilization of membranes by peptides and proteins is important for
   bacterial toxins, pore forming peptides used as therapeutics, and in the
-  processes of apoptosis and necroptosis.
+  processes of apoptosis and necroptosis. Also for prions (Andersson).
 
 * We wish to understand the mechanism by which these PFPs permeabilize
   membranes.
@@ -58,19 +58,40 @@ Results
 
 * **The simulation approach, validation**
 
-* Figure 1A: the simulation approach works by enumerating individual reaction
-  compartments. For a given pore formation mechanism, we can enumerate a
-  multi-compartment version or a single-compartment version. This requires a
-  careful accounting for rates (see Methods).
+.. figure:: ../../images/fig1a_multi_compartment.jpg
+    :width: 6in
+    :align: center
 
-* Figure 1B: the multi-compartment approach validates the Poisson
-  assumption/pores approach described by Schwarz for unimolecular pore
-  formation mechanisms without complex regulation.
+**Figure 1A**. In the two-compartment approach adopted by prior modeling
+studies, the pore forming protein P is partitions between two reaction
+compartments, solution and membrane (:math:`P_{sol}` and :math:`P_{mem}`).  The
+membrane compartment represents a continuum approximation of the many discrete
+vesicles in the solution. In the multi-compartment approach, individual lipid
+vesicles are enumerated as explicit compartments, and the pore forming protein
+partitions among each of these.
 
-* Figure 1C: the multi-compartment approach shows that the enzymatic approach
-  is wrong?
+For a proposed pore formation mechanism we can produce a two-compartment model
+or a corresponding multi-compartment model and determine whether the
+two-compartment model is equivalent to the multi-compartment model, in the
+limit of many vesicles.
 
-* Figure 1D: the multi-compartment approach shows that Almeida et al., is
+**Figure 1B** The multi-compartment approach validates the Poisson
+assumption/pores approach described by Schwarz for unimolecular pore formation
+mechanisms without complex regulation.
+
+.. plot::
+
+    from tbidbaxlipo.plots.stoch_det_comparison.translocation import \
+        plots, jobs, data
+    plots.plot_timecourse_comparison(jobs, data, 0)
+
+.. image:: ../../_static/simple_translocation_1.png
+    :width: 6in
+
+**Figure 1C**. The multi-compartment approach shows that the enzymatic approach
+is wrong?
+
+**Figure 1D**. The multi-compartment approach shows that Almeida et al., is
   right?
 
 * **Adding a second protein breaks other methods when concentrations are
