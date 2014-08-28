@@ -75,9 +75,32 @@ or a corresponding multi-compartment model and determine whether the
 two-compartment model is equivalent to the multi-compartment model, in the
 limit of many vesicles.
 
-**Figure 1B** The multi-compartment approach validates the Poisson
-assumption/pores approach described by Schwarz for unimolecular pore formation
-mechanisms without complex regulation.
+**Figure 1B** For the purposes of this paper, we focus on comparisons with
+previous approaches in which the dye release process is modeled as resulting
+from the formation of stable pores, rather than transient disruptions in the membrane leading to graded release.
+
+As a validation that the multi-compartment simulation algorithm has been
+correctly implemented, we instantiate a very simple model of pore formation and
+compare it to several of the previously described pore formation models. As
+expected, when rate parameters are set to corresponding values (see Methods),
+the MC model duplicates the dye release kinetic curves produced by two of the
+three previously described models (Schwarz, Almeida). Moreover, the
+distribution of pores across vesicles in the MC simulation matches a Poisson
+distribution with a mean pores per liposome value calculated according the
+Schwarz.
+
+Notably, the pseudo-first order enzymatic approach described by Kushnareva et
+al. does not match the results from the multi_cpt simulation. This is due to
+the fact that this approximation does not account for depletion of the pool of
+P due to binding to either permeabilized or permeabilized vesicles. As a result
+it is an effective approximation only when Pbound << P_0.
+
+
+MC model duplicates the dye release kinetics
+recapitulates previously
+validated findings from the the findings previously The multi-compartment
+approach validates the Poisson assumption/pores approach described by Schwarz
+for unimolecular pore formation mechanisms without complex regulation.
 
 .. plot::
 
