@@ -3,35 +3,60 @@
 Introduction
 ============
 
+"Compartmentalization of reactions at membranes plays a critical role in the
+rate and extent of apoptotic pore formation by Bax"
+
+"Modeling the complex regulation of pore forming proteins by explicit
+enumeration of vesicle reaction compartments."
+
+* Permeabilization of membranes by peptides and proteins is important for
+  bacterial toxins, pore forming peptides used as therapeutics, and in the
+  processes of apoptosis and necroptosis. Also for prions (Andersson).
+
+* We wish to understand the mechanism by which these PFPs permeabilize
+  membranes.
+
+* Often studied by measuring the kinetics of permeabilization of model
+  membranes using PFPs.
+
+* The problem: interpreting the leakage data in a way that informs us about the
+  pore formation mechanism.
+
+* There is current interest in using these kinetic studies to inform not just
+  about single peptide agents, but also regulated multi-protein systems such as
+  the Bcl-2 family of proteins.
+
+* The theoretical challenge associated with analyzing leakage data is that the
+  leakage measurement is not of a single large vesicle, but rather an ensemble
+  of discrete vesicles, each operating as a separate reaction compartment. This
+  is generally addressed by treating membrane as a single compartment and
+  having reactions proceed according to the relative molar concentrations of
+  the proteins there.
+
+* Here we develop a novel simulation approach that explicitly enumerates
+  hundreds of compartments and then uses that to simulate bulk observables
+  such as fraction of protein bound, fraction of leakage, etc. Using this
+  numerical simulation as a reference, we evaluate the previously described
+  single-compartment models for their ability to correctly identify the
+  underlying pore forming mechanism.
+
+* We find that while the models previously described for peptides work for the
+  mechanisms they were meant to address, extending them to new mechanisms of
+  interest leads to problems that must be addressed by the multi-compartment
+  approach. Such mechanisms include positive or negative regulation by other
+  proteins, or positive feedback in pore formation due to auto-activation or
+  aggregation. However, the one-compartment approximation can be effective even
+  in these cases when certain conditions are met.
+
+* We also find that calculation of Hill coefficients, etc. are not accurate
+  determinants of stoichiometries of pore complexes, as previously suggested.
+
+* Given that the Bcl-2 family protein network exhibits all of these features,
+  we conclude that the multi-compartment simulation is a necessary tool when
+  studying the mechanisms of pore-forming proteins with complex regulation.
+
 Modeling Apoptosis and MOMP
 ---------------------------
-
-Apoptosis is a form of programmed cell death that plays an important role in
-both normal development and disease. Apoptosis can be triggered following the
-detection of internal cellular stress by the so-called "intrinsic" pathway, or
-by the binding of ligands to death receptors via the "extrinsic" pathway.  In
-both pathways the regulation of mitochondrial outer membrane permeabilization
-(MOMP) is believed to be the key step in committing the cell to apoptosis
-[Tait2010]_.
-
-Mitochondrial outer membrane permeabilization is regulated by the Bcl-2 family
-of proteins, which act at the mitochondrial outer membrane to create the lethal
-pore that releases pro-apoptotic proteins from the mitochondrial intermembrane
-space into the cytosol [Chipuk2010]_, [Youle2008]_. The activity of Bcl-2
-proteins is regulated by post-translational modifications, translocation to and
-from membranes, conformational changes, and homo- and hetero-oligomerization
-among family members.
-
-The regulation of MOMP has been studied in a variety of experimental model
-systems, including live cells, permeabilized cells, mitochondria isolated from
-cells, and synthetic liposomes. In addition, a number of mathematical models
-have been developed to interpret data generated from the study of these
-systems, including by our group [Spencer2011]_. Some of these models explicitly
-account for the compartmentalization of Bcl-2 interactions at the membrane,
-while others do not; in our own work, we have found that this
-compartmentalization plays a key role in the regulation of Bcl-2 protein
-activitity [Albeck2008b]_, consistent with recent biochemical findings
-[Leber2010]_.
 
 Even in models which explicitly treat the compartmentalization of Bcl-2
 interactions at membranes, the membrane compartment is treated as an
@@ -53,15 +78,6 @@ vesicles. In these systems, a bulk solution of isolated mitochondria or
 synthetic lipid vesicles is treated with purified Bcl-2 proteins.  While each
 of the components is abundant, the amount of protein per compartment may be
 quite small, affecting the quantitative interpretation of the assay results.
-
-In this work we use synthetic lipid vesicles as a model system to study the
-effects of reaction compartmentalization on permeabilization kinetics.
-Synthetic lipid vesicles have been used for many years as a model system for
-studying the activity of pore-forming peptides and proteins, and have resulted
-in a number of key findings regarding the activity of Bcl-2 proteins.  In these
-studies, lipid vesicles enclosing a permeabilization marker such as a
-fluorescent dye are incubated with one or more Bcl-2 family members and the
-change in fluorescence is measured over time.
 
 Kinetics of permeabilization processes
 --------------------------------------
