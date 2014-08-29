@@ -1,22 +1,6 @@
 Properties of unimolecular dye release models
 =============================================
 
-The simplest possible model of vesicle permeabilization, one first proposed
-by Schwarz ([Schwarz1992b]_), consists of the following elementary reactions:
-
-.. math::
-
-    P_c + L \rightleftharpoons P_l
-
-.. math::
-
-    m \cdot P_l \rightarrow Pore
-
-Where :math:`P_c` and :math:`P_l` represent the peptide or protein in its
-aqueous (cytosolic) or lipid-associated state, :math:`L` represents the
-concentration of vesicles, and :math:`m` is the number of monomers involved
-in pore formation.
-
 :ref:`As mentioned earlier <previously_published_models>`, Schwarz's analysis
 indicates that when pore formation is independent, then pores by definition
 have a Poisson distribution across liposomes, which allows the experimental
