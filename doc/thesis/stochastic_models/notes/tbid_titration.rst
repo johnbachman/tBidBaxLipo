@@ -37,7 +37,7 @@ liposomes with no pores), and `P` is the average number of pores per vesicle:
     @suppress
     In [5]: savefig('_static/tbid_titration_1.png')
 
-.. image:: ../../_static/tbid_titration_1.png
+.. image:: ../../../_static/tbid_titration_1.png
     :width: 6in
 
 Todos

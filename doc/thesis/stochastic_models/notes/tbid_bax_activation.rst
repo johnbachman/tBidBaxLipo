@@ -39,7 +39,7 @@ and inserted (activated) Bax:
     @suppress
     In [10]: savefig('_static/tbid_bax_activation_1.png')
 
-.. image:: ../../_static/tbid_bax_activation_1.png
+.. image:: ../../../_static/tbid_bax_activation_1.png
     :width: 6in
 
 However, when we look at the distribution of activated Bax across the
@@ -53,7 +53,7 @@ liposomes at the final timepoint, we see that it is not at all Poisson
     @suppress
     In [4]: savefig('_static/tbid_bax_activation_2.png')
 
-.. image:: ../../_static/tbid_bax_activation_2.png
+.. image:: ../../../_static/tbid_bax_activation_2.png
     :width: 6in
 
 However, the distribution of the tBid across liposomes is independent:
@@ -65,7 +65,7 @@ However, the distribution of the tBid across liposomes is independent:
     @suppress
     In [6]: savefig('_static/tbid_bax_activation_3.png')
 
-.. image:: ../../_static/tbid_bax_activation_3.png
+.. image:: ../../../_static/tbid_bax_activation_3.png
     :width: 6in
 
 This leads us to two (not necessarily mutually exclusive) hypotheses for the
@@ -111,7 +111,7 @@ model is excellent for this system:
     @suppress
     In [7]: savefig('_static/tbid_bax_activation_4.png')
 
-.. image:: ../../_static/tbid_bax_activation_4.png
+.. image:: ../../../_static/tbid_bax_activation_4.png
     :width: 6in
 
 Here it seems that the distribution of activated Bax is much more Poissonian:
@@ -123,7 +123,7 @@ Here it seems that the distribution of activated Bax is much more Poissonian:
     @suppress
     In [9]: savefig('_static/tbid_bax_activation_5.png')
 
-.. image:: ../../_static/tbid_bax_activation_5.png
+.. image:: ../../../_static/tbid_bax_activation_5.png
     :width: 6in
 
 And as before, the distribution of tBids is independent:
@@ -135,7 +135,7 @@ And as before, the distribution of tBids is independent:
     @suppress
     In [6]: savefig('_static/tbid_bax_activation_6.png')
 
-.. image:: ../../_static/tbid_bax_activation_6.png
+.. image:: ../../../_static/tbid_bax_activation_6.png
     :width: 6in
 
 Low tBid concentration, irreversible binding
@@ -165,7 +165,7 @@ model is excellent, even here:
     @suppress
     In [7]: savefig('_static/tbid_bax_activation_7.png')
 
-.. image:: ../../_static/tbid_bax_activation_7.png
+.. image:: ../../../_static/tbid_bax_activation_7.png
     :width: 6in
 
 But the distribution of activated Bax tells a different story--the distribution
@@ -179,7 +179,7 @@ the remaining fraction are heavily loaded with Bax:
     @suppress
     In [9]: savefig('_static/tbid_bax_activation_8.png')
 
-.. image:: ../../_static/tbid_bax_activation_8.png
+.. image:: ../../../_static/tbid_bax_activation_8.png
     :width: 6in
 
 As expected, the tBid distribution is perfectly Poissonian. Note that the fraction
@@ -193,7 +193,7 @@ no activated Bax, as expected.
     @suppress
     In [6]: savefig('_static/tbid_bax_activation_9.png')
 
-.. image:: ../../_static/tbid_bax_activation_9.png
+.. image:: ../../../_static/tbid_bax_activation_9.png
     :width: 6in
 
 Low tBid concentration, reversible binding
@@ -223,7 +223,7 @@ models at the level of the bulk observables:
     @suppress
     In [10]: savefig('_static/tbid_bax_activation_10.png')
 
-.. image:: ../../_static/tbid_bax_activation_10.png
+.. image:: ../../../_static/tbid_bax_activation_10.png
     :width: 6in
 
 Remarkably, the moderate reverse rate of 0.01 substantially alleviated
@@ -236,7 +236,7 @@ the uneven distribution of Bax:
     @suppress
     In [9]: savefig('_static/tbid_bax_activation_11.png')
 
-.. image:: ../../_static/tbid_bax_activation_11.png
+.. image:: ../../../_static/tbid_bax_activation_11.png
     :width: 6in
 
 And as before, the distribution of tBids is independent:
@@ -248,7 +248,7 @@ And as before, the distribution of tBids is independent:
     @suppress
     In [6]: savefig('_static/tbid_bax_activation_12.png')
 
-.. image:: ../../_static/tbid_bax_activation_12.png
+.. image:: ../../../_static/tbid_bax_activation_12.png
     :width: 6in
 
 Conclusion
