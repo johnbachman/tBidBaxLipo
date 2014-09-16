@@ -22,3 +22,5 @@ Contents:
     140318_c126_bax_lipo_titration
     140320_nbd_bax_comp
     bid_bim_terbium_nbd/index
+    bid_bim_fret_terbium_nbd/index
+
