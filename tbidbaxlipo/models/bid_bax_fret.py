@@ -128,15 +128,15 @@ class Builder(pysb.builder.Builder):
                   p3, p4)
 
         self.rule('tBidiBax_to_tBid_iBax',
-                  tBid(bh3=1) % Bax(bh3=1, conf='mem') <>
+                  tBid(bh3=1) % Bax(bh3=1, conf='ins') <>
                   tBid(bh3=None) + Bax(bh3=None, conf='ins'),
                   p5, p6)
 
-        c1_nbd = self.parameter('c1_nbd', 2, prior=Normal(0, 1))
-        c2_nbd = self.parameter('c2_nbd', 3, prior=Normal(0, 1))
-        c3_nbd = self.parameter('c3_nbd', 5., prior=Normal(0, 1))
-        c1_fret = self.parameter('c1_fret', 30, prior=Normal(1, 1))
-        c2_fret = self.parameter('c2_fret', 20, prior=Normal(1, 1))
+        c1_nbd = self.parameter('c1_nbd', 2, prior=Uniform(-2, np.log10(6)))
+        c2_nbd = self.parameter('c2_nbd', 3, prior=Uniform(-2, np.log10(6)))
+        c3_nbd = self.parameter('c3_nbd', 5, prior=Uniform(-2, np.log10(6)))
+        c1_fret = self.parameter('c1_fret', 30, prior=Uniform(-2, np.log10(50)))
+        c2_fret = self.parameter('c2_fret', 20, prior=Uniform(-2, np.log10(50)))
 
         self.expression('FRET', (self['tBidmBax'] * c1_fret +
                                  self['tBidiBax'] * c2_fret)
