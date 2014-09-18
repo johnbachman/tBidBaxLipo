@@ -14,12 +14,14 @@ Simple permeabilization model (Schwarz)
     from tbidbaxlipo.plots.stoch_det_comparison.bax_schwarz import jobs, data
     from tbidbaxlipo.plots.stoch_det_comparison.plots import *
     plot_bax_timecourse_comparison(jobs, data, 0)
+    xlim([0,1500])
 
 .. plot::
     :context:
 
     plt.close('all')
     plot_dye_release_titration(jobs, data)
+    xlim([0, 1500])
 
 .. plot::
     :context:

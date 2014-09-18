@@ -62,6 +62,62 @@ multiple interacting proteins in membranes. Moreover, we define our differing
 hypotheses explicitly in terms of kinetic mechanisms and rigorously evluate
 them against the data.
 
+From other intro:
+
+Apoptosis is a form of programmed cell death that plays an important role in
+both normal development and disease. Apoptosis can be triggered following the
+detection of internal cellular stress by the so-called "intrinsic" pathway, or
+by the binding of ligands to death receptors via the "extrinsic" pathway.  In
+both pathways the regulation of mitochondrial outer membrane permeabilization
+(MOMP) is believed to be the key step in committing the cell to apoptosis
+[Tait2010]_.
+
+Mitochondrial outer membrane permeabilization is regulated by the Bcl-2 family
+of proteins, which act at the mitochondrial outer membrane to create the lethal
+pore that releases pro-apoptotic proteins from the mitochondrial intermembrane
+space into the cytosol [Chipuk2010]_, [Youle2008]_. The activity of Bcl-2
+proteins is regulated by post-translational modifications, translocation to and
+from membranes, conformational changes, and homo- and hetero-oligomerization
+among family members.
+
+The regulation of MOMP has been studied in a variety of experimental model
+systems, including live cells, permeabilized cells, mitochondria isolated from
+cells, and synthetic liposomes. In addition, a number of mathematical models
+have been developed to interpret data generated from the study of these
+systems, including by our group [Spencer2011]_. Some of these models explicitly
+account for the compartmentalization of Bcl-2 interactions at the membrane,
+while others do not; in our own work, we have found that this
+compartmentalization plays a key role in the regulation of Bcl-2 protein
+activitity [Albeck2008b]_, consistent with recent biochemical findings
+[Leber2010]_.
+
+Apoptosis is a form of programmed cell death that plays an important role in
+both normal development and disease. Apoptosis can be triggered following the
+detection of internal cellular stress by the so-called "intrinsic" pathway, or
+by the binding of ligands to death receptors via the "extrinsic" pathway.  In
+both pathways the regulation of mitochondrial outer membrane permeabilization
+(MOMP) is believed to be the key step in committing the cell to apoptosis
+[Tait2010]_.
+
+Mitochondrial outer membrane permeabilization is regulated by the Bcl-2 family
+of proteins, which act at the mitochondrial outer membrane to create the lethal
+pore that releases pro-apoptotic proteins from the mitochondrial intermembrane
+space into the cytosol [Chipuk2010]_, [Youle2008]_. The activity of Bcl-2
+proteins is regulated by post-translational modifications, translocation to and
+from membranes, conformational changes, and homo- and hetero-oligomerization
+among family members.
+
+The regulation of MOMP has been studied in a variety of experimental model
+systems, including live cells, permeabilized cells, mitochondria isolated from
+cells, and synthetic liposomes. In addition, a number of mathematical models
+have been developed to interpret data generated from the study of these
+systems, including by our group [Spencer2011]_. Some of these models explicitly
+account for the compartmentalization of Bcl-2 interactions at the membrane,
+while others do not; in our own work, we have found that this
+compartmentalization plays a key role in the regulation of Bcl-2 protein
+activitity [Albeck2008b]_, consistent with recent biochemical findings
+[Leber2010]_.
+
 Results
 -------
 

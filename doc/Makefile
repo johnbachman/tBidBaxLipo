@@ -43,6 +43,9 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 	-rm -rf $(STATICDIR)/*
 
+thesisclean:
+	-rm -rf $(BUILDDIR)/html/thesis
+
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo

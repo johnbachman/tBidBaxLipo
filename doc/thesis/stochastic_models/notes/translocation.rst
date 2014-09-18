@@ -7,25 +7,19 @@ consisting simply of translocation of Bax to membranes. Code
 for the comparison is in
 :py:class:`tbidbaxlipo.plots.stoch_det_comparison.translocation`.
 
-.. ipython::
+.. ipython:: python
 
-    In [2]: from tbidbaxlipo.plots.stoch_det_comparison.translocation import *
-
-    @suppress
-    In [2]: from tbidbaxlipo.plots.stoch_det_comparison.translocation.plots \
-       ...: import *
-
-    @suppress
-    In [3]: from tbidbaxlipo.plots.stoch_det_comparison.plot_funcs import *
-
-    In [5]: b_one = jobs[0].one_cpt_builder()
+    from tbidbaxlipo.plots.stoch_det_comparison.translocation import *
+    from tbidbaxlipo.plots.stoch_det_comparison.translocation.plots import *
+    from tbidbaxlipo.plots.stoch_det_comparison.plots import *
+    b_one = jobs[0].one_cpt_builder()
 
 This model has only two rules, for translocation of Bax to and from the
 single membrane compartment:
 
-.. ipython::
+.. ipython:: python
 
-    In [6]: b_one.model.rules
+    b_one.model.rules
 
 We simulate both the deterministic and stochastic versions for 60 seconds
 (translocation occurs on a fairly fast timescale):
@@ -59,7 +53,7 @@ For the first timepoint:
     @suppress
     In [5]: savefig('_static/simple_translocation_1.png')
 
-.. image:: ../../_static/simple_translocation_1.png
+.. image:: ../../../_static/simple_translocation_1.png
     :width: 6in
 
 For the 20th timepoint:
@@ -73,7 +67,7 @@ For the 20th timepoint:
     @suppress
     In [8]: savefig('_static/simple_translocation_2.png')
 
-.. image:: ../../_static/simple_translocation_2.png
+.. image:: ../../../_static/simple_translocation_2.png
     :width: 6in
 
 For the final timepoint:
@@ -87,5 +81,5 @@ For the final timepoint:
     @suppress
     In [11]: savefig('_static/simple_translocation_3.png')
 
-.. image:: ../../_static/simple_translocation_3.png
+.. image:: ../../../_static/simple_translocation_3.png
     :width: 6in
