@@ -1,7 +1,6 @@
 import pysb.builder
 from tbidbaxlipo.util import fitting
-from tbidbaxlipo.data.parse_bid_bim_fret_nbd_release import df
-from bayessb.priors import Normal
+from bayessb.priors import Normal, Uniform
 import numpy as np
 from pysb.integrate import Solver
 import numpy as np
@@ -35,21 +34,24 @@ class Builder(pysb.builder.Builder):
         self.parameter('tBid_0', 20)
         self.parameter('Bax_0', 100)
 
-        self.initial(tBid(cpt='ves', conf='mem', bh3=None), self['tBid_0'])
-        self.initial(Bax(cpt='ves', conf='mem', bh3=None, a6=None,
+        #self.initial(tBid(cpt='ves', conf='mem', bh3=None), self['tBid_0'])
+        #self.initial(Bax(cpt='ves', conf='mem', bh3=None, a6=None,
+        #                 lipo=None, pore='n'),
+        #             self['Bax_0'])
+        self.initial(tBid(cpt='sol', conf='aq', bh3=None), self['tBid_0'])
+        self.initial(Bax(cpt='sol', conf='aq', bh3=None, a6=None,
                          lipo=None, pore='n'),
                      self['Bax_0'])
         #self.initial(Vesicles(bax=None), self['Vesicles_0'])
 
         # OBSERVABLES
-        self.observable('ctBid', tBid(conf='aq'))
-        self.observable('mtBid', tBid(conf='mem'))
-
         self.observable('cBax', Bax(cpt='sol', conf='aq'))
         self.observable('mBax', Bax(conf='mem'))
         self.observable('iBax', Bax(conf='ins'))
         self.observable('mBax_free', Bax(conf='mem', bh3=None))
         self.observable('iBax_free', Bax(conf='ins', bh3=None))
+        self.observable('ctBid', tBid(cpt='sol', conf='aq'))
+        self.observable('mtBid_free', tBid(cpt='ves', conf='mem', bh3=None))
         self.observable('tBidiBax', tBid(bh3=1) % Bax(bh3=1, conf='ins'))
         self.observable('tBidmBax', tBid(bh3=1) % Bax(bh3=1, conf='mem'))
         self.observable('Bax2', Bax(bh3=1) % Bax(bh3=1))
@@ -147,7 +149,244 @@ class Builder(pysb.builder.Builder):
                                 self['iBax_free'] * c3_nbd)
                                / float(self['Bax_0'].value))
 
+    def build_model_fret2(self):
+        tBid = self['tBid']
+        Bax = self['Bax']
+
+        p1 = self.parameter('tBid_mBax_kf', 0.01, prior=Normal(-2, 2))
+        p2 = self.parameter('tBid_mBax_kr', 0.01, prior=Normal(-2, 2))
+        p3 = self.parameter('tBidmBax_tBid_iBax_k', 0.001, prior=Normal(-3, 2))
+
+        self.rule('tBid_binds_mBax',
+                  tBid(bh3=None) + Bax(bh3=None, conf='mem') <>
+                  tBid(bh3=1) % Bax(bh3=1, conf='mem'),
+                  p1, p2)
+
+        self.rule('tBidmBax_to_tBid_iBax',
+                  tBid(bh3=1) % Bax(bh3=1, conf='mem') >>
+                  tBid(bh3=None) + Bax(bh3=None, conf='ins'),
+                  p3)
+
+        c1_nbd = self.parameter('c1_nbd', 2, prior=Uniform(-2, np.log10(5)))
+        c2_nbd = self.parameter('c2_nbd', 3, prior=Uniform(-2, np.log10(5)))
+        c1_fret = self.parameter('c1_fret', 30, prior=Uniform(-2, np.log10(50)))
+
+        self.expression('FRET', (self['tBidmBax'] * c1_fret)
+                                / float(self['tBid_0'].value))
+        self.expression('NBD', (self['mBax_free'] +
+                                self['tBidmBax'] * c1_nbd +
+                                self['iBax_free'] * c2_nbd)
+                               / float(self['Bax_0'].value))
+
+    def build_model_fret3(self):
+        tBid = self['tBid']
+        Bax = self['Bax']
+
+        p1 = self.parameter('tBid_mBax_kf', 0.01, prior=Normal(-2, 2))
+        p2 = self.parameter('tBid_mBax_kr', 0.01, prior=Normal(-2, 2))
+        p3 = self.parameter('tBidmBax_tBid_iBax_k', 0.001, prior=Normal(-3, 2))
+        p4 = self.parameter('iBax_to_mBax_k', 0.001, prior=Normal(-3, 2))
+
+        self.rule('tBid_binds_mBax',
+                  tBid(bh3=None) + Bax(bh3=None, conf='mem') <>
+                  tBid(bh3=1) % Bax(bh3=1, conf='mem'),
+                  p1, p2)
+
+        self.rule('tBidmBax_to_tBid_iBax',
+                  tBid(bh3=1) % Bax(bh3=1, conf='mem') >>
+                  tBid(bh3=None) + Bax(bh3=None, conf='ins'),
+                  p3)
+
+        self.rule('iBax_to_mBax',
+                  Bax(bh3=None, conf='ins') >> Bax(bh3=None, conf='mem'),
+                  p4)
+
+        c1_nbd = self.parameter('c1_nbd', 2, prior=Uniform(-2, np.log10(5)))
+        c2_nbd = self.parameter('c2_nbd', 3, prior=Uniform(-2, np.log10(5)))
+        c1_fret = self.parameter('c1_fret', 30, prior=Uniform(-2, np.log10(50)))
+
+        self.expression('FRET', (self['tBidmBax'] * c1_fret)
+                                / float(self['tBid_0'].value))
+        self.expression('NBD', (self['mBax_free'] +
+                                self['tBidmBax'] * c1_nbd +
+                                self['iBax_free'] * c2_nbd)
+                               / float(self['Bax_0'].value))
+
+    def build_model_fret4(self):
+        tBid = self['tBid']
+        Bax = self['Bax']
+
+        p1 = self.parameter('tBid_mBax_kf', 0.01, prior=Normal(-2, 2))
+        p2 = self.parameter('tBid_mBax_kr', 0.01, prior=Normal(-2, 2))
+        p3 = self.parameter('tBidmBax_tBidiBax_kf', 0.001, prior=Normal(-3, 2))
+        p4 = self.parameter('tBidmBax_tBidiBax_kr', 0.0001, prior=Normal(-4, 2))
+        p5 = self.parameter('tBidiBax_tBid_iBax_kf', 0.01, prior=Normal(-2, 2))
+        p6 = self.parameter('tBidiBax_tBid_Bax_kr', 0.001, prior=Normal(-3, 2))
+        p7 = self.parameter('iBax_to_mBax_k', 0.001, prior=Normal(-3, 2))
+
+        self.rule('tBid_binds_mBax',
+                  tBid(bh3=None) + Bax(bh3=None, conf='mem') <>
+                  tBid(bh3=1) % Bax(bh3=1, conf='mem'),
+                  p1, p2)
+
+        self.rule('tBidmBax_to_tBidiBax',
+                  tBid(bh3=1) % Bax(bh3=1, conf='mem') <>
+                  tBid(bh3=1) % Bax(bh3=1, conf='ins'),
+                  p3, p4)
+
+        self.rule('tBidiBax_to_tBid_iBax',
+                  tBid(bh3=1) % Bax(bh3=1, conf='ins') <>
+                  tBid(bh3=None) + Bax(bh3=None, conf='ins'),
+                  p5, p6)
+
+        self.rule('iBax_to_mBax',
+                  Bax(bh3=None, conf='ins') >> Bax(bh3=None, conf='mem'),
+                  p7)
+
+        c1_nbd = self.parameter('c1_nbd', 2, prior=Uniform(-1, np.log10(6)))
+        c2_nbd = self.parameter('c2_nbd', 3, prior=Uniform(-1, np.log10(6)))
+        c3_nbd = self.parameter('c3_nbd', 5, prior=Uniform(-1, np.log10(6)))
+        c1_fret = self.parameter('c1_fret', 30, prior=Uniform(-1, np.log10(50)))
+        c2_fret = self.parameter('c2_fret', 20, prior=Uniform(-1, np.log10(50)))
+
+        self.expression('FRET', (self['tBidmBax'] * c1_fret +
+                                 self['tBidiBax'] * c2_fret)
+                                / float(self['tBid_0'].value))
+        self.expression('NBD', (self['mBax_free'] +
+                                self['tBidmBax'] * c1_nbd +
+                                self['tBidiBax'] * c2_nbd +
+                                self['iBax_free'] * c3_nbd)
+                               / float(self['Bax_0'].value))
+
+    def build_model_fret5(self):
+        tBid = self['tBid']
+        Bax = self['Bax']
+
+        p1 = self.parameter('tBid_mBax_kf', 0.01, prior=Normal(-2, 2))
+        p2 = self.parameter('tBid_mBax_kr', 0.01, prior=Normal(-2, 2))
+        p3 = self.parameter('tBidmBax_tBidiBax_kf', 0.001, prior=Normal(-3, 2))
+        p4 = self.parameter('tBidmBax_tBidiBax_kr', 0.0001, prior=Normal(-4, 2))
+        p5 = self.parameter('tBidiBax_tBid_iBax_kf', 0.01, prior=Normal(-2, 2))
+        p6 = self.parameter('tBidiBax_tBid_Bax_kr', 0.001, prior=Normal(-3, 2))
+        p7 = self.parameter('iBax_to_mBax_k', 0.0001, prior=Normal(-4, 2))
+
+        p8 = self.parameter('tBid_to_mem_kf', 0.2, prior=Normal(-1, 2))
+        p9 = self.parameter('tBid_to_mem_kr', 0.01, prior=Normal(-2, 2))
+        p10 = self.parameter('Bax_to_mem_kf', 0.2, prior=Normal(-1, 2))
+        p11 = self.parameter('Bax_to_mem_kr', 0.01, prior=Normal(-2, 2))
+
+        self.rule('tBid_to_mem',
+                  tBid(bh3=None, cpt='sol', conf='aq') <>
+                  tBid(bh3=None, cpt='ves', conf='mem'),
+                  p8, p9)
+
+        self.rule('Bax_to_mem',
+                  Bax(bh3=None, cpt='sol', conf='aq') <>
+                  Bax(bh3=None, cpt='ves', conf='mem'),
+                  p10, p11)
+
+        self.rule('tBid_binds_mBax',
+                  tBid(bh3=None, cpt='ves') +
+                  Bax(bh3=None, conf='mem', cpt='ves') <>
+                  tBid(bh3=1, cpt='ves') %
+                  Bax(bh3=1, cpt='ves', conf='mem'),
+                  p1, p2)
+
+        self.rule('tBidmBax_to_tBidiBax',
+                  tBid(bh3=1, cpt='ves') %
+                  Bax(bh3=1, cpt='ves', conf='mem') <>
+                  tBid(bh3=1, cpt='ves') %
+                  Bax(bh3=1, cpt='ves', conf='ins'),
+                  p3, p4)
+
+        self.rule('tBidiBax_to_tBid_iBax',
+                  tBid(bh3=1, cpt='ves') %
+                  Bax(bh3=1, cpt='ves', conf='ins') <>
+                  tBid(bh3=None, cpt='ves') +
+                  Bax(bh3=None, cpt='ves', conf='ins'),
+                  p5, p6)
+
+        self.rule('iBax_to_mBax',
+                  Bax(bh3=None, conf='ins') >> Bax(bh3=None, conf='mem'),
+                  p7)
+
+        c1_nbd = self.parameter('c1_nbd', 2, prior=Uniform(-1, np.log10(6)))
+        c2_nbd = self.parameter('c2_nbd', 3, prior=Uniform(-1, np.log10(6)))
+        c3_nbd = self.parameter('c3_nbd', 5, prior=Uniform(-1, np.log10(6)))
+        c1_fret = self.parameter('c1_fret', 30, prior=Uniform(-1, np.log10(50)))
+        c2_fret = self.parameter('c2_fret', 20, prior=Uniform(-1, np.log10(50)))
+
+        self.expression('FRET', (self['tBidmBax'] * c1_fret +
+                                 self['tBidiBax'] * c2_fret)
+                                / float(self['tBid_0'].value))
+        self.expression('NBD', (self['cBax'] +
+                                self['mBax_free'] +
+                                self['tBidmBax'] * c1_nbd +
+                                self['tBidiBax'] * c2_nbd +
+                                self['iBax_free'] * c3_nbd)
+                               / float(self['Bax_0'].value))
+
+    def build_model_fret6(self):
+        tBid = self['tBid']
+        Bax = self['Bax']
+
+        p1 = self.parameter('tBid_mBax_kf', 0.01, prior=Normal(-2, 2))
+        p2 = self.parameter('tBid_mBax_kr', 0.01, prior=Normal(-2, 2))
+        p5 = self.parameter('tBidmBax_tBid_iBax_kf', 0.01, prior=Normal(-2, 2))
+        p7 = self.parameter('iBax_to_mBax_k', 0.001, prior=Normal(-3, 2))
+
+        p8 = self.parameter('tBid_to_mem_kf', 0.001, prior=Normal(-3, 2))
+        p9 = self.parameter('tBid_to_mem_kr', 0.01, prior=Normal(-2, 2))
+        p10 = self.parameter('Bax_to_mem_kf', 0.001, prior=Normal(-3, 2))
+        p11 = self.parameter('Bax_to_mem_kr', 0.01, prior=Normal(-2, 2))
+
+        self.rule('tBid_to_mem',
+                  tBid(bh3=None, cpt='sol', conf='aq') <>
+                  tBid(bh3=None, cpt='ves', conf='mem'),
+                  p8, p9)
+
+        self.rule('Bax_to_mem',
+                  Bax(bh3=None, cpt='sol', conf='aq') <>
+                  Bax(bh3=None, cpt='ves', conf='mem'),
+                  p10, p11)
+
+        self.rule('tBid_binds_mBax',
+                  tBid(cpt='ves', bh3=None) +
+                  Bax(cpt='ves', bh3=None, conf='mem') <>
+                  tBid(cpt='ves', bh3=1) % Bax(cpt='ves', bh3=1, conf='mem'),
+                  p1, p2)
+
+        self.rule('tBidiBax_to_tBid_iBax',
+                  tBid(bh3=1) % Bax(bh3=1, conf='mem') >>
+                  tBid(bh3=None) + Bax(bh3=None, conf='ins'),
+                  p5)
+
+        self.rule('iBax_to_mBax',
+                  Bax(bh3=None, conf='ins') >> Bax(bh3=None, conf='mem'),
+                  p7)
+
+        c1_nbd = self.parameter('c1_nbd', 2, prior=Uniform(-1, np.log10(6)))
+        c2_nbd = self.parameter('c2_nbd', 3, prior=Uniform(-1, np.log10(6)))
+        c3_nbd = self.parameter('c3_nbd', 5, prior=Uniform(-1, np.log10(6)))
+        c1_fret = self.parameter('c1_fret', 30, prior=Uniform(-1, np.log10(50)))
+        c2_fret = self.parameter('c2_fret', 20, prior=Uniform(-1, np.log10(50)))
+
+        self.expression('FRET', (self['tBidmBax'] * c1_fret +
+                                 self['tBidiBax'] * c2_fret)
+                                / float(self['tBid_0'].value))
+        self.expression('NBD', (self['cBax'] +
+                                self['mBax_free'] +
+                                self['tBidmBax'] * c1_nbd +
+                                self['tBidiBax'] * c2_nbd +
+                                self['iBax_free'] * c3_nbd)
+                               / float(self['Bax_0'].value))
+
+
+
+
 if __name__ == '__main__':
+
+    from tbidbaxlipo.data.parse_bid_bim_fret_nbd_release import df
     plt.ion()
 
     bd = Builder()
