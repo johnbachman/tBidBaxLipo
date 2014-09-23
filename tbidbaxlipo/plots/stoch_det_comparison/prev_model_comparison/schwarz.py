@@ -20,7 +20,7 @@ Rule('P_binds_L', P(loc='c') + L() >> P(loc='m') + L(), P_binds_L_kf)
 
 Rule('P_unbinds_L', P(loc='m') >> P(loc='c'), P_binds_L_kr)
 
-Rule('Pore_formation', P(loc='m') >> Pore(), Pore_formation_k)
+Rule('Pore_formation', P(loc='m') >> P(loc='m') + Pore(), Pore_formation_k)
 
 Observable('Pores', Pore())
 
