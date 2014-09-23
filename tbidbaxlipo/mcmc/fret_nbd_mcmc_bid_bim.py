@@ -1,5 +1,3 @@
-from tbidbaxlipo.models.nbd import multiconf, exponential
-from tbidbaxlipo.data import nbd_data, nbd_plate_data
 import bayessb
 import numpy as np
 import tbidbaxlipo.mcmc
@@ -183,11 +181,11 @@ if __name__ == '__main__':
     #from tbidbaxlipo.models.enz_cpt import Builder
     from tbidbaxlipo.models.bid_bax_fret import Builder
     builder = Builder()
-    builder.build_model_fret1()
+    builder.build_model_fret5()
 
     # We set the random_seed here because it affects our choice of initial
     # values
-    random_seed = 1
+    random_seed = 2
     np.random.seed(random_seed)
 
     opts = bayessb.MCMCOpts()
@@ -226,5 +224,10 @@ if __name__ == '__main__':
 
     print "Done."
 
+    plt.ion()
+    mcmc.fit_plotting_function(mcmc.positions[-1])
 
-
+    plt.figure()
+    mcmc.solver.run(param_values=mcmc.cur_params(mcmc.positions[-1]))
+    plt.plot(mcmc.solver.tspan, mcmc.solver.yobs['mBax_free'])
+    plt.plot(mcmc.solver.tspan, mcmc.solver.yobs['iBax_free'])
