@@ -1,6 +1,9 @@
 Results
 =======
 
+Comparison with previous simulation approaches
+----------------------------------------------
+
 To study the mechanism of multi-protein pore formation processes we developed a
 simulation approach that involved the enumeration of many vesicle compartments
 (:ref:`Figure 1A <stochastic_models_fig1>`). Previously described mathematical
@@ -48,9 +51,6 @@ vesicle follows a Poisson distribution with the mean obtained from the
 deterministic simulation of the 1C model [Schwarz1990]_ (:ref:`Figure 1B
 <stochastic_models_fig1>`).
 
-Using the 
-Using the 
-Using the evaluation
 
 **Figure 1B** For the purposes of this paper, we focus on comparisons with
 previous approaches in which the dye release process is modeled as resulting
@@ -82,48 +82,6 @@ is wrong?
 **Figure 1D**. The multi-compartment approach shows that Almeida et al., is
   right?
 
-* **Adding a second protein breaks other methods when concentrations are
-  low, unless...**
-
-* Adding an activator protein, such as Bid,
-
-* **Adding auto-activation breaks other methods, unless...**
-
-* Bax is believed to auto-activate.
-
-* **Hill coefficient analysis is not a reliable indicator of stoichiometry**
-
-* Perturbation theory explanation?
-
-* **In fitting permeabilization curves with exponentials, it is essential to
-  account for Fmax as well as k**
-
-
-B + L <> BL >> BL*
-
-What I am trying to explain:
-
-    - non-origin nature of slope of Bax permeabilization?
-
-    - Show that reaction topology determines whether the continuum model
-      matches the compartment model.
-
-Need to show experimentally true as well as theoretically true
-
-Coins/buckets argument
-
-    - hinges in part on the fact that the curve is a two-parameter curve, with
-      both k and fmax.
-
-    - Both enzyme and pore formation case don't provide explanations for why
-      fmax is less than 100%.
-
-**Evaluation of permeabilization models for individual perm. curves**
-
-    - This could potentially go in the liposome perm kinetics chapter.
-
-Figure: Example permeabilization curve.
-
 Table listing models, with references and features
 
     - Exponential model (1 and 2 and 3 sum exponentials)
@@ -137,30 +95,49 @@ Table listing models, with references and features
 
     - European group paper?
 
-Bax specific:
+Discrepancies in predictions of permeabilization kinetics
+---------------------------------------------------------
 
-    - Phenomenology: a delay; nearly exponential activity; maximal activity
-      below 100% permeabilization; slow rise;
+* Show that reaction topology determines whether the continuum model
+  matches the compartment model.
 
-    - At start, you have no pores nucleated, auto-activation helps
-      get pores nucleated, hence the acceleration. However, this
-      starts to fight against the depletion of Bax due to recruitment
-      to existing pores, and eventually depletion wins out.
+* Adding a second protein breaks other methods when concentrations are
+  low, unless...
 
-    - Three velocities: initial, intermediate, final; pore production is
-      linear at each one? dp/dt = k
+Discrepancies in predictions of binding
+---------------------------------------
 
-    - Two-phase scaling of the kinetic constant, k
+* **Adding auto-activation breaks other methods, unless...**
 
-    - Hyperbolic scaling of the Fmax
+* Bax is believed to auto-activate.
 
-**Prediction of role of auto-activation**
 
-    - Auto-activation may deplete 
+Extraction of rates by fitting exponentials yields incorrect results
+--------------------------------------------------------------------
+
+* Non-origin nature of slope of Bax permeabilization.
+
+* **In fitting permeabilization curves with exponentials, it is essential to
+  account for Fmax as well as k**
+
+* Coins/buckets argument
+
+    * hinges in part on the fact that the curve is a two-parameter curve, with
+      both k and fmax.
+
+    * Both enzyme and pore formation case don't provide explanations for why
+      fmax is less than 100%.
 
 **Refute notion that linearity in slope indicates non-saturation and
 non-cooperativity!**
 
     - Show timescale separation analysis??
+
+Inferring stoichiometry
+-----------------------
+
+* **Hill coefficient analysis is not a reliable indicator of stoichiometry**
+
+* Perturbation theory explanation?
 
 

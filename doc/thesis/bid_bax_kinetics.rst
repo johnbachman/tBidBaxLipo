@@ -338,6 +338,23 @@ Outline
       what you would have gotten at the start, then you have a Bax hole.
       Do this with varying levels of starter Bax.
 
+Other notes on phenomenology (may not fit here, copied from another file)
+
+    - Phenomenology: a delay; nearly exponential activity; maximal activity
+      below 100% permeabilization; slow rise;
+
+    - At start, you have no pores nucleated, auto-activation helps
+      get pores nucleated, hence the acceleration(?). However, this
+      starts to fight against the depletion of Bax due to recruitment
+      to existing pores, and eventually depletion wins out.
+
+    - Three velocities: initial, intermediate, final; pore production is
+      linear at each one? dp/dt = k
+
+    - Two-phase scaling of the kinetic constant, k
+
+    - Hyperbolic scaling of the Fmax
+
 Experiment todo list
 --------------------
 
