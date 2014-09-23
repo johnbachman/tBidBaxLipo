@@ -50,7 +50,7 @@ if __name__ == '__main__':
     import numpy as np
     from matplotlib import pyplot as plt
 
-    tmax = 1000
+    tmax = 100
     t = np.linspace(0, tmax, 500)
     s = Solver(model, t)
     s.run()
