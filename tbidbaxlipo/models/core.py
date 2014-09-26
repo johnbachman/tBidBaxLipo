@@ -1238,11 +1238,6 @@ class Builder(pysb.builder.Builder):
         self.pores_from_Bax_monomers(bax_conf='mem')
         self.model.name = 'bax_schwarz'
 
-    def build_model_bax_schwarz_reversible(self):
-        self.translocate_Bax()
-        self.pores_from_Bax_monomers(bax_loc_state='m', reversible=True)
-        self.model.name = 'bax_schwarz_reversible'
-
     def build_model_bax_schwarz_dimer(self):
         self.translocate_Bax()
         self.Bax_dimerizes(bax_loc_state='m')
