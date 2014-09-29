@@ -441,15 +441,78 @@ def plot_initial_slope_curves(k_arr, conc_list):
 
     return k_linear()
 
+def plot_normalized_to_ref_curve():
+    data = bgsub_norm_averages
+    ref_index = 1
+    reference = data[data.keys()[ref_index]][VALUE]
+
+    # Normalize the reference to [0, 1]
+    reference = ((reference - np.min(reference)) /
+                 (np.max(reference) - np.min(reference)))
+
+    plt.figure()
+    for i, conc_str in enumerate(data.keys()):
+        curve = data[conc_str][VALUE]
+
+        # Define the minval and maxval fit parameters
+        fit_min_val = fitting.Parameter(0.)
+        fit_max_val = fitting.Parameter(max(curve))
+
+        # Define the "model" func (just the normalization equation)
+        def normalization_eqn(y): return ((y - fit_min_val()) /
+                                          (fit_max_val() - fit_min_val()))
+        fitting.fit(normalization_eqn, [fit_max_val], np.array(reference),
+            np.array(curve))
+
+        curve = np.array(curve)
+        normalized_curve = normalization_eqn(np.array(curve))
+        plt.plot(normalized_curve)
+
+def plot_normalized_by_fmax():
+    (fmax_arr, k1_arr, k2_arr, conc_list) = \
+          titration_fits.plot_two_exp_fits(bgsub_norm_wells, layout, plot=False)
+
+    data = bgsub_norm_wells
+    k1_arr = np.zeros((3, len(layout.keys())))
+    conc_list = np.zeros(len(layout.keys()))
+
+    plt.figure()
+    for i, conc_str in enumerate(layout.keys()):
+        # The list of wells for this concentration
+        wells = layout[conc_str]
+        well_conc = float(conc_str.split(' ')[1])
+        conc_list[i] = well_conc
+
+        if well_conc == 0.0:
+            continue
+
+        for j, well in enumerate(wells):
+            well_data = data[well]
+            time = np.array(well_data[TIME][:])
+            y = np.array(well_data[VALUE][:])
+            fmax = fmax_arr[j, i]
+            norm_data = y / float(fmax)
+            plt.plot(norm_data)
+
 if __name__ == '__main__':
     plt.ion()
     plt.close('all')
+    plot_normalized_to_ref_curve()
+    plot_normalized_by_fmax()
+    sys.exit()
+
+    #(fmax_arr, k1_arr, k2_arr, conc_list) = \
+    #       titration_fits.plot_two_exp_fits(bgsub_norm_wells, layout, plot=True)
+    #titration_fits.plot_fmax_curve(fmax_arr, conc_list)
+    #titration_fits.plot_k1_curve(k1_arr[:,1:], conc_list[1:])
+    #titration_fits.plot_k2_curve(k2_arr[:,1:], conc_list[1:])
+
     #approach_2(bgsub_norm_averages, bgsub_norm_stds, layout)
 
-    #(k1_arr, k2_arr, tau_arr, conc_list) = plot_pore_fits(plot=True)
-    #plot_k_curves(k1_arr, conc_list)
-    #plot_k_curves(k2_arr, conc_list)
-    #plot_k_curves(tau_arr, conc_list)
+    (k1_arr, k2_arr, tau_arr, conc_list) = plot_pore_fits(plot=True)
+    plot_k_curves(k1_arr, conc_list)
+    plot_k_curves(k2_arr, conc_list)
+    plot_k_curves(tau_arr, conc_list)
 
     # == Initial rates ==
     (k1_arr, conc_list) = plot_linear_fits(plot=False)
