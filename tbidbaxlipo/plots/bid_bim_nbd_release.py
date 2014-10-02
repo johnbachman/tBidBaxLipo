@@ -46,7 +46,7 @@ class FitResult(object):
                 str(p_se)]
 
     def timecourse_filename(self):
-        return '%s_%s_%s_%s.csv' % (self.activator, self.nbd_site, \
+        return '%s_%s_r%s_%s.csv' % (self.activator, self.nbd_site, \
                                     str(self.rep_index), self.measurement)
 
 def _mean_sd(p_name, builder, pysb_fit):
@@ -106,7 +106,7 @@ params_dict = {'c1_to_c2_k': 1e-4, 'c1_scaling': 2,
 
 def plot_2conf_fits(activator):
     plt.ion()
-    #nbd_sites = ['15']
+    #nbd_sites = ['15', '54', '62', '68', '79', '126', '138', '175']
     nbd_sites = ['3', '5', '15', '36', '47', '54', '62', '68', '79', '120',
                  '122', '126', '138', '151', '175', '179', '184', '188']
     replicates = range(1, 4)
@@ -129,9 +129,9 @@ def plot_2conf_fits(activator):
             builder.build_model_multiconf(2, ny[0], normalized_data=True)
             # Rough guesses for parameters
             # Guess that the final scaling is close to the final data value
-            builder.model.parameters['c1_scaling'] = ny[-1]
+            builder.model.parameters['c1_scaling'].value = ny[-1]
             # Rough guess for the timescale
-            builder.model.parameters['c0_to_c1_k'] = 1e-3
+            builder.model.parameters['c0_to_c1_k'].value = 1e-3
 
             pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', nt, ny)
             plt.plot(nt, ny, linestyle='', marker='.',
@@ -175,7 +175,7 @@ def plot_2conf_fits(activator):
 
 def plot_3conf_fits(activator):
     plt.ion()
-    #nbd_sites = ['15']
+    #nbd_sites = ['15', '54', '62', '68', '79', '126', '138', '175']
     nbd_sites = ['3', '5', '15', '36', '47', '54', '62', '68', '79', '120',
                  '122', '126', '138', '151', '175', '179', '184', '188']
     replicates = range(1, 4)
@@ -335,10 +335,11 @@ def plot_initial_rates(activator):
             r_slope_err = r_lin[4]
             r_errs.append(r_slope_err)
 
+            tb_param_dict = {'Initial rate (first %d pts)' % num_pts :
+                             (r_slope, r_slope_err)}
             fit_results.append(FitResult(None, activator, nbd_site,
-                                        rep_index, 'Tb release',
-                                        'Initial rate (first %d pts)' % num_pts,
-                                        r_slope, r_slope_err))
+                                        rep_index, 'Tb release', tb_param_dict,
+                                        None, None))
 
             if nbd_site == 'WT':
                 n_maxs.append(0)
@@ -371,10 +372,11 @@ def plot_initial_rates(activator):
                 nr_ratios.append(nr_ratio)
                 nr_errs.append(nr_err)
 
+                nbd_param_dict = {'Initial rate (first %d pts)' % num_pts :
+                                  (n_slope, n_slope_err)}
                 fit_results.append(FitResult(None, activator, nbd_site,
-                                        rep_index, 'NBD',
-                                        'Initial rate (first %d pts)' % num_pts,
-                                        n_slope, n_slope_err))
+                                        rep_index, 'NBD', nbd_param_dict,
+                                        None, None))
 
             #print "%s, rep %d, Tb slope: %f" % (nbd_site, rep_index, r_slope)
             #print "%s, rep %d, NBD slope: %f" % (nbd_site, rep_index, n_slope)
