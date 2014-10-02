@@ -20,23 +20,34 @@ line_styles = {1:':', 2:'-', 3:'--'}
 rep_colors = {1:'r', 2:'g', 3:'b'}
 
 class FitResult(object):
-    "A helper class for returning and displaying fit results."""
+    """A helper class for returning and displaying fit results.
+
+    param_dict is a dict mapping parameter name to a tuple of the
+    mean and standard error for the parameter from the fit.
+    """
+
     def __init__(self, builder, activator, nbd_site, rep_index,
-                 measurement, param_name, mean, se):
+                 measurement, param_dict, t, y):
         self.builder = builder
         self.activator = activator
         self.nbd_site = nbd_site
         self.rep_index = rep_index
         self.measurement = measurement
-        self.param_name = param_name
-        self.mean = mean
-        self.se = se
+        self.param_dict = param_dict
+        self.t = t
+        self.y = y
 
-    def as_string_list(self):
+    def param_result_as_string_list(self, param_name):
         """Useful for making CSV files."""
+        p_mean = self.param_dict[param_name][0]
+        p_se = self.param_dict[param_name][1]
         return [self.activator, self.nbd_site, str(self.rep_index),
-                self.measurement, self.param_name, str(self.mean),
-                str(self.se)]
+                self.measurement, param_name, str(p_mean),
+                str(p_se)]
+
+    def timecourse_filename(self):
+        return '%s_%s_%s_%s.csv' % (self.activator, self.nbd_site, \
+                                    str(self.rep_index), self.measurement)
 
 def _mean_sd(p_name, builder, pysb_fit):
     """Given the named parameter and the fit result, get mean and SE."""
@@ -45,8 +56,12 @@ def _mean_sd(p_name, builder, pysb_fit):
     p_est_index = builder.estimate_params.index(p)
     p_mean = pysb_fit.params[p_index]
     cov_x = pysb_fit.result[1]
-    p_sd = np.sqrt(cov_x[p_est_index, p_est_index] *
-                    np.var(pysb_fit.residuals))
+    if cov_x is not None:
+        p_sd = np.sqrt(cov_x[p_est_index, p_est_index] *
+                        np.var(pysb_fit.residuals))
+    else:
+        p_sd = np.nan
+
     return (p_mean, p_sd)
 
 def plot_all():
@@ -112,6 +127,11 @@ def plot_2conf_fits(activator):
 
             builder = Builder(params_dict=params_dict)
             builder.build_model_multiconf(2, ny[0], normalized_data=True)
+            # Rough guesses for parameters
+            # Guess that the final scaling is close to the final data value
+            builder.model.parameters['c1_scaling'] = ny[-1]
+            # Rough guess for the timescale
+            builder.model.parameters['c0_to_c1_k'] = 1e-3
 
             pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', nt, ny)
             plt.plot(nt, ny, linestyle='', marker='.',
@@ -129,12 +149,12 @@ def plot_2conf_fits(activator):
             k1_sds.append(k1_sd)
             (c1_mean, c1_sd) = _mean_sd('c1_scaling', builder, pysb_fit)
 
+            param_dict = {'c0_to_c1_k': (k1_mean, k1_sd),
+                          'c1_scaling': (c1_mean, c1_sd)}
             fit_results.append(FitResult(builder, activator, nbd_site,
-                                         rep_index, 'NBD', 'c0_to_c1_k',
-                                         k1_mean, k1_sd))
-            fit_results.append(FitResult(builder, activator, nbd_site,
-                                         rep_index, 'NBD', 'c1_scaling',
-                                         c1_mean, c1_sd))
+                                         rep_index, 'NBD', param_dict,
+                                         nt, pysb_fit.ypred))
+
             count += 1
 
         plt.figure('%s, NBD-%s-Bax Fits' % (activator, nbd_site))
@@ -208,6 +228,20 @@ def plot_3conf_fits(activator):
 
             builder = Builder(params_dict=params_dict)
             builder.build_model_multiconf(3, ny[0], normalized_data=True)
+            # Add some initial guesses
+            # Guess that the scaling value for the final conformation is close
+            # to the final data value
+            builder.model.parameters['c2_scaling'].value = ny[-1]
+            # Guess that the scaling value for the intermediate conformation
+            # is close to the value at ~300 sec
+            c1_timescale_seconds = 300
+            c1_timescale_index = np.where(nt > 300)[0].min()
+            builder.model.parameters['c1_scaling'].value = \
+                                                    ny[c1_timescale_index]
+            # Rough guesses for the timescales of the first and second
+            # transitions
+            builder.model.parameters['c0_to_c1_k'].value = 5e-3
+            builder.model.parameters['c1_to_c2_k'].value = 5e-4
 
             pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', nt, ny)
             plt.subplot(1, 2, 2)
@@ -226,18 +260,14 @@ def plot_3conf_fits(activator):
             (c1_mean, c1_sd) = _mean_sd('c1_scaling', builder, pysb_fit)
             (c2_mean, c2_sd) = _mean_sd('c2_scaling', builder, pysb_fit)
 
+            param_dict = {'c0_to_c1_k': (k1_mean, k1_sd),
+                          'c1_scaling': (c1_mean, c1_sd),
+                          'c1_to_c2_k': (k2_mean, k2_sd),
+                          'c2_scaling': (c2_mean, c2_sd)}
+
             fit_results.append(FitResult(builder, activator, nbd_site,
-                                         rep_index, 'NBD', 'c0_to_c1_k',
-                                         k1_mean, k1_sd))
-            fit_results.append(FitResult(builder, activator, nbd_site,
-                                         rep_index, 'NBD', 'c1_scaling',
-                                         c1_mean, c1_sd))
-            fit_results.append(FitResult(builder, activator, nbd_site,
-                                         rep_index, 'NBD', 'c1_to_c2_k',
-                                         k2_mean, k2_sd))
-            fit_results.append(FitResult(builder, activator, nbd_site,
-                                         rep_index, 'NBD', 'c2_scaling',
-                                         c2_mean, c2_sd))
+                                         rep_index, 'NBD', param_dict,
+                                         nt, pysb_fit.ypred))
 
             k1_means.append(k1_mean)
             k2_means.append(k2_mean)
@@ -584,7 +614,7 @@ if __name__ == '__main__':
     #plot_initial_rates('Bid')
     #plot_initial_rates('Bim')
     #plot_filtered_data('Bid')
-    #plot_2conf_fits('Bid')
-    plot_3conf_fits('Bid')
+    fr = plot_3conf_fits('Bid')
+    #plot_3conf_fits('Bid')
     #plot_peak_slopes('Bim')
     #plot_derivatives('Bim')
