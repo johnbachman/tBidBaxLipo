@@ -154,9 +154,13 @@ def plot_pore_fits(plot=True):
             y = np.array(well_data[VALUE])
             y = -np.log(1 - y)
 
-            fit = titration_fits.Schwarz()
+            #fit = titration_fits.Schwarz()
+            #(k1, k2, tau) = fit.fit_timecourse(time, y)
+            #fit = titration_fits.TwoExpNoT()
+            #(k1, k2) = fit.fit_timecourse(time, y)
+            #tau = 0.
+            fit = titration_fits.LinkedEq(bax_conc=well_conc)
             (k1, k2, tau) = fit.fit_timecourse(time, y)
-
             k1_arr[j, i] = k1
             k2_arr[j, i] = k2
             tau_arr[j, i] = tau
@@ -497,9 +501,14 @@ def plot_normalized_by_fmax():
 if __name__ == '__main__':
     plt.ion()
     plt.close('all')
-    plot_normalized_to_ref_curve()
-    plot_normalized_by_fmax()
+    (k1_arr, k2_arr, tau_arr, conc_list) = plot_pore_fits()
+    plot_k_curves(k1_arr, conc_list)
+    plot_k_curves(k2_arr, conc_list)
+    plot_k_curves(tau_arr, conc_list)
+
     sys.exit()
+    #plot_normalized_to_ref_curve()
+    #plot_normalized_by_fmax()
 
     #(fmax_arr, k1_arr, k2_arr, conc_list) = \
     #       titration_fits.plot_two_exp_fits(bgsub_norm_wells, layout, plot=True)
