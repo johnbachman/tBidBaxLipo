@@ -75,7 +75,7 @@ def plot_dye_release_titration(jobs, data):
         xlim([0, 4000])
     xlabel('Time (sec)')
     ylabel('Pct. Dye Release')
-    title('Dye release kinetics for tBid titration')
+    title('Dye release kinetics')
     #legend(loc='lower right')
     show()
 
