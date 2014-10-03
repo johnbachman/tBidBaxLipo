@@ -9,6 +9,7 @@ Contents:
    uni_dye_release_models
    translocation
    bax_schwarz
+   bax_schwarz_irreversible
    tbid_bax_activation
    tbid_titration
    bax_heat
