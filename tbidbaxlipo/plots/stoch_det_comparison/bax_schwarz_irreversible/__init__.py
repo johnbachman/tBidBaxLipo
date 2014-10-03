@@ -20,7 +20,7 @@ class Job(simulation.Job):
                        }
         scaling_factor = 20
         tmax = 10000
-        num_sims = 1
+        num_sims = 30
         n_steps = 200
         super(Job, self).__init__(params_dict, scaling_factor, tmax, n_steps,
                                   num_sims)
