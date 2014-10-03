@@ -463,7 +463,7 @@ class Builder(pysb.builder.Builder):
                  tBid(cpt='sol', conf='aq', bh3=None),
                  tBid_transloc_kr)
 
-    def translocate_Bax(self):
+    def translocate_Bax(self, pore_Bax_retrotranslocation=True):
         print("one_cpt: translocate_Bax()")
 
         assert len(self.cpt_list) != 0
@@ -491,10 +491,17 @@ class Builder(pysb.builder.Builder):
                  Bax_mono(cpt='sol', conf='aq') >>
                  Bax_mono(cpt=cpt_name, conf='mem'),
                  Bax_transloc_kf)
-            self.rule('Bax_mono_translocates_%s_to_sol' % cpt_name,
-                 Bax_mono(cpt=cpt_name, conf='mem') >>
-                 Bax_mono(cpt='sol', conf='aq', pore='n', lipo=None),
-                 Bax_transloc_kr)
+            if pore_Bax_retrotranslocation:
+                self.rule('Bax_mono_translocates_%s_to_sol' % cpt_name,
+                     Bax_mono(cpt=cpt_name, conf='mem') >>
+                     Bax_mono(cpt='sol', conf='aq', pore='n', lipo=None),
+                     Bax_transloc_kr)
+            else:
+                self.rule('Bax_mono_translocates_%s_to_sol' % cpt_name,
+                     Bax_mono(cpt=cpt_name, conf='mem', pore='n') >>
+                     Bax_mono(cpt='sol', conf='aq', pore='n', lipo=None),
+                     Bax_transloc_kr)
+
 
     def tBid_binds_Bax(self, bax_site, bax_conf):
         """
@@ -1238,10 +1245,10 @@ class Builder(pysb.builder.Builder):
         self.pores_from_Bax_monomers(bax_conf='mem')
         self.model.name = 'bax_schwarz'
 
-    def build_model_bax_schwarz_reversible(self):
-        self.translocate_Bax()
-        self.pores_from_Bax_monomers(bax_loc_state='m', reversible=True)
-        self.model.name = 'bax_schwarz_reversible'
+    def build_model_bax_schwarz_irreversible(self):
+        self.translocate_Bax(pore_Bax_retrotranslocation=False)
+        self.pores_from_Bax_monomers(bax_conf='mem')
+        self.model.name = 'bax_schwarz'
 
     def build_model_bax_schwarz_dimer(self):
         self.translocate_Bax()

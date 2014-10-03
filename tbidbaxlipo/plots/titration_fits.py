@@ -221,6 +221,35 @@ class TitrationFit(object):
 # Various Fitting functions (subclasses) #
 ##########################################
 
+class TwoExpNoT(TitrationFit):
+    def __init__(self):
+        super(TwoExpNoT, self).__init__(
+                    param_names=['$k_1$', '$k_2$'],
+                    initial_guesses=[1e-4, 1])
+
+    def fit_func(self, t, k_arr):
+        """Two-exponential fitting function."""
+        return (1 - np.exp(-k_arr[1] * (1 - np.exp(- 9e-5 * t))))
+        #return (1 - np.exp(-k_arr[1] * (1 - np.exp(- k_arr[0] * t))))
+
+class LinkedEq(TitrationFit):
+    def __init__(self, bax_conc):
+        super(LinkedEq, self).__init__(
+                    param_names=['$k_1$', '$k_2$', '$F_{max}$'],
+                    initial_guesses=[6e-3, 1.25e-4, 0.5])
+        self.bax_conc = bax_conc
+
+    def fit_func(self, t, k_arr):
+        """Two-exponential fitting function."""
+        #return ((k_arr[2] / float(k_arr[0] - k_arr[1])) *
+        #        (k_arr[0] * (1 - np.exp(-k_arr[1] * t)) -
+        #         k_arr[1] * (1 - np.exp(-k_arr[0] * t))))
+        return ((k_arr[2] / float(6e-3 - 1.25e-4)) *
+                (6e-3 * (1 - np.exp(-1.25e-4 * t)) -
+                 1.25e-4 * (1 - np.exp(-6e-3 * t))))
+
+        #return (1 - np.exp(-k_arr[1] * (1 - np.exp(- k_arr[0] * t))))
+
 class OneExpNoFmax(TitrationFit):
     r"""Fit timecourses to a one-parameter exponential function.
 
@@ -279,7 +308,7 @@ class Schwarz(TitrationFit):
     def __init__(self):
         super(Schwarz, self).__init__(
                     param_names=['$k_1$', '$k_2$', '$tau$'],
-                    initial_guesses=[1e-4, 1e-5, 8e-5])
+                    initial_guesses=[1e-5, 1e-6, 2e-4])
 
     def fit_func(self, t, k_arr):
         """Fitting function from Schwarz."""
@@ -297,7 +326,7 @@ class TwoExp(TitrationFit):
     def __init__(self):
         super(TwoExp, self).__init__(
                     param_names=['$k_1$', '$F_{max}$', '$k_2$'],
-                    initial_guesses=[1e-5, 0.5, 1e-3])
+                    initial_guesses=[2e-4, 0.5, 1e-2])
 
     def fit_func(self, t, k_arr):
         """Two-exponential fitting function."""
