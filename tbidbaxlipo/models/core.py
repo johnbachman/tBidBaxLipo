@@ -424,12 +424,12 @@ class Builder(pysb.builder.Builder):
 
     # -- MECHANISTIC MOTIFS ------------------------------------------------
     def translocate_tBid_Bax(self):
-        print("one_cpt: translocate_tBid_Bax()")
+        print("core: translocate_tBid_Bax()")
         self.translocate_tBid()
         self.translocate_Bax()
 
     def translocate_tBid(self):
-        print("one_cpt: translocate_tBid()")
+        print("core: translocate_tBid()")
 
         assert len(self.cpt_list) != 0
         if len(self.cpt_list) > 1:
@@ -464,7 +464,7 @@ class Builder(pysb.builder.Builder):
                  tBid_transloc_kr)
 
     def translocate_Bax(self, pore_Bax_retrotranslocation=True):
-        print("one_cpt: translocate_Bax()")
+        print("core: translocate_Bax()")
 
         assert len(self.cpt_list) != 0
         if len(self.cpt_list) > 1:
@@ -802,7 +802,7 @@ class Builder(pysb.builder.Builder):
         only reversibility of Bax insertion, which is already encoded by
         the macro Bax_reverses().
         """
-        print("one_cpt: pores_from_Bax_monomers()")
+        print("core: pores_from_Bax_monomers()")
 
         pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3,
                                                prior=Normal(-4, 1))
@@ -823,7 +823,7 @@ class Builder(pysb.builder.Builder):
 
         See notes for pores_from_Bax_monomers, above.
         """
-        print("one_cpt: pores_from_Bax_dimers(bax_conf=%s)" % bax_conf)
+        print("core: pores_from_Bax_dimers(bax_conf=%s)" % bax_conf)
 
         Bax = self['Bax']
         Pores = self['Pores']
@@ -854,6 +854,23 @@ class Builder(pysb.builder.Builder):
 
         self.rule('pores_from_Bax_%s_%dmers' % (bax_loc_state, n),
              lhs >> rhs + Pores(), pore_formation_rate_k)
+
+    def pores_aggregate(self, bax_conf='mem'):
+        print("core: pores_aggregate()")
+
+        pore_aggregation_rate_k = self.parameter('pore_aggregation_rate_k',
+                                                 5e-3, prior=Normal(-3, 1))
+
+        Bax_mono = self['Bax'](bh3=None, a6=None)
+        Pores = self['Pores']
+
+        for cpt_name in self.cpt_list:
+            self.rule('pores_aggregate_Bax_%s_%s' % (bax_conf, cpt_name),
+                      Pores(cpt=cpt_name) +
+                      Bax_mono(cpt=cpt_name, conf=bax_conf, pore='n') >>
+                      Pores(cpt=cpt_name) +
+                      Bax_mono(cpt=cpt_name, conf=bax_conf, pore='y'),
+                      pore_aggregation_rate_k)
 
     # -- OTHER MOTIFS --------------------------------------------------------
     def Bax_auto_activates(self, activator_site='bh3', target_site='bh3'):
@@ -1248,7 +1265,13 @@ class Builder(pysb.builder.Builder):
     def build_model_bax_schwarz_irreversible(self):
         self.translocate_Bax(pore_Bax_retrotranslocation=False)
         self.pores_from_Bax_monomers(bax_conf='mem')
-        self.model.name = 'bax_schwarz'
+        self.model.name = 'bax_schwarz_irreversible'
+
+    def build_model_bax_schwarz_irreversible_aggregation(self):
+        self.translocate_Bax(pore_Bax_retrotranslocation=False)
+        self.pores_from_Bax_monomers(bax_conf='mem')
+        self.pores_aggregate(bax_conf='mem')
+        self.model.name = 'bax_schwarz_irreversible_aggregation'
 
     def build_model_bax_schwarz_dimer(self):
         self.translocate_Bax()
