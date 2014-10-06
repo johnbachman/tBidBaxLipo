@@ -211,10 +211,41 @@ class CptDataset(object):
         numpy.array
             One-dimensional array with the timecourse.
         """
+        import ipdb; ipdb.set_trace()
 
         # Lazy initialization of the timecourse means
         if self._sds is None:
             self._sds = np.std(self.sim_data, axis=1)
+        return self._sds[cond_index, self.obs_dict[obs_name], :]
+
+    def means_iterative(self, cond_index, obs_name):
+        """Same as :py:method:`means` but prevents loading the entire
+        (uncompressed) dataset into memory by iterating over slices of the
+        matrix.
+        """
+        (n_conds, n_reps, n_obs, n_tpts) = self.sim_data.shape
+        if self._means is None:
+            self._means = np.empty((n_conds, n_obs, n_tpts))
+            for cond_ix in xrange(n_conds):
+                for obs_ix in xrange(n_obs):
+                    self._means[cond_ix, obs_ix, :] = \
+                            np.mean(self.sim_data[cond_ix, :, obs_ix, :])
+                print '%d' % cond_ix
+        return self._means[cond_index, self.obs_dict[obs_name], :]
+
+    def sds_iterative(self, cond_index, obs_name):
+        """Same as :py:method:`sds` but prevents loading the entire
+        (uncompressed) dataset into memory by iterating over slices of the
+        matrix.
+        """
+        (n_conds, n_reps, n_obs, n_tpts) = self.sim_data.shape
+        if self._sds is None:
+            self._sds = np.empty((n_conds, n_obs, n_tpts))
+            for cond_ix in xrange(n_conds):
+                for obs_ix in xrange(n_obs):
+                    self._sds[cond_ix, obs_ix, :] = \
+                            np.std(self.sim_data[cond_ix, :, obs_ix, :])
+                print '%d' % cond_ix
         return self._sds[cond_index, self.obs_dict[obs_name], :]
 
     def get_mean_dye_release(self, cond_index, pore_obs_prefix='pores'):
