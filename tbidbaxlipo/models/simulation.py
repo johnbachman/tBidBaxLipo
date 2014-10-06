@@ -219,7 +219,7 @@ class CptDataset(object):
         return self._sds[cond_index, self.obs_dict[obs_name], :]
 
     def means_iterative(self, cond_index, obs_name):
-        """Same as :py:method:`means` but prevents loading the entire
+        """Same as :py:meth:`means` but prevents loading the entire
         (uncompressed) dataset into memory by iterating over slices of the
         matrix.
         """
@@ -234,7 +234,7 @@ class CptDataset(object):
         return self._means[cond_index, self.obs_dict[obs_name], :]
 
     def sds_iterative(self, cond_index, obs_name):
-        """Same as :py:method:`sds` but prevents loading the entire
+        """Same as :py:meth:`sds` but prevents loading the entire
         (uncompressed) dataset into memory by iterating over slices of the
         matrix.
         """
