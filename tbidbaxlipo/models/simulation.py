@@ -211,7 +211,6 @@ class CptDataset(object):
         numpy.array
             One-dimensional array with the timecourse.
         """
-        import ipdb; ipdb.set_trace()
 
         # Lazy initialization of the timecourse means
         if self._sds is None:
