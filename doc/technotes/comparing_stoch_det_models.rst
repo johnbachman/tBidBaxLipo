@@ -9,7 +9,8 @@ stochastic simulations to perform a meaningful comparison also often requires
 that the simulations be run in parallel on a computing cluster. The following
 is a protocol for how to do this using the scripts in this package.
 
-**1. Write a script to build the SSA model and run it.**
+1. Write a script to build the SSA model and run it.
+----------------------------------------------------
 
 The module :py:mod:`tbidbaxlipo.models.simulation` contains most of the
 boilerplate code involved in setting up and parsing stochastic simulation
@@ -79,7 +80,8 @@ parsing of command line arguments and running the appropriate job in the
     it to do a test run locally. However, if there is more than one job
     in the job list, you will have to pass in an index.
 
-**2. Submit the run script jobs via LSF.**
+2. Submit the run script jobs via LSF.
+--------------------------------------
 
 Log into the computing cluster and navigate to the directory on the server
 (e.g. `tbidbaxlipo/plots/mysim`) where you want the simulation results to be
@@ -99,25 +101,81 @@ directories ``data_0``, ``data_1``, etc. The numbers associated with the
 directories are matched to the index of the jobs in the ``jobs`` list of the
 run script.
 
-**3. Parse the results back.**
+3. Parse the results back.
+--------------------------
 
-The parsing functionality of :py:mod:`tbidbaxlipo.models.simulation` will
-parse the simulation results into an HDF5 file. To generate the HDF5
-file, run the script::
+The parsing functionality of :py:mod:`tbidbaxlipo.models.simulation` will parse
+the simulation results into an HDF5 file. There are two general approaches to
+parsing: the first is to load all of the BNG files and write the final HDF5
+file in one process; the second is to pre-parse BNG files into assemble
+separate HDF5 files for each simulation condition (each Job instance in the job
+list) and then assemble them into the final HDF5 file. The latter approach has
+the advantage that the rate-limiting step of BNG file parsing can be run in
+parallel.
 
-    python -m tbidbaxlipo.models.simulation parse [hdf5_filename] [dirs]
+parse_single
+~~~~~~~~~~~~
 
-Command-line arguments include the basename of the HDF5 filename to generate
-(the standard name is ``data``, which will result in the file ``data.hdf5``)
-and a list of data directories, typically ``data_*``, so the typical command
-will be::
+To parse data from a single job/condition, run::
 
-    python -m tbidbaxlipo.models.simulation parse data data_*
+    python -m tbidbaxlipo.models.simulation parse_single [hdf5_file] [dir]
 
-Note that if there are many simulations, the parsing process can take a long
-time.
+For example::
 
-**4. (Optional) Make the data an importable resource.**
+    python -m tbidbaxlipo.models.simulation parse_single data data_0
+
+This will parse the .gdat files in the directory data_0 into the file
+data.hdf5.
+
+parse_set
+~~~~~~~~~
+
+To parse data from a list of different conditions, run::
+
+    python -m tbidbaxlipo.models.simulation parse_set [hdf5_file] [dir_base] [num_dirs]
+
+This will iteratively parse .gdat files from the directories '%s%d' %
+(dir_base, i) for i ranging from 0 through num_dirs - 1.
+
+For example::
+
+    python -m tbidbaxlipo.models.simulation parse_set data data_ 20
+
+Note that if there are many simulations or many conditions, the parsing process
+can take a long time.
+
+parse_parallel
+~~~~~~~~~~~~~~
+
+Since parse_set can take a very long time to iterate over all of the .gdat
+files, it is often more efficient to submit a parallel job to parse the data in
+stages. To do this, open a shell on Orchestra and run::
+
+    python -m tbidbaxlipo.models.simulation parse_parallel [hdf5_file] [dir_base] [num_dirs]
+
+Note that the arguments are the same as for parse_set. This will submit an LSF
+job to parse each of the data directories (using parse_single). The result
+will be a set of HDF5 files with names corresponding to the data directories,
+e.g. data_0.hdf5, data_1.hdf5, etc. These HDF5 files can then be assembled into
+the full HDF5 file using parse_assemble.
+
+parse_assemble
+~~~~~~~~~~~~~~
+
+Run this after generating a set of HDF5 files via parse_parallel. The syntax
+is similar to parse_set, except the arguments refer to HDF5 files rather
+than data directories::
+
+    python -m tbidbaxlipo.models.simulation parse_assemble [hdf5_file] [hdf5_base] [num_files]
+
+For example, to parse 20 HDF5 files data_0.hdf5, data_1.hdf5, etc. into a single HDF5 output file data, run::
+
+    python -m tbidbaxlipo.models.simulation parse_assemble data data_ 20
+
+Note here that the .hdf5 suffix is added automatically.
+
+4. (Optional) Make the data an importable resource.
+---------------------------------------------------
 
 If you put the simulation data in a submodule directory, you can add a few
 boilerplate lines to the ``__init__.py`` file which will allow access to the
@@ -135,7 +193,8 @@ The HDF5 dataset can then be imported by calling code as::
 
     from tbidbaxlipo.plots.mysim import data
 
-**5. Plot results and compare with deterministic model.**
+5. Plot results and compare with deterministic model.
+-----------------------------------------------------
 
 .. todo:: The below needs to be updated.
 
