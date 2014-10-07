@@ -1132,7 +1132,7 @@ class Builder(pysb.builder.Builder):
     # Model for NBD + Bid/Bax FRET data
     def build_model_bid_bax_fret(self):
         self.translocate_tBid_Bax()
-        self.tBid_binds_Bax('bh3')
+        self.tBid_binds_Bax('bh3', 'mem')
 
     # Models incorporating dye release
     def build_model_bax_heat(self):
