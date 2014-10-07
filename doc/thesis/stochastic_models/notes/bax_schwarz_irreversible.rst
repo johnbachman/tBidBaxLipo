@@ -16,6 +16,10 @@ Simple model with irreversible permeabilization
             import jobs, data
     from tbidbaxlipo.plots.stoch_det_comparison.plots import *
     plot_bax_timecourse_comparison(jobs, data, 0)
+    plot_bax_timecourse_comparison(jobs, data, 5)
+    plot_bax_timecourse_comparison(jobs, data, 10)
+    plot_bax_timecourse_comparison(jobs, data, 15)
+    plot_bax_timecourse_comparison(jobs, data, 19)
 
 .. plot::
     :context:
