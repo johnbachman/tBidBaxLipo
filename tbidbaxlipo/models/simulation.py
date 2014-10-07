@@ -379,10 +379,17 @@ def save_bng_dirs_to_hdf5(data_basename, num_conditions, filename):
 
     Parameters
     ----------
-    XXXXX
-    data_dirs : list of strings
-        The list of directories containing the .gdat files to load, e.g.
-        `['data_0', 'data_1', 'data_2', ... ]`
+    data_basename : string
+
+        For parsing multiple directories, the base name of the .gdat data
+        directories before the index of the job condition is appended, e.g.,
+        'data_' for the list of directories 'data_0', 'data_1', 'data_2'.
+        However, when there is only a single directory being parsed (i.e.,
+        num_conditions is 1), then this argument is taken to be the full
+        name of the data directory, e.g., 'data_0', and no index is appended.
+    num_conditions : int
+        The number of data directories/conditions, e.g., 3 for the list of
+        directories 'data_0', 'data_1', 'data_2'.
     filename : string
         The name of the HDF5 file to create.
 
@@ -435,6 +442,8 @@ def save_bng_dirs_to_hdf5(data_basename, num_conditions, filename):
     f.create_dataset('dtypes', dtype='uint8', data=map(ord, dtype_pck))
     f.close()
     return dataset
+
+def assemble_hdf5_files(self
 
 def run_main(jobs):
     """A main method for use in run scripts for job submissions.
