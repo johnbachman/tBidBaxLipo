@@ -471,6 +471,8 @@ if __name__ == '__main__':
     usage_msg += "        directories containing .gdat files and saves the\n"
     usage_msg += "        results as an HDF5 file.\n"
     usage_msg += "\n"
+    usage_msg += "    python simulation.py parallel_parse [files or dirs...]\n"
+    usage_msg += "\n"
     usage_msg += "    python simulation.py submit [run_script.py] [num_jobs]\n"
     usage_msg += "        For use with LSF. Calls bsub to submit the desired\n"
     usage_msg += "        number of instances of run_script.py. Note that if\n"
@@ -506,6 +508,37 @@ if __name__ == '__main__':
             print "Please provide a list of .gdat directories."
             print usage_msg
             sys.exit()
+    # Parallel parse
+    elif sys.argv[1] == 'parallel_parse':
+        if len(sys.argv) < 3:
+            print "Please provide a list of files.\n"
+            print usage_msg
+            sys.exit()
+        data_files = sys.argv[2:]
+        if len(data_files) == 0:
+            print "Please provide a list of directories to parse.\n"
+            print usage_msg
+            sys.exit()
+        if not os.path.isdir(data_files[0]):
+            print "Please provide a list of .gdat directories."
+            print usage_msg
+            sys.exit()
+        # All arguments are legit, so submit one job for each data directory
+        queue = 'short'
+        time_limit = '12:00'
+        cmd_list = []
+        for dir_index, data_dir in enumerate(data_files):
+            output_filename = 'parse_dir%d.out' % dir_index
+            cmd_list = ['bsub',
+                        '-W', time_limit,
+                        '-q', queue,
+                        '-o', output_filename,
+                        'python', '-m', 'tbidbaxlipo.models.simulation',
+                        'parse',
+                        data_dir,
+                        data_dir]
+            print ' '.join(cmd_list)
+            subprocess.call(cmd_list)
     # Submit jobs to LSF
     elif sys.argv[1] == 'submit':
         if len(sys.argv) < 4:
