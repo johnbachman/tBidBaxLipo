@@ -362,7 +362,7 @@ class CptDataset(object):
         obs_vars = np.var(data_slice, axis=1)
         return (obs_means, obs_vars)
 
-def save_bng_dirs_to_hdf5(data_dirs, filename):
+def save_bng_dirs_to_hdf5(data_basename, num_conditions, filename):
     """Load the .gdat files in each of the listed directories to HDF5.
 
     The HDF5 file created contains two datasets:
@@ -379,6 +379,7 @@ def save_bng_dirs_to_hdf5(data_dirs, filename):
 
     Parameters
     ----------
+    XXXXX
     data_dirs : list of strings
         The list of directories containing the .gdat files to load, e.g.
         `['data_0', 'data_1', 'data_2', ... ]`
@@ -388,14 +389,13 @@ def save_bng_dirs_to_hdf5(data_dirs, filename):
     Returns
     -------
     h5py dataset
-        The dataset containing the parsed simulation results and the corresponding
-        dtype list.
+        The dataset containing the parsed simulation results and the
+        corresponding dtype list.
     """
-    num_conditions = len(data_dirs)
     dataset = None
-
     print "Loading BNG simulation results from data directories..."
-    for condition_index, data_dir in enumerate(data_dirs):
+    for condition_index in range(num_conditions):
+        data_dir = '%s%d' % (data_basename, condition_index)
         print "Loading data from directory %s" % data_dir
         gdat_files = glob.glob('%s/*.gdat' % data_dir)
 
@@ -466,12 +466,13 @@ if __name__ == '__main__':
     usage_msg =  "Usage:\n"
     usage_msg += "\n"
     usage_msg += "    python simulation.py parse [hdf5_filename] " \
-                                                "[files or dirs...]\n"
+                                    "[data_dir_base] [n_dirs]\n"
     usage_msg += "        Parses the BNG simulation results from a list of\n"
     usage_msg += "        directories containing .gdat files and saves the\n"
     usage_msg += "        results as an HDF5 file.\n"
     usage_msg += "\n"
-    usage_msg += "    python simulation.py parallel_parse [files or dirs...]\n"
+    usage_msg += "    python simulation.py parallel_parse " \
+                                    "[data_dir_base] [n_dirs]\n"
     usage_msg += "\n"
     usage_msg += "    python simulation.py submit [run_script.py] [num_jobs]\n"
     usage_msg += "        For use with LSF. Calls bsub to submit the desired\n"
@@ -487,48 +488,39 @@ if __name__ == '__main__':
         sys.exit()
     # Parse simulation output files
     if sys.argv[1] == 'parse':
-        if len(sys.argv) < 4:
-            print "Please provide an output filename and a list of files.\n"
+        if len(sys.argv) < 5:
+            print "Please provide an output filename, base directory name, " \
+                  "and the number of directories.\n"
             print usage_msg
             sys.exit()
         hdf5_filename = sys.argv[2]
-        data_files = sys.argv[3:]
-        if hdf5_filename.endswith('.gdat') or os.path.isdir(hdf5_filename):
-            print "The argument after 'parse' should be the basename of the " \
-                  "HDF5 output file.\n"
-            print usage_msg
+        data_basename = sys.argv[3]
+        try:
+            num_dirs = int(sys.argv[4])
+        except ValueError:
+            print "num_dirs must be an integer."
             sys.exit()
-        if len(data_files) == 0:
-            print "Please provide a list of files to parse.\n"
-            print usage_msg
-            sys.exit()
-        if os.path.isdir(data_files[0]):
-            save_bng_dirs_to_hdf5(data_files, hdf5_filename)
-        else:
-            print "Please provide a list of .gdat directories."
-            print usage_msg
-            sys.exit()
+        save_bng_dirs_to_hdf5(data_basename, num_dirs, hdf5_filename)
     # Parallel parse
     elif sys.argv[1] == 'parallel_parse':
-        if len(sys.argv) < 3:
-            print "Please provide a list of files.\n"
+        if len(sys.argv) < 4:
+            print "Please provide a base directory name " \
+                  "and the number of directories.\n"
             print usage_msg
             sys.exit()
-        data_files = sys.argv[2:]
-        if len(data_files) == 0:
-            print "Please provide a list of directories to parse.\n"
-            print usage_msg
-            sys.exit()
-        if not os.path.isdir(data_files[0]):
-            print "Please provide a list of .gdat directories."
-            print usage_msg
+        data_basename = sys.argv[2]
+        try:
+            num_dirs = int(sys.argv[3])
+        except ValueError:
+            print "num_dirs must be an integer."
             sys.exit()
         # All arguments are legit, so submit one job for each data directory
         queue = 'short'
         time_limit = '12:00'
         cmd_list = []
-        for dir_index, data_dir in enumerate(data_files):
-            output_filename = 'parse_dir%d.out' % dir_index
+        for dir_index in range(num_dirs):
+            data_dir = '%s%d' % (data_basename, dir_index)
+            output_filename = 'parse_%s.out' % data_dir
             cmd_list = ['bsub',
                         '-W', time_limit,
                         '-q', queue,
@@ -538,7 +530,7 @@ if __name__ == '__main__':
                         data_dir,
                         data_dir]
             print ' '.join(cmd_list)
-            subprocess.call(cmd_list)
+            #subprocess.call(cmd_list)
     # Submit jobs to LSF
     elif sys.argv[1] == 'submit':
         if len(sys.argv) < 4:
