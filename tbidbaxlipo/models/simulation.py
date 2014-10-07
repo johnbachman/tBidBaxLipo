@@ -395,7 +395,10 @@ def save_bng_dirs_to_hdf5(data_basename, num_conditions, filename):
     dataset = None
     print "Loading BNG simulation results from data directories..."
     for condition_index in range(num_conditions):
-        data_dir = '%s%d' % (data_basename, condition_index)
+        if num_conditions == 1:
+            data_dir = data_basename
+        else:
+            data_dir = '%s%d' % (data_basename, condition_index)
         print "Loading data from directory %s" % data_dir
         gdat_files = glob.glob('%s/*.gdat' % data_dir)
 
@@ -465,14 +468,29 @@ def run_main(jobs):
 if __name__ == '__main__':
     usage_msg =  "Usage:\n"
     usage_msg += "\n"
-    usage_msg += "    python simulation.py parse [hdf5_filename] " \
+    usage_msg += "    python simulation.py parse_set [hdf5_filename] " \
                                     "[data_dir_base] [n_dirs]\n"
-    usage_msg += "        Parses the BNG simulation results from a list of\n"
+    usage_msg += "        Parses the BNG simulation results from a set of\n"
     usage_msg += "        directories containing .gdat files and saves the\n"
-    usage_msg += "        results as an HDF5 file.\n"
+    usage_msg += "        results as an HDF5 file. Looks for directories\n"
+    usage_msg += "        with names data_dir_base%d' for 0 through n_dirs.\n"
     usage_msg += "\n"
-    usage_msg += "    python simulation.py parallel_parse " \
+    usage_msg += "    python simulation.py parse_single [hdf5_filename] " \
+                                    "[data_dir]\n"
+    usage_msg += "        Parses the BNG simulation results from a specific\n"
+    usage_msg += "        directory, data_dir, and saves the results as an\n"
+    usage_msg += "        HDF5 file.\n"
+    usage_msg += "\n"
+    usage_msg += "    python simulation.py parse_parallel " \
                                     "[data_dir_base] [n_dirs]\n"
+    usage_msg += "        Submits parsing jobs to orchestra. For each of\n"
+    usage_msg += "        n_dirs, runs parse_single as a separate LSF job to\n"
+    usage_msg += "        produce a single HDF5 file corresponding to the\n"
+    usage_msg += "        data in that directory. These can then be assembled\n"
+    usage_msg += "        using parse_assemble.\n"
+    usage_msg += "\n"
+    usage_msg += "    python simulation.py parse_assemble [hdf5_file_base] " \
+                                    "[num_hdf5_files]\n"
     usage_msg += "\n"
     usage_msg += "    python simulation.py submit [run_script.py] [num_jobs]\n"
     usage_msg += "        For use with LSF. Calls bsub to submit the desired\n"
@@ -487,7 +505,7 @@ if __name__ == '__main__':
         print usage_msg
         sys.exit()
     # Parse simulation output files
-    if sys.argv[1] == 'parse':
+    if sys.argv[1] == 'parse_set':
         if len(sys.argv) < 5:
             print "Please provide an output filename, base directory name, " \
                   "and the number of directories.\n"
@@ -501,6 +519,15 @@ if __name__ == '__main__':
             print "num_dirs must be an integer."
             sys.exit()
         save_bng_dirs_to_hdf5(data_basename, num_dirs, hdf5_filename)
+    # Parse a single data directory
+    if sys.argv[1] == 'parse_single':
+        if len(sys.argv) < 4:
+            print "Please provide an output filename and a directory name.\n"
+            print usage_msg
+            sys.exit()
+        hdf5_filename = sys.argv[2]
+        data_dir = sys.argv[3]
+        save_bng_dirs_to_hdf5(data_dir, 1, hdf5_filename)
     # Parallel parse
     elif sys.argv[1] == 'parallel_parse':
         if len(sys.argv) < 4:
@@ -526,11 +553,11 @@ if __name__ == '__main__':
                         '-q', queue,
                         '-o', output_filename,
                         'python', '-m', 'tbidbaxlipo.models.simulation',
-                        'parse',
+                        'parse_single',
                         data_dir,
                         data_dir]
             print ' '.join(cmd_list)
-            #subprocess.call(cmd_list)
+            subprocess.call(cmd_list)
     # Submit jobs to LSF
     elif sys.argv[1] == 'submit':
         if len(sys.argv) < 4:
