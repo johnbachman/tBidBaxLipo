@@ -529,7 +529,7 @@ if __name__ == '__main__':
         data_dir = sys.argv[3]
         save_bng_dirs_to_hdf5(data_dir, 1, hdf5_filename)
     # Parallel parse
-    elif sys.argv[1] == 'parallel_parse':
+    elif sys.argv[1] == 'parse_parallel':
         if len(sys.argv) < 4:
             print "Please provide a base directory name " \
                   "and the number of directories.\n"
