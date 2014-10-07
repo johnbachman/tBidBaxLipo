@@ -443,7 +443,46 @@ def save_bng_dirs_to_hdf5(data_basename, num_conditions, filename):
     f.close()
     return dataset
 
-def assemble_hdf5_files(self
+def assemble_hdf5_files(hdf5_basename, num_conditions, filename):
+    dataset = None
+    print "Assembling BNG simulation results from HDF5 files..."
+    for condition_index in range(num_conditions):
+        if num_conditions == 1:
+            raise ValueError("assemble_hdf5_files should only be used when "
+                             "more than one HDF5 file is being assembled.")
+
+        cur_hdf5_filename = '%s%d.hdf5' % (hdf5_basename, condition_index)
+        print "Loading data from file %s" % cur_hdf5_filename
+        cur_hdf5_data = CptDataset(cur_hdf5_filename)
+
+        # Initialize the output dataset
+        if dataset is None:
+            (temp, num_simulations, num_observables, num_timepoints) = \
+                            cur_hdf5_data.sim_data.shape
+            f = h5py.File('%s.hdf5' % filename, 'w')
+            dataset = f.create_dataset('data',
+                           (num_conditions, num_simulations,
+                            num_observables, num_timepoints),
+                           dtype='float',
+                           chunks=(1, min(SIM_CHUNK_SIZE, num_simulations),
+                                   1, min(TIME_CHUNK_SIZE, num_timepoints)),
+                           compression=9, shuffle=True)
+        # Load the data into the appropriate slot in the dataset
+        # FIXME
+        dataset[condition_index, :, :, :] = cur_hdf5_data.sim_data # VALUE??
+        print "Loaded HDF5 file %d of %d" % \
+                (condition_index+1, num_conditions)
+    # (end iteration over all HDF5 files)
+
+    # Pickle the dtype with the observables and save in the dataset
+    #dtype_pck = pickle.dumps(ssa_result.dtype)
+    #f.create_dataset('dtypes', dtype='uint8', data=map(ord, dtype_pck))
+    #self.dtypes = pickle.loads(self.datafile[dtypes_name][:])
+
+    f.create_dataset('dtypes', dtype='uint8',
+                     data=cur_hdf5_data.datafile['dtypes'][:])
+    f.close()
+    return dataset
 
 def run_main(jobs):
     """A main method for use in run scripts for job submissions.
@@ -498,8 +537,8 @@ if __name__ == '__main__':
     usage_msg += "        data in that directory. These can then be assembled\n"
     usage_msg += "        using parse_assemble.\n"
     usage_msg += "\n"
-    usage_msg += "    python simulation.py parse_assemble [hdf5_file_base] " \
-                                    "[num_hdf5_files]\n"
+    usage_msg += "    python simulation.py parse_assemble [hdf5_filename] "
+    usage_msg += "[hdf5_file_base]\n               [num_hdf5_files]\n"
     usage_msg += "\n"
     usage_msg += "    python simulation.py submit [run_script.py] [num_jobs]\n"
     usage_msg += "        For use with LSF. Calls bsub to submit the desired\n"
@@ -567,6 +606,21 @@ if __name__ == '__main__':
                         data_dir]
             print ' '.join(cmd_list)
             subprocess.call(cmd_list)
+    # Assemble HDF5 files
+    elif sys.argv[1] == 'parse_assemble':
+        if len(sys.argv) < 5:
+            print "Please provide an output filename, base input HDF5 file " \
+                  "name, and the number of HDF5 input files.\n"
+            print usage_msg
+            sys.exit()
+        hdf5_filename = sys.argv[2]
+        data_basename = sys.argv[3]
+        try:
+            num_files = int(sys.argv[4])
+        except ValueError:
+            print "num_hdf5_files must be an integer."
+            sys.exit()
+        assemble_hdf5_files(data_basename, num_files, hdf5_filename)
     # Submit jobs to LSF
     elif sys.argv[1] == 'submit':
         if len(sys.argv) < 4:
