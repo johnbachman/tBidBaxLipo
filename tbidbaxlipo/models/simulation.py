@@ -166,7 +166,7 @@ class CptDataset(object):
         self._means = None
         self._sds = None
 
-    def means(self, cond_index, obs_name):
+    def means_hi_mem(self, cond_index, obs_name):
         """Gets the mean timecourse for the given condition and observable.
 
         The mean is calculated across the simulations on a per-condition basis,
@@ -191,7 +191,7 @@ class CptDataset(object):
             self._means = np.mean(self.sim_data, axis=1)
         return self._means[cond_index, self.obs_dict[obs_name], :]
 
-    def sds(self, cond_index, obs_name):
+    def sds_hi_mem(self, cond_index, obs_name):
         """Gets the SD of the timecourse for the given condition and observable.
 
         The standard deviationis calculated across the simulations on a
@@ -217,8 +217,8 @@ class CptDataset(object):
             self._sds = np.std(self.sim_data, axis=1)
         return self._sds[cond_index, self.obs_dict[obs_name], :]
 
-    def means_iterative(self, cond_index, obs_name):
-        """Same as :py:meth:`means` but prevents loading the entire
+    def means(self, cond_index, obs_name):
+        """Same as :py:meth:`means_hi_mem` but prevents loading the entire
         (uncompressed) dataset into memory by iterating over slices of the
         matrix.
         """
@@ -226,14 +226,13 @@ class CptDataset(object):
         if self._means is None:
             self._means = np.empty((n_conds, n_obs, n_tpts))
             for cond_ix in xrange(n_conds):
-                for obs_ix in xrange(n_obs):
-                    self._means[cond_ix, obs_ix, :] = \
-                            np.mean(self.sim_data[cond_ix, :, obs_ix, :])
+                self._means[cond_ix, :, :] = \
+                        np.mean(self.sim_data[cond_ix, :, :, :], axis=0)
                 print '%d' % cond_ix
         return self._means[cond_index, self.obs_dict[obs_name], :]
 
-    def sds_iterative(self, cond_index, obs_name):
-        """Same as :py:meth:`sds` but prevents loading the entire
+    def sds(self, cond_index, obs_name):
+        """Same as :py:meth:`sds_hi_mem` but prevents loading the entire
         (uncompressed) dataset into memory by iterating over slices of the
         matrix.
         """
@@ -241,9 +240,8 @@ class CptDataset(object):
         if self._sds is None:
             self._sds = np.empty((n_conds, n_obs, n_tpts))
             for cond_ix in xrange(n_conds):
-                for obs_ix in xrange(n_obs):
-                    self._sds[cond_ix, obs_ix, :] = \
-                            np.std(self.sim_data[cond_ix, :, obs_ix, :])
+                self._sds[cond_ix, :, :] = \
+                        np.std(self.sim_data[cond_ix, :, :, :], axis=0)
                 print '%d' % cond_ix
         return self._sds[cond_index, self.obs_dict[obs_name], :]
 
