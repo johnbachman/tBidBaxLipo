@@ -31,24 +31,27 @@ def plot_timecourse_comparison(jobs, data, cond_index):
 
     cpt_time = data.means(cond_index, 'time')
     errorbar(cpt_time,  data.means(cond_index, 'cBax') / n_cpt_Bax_0, \
-             yerr=cBax_se, color='r', label='cBax');
+             yerr=cBax_se, color='r', label='cBax', linestyle='');
     errorbar(cpt_time,  data.means(cond_index, 'mBax') / n_cpt_Bax_0, \
-             yerr=mBax_se, color='g', label='mBax');
+             yerr=mBax_se, color='g', label='mBax', linestyle='');
     errorbar(cpt_time,  data.means(cond_index, 'tBidBax') / n_cpt_Bax_0, \
-             yerr=frac_Bax_se, color='b', label='Bax bound');
+             yerr=frac_Bax_se, color='b', label='Bax bound', linestyle='');
     errorbar(cpt_time,  data.means(cond_index, 'ctBid') / n_cpt_tBid_0, \
-             yerr=ctBid_se, color='r', label='ctBid', linestyle='-');
+             yerr=ctBid_se, color='r', label='ctBid', linestyle='');
     errorbar(cpt_time,  data.means(cond_index, 'mtBid') / n_cpt_tBid_0, \
-             yerr=mtBid_se, color='g', label='mtBid', linestyle='-');
+             yerr=mtBid_se, color='g', label='mtBid', linestyle='');
     errorbar(cpt_time,  data.means(cond_index, 'tBidBax') / n_cpt_tBid_0, \
-             yerr=frac_tBid_se, color='b', label='tBid bound', linestyle='-');
+             yerr=frac_tBid_se, color='b', label='tBid bound', linestyle='');
 
     plot(time, one_cpt_obs['cBax'] / one_cpt_Bax_0, color='r');
     plot(time, one_cpt_obs['mBax'] / one_cpt_Bax_0, color='g');
     plot(time, one_cpt_obs['tBidBax'] / one_cpt_Bax_0, color='b');
-    plot(time, one_cpt_obs['ctBid'] / one_cpt_tBid_0, color='r', linestyle='-');
-    plot(time, one_cpt_obs['mtBid'] / one_cpt_tBid_0, color='g', linestyle='-');
-    plot(time, one_cpt_obs['tBidBax'] / one_cpt_tBid_0, color='b', linestyle='-');
+    plot(time, one_cpt_obs['ctBid'] / one_cpt_tBid_0, color='r',
+            linestyle='--');
+    plot(time, one_cpt_obs['mtBid'] / one_cpt_tBid_0, color='g',
+            linestyle='--');
+    plot(time, one_cpt_obs['tBidBax'] / one_cpt_tBid_0, color='b',
+            linestyle='--');
 
     title('one_cpt vs. n_cpt')
     xlabel('Time (sec)')

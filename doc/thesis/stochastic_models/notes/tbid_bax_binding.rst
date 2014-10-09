@@ -1,7 +1,7 @@
 .. _tbid_bax_binding:
 
 Binding of Bax and tBid
-=========================
+=======================
 
 Now we look at a bimolecular system in which tBid and Bax both translocate
 to liposomes and then binding to each other.
@@ -44,5 +44,4 @@ We now look at the distribution of membrane bounding Bid and Bax:
 
     @savefig tbid_bax_binding_3.png
     In [5]: plot_hist_vs_poisson(jobs, data, 0, 'mtBid', -1);
-
 
