@@ -10,14 +10,14 @@ if os.path.exists(hdf5_filename):
     data = simulation.CptDataset(hdf5_filename)
 
 class Job(simulation.Job):
-    def __init__(self, Bax_0):
-        params_dict = {'Bax_0': Bax_0,
+    def __init__(self, pore_aggregation_rate_k):
+        params_dict = {'Bax_0': 100,
                        'tBid_0': 0.,
                        'Vesicles_0': 5.,
                        'Bax_transloc_kf': 1e-3,
                        'Bax_transloc_kr': 1e-1,
                        'pore_formation_rate_k': 1e-3,
-                       'pore_aggregation_rate_k': 100,
+                       'pore_aggregation_rate_k': pore_aggregation_rate_k,
                        }
         scaling_factor = 20
         tmax = 10000
@@ -34,8 +34,8 @@ class Job(simulation.Job):
 
 # Create jobs for each condition
 #bax_concs = np.logspace(0, 3, 20)
-bax_concs = np.array([100.])
-jobs = [Job(bax_conc) for bax_conc in bax_concs]
+agg_rates = np.logspace(-3, 3, 7)
+jobs = [Job(agg_rate) for agg_rate in agg_rates]
 job_name = 'bax_schwarz_irreversible_agg_titration'
 
 if __name__ == '__main__':
