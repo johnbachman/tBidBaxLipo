@@ -228,7 +228,6 @@ class CptDataset(object):
             for cond_ix in xrange(n_conds):
                 self._means[cond_ix, :, :] = \
                         np.mean(self.sim_data[cond_ix, :, :, :], axis=0)
-                print '%d' % cond_ix
         return self._means[cond_index, self.obs_dict[obs_name], :]
 
     def sds(self, cond_index, obs_name):
@@ -242,7 +241,6 @@ class CptDataset(object):
             for cond_ix in xrange(n_conds):
                 self._sds[cond_ix, :, :] = \
                         np.std(self.sim_data[cond_ix, :, :, :], axis=0)
-                print '%d' % cond_ix
         return self._sds[cond_index, self.obs_dict[obs_name], :]
 
     def get_mean_dye_release(self, cond_index, pore_obs_prefix='pores'):
@@ -566,7 +564,7 @@ if __name__ == '__main__':
             sys.exit()
         save_bng_dirs_to_hdf5(data_basename, num_dirs, hdf5_filename)
     # Parse a single data directory
-    if sys.argv[1] == 'parse_single':
+    elif sys.argv[1] == 'parse_single':
         if len(sys.argv) < 4:
             print "Please provide an output filename and a directory name.\n"
             print usage_msg
