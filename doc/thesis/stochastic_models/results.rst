@@ -113,6 +113,21 @@ Table listing models, with references and features
 
     - European group paper?
 
+Problems arising with fitting pore formation with exponential functions
+-----------------------------------------------------------------------
+
+* If you fit the raw, non-pore-transformed data to a function that goes to
+  Fmax, you find that both the Fmax and the kinetics appear to scale with
+  concentration.
+
+* However, a simple model shows that this should not necessarily be the case.
+  The QSSA shows analytically that the rate of pore formation doesn't scale with
+  Bax--only the number of pores.
+
+* Even this simple model fits the Bax heat data quite well (though not the
+  lag), with only a single parameter (the "Fmax") scaling with Bax, linearly at
+  low concentrations.
+
 Discrepancies in predictions of permeabilization kinetics
 ---------------------------------------------------------
 

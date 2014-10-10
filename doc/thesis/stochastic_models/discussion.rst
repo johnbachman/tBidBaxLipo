@@ -3,6 +3,14 @@ Discussion
 
 .. _previously_published_models:
 
+Implications for cells
+----------------------
+
+Reason for completeness of cell death may simply be the excess of Bax ("pore
+overshoot"). The apparently faster kinetics in cells (3 minutes from first pore
+to death) may simply be because so little permeabilization is required (low
+vesicle numbers, effectively).
+
 Previously published models of permeabilization kinetics
 --------------------------------------------------------
 
