@@ -38,4 +38,3 @@ Simple model with irreversible permeabilization, aggregation, titration
     plot_hist_vs_poisson(jobs, data, 10, 'pBax', -1)
 
 
-
