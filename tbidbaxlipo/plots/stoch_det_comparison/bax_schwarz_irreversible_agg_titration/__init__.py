@@ -16,12 +16,12 @@ class Job(simulation.Job):
                        'Vesicles_0': 5.,
                        'Bax_transloc_kf': 1e-3,
                        'Bax_transloc_kr': 1e-1,
-                       'pore_formation_rate_k': 1e7,
-                       'pore_aggregation_rate_k': pore_aggregation_rate_k,
+                       'pore_formation_rate_k': 1e-3,
+                       'pore_aggregation_rate_k': 1e7,
                        }
         scaling_factor = 20
         tmax = 10000
-        num_sims = 30
+        num_sims = 1
         n_steps = 200
         super(Job, self).__init__(params_dict, scaling_factor, tmax, n_steps,
                                   num_sims)

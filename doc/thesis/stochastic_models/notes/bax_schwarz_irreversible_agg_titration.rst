@@ -3,7 +3,7 @@ Simple model with irreversible permeabilization, aggregation
 
 .. ipython:: python
 
-    from tbidbaxlipo.plots.stoch_det_comparison.bax_schwarz_irreversible_agg \
+    from tbidbaxlipo.plots.stoch_det_comparison.bax_schwarz_irreversible_titration \
              import jobs, data
     m = jobs[0].one_cpt_builder().model
     [r.name for r in m.rules]
@@ -13,7 +13,7 @@ Simple model with irreversible permeabilization, aggregation
     :context:
 
     plt.close('all')
-    from tbidbaxlipo.plots.stoch_det_comparison.bax_schwarz_irreversible_agg \
+    from tbidbaxlipo.plots.stoch_det_comparison.bax_schwarz_irreversible_agg_titration \
             import jobs, data
     from tbidbaxlipo.plots.stoch_det_comparison.plots import *
     plot_bax_timecourse_comparison(jobs, data, 0)

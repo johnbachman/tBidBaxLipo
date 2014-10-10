@@ -10,7 +10,8 @@ Contents:
    translocation
    bax_schwarz
    bax_schwarz_irreversible
-   bax_schwarz_irreversible_agg
+   bax_schwarz_irreversible_agg_rate
+   bax_schwarz_irreversible_agg_titration
    tbid_bax_activation
    tbid_bax_binding
    tbid_titration
