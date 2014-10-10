@@ -36,7 +36,7 @@ class Job(simulation.Job):
 #bax_concs = np.logspace(0, 3, 20)
 agg_rates = np.logspace(-3, 3, 7)
 jobs = [Job(agg_rate) for agg_rate in agg_rates]
-job_name = 'bax_schwarz_irreversible_agg_titration'
+job_name = 'bax_schwarz_irreversible_agg_rate'
 
 if __name__ == '__main__':
     simulation.run_main(jobs)
