@@ -498,30 +498,131 @@ def plot_normalized_by_fmax():
             norm_data = y / float(fmax)
             plt.plot(norm_data)
 
+def calc_pore_size_by_slope():
+    (fmax_arr, k1_arr, k2_arr, conc_list) = \
+           titration_fits.plot_two_exp_fits(bgsub_norm_wells, layout, plot=True)
+    titration_fits.plot_fmax_curve(fmax_arr, conc_list)
+    titration_fits.plot_k1_curve(k1_arr[:,1:], conc_list[1:])
+    titration_fits.plot_k2_curve(k2_arr[:,1:], conc_list[1:])
+
+    conc_lipos = 5.16
+
+    fmax_means = np.mean(fmax_arr, axis=0)
+    fmax_stds = np.std(fmax_arr, axis=0)
+    ratios = conc_list / conc_lipos
+
+    derivs = np.zeros(len(fmax_means)-1)
+    deriv_sds = np.zeros(len(fmax_means)-1)
+    for i in np.arange(1, len(fmax_means)):
+        if i == 1:
+            prev_mean = 0
+            prev_sd = 0
+        else:
+            prev_mean = fmax_means[i-1]
+            prev_sd = fmax_stds[i-1]
+
+        fmax_diff = fmax_means[i] - prev_mean
+        conc_diff = conc_list[i] - conc_list[i-1]
+        derivs[i-1] = fmax_diff / float(conc_diff)
+        deriv_sds[i-1] = np.sqrt(fmax_stds[i] ** 2 + prev_sd ** 2)
+    plt.figure()
+    #plt.errorbar(conc_list[1:], derivs, yerr=deriv_sds, marker='o', )
+    plt.errorbar(conc_list[1:], derivs, marker='o', )
+    plt.title('d[Fmax]/d[Bax]')
+
+    # Fit with exp dist?
+    exp_lambda = fitting.Parameter(1/20.)
+    def exp_dist(x):
+        return exp_lambda() * np.exp(-exp_lambda() * x)
+    (residuals, result) = fitting.fit(exp_dist, [exp_lambda], derivs,
+                                      conc_list[1:])
+    plt.plot(conc_list[1:], exp_dist(conc_list[1:]), color='g')
+    print "exp_lambda: %f" % exp_lambda()
+
+    # Fit with exp decay
+    exp_c0 = fitting.Parameter(0.005)
+    exp_k = fitting.Parameter(1/50.)
+    def exp_decay(x):
+        return exp_c0() * np.exp(-exp_k() * x)
+    (residuals, result) = fitting.fit(exp_decay, [exp_c0, exp_k],
+                                      derivs, conc_list[1:])
+    plt.plot(conc_list[1:], exp_decay(conc_list[1:]), color='r')
+    print "exp_c0: %f" % exp_c0()
+    print "exp_k: %f" % exp_k()
+    # We want to estimate Bax per pore, or pores per Bax, if Bax
+    # holes didn't exist. Basically we want to know the fraction release
+    # we would get if the amount of Bax approached 0. In the case of
+    # the exponential decay, this is the value of exp_c0.
+    # We convert exp_c0 from % release to number of pores:
+    # The derivative dfmax/dBax tells us how much more permeabilization we get
+    # per Bax. At low concentrations, we get a certain amount of release
+    # per Bax that is relatively unaffected by the Bax hole phenomenon.
+    print "exp_c0 * conc_lipos: %f" % (exp_c0() * conc_lipos)
+    # According to this, we get only 0.03 pores per Bax??? So ~30 Baxes
+    # per pore--believe if you account for the fact that the slowdown is
+    # due to Bax depletion, and isn't related to minimum pore size.
+
+def calc_pore_size_by_poisson():
+    (fmax_arr, k1_arr, k2_arr, conc_list) = \
+         titration_fits.plot_two_exp_fits(bgsub_norm_wells, layout, plot=False)
+
+    conc_lipos = 5.16
+
+    fmax_means = np.mean(fmax_arr, axis=0)
+    fmax_stds = np.std(fmax_arr, axis=0)
+    ratios = conc_list / conc_lipos
+
+    k_max = 20
+    for i, ratio in enumerate(ratios):
+        if i == 0:
+            continue
+        # Probability of permeabilization is
+        # 1 - poisson.cdf(pore_size, ratio)
+        pore_sizes = np.arange(1, k_max)
+        probs = [1 - stats.poisson.cdf(pore_size, ratio)
+                 for pore_size in pore_sizes]
+        isf_pore_size = stats.poisson.isf(fmax_means[i], ratio)
+
+        plt.figure()
+        plt.plot(pore_sizes, probs, marker='o')
+        plt.xlabel('Pore size')
+        plt.ylim([-0.05, 1.05])
+        plt.title('Ratio of %f, isf pore size: %f' % (ratio, isf_pore_size))
+        sd_lines = [fmax_means[i] + fmax_stds[i]*num_sds
+                    for num_sds in np.arange(-2, 3)]
+        plt.hlines(sd_lines, 0, k_max, color='r')
+
+    # Predicted Fmax curve for fixed pore size
+    pore_size = 1
+    probs = [1 - stats.poisson.cdf(pore_size, ratio) for ratio in ratios]
+    plt.figure()
+    plt.errorbar(conc_list[1:], fmax_means[1:], yerr=fmax_stds[1:])
+    plt.plot(conc_list, probs)
+    plt.title("Predicted Fmax curve for fixed pore size of %d" % pore_size)
+
+    cov_matrix = result[1] * res_var
+
+    bg_init_sd = np.sqrt(cov_matrix[0,0])
+    k_decay_sd = np.sqrt(cov_matrix[1, 1])
+    bg_bg_sd = np.sqrt(cov_matrix[2, 2])
+
 if __name__ == '__main__':
     plt.ion()
     plt.close('all')
+    calc_pore_size_by_poisson()
+
+    sys.exit()
+
     (k1_arr, k2_arr, tau_arr, conc_list) = plot_pore_fits()
     plot_k_curves(k1_arr, conc_list)
     plot_k_curves(k2_arr, conc_list)
     plot_k_curves(tau_arr, conc_list)
 
-    sys.exit()
     #plot_normalized_to_ref_curve()
     #plot_normalized_by_fmax()
 
-    #(fmax_arr, k1_arr, k2_arr, conc_list) = \
-    #       titration_fits.plot_two_exp_fits(bgsub_norm_wells, layout, plot=True)
-    #titration_fits.plot_fmax_curve(fmax_arr, conc_list)
-    #titration_fits.plot_k1_curve(k1_arr[:,1:], conc_list[1:])
-    #titration_fits.plot_k2_curve(k2_arr[:,1:], conc_list[1:])
 
     #approach_2(bgsub_norm_averages, bgsub_norm_stds, layout)
-
-    (k1_arr, k2_arr, tau_arr, conc_list) = plot_pore_fits(plot=True)
-    plot_k_curves(k1_arr, conc_list)
-    plot_k_curves(k2_arr, conc_list)
-    plot_k_curves(tau_arr, conc_list)
 
     # == Initial rates ==
     (k1_arr, conc_list) = plot_linear_fits(plot=False)
@@ -578,93 +679,6 @@ if __name__ == '__main__':
     plt.title('One_exp_deriv, 1e-4, 4e-2')
     #plt.plot(t, two_exp_deriv(t, 1e-4, 4e-2, 1), color='r')
     """
-
-    fmax_means = np.mean(fmax_arr, axis=0)
-    fmax_stds = np.std(fmax_arr, axis=0)
-    ratios = conc_list / conc_lipos
-
-    derivs = np.zeros(len(fmax_means)-1)
-    deriv_sds = np.zeros(len(fmax_means)-1)
-    for i in np.arange(1, len(fmax_means)):
-        if i == 1:
-            prev_mean = 0
-            prev_sd = 0
-        else:
-            prev_mean = fmax_means[i-1]
-            prev_sd = fmax_stds[i-1]
-
-        fmax_diff = fmax_means[i] - prev_mean
-        conc_diff = conc_list[i] - conc_list[i-1]
-        derivs[i-1] = fmax_diff / float(conc_diff)
-        deriv_sds[i-1] = np.sqrt(fmax_stds[i] ** 2 + prev_sd ** 2)
-    plt.figure()
-    #plt.errorbar(conc_list[1:], derivs, yerr=deriv_sds, marker='o', )
-    plt.errorbar(conc_list[1:], derivs, marker='o', )
-    plt.title('d[Fmax]/d[Bax]')
-    # Fit with exp dist?
-    exp_lambda = fitting.Parameter(1/20.)
-    def exp_dist(x):
-        return exp_lambda() * np.exp(-exp_lambda() * x)
-    (residuals, result) = fitting.fit(exp_dist, [exp_lambda], derivs,
-                                      conc_list[1:])
-    plt.plot(conc_list[1:], exp_dist(conc_list[1:]), color='g')
-    print "exp_lambda: %f" % exp_lambda()
-
-    # Fit with exp decay
-    exp_c0 = fitting.Parameter(0.005)
-    exp_k = fitting.Parameter(1/50.)
-    def exp_decay(x):
-        return exp_c0() * np.exp(-exp_k() * x)
-    (residuals, result) = fitting.fit(exp_decay, [exp_c0, exp_k],
-                                      derivs, conc_list[1:])
-    plt.plot(conc_list[1:], exp_decay(conc_list[1:]), color='r')
-    print "exp_c0: %f" % exp_c0()
-    print "exp_k: %f" % exp_k()
-    # We want to estimate Bax per pore, or pores per Bax, if Bax
-    # holes didn't exist. Basically we want to know the fraction release
-    # we would get if the amount of Bax approached 0. In the case of
-    # the exponential decay, this is the value of exp_c0.
-    # We convert exp_c0 from % release to number of pores:
-    # The derivative dfmax/dBax tells us how much more permeabilization we get
-    # per Bax. At low concentrations, we get a certain amount of release
-    # per Bax that is relatively unaffected by the Bax hole phenomenon.
-    print "exp_c0 * conc_lipos: %f" % (exp_c0() * conc_lipos)
-    # According to this, we get only 0.03 pores per Bax??? So ~30 Baxes
-    # per pore??? No way.
-    sys.exit()
-
-    k_max = 20
-    for i, ratio in enumerate(ratios):
-        if i == 0:
-            continue
-        # Probability of permeabilization is
-        # 1 - poisson.cdf(pore_size, ratio)
-        pore_sizes = np.arange(1, k_max)
-        probs = [1 - stats.poisson.cdf(pore_size, ratio)
-                 for pore_size in pore_sizes]
-        plt.figure()
-        plt.plot(pore_sizes, probs, marker='o')
-        plt.xlabel('Pore size')
-        plt.ylim([-0.05, 1.05])
-        plt.title('Ratio of %f' % ratio)
-        sd_lines = [fmax_means[i] + fmax_stds[i]*num_sds
-                    for num_sds in np.arange(-2, 3)]
-        plt.hlines(sd_lines, 0, k_max, color='r')
-
-    # Predicted Fmax curve for fixed pore size
-    pore_size = 1
-    probs = [1 - stats.poisson.cdf(pore_size, ratio) for ratio in ratios]
-    plt.figure()
-    plt.errorbar(conc_list[1:], fmax_means[1:], yerr=fmax_stds[1:])
-    plt.plot(conc_list, probs)
-    plt.title("Predicted Fmax curve for fixed pore size of %d" % pore_size)
-    sys.exit()
-
-    cov_matrix = result[1] * res_var
-
-    bg_init_sd = np.sqrt(cov_matrix[0,0])
-    k_decay_sd = np.sqrt(cov_matrix[1, 1])
-    bg_bg_sd = np.sqrt(cov_matrix[2, 2])
 
 
     """
