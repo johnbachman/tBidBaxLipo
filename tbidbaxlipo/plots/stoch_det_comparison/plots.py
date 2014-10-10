@@ -79,6 +79,33 @@ def plot_dye_release_titration(jobs, data):
     #legend(loc='lower right')
     show()
 
+def plot_dr_fmax_vs_bax(jobs, data):
+    dr_fmax_means = np.zeros(len(jobs))
+    dr_fmax_ses = np.zeros(len(jobs))
+    bax_concs = np.zeros(len(jobs))
+    num_sims = data.sim_data.shape[1]
+    for cond_index, job in enumerate(jobs):
+        (dr_mean, dr_sd) = data.get_mean_dye_release(cond_index)
+        dr_se = dr_sd / sqrt(num_sims)
+        dr_fmax_means[cond_index] = dr_mean[-1]
+        dr_fmax_ses[cond_index] = dr_se[-1]
+        bax_concs[cond_index] = \
+                       job.one_cpt_builder().model.parameters['Bax_0'].value
+
+    plt.figure()
+    plt.plot(bax_concs, dr_fmax_means)
+    plt.xlabel('[Bax]')
+    plt.ylabel('Final dye release')
+    plt.title('Max dye release vs. [Bax]')
+    plt.show()
+
+    plt.figure()
+    plt.plot(bax_concs, -np.log10(1 - dr_fmax_means))
+    plt.xlabel('[Bax]')
+    plt.ylabel('Inferred max pores')
+    plt.title('Max pores vs. [Bax]')
+    plt.show()
+
 def plot_hist_vs_poisson(jobs, data, cond_index, obs_basename, timepoint_index):
     """Plot the compartment distribution of an observable against a Poisson.
 
