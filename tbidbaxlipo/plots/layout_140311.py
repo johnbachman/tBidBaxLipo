@@ -571,7 +571,7 @@ def calc_pore_size_by_poisson():
     fmax_means = np.mean(fmax_arr, axis=0)
     fmax_stds = np.std(fmax_arr, axis=0)
     ratios = conc_list / conc_lipos
-
+    isf_pore_sizes = []
     k_max = 20
     for i, ratio in enumerate(ratios):
         if i == 0:
@@ -582,7 +582,7 @@ def calc_pore_size_by_poisson():
         probs = [1 - stats.poisson.cdf(pore_size, ratio)
                  for pore_size in pore_sizes]
         isf_pore_size = stats.poisson.isf(fmax_means[i], ratio)
-
+        isf_pore_sizes.append(isf_pore_size)
         plt.figure()
         plt.plot(pore_sizes, probs, marker='o')
         plt.xlabel('Pore size')
@@ -592,6 +592,18 @@ def calc_pore_size_by_poisson():
                     for num_sds in np.arange(-2, 3)]
         plt.hlines(sd_lines, 0, k_max, color='r')
 
+    # Plot min pore size vs. Bax, with linear fit
+    plt.figure()
+    plt.plot(conc_list[1:], isf_pore_sizes, marker='o') # Skip the 0 Bax pt
+    plt.xlabel('Bax')
+    plt.ylabel('Min pore size')
+    plt.show()
+    lin_fit = stats.linregress(conc_list[1:], isf_pore_sizes)
+    slope = lin_fit[0]
+    intercept = lin_fit[1]
+    plt.plot(conc_list[1:], slope*conc_list[1:] + intercept, color='r')
+    plt.title('Slope %f, intercept %f' % (slope, intercept))
+
     # Predicted Fmax curve for fixed pore size
     pore_size = 1
     probs = [1 - stats.poisson.cdf(pore_size, ratio) for ratio in ratios]
@@ -599,6 +611,7 @@ def calc_pore_size_by_poisson():
     plt.errorbar(conc_list[1:], fmax_means[1:], yerr=fmax_stds[1:])
     plt.plot(conc_list, probs)
     plt.title("Predicted Fmax curve for fixed pore size of %d" % pore_size)
+    plt.show()
 
     cov_matrix = result[1] * res_var
 
