@@ -19,9 +19,9 @@ class Job(simulation.Job):
                        'pore_formation_rate_k': 1e-3,
                        }
         scaling_factor = 20
-        tmax = 10000
-        num_sims = 30
-        n_steps = 200
+        tmax = 1000
+        num_sims = 1
+        n_steps = 100
         super(Job, self).__init__(params_dict, scaling_factor, tmax, n_steps,
                                   num_sims)
 
@@ -32,7 +32,8 @@ class Job(simulation.Job):
         return builder
 
 # Create jobs for each condition
-bax_concs = np.logspace(0, 3, 20)
+# Make sure concs are integers for best agreement between 1C and MC models
+bax_concs = np.round(np.logspace(0, 3, 20))
 jobs = [Job(bax_conc) for bax_conc in bax_concs]
 job_name = 'bax_schwarz_irreversible_titration'
 
