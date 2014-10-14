@@ -33,7 +33,7 @@ class Job(simulation.Job):
         return builder
 
 # Create jobs for each condition
-bax_concs = np.logspace(0, 3, 20)
+bax_concs = np.round(np.logspace(0, 3, 20))
 jobs = [Job(bax_conc) for bax_conc in bax_concs]
 job_name = 'bax_schwarz_irreversible_agg_titration'
 

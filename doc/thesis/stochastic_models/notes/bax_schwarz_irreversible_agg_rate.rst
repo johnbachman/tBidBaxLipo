@@ -1,5 +1,5 @@
-Simple model with irreversible permeabilization, aggregation
-============================================================
+Simple model with irreversible permeabilization, aggregation rate
+=================================================================
 
 .. ipython:: python
 

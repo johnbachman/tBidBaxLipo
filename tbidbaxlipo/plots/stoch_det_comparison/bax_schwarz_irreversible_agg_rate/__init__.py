@@ -34,7 +34,8 @@ class Job(simulation.Job):
 
 # Create jobs for each condition
 #bax_concs = np.logspace(0, 3, 20)
-agg_rates = np.logspace(-3, 3, 7)
+agg_rates = np.zeros(9)
+agg_rates[1:] = np.logspace(-4, 3, 8)
 jobs = [Job(agg_rate) for agg_rate in agg_rates]
 job_name = 'bax_schwarz_irreversible_agg_rate'
 

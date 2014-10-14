@@ -32,3 +32,10 @@ Simple model with irreversible permeabilization
 
     plt.close('all')
     plot_hist_vs_poisson(jobs, data, 0, 'pores', -1)
+
+.. plot::
+    :context:
+
+    plt.close('all')
+    plot_hist_vs_poisson(jobs, data, 10, 'pores', -1)
+
