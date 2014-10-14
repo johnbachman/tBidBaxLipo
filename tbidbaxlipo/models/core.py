@@ -463,7 +463,7 @@ class Builder(pysb.builder.Builder):
                  tBid(cpt='sol', conf='aq', bh3=None),
                  tBid_transloc_kr)
 
-    def translocate_Bax(self, pore_Bax_retrotranslocation=True):
+    def translocate_Bax(self):
         print("core: translocate_Bax()")
 
         assert len(self.cpt_list) != 0
@@ -491,16 +491,10 @@ class Builder(pysb.builder.Builder):
                  Bax_mono(cpt='sol', conf='aq') >>
                  Bax_mono(cpt=cpt_name, conf='mem'),
                  Bax_transloc_kf)
-            if pore_Bax_retrotranslocation:
-                self.rule('Bax_mono_translocates_%s_to_sol' % cpt_name,
-                     Bax_mono(cpt=cpt_name, conf='mem') >>
-                     Bax_mono(cpt='sol', conf='aq', pore='n', lipo=None),
-                     Bax_transloc_kr)
-            else:
-                self.rule('Bax_mono_translocates_%s_to_sol' % cpt_name,
-                     Bax_mono(cpt=cpt_name, conf='mem', pore='n') >>
-                     Bax_mono(cpt='sol', conf='aq', pore='n', lipo=None),
-                     Bax_transloc_kr)
+            self.rule('Bax_mono_translocates_%s_to_sol' % cpt_name,
+                 Bax_mono(cpt=cpt_name, conf='mem', pore='n') >>
+                 Bax_mono(cpt='sol', conf='aq', pore='n', lipo=None),
+                 Bax_transloc_kr)
 
 
     def tBid_binds_Bax(self, bax_site, bax_conf):
@@ -774,6 +768,26 @@ class Builder(pysb.builder.Builder):
 
         self.rule('Bax_%s_forms_%dmers_rev' % (bax_conf_state, n),
                   rhs >> lhs, Bax_nmerization_kr)
+
+    def pores_from_Bax_schwarz(self, bax_conf='mem'):
+        """The Schwarz model has pores form directly from the membrane-bound
+        form without the pore former itself changing state. This appears
+        a simpler approach that is worth using for comparing methods of
+        permeabilization."""
+        print("core: pores_from_Bax_schwarz()")
+
+        pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3,
+                                               prior=Normal(-4, 1))
+
+        Bax_mono = self['Bax'](bh3=None, a6=None)
+        Pores = self['Pores']
+
+        for cpt_name in self.cpt_list:
+            self.rule('pores_from_Bax_schwarz_%s' % cpt_name,
+                      Bax_mono(cpt=cpt_name, conf=bax_conf) >>
+                      Bax_mono(cpt=cpt_name, conf=bax_conf) +
+                      Pores(cpt=cpt_name),
+                      pore_formation_rate_k)
 
     def pores_from_Bax_monomers(self, bax_conf='ins'):
         """Basically a way of counting the time-integrated amount of
@@ -1259,16 +1273,16 @@ class Builder(pysb.builder.Builder):
     # Models incorporating dye release
     def build_model_bax_schwarz(self):
         self.translocate_Bax()
-        self.pores_from_Bax_monomers(bax_conf='mem')
+        self.pores_from_Bax_schwarz(bax_conf='mem')
         self.model.name = 'bax_schwarz'
 
     def build_model_bax_schwarz_irreversible(self):
-        self.translocate_Bax(pore_Bax_retrotranslocation=False)
+        self.translocate_Bax()
         self.pores_from_Bax_monomers(bax_conf='mem')
         self.model.name = 'bax_schwarz_irreversible'
 
     def build_model_bax_schwarz_irreversible_aggregation(self):
-        self.translocate_Bax(pore_Bax_retrotranslocation=False)
+        self.translocate_Bax()
         self.pores_from_Bax_monomers(bax_conf='mem')
         self.pores_aggregate(bax_conf='mem')
         self.model.name = 'bax_schwarz_irreversible_aggregation'
