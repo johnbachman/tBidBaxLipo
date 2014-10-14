@@ -72,7 +72,6 @@ def plot_dye_release_titration(jobs, data):
         plot(one_cpt_time, one_cpt_dr, color='b')
         errorbar(cpt_time, dr_mean, yerr=dr_se, color='r',
                  label='Cond %d' % cond_index)
-        xlim([0, 4000])
     xlabel('Time (sec)')
     ylabel('Pct. Dye Release')
     title('Dye release kinetics')
