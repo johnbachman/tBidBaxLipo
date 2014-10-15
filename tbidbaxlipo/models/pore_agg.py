@@ -1,4 +1,5 @@
 from pysb import *
+import math
 
 Model()
 
@@ -11,7 +12,7 @@ Parameter('Vesicles_0', 5.)
 
 Parameter('Bax_to_mem_kf', 1e-2)
 Parameter('Bax_to_mem_kr', 1e-1)
-Parameter('Bax_forms_pores_kf', 1e-3)
+Parameter('Bax_forms_pores_kf', 1e-3 / Vesicles_0.value)
 #Parameter('Bax_aggregates_at_pores_kf', 1e-3)
 
 Initial(Bax(conf='aq', pore='n'), Bax_0)
@@ -57,21 +58,12 @@ if __name__ == '__main__':
             import jobs, data
     """
     from tbidbaxlipo.plots.stoch_det_comparison.bax_schwarz import jobs, data
-    #from tbidbaxlipo.plots.stoch_det_comparison.plots import *
-    #plot_dye_release_titration(jobs, data)
+    from tbidbaxlipo.plots.stoch_det_comparison.plots import *
+    plot_dye_release_titration(jobs, data)
 
     tmax = 4000
     t = np.linspace(0, tmax, 500)
-    s = Solver(model, t)
-    s.run()
+    s1 = Solver(model, t)
+    s1.run()
 
-    plt.plot(t, s.yexpr['DR'], linewidth=2, color='g')
-
-    import pore_agg2
-
-    s = Solver(pore_agg2.model, t)
-    s.run()
-
-    plt.plot(t, s.yexpr['DR'], linewidth=2, color='r', linestyle='--')
-
-
+    plt.plot(t, s1.yexpr['DR'], linewidth=2, color='g', label='pore_agg')
