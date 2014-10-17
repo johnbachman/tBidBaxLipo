@@ -42,6 +42,20 @@ layout = collections.OrderedDict([
         ('ANTS Lipos 12.1 nM', ['G3', 'G4']),
         ])
 
+lipo_conc_names = [
+        'Lipos 0 nM',
+        'Lipos 0.021 nM',
+        'Lipos 0.042 nM',
+        'Lipos 0.085 nM',
+        'Lipos 0.17 nM',
+        'Lipos 0.34 nM',
+        'Lipos 0.68 nM',
+        'Lipos 1.4 nM',
+        'Lipos 2.7 nM',
+        'Lipos 5.4 nM', 
+        'Lipos 10.9 nM',
+        'Lipos 21.7 nM',]
+
 data_path = os.path.dirname(sys.modules['tbidbaxlipo.data'].__file__)
 preinc_file = os.path.abspath(os.path.join(data_path,
                                         '141016_Bax_depletion_preincubation.txt'))
@@ -49,12 +63,8 @@ timecourse_file = os.path.abspath(os.path.join(data_path,
                                         '141016_Bax_depletion_timecourse.txt'))
 triton_file = os.path.abspath(os.path.join(data_path,
                                         '141016_Bax_depletion_triton.txt'))
-
-# Define a few sets of wells
-release_ctrls = ['ANTS Lipos 12.1 nM, Bid/Bax',
-                 'ANTS Lipos 12.1 nM']
-release_ctrl_wells = ['G1', 'G2', 'G3', 'G4']
-
+bg_file = os.path.abspath(os.path.join(data_path,
+                                     '141016_Bax_depletion_added_ANTS_EF.txt'))
 # Assemble all the wells included in the layout
 # http://stackoverflow.com/questions/406121/
 # flattening-a-shallow-list-in-python
@@ -62,6 +72,10 @@ wells_to_read = list(itertools.chain(*layout.values()))
 
 # Preincubation wells
 preinc_wells = read_flexstation_kinetics(preinc_file)
+
+# ANTS+liposomes to serve as background ctrls
+bg_wells = read_flexstation_kinetics(bg_file)
+bg_avgs = get_repeat_averages_by_well(bg_wells)
 
 # Timecourse wells
 timecourse_wells = read_flexstation_kinetics(timecourse_file)
@@ -73,7 +87,7 @@ initial_wells_tc = get_first_points_by_well(timecourse_wells)
 
 # Post-Triton values
 final_wells = read_flexstation_kinetics(triton_file)
-final_wells = extract(wells_to_read, final_wells)
+#final_wells = extract(wells_to_read, final_wells)
 final_well_avgs = get_repeat_averages_by_well(final_wells)
 
 # Averages of raw timecourses across replicates
@@ -111,55 +125,120 @@ shifted to t = 0."""
 # Pore timecourses
 #pores = get_average_pore_timecourses(bgsub_norm_averages)
 """Average pores derived by taking -log(1 - data)."""
-
-def plot_data():
-    """Plots the data and various transformations of it."""
-    ion()
-    # ANTS release ctrls
-    ctrls = extract(release_ctrl_wells, preinc_wells)
-    plot_all(ctrls)
-    return
-    # Timecourse wells
+def plot_preinc():
+    # Get the baseline (untreated wells) and the treated wells
+    ctrl_timecourses_all = extract(['G1', 'G2', 'G3', 'G4'], preinc_wells)
+    # Plot the unnormalized timecourses along with baseline timecourses
     figure()
-    plot_all(timecourse_wells)
-    title("Raw timecourses")
-    return
-    # Averages of raw timecourses across replicates
-    figure()
-    plot_all(timecourse_averages, errors=timecourse_stds)
-    title("Raw timecourses, averaged")
+    plot_all(ctrl_timecourses_all)
+    title('70 uL ANTS lipos, 100 nM Bid/Bax, preinc step')
+    ylabel('RFU')
+    xlabel('Time (sec)')
 
     # Normalized timecourses
-    figure()
-    plot_all(norm_wells)
-    title("Normalized timecourses")
+    # Get baseline value from untreated ANTS wells
+    baseline_wells = extract(['G3', 'G4'], preinc_wells)
+    baseline_value = get_baseline_value(baseline_wells, num_timepoints=10)
+    # Get just the treated ANTS wells
+    ctrl_well_names = ['G1', 'G2']
+    ctrl_timecourses = extract(ctrl_well_names, preinc_wells)
+    ctrl_triton = extract(ctrl_well_names, final_well_avgs)
+    # Normalize
+    ctrl_norm_wells = get_normalized_well_timecourses(
+            ctrl_timecourses, baseline_value, ctrl_triton)
+    # Plot the normalized preinc timecourses
+    plt.figure()
+    plot_all(ctrl_norm_wells)
+    plt.ylim([0, 1])
+    plt.title('70 uL ANTS lipos, 100 nM Bid/Bax, preinc step')
 
-    # Normalized timecourses, background-subtracted
-    figure()
-    plot_all(bgsub_norm_wells)
-    title("Normalized, BG-subtracted timecourses")
+    # Now take the average
+    #ctrl_layout = collections.OrderedDict(
+    #        [('Ctrls', ['G1', 'G2'])])
+    #(ctrl_avgs, ctrl_stds) = averages(ctrl_norm_wells, ctrl_layout)
+    #plt.errorbar(ctrl_avgs['Ctrls'][TIME], ctrl_avgs['Ctrls'][VALUE],
+    #             yerr=ctrl_stds['Ctrls'][VALUE])
+    #(ctrl_avgs2, ctrl_stds2) = averages(ctrl_norm_wells2, ctrl_layout)
+    #ctrl_avgs2['Ctrls'][TIME] += 8000
+    #ctrl_stds2['Ctrls'][TIME] += 8000
+    #plt.errorbar(ctrl_avgs2['Ctrls'][TIME], ctrl_avgs2['Ctrls'][VALUE],
+    #             yerr=ctrl_stds2['Ctrls'][VALUE])
 
-    # Normalized timecourses, averaged
-    figure()
-    plot_all(norm_averages, errors=norm_stds)
-    title("Normalized timecourses, averaged")
+    # Get the value of the ANTS wells during the main timecourse
+    ctrl_timecourses2 = extract(ctrl_well_names, timecourse_wells)
+    ctrl_norm_wells2 = get_normalized_well_timecourses(
+                ctrl_timecourses2, baseline_value, ctrl_triton)
 
-    # Normalized timecourses, background subtracted, averaged
-    figure()
-    plot_all(bgsub_norm_averages, errors=norm_stds)
-    title("Normalized timecourses, BG-subtracted, averaged")
+    # Plot the preinc and treatment timecourses on same plot
+    plt.figure()
+    for ctrl_well in ctrl_well_names:
+        plt.plot(ctrl_norm_wells[ctrl_well][TIME],
+                 ctrl_norm_wells[ctrl_well][VALUE], color='b')
+        plt.plot(ctrl_norm_wells2[ctrl_well][TIME] + 8000,
+                 ctrl_norm_wells2[ctrl_well][VALUE], color='g')
+    plt.ylim([0, 1])
+    plt.xlim([0, 2e4])
+    plt.title('70 uL ANTS lipos, 100 nM Bid/Bax, step')
 
-    # First timepoint shifted to 0 (better for fitting)
-    figure()
-    plot_all(reset_bgsub_means)
-    title("Norm., BG-sub, avg., Reset to t = 0")
+def plot_release_comparisons(lipo_conc_name, plot_abs=True, plot_norm=True,
+                             bar_plot=True):
+    # We'll take care of the calculations before plotting:
+    ref_name = lipo_conc_name
+    preinc_name = lipo_conc_name + ', Pre-inc'
+    # Names of the wells
+    preinc_well_names = layout[preinc_name]
+    ref_well_names = layout[ref_name]
+    # Get the averages for the ref wells from the background read
+    bg_well_avgs = extract(ref_well_names, bg_avgs)
+    # Take the mean of the two ref wells (rows E and F)
+    bg_value = np.mean(bg_well_avgs.values())
+    # Now that we have the background to subtract, normalize the wells
+    # Normalized timecourses
+    tc_wells_for_lipo_conc = extract(preinc_well_names + ref_well_names,
+                                  timecourse_wells)
+    final_wells_for_lipo_conc = extract(preinc_well_names + ref_well_names,
+                                  final_well_avgs)
+    norm_wells_for_lipo_conc = get_normalized_well_timecourses(
+            tc_wells_for_lipo_conc, bg_value, final_wells_for_lipo_conc)
 
-    # Pore timecourses
-    figure()
-    plot_all(pores)
-    title("Avg. pores per liposome")
+    # Now, to the plots.
+    # Simplest version: plot the preinc and ref wells side by side, unnormed
+    if plot_abs:
+        plt.figure()
+        for preinc_well in preinc_well_names:
+            plt.plot(timecourse_wells[preinc_well][TIME],
+                     timecourse_wells[preinc_well][VALUE], color='r')
+        for ref_well in ref_well_names:
+            plt.plot(timecourse_wells[ref_well][TIME],
+                     timecourse_wells[ref_well][VALUE], color='b')
+        # Plot the background value as a reference point on the unnormalized
+        # plot.  This will help to determine if the background is wildly off
+        # from the preincubated wells (since the background wells were taken
+        # from the ref wells (rows E-F), not the preincubated wells, (rows
+        # C-D))
+        plt.hlines(bg_value, 0, 1e4, color='k', linestyle='--')
+    # Plot the normalized version, where the baseline value from rows E and F
+    # are used as the min value, and the per-well Triton reads are used as the
+    # max value.
+    if plot_norm:
+        plt.figure()
+        for preinc_well in preinc_well_names:
+            plt.plot(norm_wells_for_lipo_conc[preinc_well][TIME],
+                     norm_wells_for_lipo_conc[preinc_well][VALUE], color='r')
+        for ref_well in ref_well_names:
+            plt.plot(norm_wells_for_lipo_conc[ref_well][TIME],
+                     norm_wells_for_lipo_conc[ref_well][VALUE], color='b')
+        plt.hlines(0, 0, 1e4, color='k', linestyle='--')
+        plt.ylim([-0.1, 1.1])
+        plt.xlim([-100, 1e4])
+        plt.title(ref_name)
+
+
 
 if __name__ == '__main__':
     # First, plot the ANTS controls to show that reaction should be at eq
-    plot_data()
+    ion()
+    for lipo_conc_name in lipo_conc_names:
+        plot_release_comparisons(lipo_conc_name, plot_abs=False)
+
     # Second, big plot, maybe 3 x 4 subplots, showing 
