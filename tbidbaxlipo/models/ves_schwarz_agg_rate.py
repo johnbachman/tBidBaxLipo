@@ -21,8 +21,8 @@ Initial(Bax(conf='aq', pore='n', dye='none'), Bax_0)
 Initial(Vesicles(pore='n'), Vesicles_0)
 
 Rule('Bax_to_mem_fwd_f',
-     Bax(conf='aq', pore='n', dye='none') + Vesicles(pore='n') >>
-     Bax(conf='mem', pore='n', dye='f') + Vesicles(pore='n'),
+     Bax(conf='aq', pore='n') + Vesicles() >>
+     Bax(conf='mem', pore='n') + Vesicles(),
      Bax_to_mem_kf)
 
 Rule('Bax_to_mem_fwd_e',
