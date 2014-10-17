@@ -507,7 +507,12 @@ def get_baseline_value(baseline_wells, num_timepoints=10):
     the value, which can be used to normalize other wells for which a
     baseline measurement is missing or unreliable (e.g., in fast kinetics
     assays."""
-    pass
+    well_avgs = []
+    for well_name in baseline_wells.keys():
+        values = baseline_wells[well_name][VALUE]
+        well_avgs.append(np.mean(values[0:num_timepoints]))
+    well_avgs = np.array(well_avgs)
+    return np.mean(well_avgs)
 
 def get_normalized_well_timecourses(wells, initial_vals, final_vals):
     """For every well, normalizes to a percentage between the initial value and
@@ -519,7 +524,7 @@ def get_normalized_well_timecourses(wells, initial_vals, final_vals):
         # the dict; otherwise, treat initial_vals as a fixed number offset
         try:
             initial_val = initial_vals[well_name]
-        except TypeError:
+        except IndexError:
             initial_val = initial_vals
 
         range = final_vals[well_name] - initial_val
