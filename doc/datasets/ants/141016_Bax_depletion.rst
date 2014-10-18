@@ -10,7 +10,7 @@ Preincubation timecourse controls
     :context:
 
     from tbidbaxlipo.plots.layout_141016 import \
-        lipo_conc_names, plot_release_comparisons, plot_preinc
+        plot_release_comparisons, plot_preinc
     plot_preinc()
 
 Timecourse comparison
@@ -20,6 +20,5 @@ Timecourse comparison
     :context:
 
     plt.close('all')
-    for lipo_conc_name in lipo_conc_names:
-        plot_release_comparisons(lipo_conc_name, plot_abs=False)
+    plot_release_comparisons(plot_norm=True, plot_abs=False, bar_plot=True)
 
