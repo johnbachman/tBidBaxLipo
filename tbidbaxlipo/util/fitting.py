@@ -24,6 +24,7 @@ Example usage:
 import numpy as np
 from scipy import optimize
 from pysb.integrate import Solver
+from matplotlib import pyplot as plt
 
 class Parameter:
     """A simple object wrapper around parameter values.
@@ -213,3 +214,112 @@ def fit_pysb_builder(builder, obs_name, t, data,
     pysb_fit = PySBFitResult([p() for p in all_params], fit_func(t),
                              residuals, result)
     return pysb_fit
+
+
+class GlobalFit(object):
+    """Least-squares fit of PySB model to a set of multiple timecourses, with a
+    mix of globally and locally fit parameters.
+
+    Parameters
+    ----------
+    builder : pysb.builder.Builder
+        Builder containing the model to fit. Should contain an attribute
+        builder.global_params for the parameters that are to be fit globally.
+    time : np.array
+        The time vector.
+    data : list of np.array
+        The experimental timecourses to fit.
+    params : dict of lists
+        The keys to the dict should be names of parameters in the PySB model
+        (e.g., initial conditions); each value should be a list containing
+        values for the parameter for each of the entries in the data list. The
+        length of each value in the dict should match the length of the data
+        list.
+    obs_name : string
+        The name of the model observable to compare against the data.
+    """
+
+    def __init__(self, builder, time, data, params, obs_name):
+        # Check that the dimensions of everything that has been provided matches
+        for tc in data:
+            if not len(time) == len(tc):
+                raise ValueError("Length of time vector must match the length "
+                                 "of each data vector.")
+        for p, vals in params.iteritems():
+            if not len(vals) == len(data):
+                raise ValueError("Each parameter in the params dict must have "
+                                 "an entry for each entry in the data list.")
+
+        self.builder = builder
+        self.time = time
+        self.data = data
+        self.params = params
+        self.obs_name = obs_name
+
+    # A generic objective function
+    def plot_func(self, x):
+        s = Solver(self.builder.model, self.time)
+        # Iterate over each entry in the data array
+        for data_ix, data in enumerate(self.data):
+            # Set the parameters appropriately for the simulation:
+            # Iterate over the globally fit parameters
+            for g_ix, p in enumerate(self.builder.global_params):
+                p.value = x[g_ix]
+            # Iterate over the locally fit parameters
+            for l_ix, p in enumerate(self.builder.local_params):
+                ix_offset = len(self.builder.global_params) + \
+                            data_ix * len(self.builder.local_params)
+                p.value = x[l_ix + ix_offset]
+            # Now fill in the initial condition parameters
+            for p_name, values in self.params.iteritems():
+                p = self.builder.model.parameters[p_name]
+                p.value = values[data_ix]
+            # Now run the simulation
+            s.run()
+            # Plot the observable
+            plt.plot(self.time, s.yobs[self.obs_name], color='g')
+
+    def fit(self, maxfev=1e5):
+        s = Solver(self.builder.model, self.time)
+
+        # A generic objective function
+        def obj_func(x):
+            # The cumulative error over all timecourses
+            err = 0
+            # Iterate over each entry in the data array
+            for data_ix, data in enumerate(self.data):
+                # Set the parameters appropriately for the simulation:
+                # Iterate over the globally fit parameters
+                for g_ix, p in enumerate(self.builder.global_params):
+                    p.value = x[g_ix]
+                # Iterate over the locally fit parameters
+                for l_ix, p in enumerate(self.builder.local_params):
+                    ix_offset = len(self.builder.global_params) + \
+                                data_ix * len(self.builder.local_params)
+                    p.value = x[l_ix + ix_offset]
+                # Now fill in the initial condition parameters
+                for p_name, values in self.params.iteritems():
+                    p = self.builder.model.parameters[p_name]
+                    p.value = values[data_ix]
+                # Now run the simulation
+                s.run()
+                # Calculate the squared error
+                err += np.sum((data - s.yobs[self.obs_name]) ** 2)
+            return err
+
+        # Initialize the parameter array with initial values
+        p = []
+        for g_p in self.builder.global_params:
+            p.append(g_p.value)
+        for data_ix in range(len(self.data)):
+            for l_p in self.builder.local_params:
+                p.append(l_p.value)
+
+        # Now, run the fit
+        #result = optimize.leastsq(obj_func, p,
+        #                    ftol=1e-12, xtol=1e-12, maxfev=maxfev,
+        #                    full_output=True)
+        result = optimize.minimize(obj_func, p, method='Nelder-Mead')
+
+        return result
+
