@@ -7,8 +7,10 @@ import os
 import tbidbaxlipo.data
 from matplotlib import pyplot as plt
 import numpy as np
-from tbidbaxlipo.util import fitting
-from tbidbaxlipo.plots.titration_fits import TwoExp
+from tbidbaxlipo.util import fitting, set_fig_params_for_publication
+from tbidbaxlipo.plots.titration_fits import TwoExp, OneExpFmax
+from matplotlib.ticker import MultipleLocator, ScalarFormatter
+from tbidbaxlipo.models.nbd.multiconf import Builder
 
 layout = collections.OrderedDict([
         ('Bax 185 nM, Lipos 1 mg/ml',  ['A1']),
@@ -278,14 +280,72 @@ def plot_fmax_curve(fmax_arr, conc_list):
     plt.legend(loc='lower right')
     plt.show()
 
+def plot_timecourse_figure():
+    set_fig_params_for_publication()
+    fig = plt.figure(figsize=(4, 3), dpi=150)
+    #fig.set_size_inches(1, 1)
+    bg_tc = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][VALUE]
+    bg_time = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][TIME]
+    plt.ylabel('$F/F_0$')
+    plt.xlabel(r'Time (sec $\times 10^3$)')
+    plt.ylim([0.7, 5.2])
+    plt.xlim([0, bg_time[-1] + 500])
+    ax = plt.gca()
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+    ax.yaxis.set_tick_params(direction='out')
+    ax.xaxis.set_tick_params(direction='out')
+    ax.set_xticks(np.linspace(0, 1e4, 6))
+    ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
+    plt.subplots_adjust(bottom=0.35, left=0.35)
+    k_vals = []
+    lipo_concs = []
+    for conc_name in bgsub_averages.keys():
+        lipo_conc = float(conc_name.split()[4])
+        lipo_concs.append(lipo_conc)
+        t = bgsub_averages[conc_name][TIME]
+        v = bgsub_averages[conc_name][VALUE]
+        v_bg = v / bg_tc
+        plt.plot(t, v_bg, color='k', linewidth=1)
+
+
+        #def my_exp_func(time):
+        #    return 1. + fmax() * (1 - np.exp(-k() * time))
+        params_dict = {'c1_to_c2_k': 1e-4, 'c1_scaling': 2,
+                       'c0_to_c1_k': 2e-3, 'c2_scaling': 3.8}
+        builder = Builder(params_dict=params_dict)
+        builder.build_model_multiconf(3, v_bg[0], normalized_data=True)
+        builder.model.parameters['c2_scaling'].value = v_bg[-1]
+        pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', t, v_bg)
+        plt.plot(t, pysb_fit.ypred, color='r')
+
+        #fmax1 = fitting.Parameter(3.8)
+        #k1 = fitting.Parameter(1e-3)
+        #fmax2 = fitting.Parameter(4.)
+        #k2 = fitting.Parameter(1e-4)
+        #fitting.fit(my_exp_func, [k], v_bg, t)
+        #tf = OneExpFmax(initial_guesses=[1e-4, 5.0])
+        #k = tf.fit_timecourse(t, v - 1)
+        #plt.plot(t, tf.fit_func(t, k) + 1, color='r')
+        #plt.plot(t, my_exp_func(t), color='r', )
+        #k_vals.append(k())
+
+    #plt.figure()
+    #plt.plot(np.log10(lipo_concs), np.log10(k_vals), marker='o', color='k')
+
+    import ipdb; ipdb.set_trace()
+
 if __name__ == '__main__':
     plt.ion()
+    plot_timecourse_figure()
+    sys.exit()
+
     #plot_data()
     #plot_lipo_background(lipo_bg_wells, lipo_bg_layout)
 
     # Try fitting the high conc trajectory
-    y = bgsub_wells['A10'][VALUE]
-    t = bgsub_wells['A10'][TIME]
+    y = bgsub_wells['A3'][VALUE]
+    t = bgsub_wells['A3'][TIME]
     b = fitting.Parameter(np.mean(y[0:2]))
     fmax = fitting.Parameter(25.)
     k1 = fitting.Parameter(np.log(2)/2000.)
