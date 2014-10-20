@@ -18,4 +18,8 @@ def set_fig_params_for_publication():
             r'\usepackage{helvet}',
             r'\usepackage{sansmath}',
             r'\sansmath']
+    matplotlib.rcParams['xtick.major.size'] = 2
+    matplotlib.rcParams['ytick.major.size'] = 2
+    matplotlib.rcParams['xtick.major.pad'] = 2
+    matplotlib.rcParams['ytick.major.pad'] = 2
 
