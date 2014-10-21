@@ -10,7 +10,8 @@ import numpy as np
 from tbidbaxlipo.util import fitting, set_fig_params_for_publication
 from tbidbaxlipo.plots.titration_fits import TwoExp, OneExpFmax
 from matplotlib.ticker import MultipleLocator, ScalarFormatter
-from tbidbaxlipo.models.nbd.multiconf import Builder
+#from tbidbaxlipo.models.nbd.multiconf import Builder
+from tbidbaxlipo.models.one_cpt import Builder
 
 layout = collections.OrderedDict([
         ('Bax 185 nM, Lipos 1 mg/ml',  ['A1']),
@@ -300,25 +301,35 @@ def plot_timecourse_figure():
     plt.subplots_adjust(bottom=0.35, left=0.35)
     k_vals = []
     lipo_concs = []
+    data = []
     for conc_name in bgsub_averages.keys():
         lipo_conc = float(conc_name.split()[4])
-        lipo_concs.append(lipo_conc)
+        if not (lipo_conc == 1. or lipo_conc == 0.5 or
+                lipo_conc == 0.25 or lipo_conc == 0.125):
+            continue
+        lipo_concs.append(lipo_conc * 15.502)
         t = bgsub_averages[conc_name][TIME]
         v = bgsub_averages[conc_name][VALUE]
         v_bg = v / bg_tc
+        data.append(v_bg)
         plt.plot(t, v_bg, color='k', linewidth=1)
 
 
         #def my_exp_func(time):
         #    return 1. + fmax() * (1 - np.exp(-k() * time))
-        params_dict = {'c1_to_c2_k': 1e-4, 'c1_scaling': 2,
-                       'c0_to_c1_k': 2e-3, 'c2_scaling': 3.8}
+        """
+        params_dict = {'Bax_transloc_kf': 6e-3,
+                       'Bax_transloc_kr': 6e-3,
+                       'basal_Bax_kf': 1e-3}
         builder = Builder(params_dict=params_dict)
-        builder.build_model_multiconf(3, v_bg[0], normalized_data=True)
-        builder.model.parameters['c2_scaling'].value = v_bg[-1]
+        #builder.build_model_multiconf(3, v_bg[0], normalized_data=True)
+        builder.build_model_nbd_2_conf()
+        builder.model.parameters['c1_scaling'].value = v_bg[-1]
+        builder.model.parameters['c0_scaling'].value = v_bg[0]
         pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', t, v_bg)
         plt.plot(t, pysb_fit.ypred, color='r')
-
+        k_vals.append(pysb_fit.params)
+        """
         #fmax1 = fitting.Parameter(3.8)
         #k1 = fitting.Parameter(1e-3)
         #fmax2 = fitting.Parameter(4.)
@@ -330,10 +341,37 @@ def plot_timecourse_figure():
         #plt.plot(t, my_exp_func(t), color='r', )
         #k_vals.append(k())
 
+    gf = fit_with_2conf(bg_time, data, lipo_concs)
+    gf.plot_func()
+    import ipdb; ipdb.set_trace()
     #plt.figure()
     #plt.plot(np.log10(lipo_concs), np.log10(k_vals), marker='o', color='k')
 
-    import ipdb; ipdb.set_trace()
+def fit_with_3conf(time, data, lipo_concs):
+    bd = Builder()
+    bd.build_model_nbd_3_conf()
+    bd.global_params = [bd['c1_scaling'], bd['c2_scaling'], bd['basal_Bax_kf'],
+                        bd['pore_formation_rate_k'], bd['Bax_transloc_kr']]
+    bd.local_params = [bd['Bax_transloc_kf']]
+    params = {'Vesicles_0': lipo_concs}
+    gf = fitting.GlobalFit(bd, time, data, params, 'NBD')
+    gf.fit()
+    return gf
+
+def fit_with_2conf(time, data, lipo_concs):
+    bd = Builder()
+    params_dict = {'c1_scaling': 4.85,
+                   'basal_Bax_kf': 1.73e-3,
+                   'Bax_transloc_kr': 1.4835e-1,
+                   'Bax_transloc_kf': 1e-2}
+    bd.build_model_nbd_2_conf()
+    bd.global_params = [bd['c1_scaling'], bd['basal_Bax_kf'],
+                        bd['Bax_transloc_kr'], bd['Bax_transloc_kf']]
+    bd.local_params = []
+    params = {'Vesicles_0': lipo_concs}
+    gf = fitting.GlobalFit(bd, time, data, params, 'NBD')
+    gf.fit()
+    return gf
 
 if __name__ == '__main__':
     plt.ion()
