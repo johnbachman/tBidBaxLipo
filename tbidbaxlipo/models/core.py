@@ -288,6 +288,7 @@ class Builder(pysb.builder.Builder):
         self.observable('cBax', Bax(cpt='sol', conf='aq'))
         self.observable('mBax', Bax(conf='mem'))
         self.observable('iBax', Bax(conf='ins'))
+        self.observable('iBax_nopore', Bax(conf='ins', pore='n'))
         self.observable('tBidBax', tBid(bh3=1) % Bax(bh3=1))
         self.observable('Bax2', Bax(bh3=1) % Bax(bh3=1))
         self.observable('Bax4',
@@ -1147,6 +1148,28 @@ class Builder(pysb.builder.Builder):
     def build_model_bid_bax_fret(self):
         self.translocate_tBid_Bax()
         self.tBid_binds_Bax('bh3', 'mem')
+
+    def build_model_nbd_3_conf(self):
+        self.build_model_bax_heat()
+        c0 = self.parameter('c0_scaling', 1.)
+        c1 = self.parameter('c1_scaling', 5.)
+        c2 = self.parameter('c2_scaling', 2.)
+        self.expression('NBD',
+                (c0 * self['cBax'] +
+                c0 * self['mBax'] +
+                c1 * self['iBax_nopore'] +
+                c2 * self['pBax']) / self['Bax_0'].value)
+
+    def build_model_nbd_2_conf(self):
+        self.translocate_Bax()
+        self.basal_Bax_activation()
+        c0 = self.parameter('c0_scaling', 1., prior=None)
+        #c1 = self.parameter('c1_scaling', 5., prior=Normal(0, 1))
+        c1 = self.parameter('c1_scaling', 5., prior=None)
+        self.expression('NBD',
+                (c0 * self['cBax'] +
+                c0 * self['mBax'] +
+                c1 * self['iBax_nopore']) / self['Bax_0'].value)
 
     # Models incorporating dye release
     def build_model_bax_heat(self):
