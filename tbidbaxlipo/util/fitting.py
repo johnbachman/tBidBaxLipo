@@ -295,11 +295,11 @@ class GlobalFit(object):
                 # If minimize was run, the parameters will be in the 'x'
                 # attribute of the result object
                 try:
-                    x = self.result.x
+                    x = 10 ** self.result.x
                 # If leastsq was run, the parameters will be the first entry
                 # in the result tuple
                 except AttributeError:
-                    x = self.result[0]
+                    x = 10 ** self.result[0]
 
         s = Solver(self.builder.model, self.time)
         # Iterate over each entry in the data array
@@ -321,9 +321,9 @@ class GlobalFit(object):
             s.run()
             # Plot the observable
             if self.use_expr:
-                plt.plot(self.time, s.yexpr[self.obs_name], color='g')
+                plt.plot(self.time, s.yexpr[self.obs_name], color='r')
             else:
-                plt.plot(self.time, s.yobs[self.obs_name], color='g')
+                plt.plot(self.time, s.yobs[self.obs_name], color='r')
 
     def fit(self, maxfev=100000, method='Nelder-Mead'):
         """Fits the model to the data.
@@ -331,6 +331,11 @@ class GlobalFit(object):
         The result object from the fitting function (scipy.optimize.minimize)
         is stored in self.result after fitting is completed, and is also
         returned by the function.
+
+        Note that parameters are log10-transformed during fitting, so the
+        parameter values returned from the fit result object must be
+        exponentiated to get them back to untransformed values (e.g.,
+        10 ** globalfit.result.x).
 
         Parameters
         ----------
@@ -357,17 +362,19 @@ class GlobalFit(object):
             else:
                 err = 0
 
+            # NOTE: Parameter values are transformed from log10 units back
+            # into untransformed units here (this prevents negative values).
             # Iterate over each entry in the data array
             for data_ix, data in enumerate(self.data):
                 # Set the parameters appropriately for the simulation:
                 # Iterate over the globally fit parameters
                 for g_ix, p in enumerate(self.builder.global_params):
-                    p.value = x[g_ix]
+                    p.value = 10 ** x[g_ix]
                 # Iterate over the locally fit parameters
                 for l_ix, p in enumerate(self.builder.local_params):
                     ix_offset = len(self.builder.global_params) + \
                                 data_ix * len(self.builder.local_params)
-                    p.value = x[l_ix + ix_offset]
+                    p.value = 10 ** x[l_ix + ix_offset]
                 # Now fill in the initial condition parameters
                 for p_name, values in self.params.iteritems():
                     p = self.builder.model.parameters[p_name]
@@ -392,13 +399,13 @@ class GlobalFit(object):
                 print 'err %f' % err
             return err
 
-        # Initialize the parameter array with initial values
+        # Initialize the parameter array with initial values (in log10 units)
         p = []
         for g_p in self.builder.global_params:
-            p.append(g_p.value)
+            p.append(np.log10(g_p.value))
         for data_ix in range(len(self.data)):
             for l_p in self.builder.local_params:
-                p.append(l_p.value)
+                p.append(np.log10(l_p.value))
 
         # Now, run the fit
         if method == 'leastsq':
