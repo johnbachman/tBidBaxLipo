@@ -217,7 +217,7 @@ def fit_pysb_builder(builder, obs_name, t, data,
 
 
 class GlobalFit(object):
-    """Least-squares fit of PySB model to a set of multiple timecourses, with a
+    """Fit of PySB model to a set of multiple timecourses, with a
     mix of globally and locally fit parameters.
 
     Parameters
@@ -237,9 +237,23 @@ class GlobalFit(object):
         list.
     obs_name : string
         The name of the model observable to compare against the data.
+    obs_type : string, "Expression" or "Observable"
+        Indicates whether the named expression/observable specified by
+        obs_name is to be found in the model's set of Expression objects
+        or Observable objects.
+
+    Attributes
+    ----------
+    result : None or scipy.optimize.minimize fit result object
+        The result field is initialized to None and is assigned the results
+        of fitting after the :py:meth:`fit` method completes successfully.
+    use_expr : boolean
+        Based on the obs_type argument. True if the named observable is an
+        Expression, False if it is an Observable.
     """
 
-    def __init__(self, builder, time, data, params, obs_name):
+    def __init__(self, builder, time, data, params, obs_name,
+                 obs_type='Expression'):
         # Check that the dimensions of everything that has been provided matches
         for tc in data:
             if not len(time) == len(tc):
@@ -249,15 +263,37 @@ class GlobalFit(object):
             if not len(vals) == len(data):
                 raise ValueError("Each parameter in the params dict must have "
                                  "an entry for each entry in the data list.")
-
         self.builder = builder
         self.time = time
         self.data = data
         self.params = params
         self.obs_name = obs_name
+        self.result = None
+        if obs_type == 'Expression':
+            self.use_expr = True
+        elif obs_type == 'Observable':
+            self.use_expr = False
+        else:
+            raise ValueError('obs_type must be Expression or Observable.')
 
     # A generic objective function
-    def plot_func(self, x):
+    def plot_func(self, x=None):
+        """Plots the timecourses with the parameter values given by x.
+
+        Parameters
+        ----------
+        x : np.array or list
+            The parameters to use for the plot. These should be in the same
+            order used by the objective function: globally fit parameters
+            first, then a set of local parameters for each of the timecourses
+            being fit.
+        """
+
+        if x is None:
+            if self.result is None:
+                raise ValueError('x must be a vector of parameter values.')
+            else:
+                x = self.result.x
         s = Solver(self.builder.model, self.time)
         # Iterate over each entry in the data array
         for data_ix, data in enumerate(self.data):
@@ -277,11 +313,20 @@ class GlobalFit(object):
             # Now run the simulation
             s.run()
             # Plot the observable
-            plt.plot(self.time, s.yobs[self.obs_name], color='g')
+            if self.use_expr:
+                plt.plot(self.time, s.yexpr[self.obs_name], color='g')
+            else:
+                plt.plot(self.time, s.yobs[self.obs_name], color='g')
 
     def fit(self, maxfev=1e5):
-        s = Solver(self.builder.model, self.time)
+        """Fits the model to the data.
 
+        The result object from the fitting function (scipy.optimize.minimize)
+        is stored in self.result after fitting is completed, and is also
+        returned by the function.
+        """
+
+        s = Solver(self.builder.model, self.time)
         # A generic objective function
         def obj_func(x):
             # The cumulative error over all timecourses
@@ -304,7 +349,12 @@ class GlobalFit(object):
                 # Now run the simulation
                 s.run()
                 # Calculate the squared error
-                err += np.sum((data - s.yobs[self.obs_name]) ** 2)
+                if self.use_expr:
+                    err += np.sum((data - s.yexpr[self.obs_name]) ** 2)
+                else:
+                    err += np.sum((data - s.yobs[self.obs_name]) ** 2)
+            print 'err %f' % err
+
             return err
 
         # Initialize the parameter array with initial values
@@ -319,7 +369,7 @@ class GlobalFit(object):
         #result = optimize.leastsq(obj_func, p,
         #                    ftol=1e-12, xtol=1e-12, maxfev=maxfev,
         #                    full_output=True)
-        result = optimize.minimize(obj_func, p, method='Nelder-Mead')
+        self.result = optimize.minimize(obj_func, p, method='Nelder-Mead')
 
-        return result
+        return self.result
 
