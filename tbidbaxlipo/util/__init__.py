@@ -11,7 +11,7 @@ fig_gray = '#f7f7f7'
 fig_purple = '#998ec3'
 
 def set_fig_params_for_publication():
-    matplotlib.rcParams['font.size'] = 7
+    matplotlib.rcParams['font.size'] = 6
     matplotlib.rcParams['font.sans-serif'] = 'Arial'
     matplotlib.rcParams['text.usetex'] = True
     matplotlib.rcParams['text.latex.preamble'] = [
