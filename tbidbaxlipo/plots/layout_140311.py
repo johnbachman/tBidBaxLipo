@@ -619,10 +619,18 @@ def calc_pore_size_by_poisson():
     k_decay_sd = np.sqrt(cov_matrix[1, 1])
     bg_bg_sd = np.sqrt(cov_matrix[2, 2])
 
+def get_twoexp_fmax_arr():
+    (fmax_arr, k1_arr, k2_arr, conc_list) = \
+         titration_fits.plot_two_exp_fits(bgsub_norm_wells, layout, plot=False)
+    return (fmax_arr, conc_list)
+
 if __name__ == '__main__':
     plt.ion()
     plt.close('all')
-    calc_pore_size_by_poisson()
+
+    (fmax_arr, k1_arr, k2_arr, conc_list) = \
+         titration_fits.plot_two_exp_fits(bgsub_norm_wells, layout, plot=False)
+    plot_k_curves(fmax_arr, conc_list)
 
     sys.exit()
 
@@ -630,6 +638,8 @@ if __name__ == '__main__':
     plot_k_curves(k1_arr, conc_list)
     plot_k_curves(k2_arr, conc_list)
     plot_k_curves(tau_arr, conc_list)
+
+    calc_pore_size_by_poisson()
 
     #plot_normalized_to_ref_curve()
     #plot_normalized_by_fmax()
