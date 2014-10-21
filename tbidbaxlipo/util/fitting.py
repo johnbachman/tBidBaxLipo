@@ -288,12 +288,19 @@ class GlobalFit(object):
             first, then a set of local parameters for each of the timecourses
             being fit.
         """
-
         if x is None:
             if self.result is None:
                 raise ValueError('x must be a vector of parameter values.')
             else:
-                x = self.result.x
+                # If minimize was run, the parameters will be in the 'x'
+                # attribute of the result object
+                try:
+                    x = self.result.x
+                # If leastsq was run, the parameters will be the first entry
+                # in the result tuple
+                except AttributeError:
+                    x = self.result[0]
+
         s = Solver(self.builder.model, self.time)
         # Iterate over each entry in the data array
         for data_ix, data in enumerate(self.data):
@@ -318,19 +325,38 @@ class GlobalFit(object):
             else:
                 plt.plot(self.time, s.yobs[self.obs_name], color='g')
 
-    def fit(self, maxfev=1e5):
+    def fit(self, maxfev=100000, method='Nelder-Mead'):
         """Fits the model to the data.
 
         The result object from the fitting function (scipy.optimize.minimize)
         is stored in self.result after fitting is completed, and is also
         returned by the function.
+
+        Parameters
+        ----------
+        maxfev : int
+            The maximum number of function evaluations before terminating the
+            optimization procedure.
+        method : string
+            One of the scipy.optimize.minimize optimization methods. Defaults
+            to 'Nelder-Mead'. 'leastsq' will use scipy.optimize.leastsq.
+
+        Returns
+        -------
+        The result object returned by scipy.optimize.minimize or
+        scipy.optimize.leastsq (when the 'leastsq' method is used).
         """
 
         s = Solver(self.builder.model, self.time)
         # A generic objective function
         def obj_func(x):
             # The cumulative error over all timecourses
-            err = 0
+            tc_length = len(self.data[0])
+            if method == 'leastsq':
+                err = np.zeros(len(self.data) * tc_length)
+            else:
+                err = 0
+
             # Iterate over each entry in the data array
             for data_ix, data in enumerate(self.data):
                 # Set the parameters appropriately for the simulation:
@@ -350,11 +376,20 @@ class GlobalFit(object):
                 s.run()
                 # Calculate the squared error
                 if self.use_expr:
-                    err += np.sum((data - s.yexpr[self.obs_name]) ** 2)
+                    ysim = s.yexpr[self.obs_name]
                 else:
-                    err += np.sum((data - s.yobs[self.obs_name]) ** 2)
-            print 'err %f' % err
+                    ysim = s.yobs[self.obs_name]
 
+                if method == 'leastsq':
+                    lbound = data_ix * tc_length
+                    ubound = (data_ix + 1) * tc_length
+                    err[lbound:ubound] = data - ysim
+                else:
+                    err += np.sum((data - ysim) ** 2)
+            if method == 'leastsq':
+                print 'lsq err %f' % np.sum(err ** 2)
+            else:
+                print 'err %f' % err
             return err
 
         # Initialize the parameter array with initial values
@@ -366,10 +401,11 @@ class GlobalFit(object):
                 p.append(l_p.value)
 
         # Now, run the fit
-        #result = optimize.leastsq(obj_func, p,
-        #                    ftol=1e-12, xtol=1e-12, maxfev=maxfev,
-        #                    full_output=True)
-        self.result = optimize.minimize(obj_func, p, method='Nelder-Mead')
+        if method == 'leastsq':
+            self.result = optimize.leastsq(obj_func, p, maxfev=maxfev,
+                                           full_output=True)
+        else:
+            self.result = optimize.minimize(obj_func, p, method=method)
 
         return self.result
 
