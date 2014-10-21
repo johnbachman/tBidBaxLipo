@@ -252,6 +252,38 @@ def plot_release_comparisons(plot_abs=True, plot_norm=True, bar_plot=True):
                 continue
             ref_fmaxes.append(norm_wells_for_lipo_conc[ref_well][VALUE][-1])
 
+        # Make a pub-style plot of the 0.68 nM liposome condition
+        if lipo_conc_name == 'Lipos 0.68 nM':
+            set_fig_params_for_publication()
+            plt.figure(figsize=(1.5, 1.5), dpi=300)
+            for preinc_well in preinc_well_names:
+                line_preinc = plt.plot(
+                         norm_wells_for_lipo_conc[preinc_well][TIME],
+                         norm_wells_for_lipo_conc[preinc_well][VALUE],
+                         color=fig_purple)
+            for ref_well in ref_well_names:
+                line_ref = plt.plot(
+                         norm_wells_for_lipo_conc[ref_well][TIME],
+                         norm_wells_for_lipo_conc[ref_well][VALUE],
+                         color=fig_orange)
+            plt.subplots_adjust(left=0.25, bottom=0.23)
+            ax = plt.gca()
+            ax.xaxis.set_ticks_position('bottom')
+            ax.yaxis.set_ticks_position('left')
+            ax.xaxis.set_tick_params(direction='out')
+            ax.yaxis.set_tick_params(direction='out')
+            ax.set_xticks(np.linspace(0, 1e4, 6))
+            ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
+            plt.ylim([0, 1])
+            plt.xlim([-100, 1e4])
+            plt.xlabel(r'Time (sec $\times 10^3$)')
+            plt.ylabel(r'\% ANTS release')
+            leg = plt.legend((line_ref[0], line_preinc[0]),
+                       ('No preinc.', 'Preinc.'),
+                       loc='right',
+                       prop={'size': 7})
+            leg.draw_frame(False)
+
     # Make the bar plot that is probably what we would show in a publication
     set_fig_params_for_publication()
     plt.figure(figsize=(4, 1))
