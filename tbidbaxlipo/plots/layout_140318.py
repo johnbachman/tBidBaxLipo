@@ -283,7 +283,7 @@ def plot_fmax_curve(fmax_arr, conc_list):
 
 def plot_timecourse_figure():
     set_fig_params_for_publication()
-    fig = plt.figure(figsize=(4, 3), dpi=150)
+    fig = plt.figure(figsize=(1.5, 1.5), dpi=150)
     #fig.set_size_inches(1, 1)
     bg_tc = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][VALUE]
     bg_time = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][TIME]
@@ -298,14 +298,17 @@ def plot_timecourse_figure():
     ax.xaxis.set_tick_params(direction='out')
     ax.set_xticks(np.linspace(0, 1e4, 6))
     ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
-    plt.subplots_adjust(bottom=0.35, left=0.35)
+    plt.subplots_adjust(bottom=0.24, left=0.21)
     k_vals = []
     lipo_concs = []
     data = []
     for conc_name in bgsub_averages.keys():
         lipo_conc = float(conc_name.split()[4])
         if not (lipo_conc == 1. or lipo_conc == 0.5 or
-                lipo_conc == 0.25 or lipo_conc == 0.125):
+                lipo_conc == 0.25 or lipo_conc == 0.125 or
+                lipo_conc == 0.063 or lipo_conc == 0.031 or
+                lipo_conc == 0.016 or lipo_conc == 0.008 or
+                lipo_conc == 0.004 or lipo_conc == 0):
             continue
         lipo_concs.append(lipo_conc * 15.502)
         t = bgsub_averages[conc_name][TIME]
@@ -314,38 +317,8 @@ def plot_timecourse_figure():
         data.append(v_bg)
         plt.plot(t, v_bg, color='k', linewidth=1)
 
-
-        #def my_exp_func(time):
-        #    return 1. + fmax() * (1 - np.exp(-k() * time))
-        """
-        params_dict = {'Bax_transloc_kf': 6e-3,
-                       'Bax_transloc_kr': 6e-3,
-                       'basal_Bax_kf': 1e-3}
-        builder = Builder(params_dict=params_dict)
-        #builder.build_model_multiconf(3, v_bg[0], normalized_data=True)
-        builder.build_model_nbd_2_conf()
-        builder.model.parameters['c1_scaling'].value = v_bg[-1]
-        builder.model.parameters['c0_scaling'].value = v_bg[0]
-        pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', t, v_bg)
-        plt.plot(t, pysb_fit.ypred, color='r')
-        k_vals.append(pysb_fit.params)
-        """
-        #fmax1 = fitting.Parameter(3.8)
-        #k1 = fitting.Parameter(1e-3)
-        #fmax2 = fitting.Parameter(4.)
-        #k2 = fitting.Parameter(1e-4)
-        #fitting.fit(my_exp_func, [k], v_bg, t)
-        #tf = OneExpFmax(initial_guesses=[1e-4, 5.0])
-        #k = tf.fit_timecourse(t, v - 1)
-        #plt.plot(t, tf.fit_func(t, k) + 1, color='r')
-        #plt.plot(t, my_exp_func(t), color='r', )
-        #k_vals.append(k())
-
     gf = fit_with_2conf(bg_time, data, lipo_concs)
     gf.plot_func()
-    import ipdb; ipdb.set_trace()
-    #plt.figure()
-    #plt.plot(np.log10(lipo_concs), np.log10(k_vals), marker='o', color='k')
 
 def fit_with_3conf(time, data, lipo_concs):
     bd = Builder()
