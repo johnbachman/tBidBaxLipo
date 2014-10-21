@@ -241,12 +241,12 @@ class LinkedEq(TitrationFit):
 
     def fit_func(self, t, k_arr):
         """Two-exponential fitting function."""
-        #return ((k_arr[2] / float(k_arr[0] - k_arr[1])) *
-        #        (k_arr[0] * (1 - np.exp(-k_arr[1] * t)) -
-        #         k_arr[1] * (1 - np.exp(-k_arr[0] * t))))
-        return ((k_arr[2] / float(6e-3 - 1.25e-4)) *
-                (6e-3 * (1 - np.exp(-1.25e-4 * t)) -
-                 1.25e-4 * (1 - np.exp(-6e-3 * t))))
+        return ((k_arr[2] / float(k_arr[0] - k_arr[1])) *
+                (k_arr[0] * (1 - np.exp(-k_arr[1] * t)) -
+                 k_arr[1] * (1 - np.exp(-k_arr[0] * t))))
+        #return ((k_arr[2] / float(6e-3 - 1.25e-4)) *
+        #        (6e-3 * (1 - np.exp(-1.25e-4 * t)) -
+        #         1.25e-4 * (1 - np.exp(-6e-3 * t))))
 
         #return (1 - np.exp(-k_arr[1] * (1 - np.exp(- k_arr[0] * t))))
 
