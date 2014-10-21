@@ -475,11 +475,10 @@ class Builder(pysb.builder.Builder):
                                           prior=Normal(-3, 1),
                                           factor=(1/float(self.scaling_factor)))
         else:
-            # In a single-compartment situation, we need to multiply the
-            # forward translocation rate by the concentration of Vesicles
+            # In a single-compartment situation, the scaling is provided
+            # by the pseudo-first order reaction with Vesicles
             Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
-                                          prior=Normal(-3, 1),
-                                          factor=self['Vesicles_0'].value)
+                                          prior=Normal(-3, 1))
 
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1,
                             prior=Normal(-1, 1))
@@ -487,15 +486,26 @@ class Builder(pysb.builder.Builder):
         Bax_mono = self['Bax'](bh3=None, a6=None)
         Vesicles = self['Vesicles']
 
-        for cpt_name in self.cpt_list:
+        if len(self.cpt_list) == 1:
+            cpt_name = self.cpt_list[0]
             self.rule('Bax_mono_translocates_sol_to_%s' % cpt_name,
-                 Bax_mono(cpt='sol', conf='aq') >>
-                 Bax_mono(cpt=cpt_name, conf='mem'),
+                 Bax_mono(cpt='sol', conf='aq') + Vesicles() >>
+                 Bax_mono(cpt=cpt_name, conf='mem') + Vesicles(),
                  Bax_transloc_kf)
             self.rule('Bax_mono_translocates_%s_to_sol' % cpt_name,
                  Bax_mono(cpt=cpt_name, conf='mem', pore='n') >>
                  Bax_mono(cpt='sol', conf='aq', pore='n', lipo=None),
                  Bax_transloc_kr)
+        else:
+            for cpt_name in self.cpt_list:
+                self.rule('Bax_mono_translocates_sol_to_%s' % cpt_name,
+                     Bax_mono(cpt='sol', conf='aq') >>
+                     Bax_mono(cpt=cpt_name, conf='mem'),
+                     Bax_transloc_kf)
+                self.rule('Bax_mono_translocates_%s_to_sol' % cpt_name,
+                     Bax_mono(cpt=cpt_name, conf='mem', pore='n') >>
+                     Bax_mono(cpt='sol', conf='aq', pore='n', lipo=None),
+                     Bax_transloc_kr)
 
 
     def tBid_binds_Bax(self, bax_site, bax_conf):
