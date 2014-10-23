@@ -667,7 +667,8 @@ class Builder(pysb.builder.Builder):
         Bax = self['Bax']
 
         # Reversion of active Bax (P -> S)
-        krev = self.parameter('iBax_reverse_k', 1e-4, prior=Normal(-3, 2))
+        # Estimated at 2e-4 +/- 1e-4 in Shamas-Din doi:10.1038/cddis.2014.234
+        krev = self.parameter('iBax_reverse_k', 2e-4, prior=Normal(-3, 2))
 
         # iBax reverses back to mBax
         self.rule('iBax_reverses',
@@ -1180,6 +1181,10 @@ class Builder(pysb.builder.Builder):
                 (c0 * self['cBax'] +
                 c0 * self['mBax'] +
                 c1 * self['iBax_nopore']) / self['Bax_0'].value)
+
+    def build_model_nbd_2_conf_rev(self):
+        self.build_model_nbd_2_conf()
+        self.Bax_reverses()
 
     # Models incorporating dye release
     def build_model_bax_heat(self):
