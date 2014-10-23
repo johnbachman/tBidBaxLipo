@@ -7,7 +7,7 @@ import os
 import tbidbaxlipo.data
 from matplotlib import pyplot as plt
 import numpy as np
-from tbidbaxlipo.util import fitting, set_fig_params_for_publication
+from tbidbaxlipo.util import fitting, set_fig_params_for_publication, emcee_fit
 from tbidbaxlipo.plots.titration_fits import TwoExp, OneExpFmax
 from matplotlib.ticker import MultipleLocator, ScalarFormatter
 from tbidbaxlipo.models.nbd import multiconf
@@ -301,13 +301,10 @@ def plot_timecourse_figure():
     k_vals = []
     lipo_concs = []
     data = []
+    lipo_concs_to_fit = [1.]
     for conc_name in bgsub_averages.keys():
         lipo_conc = float(conc_name.split()[4])
-        if not (lipo_conc == 1. or lipo_conc == 0.5 or
-                lipo_conc == 0.25 or lipo_conc == 0.125 or
-                lipo_conc == 0.063 or lipo_conc == 0.031 or
-                lipo_conc == 0.016 or lipo_conc == 0.008 or
-                lipo_conc == 0.004 or lipo_conc == 0):
+        if not lipo_conc in lipo_concs_to_fit:
             continue
         lipo_concs.append(lipo_conc * 15.502)
         t = bgsub_averages[conc_name][TIME]
@@ -316,11 +313,12 @@ def plot_timecourse_figure():
         data.append(v_bg)
         plt.plot(t, v_bg, color='k', linewidth=1)
 
+    gf = fit_with_2conf_mc(bg_time, data, lipo_concs)
     #gf = fit_with_2conf(bg_time, data, lipo_concs)
     #gf = fit_with_2conf_rev(bg_time, data, lipo_concs)
-    gf = fit_with_3conf(bg_time, data, lipo_concs)
+    #gf = fit_with_3conf(bg_time, data, lipo_concs)
     #gf = fit_with_simple_3conf(bg_time, data, lipo_concs)
-    gf.plot_func()
+    gf.plot_func(gf.sampler.flatchain[-1])
     return gf
 
 def fit_with_simple_3conf(time, data, lipo_concs):
@@ -366,6 +364,23 @@ def fit_with_3conf(time, data, lipo_concs):
     gf.fit()
     return gf
 
+def fit_with_2conf_mc(time, data, lipo_concs):
+    params_dict = {'c1_scaling': 4.85,
+                   'basal_Bax_kf': 1.73e-3,
+                   'Bax_transloc_kr': 1.4835e-1,
+                   'Bax_transloc_kf': 1e-2}
+    bd = one_cpt.Builder(params_dict=params_dict)
+    bd.build_model_nbd_2_conf()
+    bd.global_params = (bd['c1_scaling'],
+                        bd['Bax_transloc_kf'],
+                        bd['Bax_transloc_kr'],
+                        bd['basal_Bax_kf'])
+    bd.local_params = []
+    params = {'Vesicles_0': lipo_concs}
+    gf = emcee_fit.GlobalFit(bd, time, data, params, 'NBD')
+    gf.sample(20, 200, 500)
+    return gf
+
 def fit_with_2conf(time, data, lipo_concs):
     params_dict = {'c1_scaling': 4.85,
                    'basal_Bax_kf': 1.73e-3,
@@ -405,6 +420,15 @@ def fit_with_2conf_rev(time, data, lipo_concs):
 if __name__ == '__main__':
     plt.ion()
     gf = plot_timecourse_figure()
+    import triangle
+    fig = triangle.corner(gf.sampler.flatchain)
+    fig.savefig("triangle.png")
+    import pickle
+    with open('140318fit.pck', 'w') as f:
+        pickle.dump(gf, f)
+
+    #plt.figure()
+    #plt.hist(chain[:,0], bins=20)
     sys.exit()
 
     #plot_data()
