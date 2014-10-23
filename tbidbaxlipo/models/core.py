@@ -246,7 +246,7 @@ __author__ = 'johnbachman'
 from pysb import *
 import numpy as np
 import pysb.builder
-from bayessb.priors import Normal
+from bayessb.priors import Normal, Uniform
 import sympy
 import math
 import itertools
@@ -1175,8 +1175,7 @@ class Builder(pysb.builder.Builder):
         self.translocate_Bax()
         self.basal_Bax_activation()
         c0 = self.parameter('c0_scaling', 1., prior=None)
-        #c1 = self.parameter('c1_scaling', 5., prior=Normal(0, 1))
-        c1 = self.parameter('c1_scaling', 5., prior=None)
+        c1 = self.parameter('c1_scaling', 5., prior=Uniform(0, 1))
         self.expression('NBD',
                 (c0 * self['cBax'] +
                 c0 * self['mBax'] +
