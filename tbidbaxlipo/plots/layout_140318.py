@@ -10,8 +10,8 @@ import numpy as np
 from tbidbaxlipo.util import fitting, set_fig_params_for_publication
 from tbidbaxlipo.plots.titration_fits import TwoExp, OneExpFmax
 from matplotlib.ticker import MultipleLocator, ScalarFormatter
-#from tbidbaxlipo.models.nbd.multiconf import Builder
-from tbidbaxlipo.models.one_cpt import Builder
+from tbidbaxlipo.models.nbd import multiconf
+from tbidbaxlipo.models import one_cpt
 
 layout = collections.OrderedDict([
         ('Bax 185 nM, Lipos 1 mg/ml',  ['A1']),
@@ -283,8 +283,7 @@ def plot_fmax_curve(fmax_arr, conc_list):
 
 def plot_timecourse_figure():
     set_fig_params_for_publication()
-    fig = plt.figure(figsize=(1.5, 1.5), dpi=150)
-    #fig.set_size_inches(1, 1)
+    fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
     bg_tc = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][VALUE]
     bg_time = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][TIME]
     plt.ylabel('$F/F_0$')
@@ -317,29 +316,86 @@ def plot_timecourse_figure():
         data.append(v_bg)
         plt.plot(t, v_bg, color='k', linewidth=1)
 
-    gf = fit_with_2conf(bg_time, data, lipo_concs)
+    #gf = fit_with_2conf(bg_time, data, lipo_concs)
+    #gf = fit_with_2conf_rev(bg_time, data, lipo_concs)
+    gf = fit_with_3conf(bg_time, data, lipo_concs)
+    #gf = fit_with_simple_3conf(bg_time, data, lipo_concs)
     gf.plot_func()
+    return gf
+
+def fit_with_simple_3conf(time, data, lipo_concs):
+    params_dict = {
+                   'c1_scaling': 2.,
+                   'c2_scaling': 4.85,
+                   'c0_to_c1_k': 1e-3,
+                   'c1_to_c2_k': 1e-3,
+                  }
+    bd = multiconf.Builder(params_dict=params_dict)
+    bd.build_model_multiconf(3, 1, normalized_data=True, reversible=False)
+    bd.global_params = (bd['c1_scaling'],
+                        bd['c2_scaling'],
+                        bd['c1_to_c2_k'])
+    bd.local_params = [
+                        bd['c0_to_c1_k'],
+            ]
+    params = {}
+    gf = fitting.GlobalFit(bd, time, data, params, 'NBD')
+    gf.fit()
+    return gf
 
 def fit_with_3conf(time, data, lipo_concs):
-    bd = Builder()
+    params_dict = {
+                   'c1_scaling': 1.,
+                   'c2_scaling': 4.8,
+                   'Bax_transloc_kf': 1e-4,
+                   'Bax_transloc_kr': 1e-1,
+                   'basal_Bax_kf': 9e-1,
+                   'pore_formation_rate_k': 3e-3,
+                  }
+    bd = one_cpt.Builder(params_dict=params_dict)
     bd.build_model_nbd_3_conf()
-    bd.global_params = [bd['c1_scaling'], bd['c2_scaling'], bd['basal_Bax_kf'],
-                        bd['pore_formation_rate_k'], bd['Bax_transloc_kr']]
-    bd.local_params = [bd['Bax_transloc_kf']]
+    bd.global_params = (bd['c1_scaling'],
+                        bd['c2_scaling'],
+                        bd['Bax_transloc_kf'],
+                        bd['Bax_transloc_kr'],
+                        #bd['basal_Bax_kf'],
+                        bd['pore_formation_rate_k'])
+    bd.local_params = [bd['basal_Bax_kf']]
     params = {'Vesicles_0': lipo_concs}
     gf = fitting.GlobalFit(bd, time, data, params, 'NBD')
     gf.fit()
     return gf
 
 def fit_with_2conf(time, data, lipo_concs):
-    bd = Builder()
     params_dict = {'c1_scaling': 4.85,
                    'basal_Bax_kf': 1.73e-3,
                    'Bax_transloc_kr': 1.4835e-1,
                    'Bax_transloc_kf': 1e-2}
+    bd = one_cpt.Builder(params_dict=params_dict)
     bd.build_model_nbd_2_conf()
-    bd.global_params = [bd['c1_scaling'], bd['basal_Bax_kf'],
-                        bd['Bax_transloc_kr'], bd['Bax_transloc_kf']]
+    bd.global_params = (bd['c1_scaling'],
+                        bd['Bax_transloc_kf'],
+                        bd['Bax_transloc_kr'],
+                        bd['basal_Bax_kf'])
+    bd.local_params = []
+    params = {'Vesicles_0': lipo_concs}
+    gf = fitting.GlobalFit(bd, time, data, params, 'NBD')
+    gf.fit()
+    return gf
+
+def fit_with_2conf_rev(time, data, lipo_concs):
+    params_dict = {'c1_scaling': 4.85,
+                   'basal_Bax_kf': 1.73e-3,
+                   'Bax_transloc_kr': 1.4835e-1,
+                   'Bax_transloc_kf': 1e-2,
+                   'iBax_reverse_k': 2e-4}
+    bd = one_cpt.Builder(params_dict=params_dict)
+    bd.build_model_nbd_2_conf_rev()
+    bd.global_params = (bd['c1_scaling'],
+                        bd['Bax_transloc_kf'],
+                        bd['Bax_transloc_kr'],
+                        bd['basal_Bax_kf'],
+                        bd['iBax_reverse_k'])
     bd.local_params = []
     params = {'Vesicles_0': lipo_concs}
     gf = fitting.GlobalFit(bd, time, data, params, 'NBD')
@@ -348,7 +404,7 @@ def fit_with_2conf(time, data, lipo_concs):
 
 if __name__ == '__main__':
     plt.ion()
-    plot_timecourse_figure()
+    gf = plot_timecourse_figure()
     sys.exit()
 
     #plot_data()
