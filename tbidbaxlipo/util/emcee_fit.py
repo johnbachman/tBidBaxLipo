@@ -69,9 +69,9 @@ def likelihood(position, gf):
 
         err += -np.sum(((data - ysim) ** 2) / (2 * 0.2**2))
 
-        if gf.iter % 50 == 0:
-            print 'err %f' % err
-        gf.iter += 1
+        if gf.nstep % 50 == 0:
+            print 'err %f, step %d' % (err, gf.nstep)
+        gf.nstep += 1
 
     return err
 
@@ -141,7 +141,7 @@ class GlobalFit(object):
         self.init_solver()
 
         # Used to keep track of the number of steps run
-        self.iter = 0
+        self.nstep = 0
 
         # Build up a list of priors corresponding to the global and local
         # parameters
@@ -220,7 +220,7 @@ class GlobalFit(object):
             else:
                 plt.plot(self.time, s.yobs[self.obs_name], color='r')
 
-def sample(gf, nwalkers, burn_steps, sample_steps, threads=1):
+def pt_sample(gf, nwalkers, burn_steps, sample_steps, threads=1):
     """Samples from the posterior function.
 
     The emcee sampler containing the chain is stored in gf.sampler.
@@ -242,21 +242,30 @@ def sample(gf, nwalkers, burn_steps, sample_steps, threads=1):
     # Initialize the walkers with starting positions drawn from the priors
     # Note that the priors are in log10 scale already, so they don't
     # need to be transformed here
-    p0 = np.zeros((nwalkers, ndim))
-    for walk_ix in range(nwalkers):
-        for p_ix in range(ndim):
-            p0[walk_ix, p_ix] = gf.priors[p_ix].random()
+    ntemps = 10
+    p0 = np.zeros((ntemps, nwalkers, ndim))
+    for temp_ix in range(ntemps):
+        for walk_ix in range(nwalkers):
+            for p_ix in range(ndim):
+                p0[temp_ix, walk_ix, p_ix] = gf.priors[p_ix].random()
 
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior,
-                                         args=[gf],
-                                         threads=threads)
+    sampler = emcee.PTSampler(ntemps, nwalkers, ndim, likelihood, prior,
+                              loglargs=[gf],
+                              logpargs=[gf],
+                              threads=threads)
+    #sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior,
+    #                                     args=[gf],
+    #                                     threads=threads)
 
     print "Burn in sampling..."
-    pos, prob, state = sampler.run_mcmc(p0, burn_steps)
+    for p, lnprob, lnlike in sampler.sample(p0, iterations=100):
+        pass
     sampler.reset()
 
     print "Main sampling..."
-    sampler.run_mcmc(pos, sample_steps)
+    for p, lnprob, lnlike in sampler.sample(p, lnprob0=lnprob, lnlike0=lnlike,
+                            iterations=500, thin=10):
+        pass
 
     print "Done sampling."
     return sampler

@@ -301,7 +301,7 @@ def plot_timecourse_figure():
     k_vals = []
     lipo_concs = []
     data = []
-    lipo_concs_to_fit = [1.]
+    lipo_concs_to_fit = [1., 0.5, 0.25, 0.125, 0.063, 0.031]
     for conc_name in bgsub_averages.keys():
         lipo_conc = float(conc_name.split()[4])
         if not lipo_conc in lipo_concs_to_fit:
@@ -378,7 +378,8 @@ def fit_with_2conf_mc(time, data, lipo_concs):
     bd.local_params = []
     params = {'Vesicles_0': lipo_concs}
     gf = emcee_fit.GlobalFit(bd, time, data, params, 'NBD')
-    sampler = emcee_fit.sample(gf, 20, 100, 100, threads=2)
+    sampler = emcee_fit.sample(gf, 20, 5, 10, threads=10)
+    import ipdb; ipdb.set_trace()
     return (gf, sampler)
 
 def fit_with_2conf(time, data, lipo_concs):
@@ -423,10 +424,14 @@ if __name__ == '__main__':
 
     plt.ion()
     (gf, sampler) = plot_timecourse_figure()
-    fig = triangle.corner(sampler.flatchain)
-    fig.savefig("triangle.png")
-    with open('140318fit.pck', 'w') as f:
-        pickle.dump((gf, sampler.flatchain), f)
+    import ipdb; ipdb.set_trace()
+    fig = triangle.corner(sampler.chain[0])
+    fig.savefig("triangle0.png")
+    fig = triangle.corner(sampler.chain[-1])
+    fig.savefig("triangle_last.png")
+
+    with open('140318fit_pt.pck', 'w') as f:
+        pickle.dump((gf, sampler.chain), f)
 
     #plt.figure()
     #plt.hist(chain[:,0], bins=20)
