@@ -313,13 +313,13 @@ def plot_timecourse_figure():
         data.append(v_bg)
         plt.plot(t, v_bg, color='k', linewidth=1)
 
-    gf = fit_with_2conf_mc(bg_time, data, lipo_concs)
+    (gf, sampler) = fit_with_2conf_mc(bg_time, data, lipo_concs)
     #gf = fit_with_2conf(bg_time, data, lipo_concs)
     #gf = fit_with_2conf_rev(bg_time, data, lipo_concs)
     #gf = fit_with_3conf(bg_time, data, lipo_concs)
     #gf = fit_with_simple_3conf(bg_time, data, lipo_concs)
-    gf.plot_func(gf.sampler.flatchain[-1])
-    return gf
+    gf.plot_func(sampler.flatchain[-1])
+    return (gf, sampler)
 
 def fit_with_simple_3conf(time, data, lipo_concs):
     params_dict = {
@@ -378,8 +378,8 @@ def fit_with_2conf_mc(time, data, lipo_concs):
     bd.local_params = []
     params = {'Vesicles_0': lipo_concs}
     gf = emcee_fit.GlobalFit(bd, time, data, params, 'NBD')
-    gf.sample(20, 200, 500)
-    return gf
+    sampler = emcee_fit.sample(gf, 20, 100, 100, threads=2)
+    return (gf, sampler)
 
 def fit_with_2conf(time, data, lipo_concs):
     params_dict = {'c1_scaling': 4.85,
@@ -418,14 +418,15 @@ def fit_with_2conf_rev(time, data, lipo_concs):
     return gf
 
 if __name__ == '__main__':
-    plt.ion()
-    gf = plot_timecourse_figure()
     import triangle
-    fig = triangle.corner(gf.sampler.flatchain)
-    fig.savefig("triangle.png")
     import pickle
+
+    plt.ion()
+    (gf, sampler) = plot_timecourse_figure()
+    fig = triangle.corner(sampler.flatchain)
+    fig.savefig("triangle.png")
     with open('140318fit.pck', 'w') as f:
-        pickle.dump(gf, f)
+        pickle.dump((gf, sampler.flatchain), f)
 
     #plt.figure()
     #plt.hist(chain[:,0], bins=20)

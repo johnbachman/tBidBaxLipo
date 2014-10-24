@@ -220,44 +220,44 @@ class GlobalFit(object):
             else:
                 plt.plot(self.time, s.yobs[self.obs_name], color='r')
 
-    def sample(self, nwalkers, burn_steps, sample_steps, threads=1):
-        """Samples from the posterior function.
+def sample(gf, nwalkers, burn_steps, sample_steps, threads=1):
+    """Samples from the posterior function.
 
-        The emcee sampler containing the chain is stored in self.sampler.
+    The emcee sampler containing the chain is stored in gf.sampler.
 
-        Note that parameters are log10-transformed during fitting, so the
-        parameter values returned from the walk must be exponentiated to get
-        them back to untransformed values (e.g., 10 ** self.sampler.flatchain)
+    Note that parameters are log10-transformed during fitting, so the
+    parameter values returned from the walk must be exponentiated to get
+    them back to untransformed values (e.g., 10 ** gf.sampler.flatchain)
 
-        Parameters
-        ----------
-        nwalkers : int
-            Number of walkers to use in the emcee sampler.
-        """
+    Parameters
+    ----------
+    nwalkers : int
+        Number of walkers to use in the emcee sampler.
+    """
 
-        # Initialize the parameter array with initial values (in log10 units)
-        # Number of parameters to estimate
-        ndim = (len(self.builder.global_params) +
-                (len(self.data) * len(self.builder.local_params)))
-        # Initialize the walkers with starting positions drawn from the priors
-        # Note that the priors are in log10 scale already, so they don't
-        # need to be transformed here
-        p0 = np.zeros((nwalkers, ndim))
-        for walk_ix in range(nwalkers):
-            for p_ix in range(ndim):
-                p0[walk_ix, p_ix] = self.priors[p_ix].random()
+    # Initialize the parameter array with initial values (in log10 units)
+    # Number of parameters to estimate
+    ndim = (len(gf.builder.global_params) +
+            (len(gf.data) * len(gf.builder.local_params)))
+    # Initialize the walkers with starting positions drawn from the priors
+    # Note that the priors are in log10 scale already, so they don't
+    # need to be transformed here
+    p0 = np.zeros((nwalkers, ndim))
+    for walk_ix in range(nwalkers):
+        for p_ix in range(ndim):
+            p0[walk_ix, p_ix] = gf.priors[p_ix].random()
 
-        self.sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior,
-                                             args=[self],
-                                             threads=threads)
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior,
+                                         args=[gf],
+                                         threads=threads)
 
-        print "Burn in sampling..."
-        pos, prob, state = self.sampler.run_mcmc(p0, burn_steps)
-        self.sampler.reset()
+    print "Burn in sampling..."
+    pos, prob, state = sampler.run_mcmc(p0, burn_steps)
+    sampler.reset()
 
-        print "Main sampling..."
-        self.sampler.run_mcmc(pos, sample_steps)
+    print "Main sampling..."
+    sampler.run_mcmc(pos, sample_steps)
 
-        print "Done sampling."
-        return self.sampler
+    print "Done sampling."
+    return sampler
 
