@@ -320,6 +320,29 @@ def plot_timecourse_figure():
     #gf = fit_with_simple_3conf(bg_time, data, lipo_concs)
     return (gf, sampler)
 
+def mpi_fit():
+    bg_time = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][TIME]
+    bg_tc = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][VALUE]
+    lipo_concs = []
+    data = []
+    lipo_concs_to_fit = [1., 0.5, 0.25, 0.125, 0.063, 0.031]
+    for conc_name in bgsub_averages.keys():
+        lipo_conc = float(conc_name.split()[4])
+        if not lipo_conc in lipo_concs_to_fit:
+            continue
+        lipo_concs.append(lipo_conc * 15.502)
+        t = bgsub_averages[conc_name][TIME]
+        v = bgsub_averages[conc_name][VALUE]
+        v_bg = v / bg_tc
+        data.append(v_bg)
+
+    (gf, sampler) = fit_with_2conf_mc(bg_time, data, lipo_concs)
+    #gf = fit_with_2conf(bg_time, data, lipo_concs)
+    #gf = fit_with_2conf_rev(bg_time, data, lipo_concs)
+    #gf = fit_with_3conf(bg_time, data, lipo_concs)
+    #gf = fit_with_simple_3conf(bg_time, data, lipo_concs)
+    return (gf, sampler)
+
 def fit_with_simple_3conf(time, data, lipo_concs):
     params_dict = {
                    'c1_scaling': 2.,
@@ -377,7 +400,7 @@ def fit_with_2conf_mc(time, data, lipo_concs):
     bd.local_params = []
     params = {'Vesicles_0': lipo_concs}
     gf = emcee_fit.GlobalFit(bd, time, data, params, 'NBD')
-    sampler = emcee_fit.ens_mpi_sample(gf, 20, 2, 2)
+    sampler = emcee_fit.ens_mpi_sample(gf, 200, 50, 100)
     return (gf, sampler)
 
 def fit_with_2conf(time, data, lipo_concs):
@@ -421,10 +444,11 @@ if __name__ == '__main__':
     import pickle
 
     plt.ion()
-    (gf, sampler) = plot_timecourse_figure()
+    #(gf, sampler) = plot_timecourse_figure()
+    (gf, sampler) = mpi_fit()
     chain = sampler.flatchain
-    fig = triangle.corner(chain)
-    fig.savefig("triangle0.png")
+    #fig = triangle.corner(chain)
+    #fig.savefig("triangle0.png")
 
     with open('140318fit_pt.pck', 'w') as f:
         pickle.dump((gf, chain), f)

@@ -72,9 +72,9 @@ def likelihood(position, gf):
 
         err += -np.sum(((data - ysim) ** 2) / (2 * 0.2**2))
 
-        if gf.nstep % 50 == 0:
-            print 'err %f, step %d' % (err, gf.nstep)
-        gf.nstep += 1
+        #if gf.nstep % 50 == 0:
+        #    print 'err %f, step %d' % (err, gf.nstep)
+        #gf.nstep += 1
 
     return err
 
