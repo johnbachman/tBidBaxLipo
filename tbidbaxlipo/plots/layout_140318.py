@@ -377,8 +377,7 @@ def fit_with_2conf_mc(time, data, lipo_concs):
     bd.local_params = []
     params = {'Vesicles_0': lipo_concs}
     gf = emcee_fit.GlobalFit(bd, time, data, params, 'NBD')
-    sampler = emcee_fit.ens_mpi_sample(gf, 20, 5, 10)
-    import ipdb; ipdb.set_trace()
+    sampler = emcee_fit.ens_mpi_sample(gf, 20, 2, 2)
     return (gf, sampler)
 
 def fit_with_2conf(time, data, lipo_concs):
@@ -423,14 +422,12 @@ if __name__ == '__main__':
 
     plt.ion()
     (gf, sampler) = plot_timecourse_figure()
-    import ipdb; ipdb.set_trace()
-    fig = triangle.corner(sampler.chain[0])
+    chain = sampler.flatchain
+    fig = triangle.corner(chain)
     fig.savefig("triangle0.png")
-    fig = triangle.corner(sampler.chain[-1])
-    fig.savefig("triangle_last.png")
 
     with open('140318fit_pt.pck', 'w') as f:
-        pickle.dump((gf, sampler.chain), f)
+        pickle.dump((gf, chain), f)
 
     #plt.figure()
     #plt.hist(chain[:,0], bins=20)
