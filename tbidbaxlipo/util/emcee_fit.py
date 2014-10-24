@@ -309,8 +309,18 @@ def ens_mpi_sample(gf, nwalkers, burn_steps, sample_steps):
     print "Done sampling."
     return sampler
 
+def pt_mpi_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
+                  pool=None):
+    pool = MPIPool()
+    if not pool.is_master():
+        pool.wait()
+        sys.exit(0)
+
+    return pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=thin,
+                     pool=pool)
+
 def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
-              threads=1):
+              pool=None):
     """Samples from the posterior function.
 
     The emcee sampler containing the chain is stored in gf.sampler.
@@ -332,9 +342,15 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
     thin : int
         Thinning interval; saves only every thin number of steps. Default
         is 1 (saves all steps, no thinning).
-    threads : int
-        Number of threads to use for parallelization. Default is 1.
+    pool : pool object
+        Pool object for parallelization. Can be instance of emcee.utils.MPIPool
+        or multiprocessing.pool (or other pool-like object implementing map
+        method).
     """
+    pool = MPIPool()
+    if not pool.is_master():
+        pool.wait()
+        sys.exit(0)
 
     # Initialize the parameter array with initial values (in log10 units)
     # Number of parameters to estimate
@@ -351,21 +367,26 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
 
     # Create the sampler
     sampler = emcee.PTSampler(ntemps, nwalkers, ndim, likelihood, prior,
-                              loglargs=[gf],
-                              logpargs=[gf],
-                              threads=threads)
+                              loglargs=[gf], logpargs=[gf], pool=pool)
 
     # The PTSampler is implemented as a generator, so it is called in a for
     # loop
     print "Burn in sampling..."
+    nstep = 0
     for p, lnprob, lnlike in sampler.sample(p0, iterations=burn_steps):
-        pass
+        if nstep % 10 == 0:
+            print "nstep %d of " % (nstep, burn_steps)
+        nstep +=1
+
     sampler.reset()
 
     print "Main sampling..."
+    nstep = 0
     for p, lnprob, lnlike in sampler.sample(p, lnprob0=lnprob, lnlike0=lnlike,
                             iterations=sample_steps, thin=thin):
-        pass
+        if nstep % 10 == 0:
+            print "nstep %d of %d" % (nstep, sample_steps)
+        nstep +=1
 
     print "Done sampling."
     return sampler

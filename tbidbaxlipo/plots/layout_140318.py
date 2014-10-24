@@ -400,7 +400,7 @@ def fit_with_2conf_mc(time, data, lipo_concs):
     bd.local_params = []
     params = {'Vesicles_0': lipo_concs}
     gf = emcee_fit.GlobalFit(bd, time, data, params, 'NBD')
-    sampler = emcee_fit.ens_mpi_sample(gf, 200, 50, 100)
+    sampler = emcee_fit.pt_mpi_sample(gf, 20, 100, 5, 10)
     return (gf, sampler)
 
 def fit_with_2conf(time, data, lipo_concs):
