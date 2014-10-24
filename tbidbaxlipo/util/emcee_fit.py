@@ -27,6 +27,54 @@ from pysb.integrate import Solver
 from matplotlib import pyplot as plt
 import emcee
 
+def posterior(position, gf):
+    """A generic posterior function."""
+    return prior(position, gf) + likelihood(position, gf)
+
+def prior(position, gf):
+    """A generic prior function."""
+    prior_prob = 0
+    for i, prior in enumerate(gf.priors):
+        prior_prob += prior.pdf(position[i])
+    return -prior_prob
+
+def likelihood(position, gf):
+    # A generic objective function
+    # The cumulative error over all timecourses
+    tc_length = len(gf.data[0])
+    err = 0
+
+    # Iterate over each entry in the data array
+    for data_ix, data in enumerate(gf.data):
+        # Set the parameters appropriately for the simulation:
+        # Iterate over the globally fit parameters
+        for g_ix, p in enumerate(gf.builder.global_params):
+            p.value = 10 ** position[g_ix]
+        # Iterate over the locally fit parameters
+        for l_ix, p in enumerate(gf.builder.local_params):
+            ix_offset = len(gf.builder.global_params) + \
+                        data_ix * len(gf.builder.local_params)
+            p.value = 10 ** position[l_ix + ix_offset]
+        # Now fill in the initial condition parameters
+        for p_name, values in gf.params.iteritems():
+            p = gf.builder.model.parameters[p_name]
+            p.value = values[data_ix]
+        # Now run the simulation
+        gf.solver.run()
+        # Calculate the squared error
+        if gf.use_expr:
+            ysim = gf.solver.yexpr[gf.obs_name]
+        else:
+            ysim = gf.solver.yobs[gf.obs_name]
+
+        err += -np.sum(((data - ysim) ** 2) / (2 * 0.2**2))
+
+        if gf.iter % 50 == 0:
+            print 'err %f' % err
+        gf.iter += 1
+
+    return err
+
 class GlobalFit(object):
     """Fit of PySB model to a set of multiple timecourses, with a
     mix of globally and locally fit parameters.
@@ -90,7 +138,7 @@ class GlobalFit(object):
         else:
             raise ValueError('obs_type must be Expression or Observable.')
 
-        self.solver = Solver(self.builder.model, self.time)
+        self.init_solver()
 
         # Used to keep track of the number of steps run
         self.iter = 0
@@ -118,52 +166,21 @@ class GlobalFit(object):
                             'The parameter %s, in local_params, must also be '
                             'present in estimate_params.')
 
-    def posterior(self, position):
-        """A generic posterior function."""
-        return self.prior(position) + self.likelihood(position)
+    def __getstate__(self):
+        # Clear solver since it causes problems with pickling
+        state = self.__dict__.copy()
+        if 'solver' in state:
+            del state['solver']
+        return state
 
-    def prior(self, position):
-        """A generic prior function."""
-        prior_prob = 0
-        for i, prior in enumerate(self.priors):
-            prior_prob += prior.pdf(position[i])
-        return -prior_prob
+    def __setstate__(self, state):
+        # Re-init the solver which we didn't pickle
+        self.__dict__.update(state)
+        self.init_solver()
 
-    def likelihood(self, position):
-        # A generic objective function
-        # The cumulative error over all timecourses
-        tc_length = len(self.data[0])
-        err = 0
-
-        # Iterate over each entry in the data array
-        for data_ix, data in enumerate(self.data):
-            # Set the parameters appropriately for the simulation:
-            # Iterate over the globally fit parameters
-            for g_ix, p in enumerate(self.builder.global_params):
-                p.value = 10 ** position[g_ix]
-            # Iterate over the locally fit parameters
-            for l_ix, p in enumerate(self.builder.local_params):
-                ix_offset = len(self.builder.global_params) + \
-                            data_ix * len(self.builder.local_params)
-                p.value = 10 ** position[l_ix + ix_offset]
-            # Now fill in the initial condition parameters
-            for p_name, values in self.params.iteritems():
-                p = self.builder.model.parameters[p_name]
-                p.value = values[data_ix]
-            # Now run the simulation
-            self.solver.run()
-            # Calculate the squared error
-            if self.use_expr:
-                ysim = self.solver.yexpr[self.obs_name]
-            else:
-                ysim = self.solver.yobs[self.obs_name]
-
-            err += -np.sum(((data - ysim) ** 2) / (2 * 0.2**2))
-
-            if self.iter % 50 == 0:
-                print 'err %f' % err
-
-        return err
+    def init_solver(self):
+        """Initialize solver from model and tspan."""
+        self.solver = Solver(self.builder.model, self.time)
 
     # A generic objective function
     def plot_func(self, x):
@@ -203,7 +220,7 @@ class GlobalFit(object):
             else:
                 plt.plot(self.time, s.yobs[self.obs_name], color='r')
 
-    def sample(self, nwalkers, burn_steps, sample_steps):
+    def sample(self, nwalkers, burn_steps, sample_steps, threads=1):
         """Samples from the posterior function.
 
         The emcee sampler containing the chain is stored in self.sampler.
@@ -230,7 +247,9 @@ class GlobalFit(object):
             for p_ix in range(ndim):
                 p0[walk_ix, p_ix] = self.priors[p_ix].random()
 
-        self.sampler = emcee.EnsembleSampler(nwalkers, ndim, self.posterior)
+        self.sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior,
+                                             args=[self],
+                                             threads=threads)
 
         print "Burn in sampling..."
         pos, prob, state = self.sampler.run_mcmc(p0, burn_steps)
@@ -241,3 +260,4 @@ class GlobalFit(object):
 
         print "Done sampling."
         return self.sampler
+
