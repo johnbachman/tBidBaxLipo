@@ -26,6 +26,9 @@ from scipy import optimize
 from pysb.integrate import Solver
 from matplotlib import pyplot as plt
 import emcee
+from emcee.utils import MPIPool
+import mpi4py
+import sys
 
 def posterior(position, gf):
     """A generic posterior function."""
@@ -271,6 +274,40 @@ def ens_sample(gf, nwalkers, burn_steps, sample_steps, threads=1):
     print "Done sampling."
     return sampler
 
+def ens_mpi_sample(gf, nwalkers, burn_steps, sample_steps):
+    pool = MPIPool()
+    if not pool.is_master():
+        pool.wait()
+        sys.exit(0)
+
+    # Initialize the parameter array with initial values (in log10 units)
+    # Number of parameters to estimate
+    ndim = (len(gf.builder.global_params) +
+            (len(gf.data) * len(gf.builder.local_params)))
+    # Initialize the walkers with starting positions drawn from the priors
+    # Note that the priors are in log10 scale already, so they don't
+    # need to be transformed here
+    p0 = np.zeros((nwalkers, ndim))
+    for walk_ix in range(nwalkers):
+        for p_ix in range(ndim):
+            p0[walk_ix, p_ix] = gf.priors[p_ix].random()
+
+    # Create the sampler object
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior,
+                                         args=[gf], pool=pool)
+
+    print "Burn in sampling..."
+    pos, prob, state = sampler.run_mcmc(p0, burn_steps)
+    sampler.reset()
+
+    print "Main sampling..."
+    sampler.run_mcmc(pos, sample_steps)
+
+    # Close the pool!
+    pool.close()
+
+    print "Done sampling."
+    return sampler
 
 def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
               threads=1):
@@ -332,4 +369,6 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
 
     print "Done sampling."
     return sampler
+
+
 

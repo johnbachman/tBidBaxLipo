@@ -318,7 +318,6 @@ def plot_timecourse_figure():
     #gf = fit_with_2conf_rev(bg_time, data, lipo_concs)
     #gf = fit_with_3conf(bg_time, data, lipo_concs)
     #gf = fit_with_simple_3conf(bg_time, data, lipo_concs)
-    gf.plot_func(sampler.flatchain[-1])
     return (gf, sampler)
 
 def fit_with_simple_3conf(time, data, lipo_concs):
@@ -378,7 +377,7 @@ def fit_with_2conf_mc(time, data, lipo_concs):
     bd.local_params = []
     params = {'Vesicles_0': lipo_concs}
     gf = emcee_fit.GlobalFit(bd, time, data, params, 'NBD')
-    sampler = emcee_fit.sample(gf, 20, 5, 10, threads=10)
+    sampler = emcee_fit.ens_mpi_sample(gf, 20, 5, 10)
     import ipdb; ipdb.set_trace()
     return (gf, sampler)
 
