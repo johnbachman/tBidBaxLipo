@@ -220,7 +220,60 @@ class GlobalFit(object):
             else:
                 plt.plot(self.time, s.yobs[self.obs_name], color='r')
 
-def pt_sample(gf, nwalkers, burn_steps, sample_steps, threads=1):
+def ens_sample(gf, nwalkers, burn_steps, sample_steps, threads=1):
+    """Samples from the posterior function using emcee.EnsembleSampler.
+
+    The EnsembleSampler containing the chain is stored in gf.sampler.
+
+    Note that parameters are log10-transformed during fitting, so the
+    parameter values returned from the walk must be exponentiated to get
+    them back to untransformed values (e.g., 10 ** gf.sampler.flatchain)
+
+    Parameters
+    ----------
+    gf : emcee_fit.GlobalFit
+        GlobalFit object containing the timepoints, data, builder object,
+        Solver, etc.
+    nwalkers : int
+        Number of walkers to use in the emcee sampler.
+    burn_steps : int
+        Number of burn-in steps.
+    sample_steps : int
+        Number of sampling steps.
+    threads : int
+        Number of threads to use for parallelization. Default is 1.
+    """
+
+    # Initialize the parameter array with initial values (in log10 units)
+    # Number of parameters to estimate
+    ndim = (len(gf.builder.global_params) +
+            (len(gf.data) * len(gf.builder.local_params)))
+    # Initialize the walkers with starting positions drawn from the priors
+    # Note that the priors are in log10 scale already, so they don't
+    # need to be transformed here
+    p0 = np.zeros((nwalkers, ndim))
+    for walk_ix in range(nwalkers):
+        for p_ix in range(ndim):
+            p0[walk_ix, p_ix] = gf.priors[p_ix].random()
+
+    # Create the sampler object
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior,
+                                         args=[gf],
+                                         threads=threads)
+
+    print "Burn in sampling..."
+    pos, prob, state = sampler.run_mcmc(p0, burn_steps)
+    sampler.reset()
+
+    print "Main sampling..."
+    sampler.run_mcmc(pos, sample_steps)
+
+    print "Done sampling."
+    return sampler
+
+
+def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
+              threads=1):
     """Samples from the posterior function.
 
     The emcee sampler containing the chain is stored in gf.sampler.
@@ -231,8 +284,19 @@ def pt_sample(gf, nwalkers, burn_steps, sample_steps, threads=1):
 
     Parameters
     ----------
+    ntemps : int
+        The number of temperature to use in the temperature ladder.
     nwalkers : int
         Number of walkers to use in the emcee sampler.
+    burn_steps : int
+        Number of burn-in steps.
+    sample_steps : int
+        Number of sampling steps.
+    thin : int
+        Thinning interval; saves only every thin number of steps. Default
+        is 1 (saves all steps, no thinning).
+    threads : int
+        Number of threads to use for parallelization. Default is 1.
     """
 
     # Initialize the parameter array with initial values (in log10 units)
@@ -242,29 +306,28 @@ def pt_sample(gf, nwalkers, burn_steps, sample_steps, threads=1):
     # Initialize the walkers with starting positions drawn from the priors
     # Note that the priors are in log10 scale already, so they don't
     # need to be transformed here
-    ntemps = 10
     p0 = np.zeros((ntemps, nwalkers, ndim))
     for temp_ix in range(ntemps):
         for walk_ix in range(nwalkers):
             for p_ix in range(ndim):
                 p0[temp_ix, walk_ix, p_ix] = gf.priors[p_ix].random()
 
+    # Create the sampler
     sampler = emcee.PTSampler(ntemps, nwalkers, ndim, likelihood, prior,
                               loglargs=[gf],
                               logpargs=[gf],
                               threads=threads)
-    #sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior,
-    #                                     args=[gf],
-    #                                     threads=threads)
 
+    # The PTSampler is implemented as a generator, so it is called in a for
+    # loop
     print "Burn in sampling..."
-    for p, lnprob, lnlike in sampler.sample(p0, iterations=100):
+    for p, lnprob, lnlike in sampler.sample(p0, iterations=burn_steps):
         pass
     sampler.reset()
 
     print "Main sampling..."
     for p, lnprob, lnlike in sampler.sample(p, lnprob0=lnprob, lnlike0=lnlike,
-                            iterations=500, thin=10):
+                            iterations=sample_steps, thin=thin):
         pass
 
     print "Done sampling."
