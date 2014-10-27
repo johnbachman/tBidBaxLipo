@@ -4,9 +4,10 @@ from matplotlib import pyplot as plt
 
 plt.ion()
 
-with open('140318fit_pt.pck') as f:
-    (gf, chain) = pickle.load(f)
+with open('pt_140318_nbd_2_conf_1.pck') as f:
+    (gf, sample) = pickle.load(f)
 
+chain = sample.flatchain
 print chain.shape
 fig = triangle.corner(chain[0])
 fig.savefig('triangle_low.png')
