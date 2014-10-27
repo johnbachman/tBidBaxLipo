@@ -103,6 +103,21 @@ bgsub_wells = subtract_background_set(bax_lipo_wells, lipo_bg_wells)
 shifted to t = 0."""
 #reset_bgsub_sds = reset_first_timepoint_to_zero(bgsub_norm_stds)
 
+lipo_conc_conv_factor = 15.502 # 1 mg/ml ~= 15.502 nM liposomes
+bg_tc = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][VALUE]
+bg_time = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][TIME]
+data_to_fit = []
+lipo_concs_to_fit = []
+lipo_mgs_to_fit = [1., 0.5, 0.25, 0.125, 0.063, 0.031, 0.016, 0.008, 0]
+for conc_name in bgsub_averages.keys():
+    lipo_mg = float(conc_name.split()[4])
+    if not lipo_mg in lipo_mgs_to_fit:
+        continue
+    lipo_concs_to_fit.append(lipo_mg * lipo_conc_conv_factor)
+    t = bgsub_averages[conc_name][TIME]
+    v = bgsub_averages[conc_name][VALUE]
+    v_bg = v / bg_tc
+    data_to_fit.append(v_bg)
 
 def plot_data():
     """Plots the data and various transformations of it."""
@@ -284,8 +299,6 @@ def plot_fmax_curve(fmax_arr, conc_list):
 def plot_timecourse_figure():
     set_fig_params_for_publication()
     fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
-    bg_tc = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][VALUE]
-    bg_time = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][TIME]
     plt.ylabel('$F/F_0$')
     plt.xlabel(r'Time (sec $\times 10^3$)')
     plt.ylim([0.7, 5.2])
@@ -298,27 +311,8 @@ def plot_timecourse_figure():
     ax.set_xticks(np.linspace(0, 1e4, 6))
     ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
     plt.subplots_adjust(bottom=0.24, left=0.21)
-    k_vals = []
-    lipo_concs = []
-    data = []
-    lipo_concs_to_fit = [1., 0.5, 0.25, 0.125, 0.063, 0.031]
-    for conc_name in bgsub_averages.keys():
-        lipo_conc = float(conc_name.split()[4])
-        if not lipo_conc in lipo_concs_to_fit:
-            continue
-        lipo_concs.append(lipo_conc * 15.502)
-        t = bgsub_averages[conc_name][TIME]
-        v = bgsub_averages[conc_name][VALUE]
-        v_bg = v / bg_tc
-        data.append(v_bg)
-        plt.plot(t, v_bg, color='k', linewidth=1)
-
-    (gf, sampler) = fit_with_2conf_mc(bg_time, data, lipo_concs)
-    #gf = fit_with_2conf(bg_time, data, lipo_concs)
-    #gf = fit_with_2conf_rev(bg_time, data, lipo_concs)
-    #gf = fit_with_3conf(bg_time, data, lipo_concs)
-    #gf = fit_with_simple_3conf(bg_time, data, lipo_concs)
-    return (gf, sampler)
+    for data in data_to_fit:
+        plt.plot(bg_time, data, 'k', linewidth=1)
 
 def mpi_fit():
     bg_time = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][TIME]
@@ -386,22 +380,6 @@ def fit_with_3conf(time, data, lipo_concs):
     gf.fit()
     return gf
 
-def fit_with_2conf_mc(time, data, lipo_concs):
-    params_dict = {'c1_scaling': 4.85,
-                   'basal_Bax_kf': 1.73e-3,
-                   'Bax_transloc_kr': 1.4835e-1,
-                   'Bax_transloc_kf': 1e-2}
-    bd = one_cpt.Builder(params_dict=params_dict)
-    bd.build_model_nbd_2_conf()
-    bd.global_params = (bd['c1_scaling'],
-                        bd['Bax_transloc_kf'],
-                        bd['Bax_transloc_kr'],
-                        bd['basal_Bax_kf'])
-    bd.local_params = []
-    params = {'Vesicles_0': lipo_concs}
-    gf = emcee_fit.GlobalFit(bd, time, data, params, 'NBD')
-    sampler = emcee_fit.pt_mpi_sample(gf, 20, 100, 5, 10)
-    return (gf, sampler)
 
 def fit_with_2conf(time, data, lipo_concs):
     params_dict = {'c1_scaling': 4.85,
@@ -440,10 +418,14 @@ def fit_with_2conf_rev(time, data, lipo_concs):
     return gf
 
 if __name__ == '__main__':
+
+    plt.ion()
+    plot_timecourse_figure()
+    sys.exit()
+
     import triangle
     import pickle
 
-    plt.ion()
     #(gf, sampler) = plot_timecourse_figure()
     (gf, sampler) = mpi_fit()
     chain = sampler.flatchain
