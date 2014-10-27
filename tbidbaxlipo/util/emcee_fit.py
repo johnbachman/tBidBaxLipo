@@ -384,6 +384,9 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
             print "nstep %d of %d" % (nstep, sample_steps)
         nstep +=1
 
+    # Close the pool!
+    pool.close()
+
     print "Done sampling."
     return sampler
 
