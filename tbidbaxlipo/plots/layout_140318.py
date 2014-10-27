@@ -380,7 +380,6 @@ def fit_with_3conf(time, data, lipo_concs):
     gf.fit()
     return gf
 
-
 def fit_with_2conf(time, data, lipo_concs):
     params_dict = {'c1_scaling': 4.85,
                    'basal_Bax_kf': 1.73e-3,

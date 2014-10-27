@@ -347,10 +347,6 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         or multiprocessing.pool (or other pool-like object implementing map
         method).
     """
-    pool = MPIPool()
-    if not pool.is_master():
-        pool.wait()
-        sys.exit(0)
 
     # Initialize the parameter array with initial values (in log10 units)
     # Number of parameters to estimate
@@ -375,7 +371,7 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
     nstep = 0
     for p, lnprob, lnlike in sampler.sample(p0, iterations=burn_steps):
         if nstep % 10 == 0:
-            print "nstep %d of " % (nstep, burn_steps)
+            print "nstep %d of %d" % (nstep, burn_steps)
         nstep +=1
 
     sampler.reset()

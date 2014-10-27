@@ -6,7 +6,8 @@ from tbidbaxlipo.plots.layout_140318 import data_to_fit, lipo_concs_to_fit, \
                                             bg_time
 
 def fit(model_name, time, data, lipo_concs):
-    params_dict = {'c1_scaling': 4.85,
+    params_dict = {'Bax_0': 185.,
+                   'c1_scaling': 4.85,
                    'basal_Bax_kf': 1.73e-3,
                    'Bax_transloc_kr': 1.4835e-1,
                    'Bax_transloc_kf': 1e-2}
