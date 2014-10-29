@@ -11,6 +11,7 @@ import titration_fits as tf
 import scipy.stats
 import scipy.signal
 from tbidbaxlipo.util.error_propagation import calc_ratio_sd
+from tbidbaxlipo.util import moving_average
 
 font = {'size': 10}
 matplotlib.rc('font', **font)
@@ -607,10 +608,6 @@ def plot_filtered_data(activator):
             plt.plot(nt, n_filt)
 
 
-def moving_average(a, n=3) :
-    ret = np.cumsum(a, dtype=float)
-    ret[n:] = ret[n:] - ret[:-n]
-    return ret[n - 1:] / n
 
 if __name__ == '__main__':
     #plot_initial_rates('Bid')

@@ -1,4 +1,5 @@
 import matplotlib
+import numpy as np
 
 colors = ['r', 'g', 'b', 'c', 'y', 'm', 'k']
 
@@ -22,4 +23,9 @@ def set_fig_params_for_publication():
     matplotlib.rcParams['ytick.major.size'] = 2
     matplotlib.rcParams['xtick.major.pad'] = 2
     matplotlib.rcParams['ytick.major.pad'] = 2
+
+def moving_average(a, n=3) :
+    ret = np.cumsum(a, dtype=float)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret[n - 1:] / n
 
