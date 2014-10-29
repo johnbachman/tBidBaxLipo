@@ -17,13 +17,15 @@ params_dict = {'Bax_0': 185.,
                'c1_scaling': 4.85,
                'basal_Bax_kf': 1.73e-3,
                'Bax_transloc_kr': 1.4835e-1,
-               'Bax_transloc_kf': 1e-2}
+               'Bax_transloc_kf': 1e-2,
+               'iBax_reverse_k': 1e-3}
 bd = one_cpt.Builder(params_dict=params_dict)
-bd.build_model_nbd_2_conf()
+bd.build_model_nbd_2_conf_rev()
 bd.global_params = (bd['c1_scaling'],
                     bd['Bax_transloc_kf'],
                     bd['Bax_transloc_kr'],
-                    bd['basal_Bax_kf'])
+                    bd['basal_Bax_kf'],
+                    bd['iBax_reverse_k'])
 bd.local_params = []
 params = {'Vesicles_0': lipo_concs_to_fit}
 gf = emcee_fit.GlobalFit(bd, bg_time, data_to_fit, params, 'NBD')
@@ -31,7 +33,7 @@ sampler = emcee_fit.pt_mpi_sample(gf, 25, 300, 100, 150)
 
 # Get rid of the pool so we can pickle the sampler
 sampler.pool = None
-with open('pt_140318_nbd_2_conf_%d.pck' % random_seed, 'w') as f:
+with open('pt_140318_nbd_2_conf_rev_%d.pck' % random_seed, 'w') as f:
     pickle.dump((gf, sampler), f)
 
 sys.exit()

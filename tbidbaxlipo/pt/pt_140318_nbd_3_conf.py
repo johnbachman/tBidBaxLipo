@@ -19,11 +19,14 @@ params_dict = {'Bax_0': 185.,
                'Bax_transloc_kr': 1.4835e-1,
                'Bax_transloc_kf': 1e-2}
 bd = one_cpt.Builder(params_dict=params_dict)
-bd.build_model_nbd_2_conf()
+bd.build_model_nbd_3_conf()
 bd.global_params = (bd['c1_scaling'],
+                    bd['c2_scaling'],
                     bd['Bax_transloc_kf'],
                     bd['Bax_transloc_kr'],
-                    bd['basal_Bax_kf'])
+                    bd['basal_Bax_kf'],
+                    bd['pore_formation_rate_k'])
+
 bd.local_params = []
 params = {'Vesicles_0': lipo_concs_to_fit}
 gf = emcee_fit.GlobalFit(bd, bg_time, data_to_fit, params, 'NBD')
