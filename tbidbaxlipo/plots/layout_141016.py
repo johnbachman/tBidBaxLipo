@@ -7,7 +7,6 @@ import os
 import tbidbaxlipo.data
 from matplotlib import pyplot as plt
 import numpy as np
-from tbidbaxlipo.util import fitting
 from tbidbaxlipo.plots import titration_fits
 import pymc
 from scipy import stats
@@ -324,4 +323,6 @@ if __name__ == '__main__':
     # First, plot the ANTS controls to show that reaction should be at eq
     ion()
     plot_release_comparisons(plot_norm=False, plot_abs=False)
-    # Second, big plot, maybe 3 x 4 subplots, showing 
+    for i in plt.get_fignums():
+        plt.figure(i)
+        plt.savefig('fig_141016_%d.pdf' % i)

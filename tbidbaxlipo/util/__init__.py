@@ -29,3 +29,10 @@ def moving_average(a, n=3) :
     ret[n:] = ret[n:] - ret[:-n]
     return ret[n - 1:] / n
 
+def set_axis_ticks(ax):
+    """Set ticks on left and bottom axis, ticks facing out."""
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+    ax.yaxis.set_tick_params(direction='out')
+    ax.xaxis.set_tick_params(direction='out')
+

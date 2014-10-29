@@ -1,5 +1,6 @@
 .DS_Store
 
+results
 doc/_build
 doc/_static
 doc/sphinxreport.log

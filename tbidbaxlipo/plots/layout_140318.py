@@ -296,24 +296,6 @@ def plot_fmax_curve(fmax_arr, conc_list):
     plt.legend(loc='lower right')
     plt.show()
 
-def plot_timecourse_figure():
-    set_fig_params_for_publication()
-    fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
-    plt.ylabel('$F/F_0$')
-    plt.xlabel(r'Time (sec $\times 10^3$)')
-    plt.ylim([0.7, 5.2])
-    plt.xlim([0, bg_time[-1] + 500])
-    ax = plt.gca()
-    ax.xaxis.set_ticks_position('bottom')
-    ax.yaxis.set_ticks_position('left')
-    ax.yaxis.set_tick_params(direction='out')
-    ax.xaxis.set_tick_params(direction='out')
-    ax.set_xticks(np.linspace(0, 1e4, 6))
-    ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
-    plt.subplots_adjust(bottom=0.24, left=0.21)
-    for data in data_to_fit:
-        plt.plot(bg_time, data, 'k', linewidth=1)
-
 def mpi_fit():
     bg_time = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][TIME]
     bg_tc = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][VALUE]
@@ -416,11 +398,56 @@ def fit_with_2conf_rev(time, data, lipo_concs):
     gf.fit()
     return gf
 
+def plot_emcee_fits(gf, sampler):
+    set_fig_params_for_publication()
+    fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
+    plt.ylabel('$F/F_0$')
+    plt.xlabel(r'Time (sec $\times 10^3$)')
+    plt.ylim([0.7, 5.2])
+    plt.xlim([0, bg_time[-1] + 500])
+    ax = plt.gca()
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+    ax.yaxis.set_tick_params(direction='out')
+    ax.xaxis.set_tick_params(direction='out')
+    ax.set_xticks(np.linspace(0, 1e4, 6))
+    ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
+    plt.subplots_adjust(bottom=0.24, left=0.21)
+    for data in data_to_fit:
+        plt.plot(bg_time, data, 'k', linewidth=1)
+    # Plot the final point
+    gf.plot_func(sampler.flatchain[0,-1,:])
+
 if __name__ == '__main__':
 
     plt.ion()
-    plot_timecourse_figure()
+    import pickle
+    #(gf2, sampler2) = pickle.load(open('../pt/pt_140318_nbd_2_conf_2.pck'))
+    #plot_emcee_fits(gf2, sampler2)
+
+    (gf_2r, sampler_2r) = pickle.load(open('../pt/pt_140318_nbd_2_conf_rev_2.pck'))
+    plot_emcee_fits(gf_2r, sampler_2r)
+    plt.figure()
+    plt.plot(sampler_2r._lnprob[0,:,:].T, alpha=0.2)
+    plt.figure()
+    plt.plot(sampler_2r._lnprob[2,:,:].T, alpha=0.2)
+    plt.figure()
+    plt.plot(sampler_2r._lnprob[4,:,:].T, alpha=0.2)
     sys.exit()
+
+    (gf2, sampler2) = pickle.load(open('../pt/pt_140318_nbd_2_conf_3.pck'))
+    plot_emcee_fits(gf2, sampler2)
+    plt.figure()
+    plt.plot(sampler2._lnprob[2,:,:].T, alpha=0.1)
+
+    (gf3, sampler3) = pickle.load(open('../pt/pt_140318_nbd_3_conf_1.pck'))
+    plot_emcee_fits(gf3, sampler3)
+    plt.figure()
+    plt.plot(sampler3._lnprob[0,:,:].T, alpha=0.2)
+    plt.figure()
+    plt.plot(sampler3._lnprob[1,:,:].T, alpha=0.2)
+    plt.figure()
+    plt.plot(sampler3._lnprob[5,:,:].T, alpha=0.2)
 
     import triangle
     import pickle
