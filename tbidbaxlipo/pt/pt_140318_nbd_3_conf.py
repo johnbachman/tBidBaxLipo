@@ -34,7 +34,7 @@ sampler = emcee_fit.pt_mpi_sample(gf, 25, 300, 100, 150)
 
 # Get rid of the pool so we can pickle the sampler
 sampler.pool = None
-with open('pt_140318_nbd_2_conf_%d.pck' % random_seed, 'w') as f:
+with open('pt_140318_nbd_3_conf_%d.pck' % random_seed, 'w') as f:
     pickle.dump((gf, sampler), f)
 
 sys.exit()
