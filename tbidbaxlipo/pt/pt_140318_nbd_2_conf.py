@@ -32,7 +32,7 @@ gf = emcee_fit.GlobalFit(bd, bg_time, data_to_fit, params, 'NBD')
 # (90%+ acceptance at 11th temp and above).
 ntemps = 25
 betas = 10 ** np.linspace(0, -7, ntemps)
-sampler = emcee_fit.pt_mpi_sample(gf, 25, 300, 0, 250, betas=betas)
+sampler = emcee_fit.pt_mpi_sample(gf, ntemps, 300, 10, 250, betas=betas)
 
 # Get rid of the pool so we can pickle the sampler
 sampler.pool = None

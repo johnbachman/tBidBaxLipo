@@ -29,7 +29,9 @@ bd.global_params = (bd['c1_scaling'],
 bd.local_params = []
 params = {'Vesicles_0': lipo_concs_to_fit}
 gf = emcee_fit.GlobalFit(bd, bg_time, data_to_fit, params, 'NBD')
-sampler = emcee_fit.pt_mpi_sample(gf, 25, 300, 100, 150)
+temps = 25
+betas = 10 ** np.linspace(0, -6, ntemps)
+sampler = emcee_fit.pt_mpi_sample(gf, ntemps, 300, 10, 250)
 
 # Get rid of the pool so we can pickle the sampler
 sampler.pool = None
