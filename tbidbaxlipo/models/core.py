@@ -1162,9 +1162,9 @@ class Builder(pysb.builder.Builder):
 
     def build_model_nbd_3_conf(self):
         self.build_model_bax_heat()
-        c0 = self.parameter('c0_scaling', 1.)
-        c1 = self.parameter('c1_scaling', 5.)
-        c2 = self.parameter('c2_scaling', 2.)
+        c0 = self.parameter('c0_scaling', 1., prior=None)
+        c1 = self.parameter('c1_scaling', 2., prior=Uniform(0, 1))
+        c2 = self.parameter('c2_scaling', 5., prior=Uniform(0, 1))
         self.expression('NBD',
                 (c0 * self['cBax'] +
                 c0 * self['mBax'] +
