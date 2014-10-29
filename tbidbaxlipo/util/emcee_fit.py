@@ -185,7 +185,6 @@ class GlobalFit(object):
         """Initialize solver from model and tspan."""
         self.solver = Solver(self.builder.model, self.time)
 
-    # A generic objective function
     def plot_func(self, x):
         """Plots the timecourses with the parameter values given by x.
 
@@ -310,17 +309,17 @@ def ens_mpi_sample(gf, nwalkers, burn_steps, sample_steps):
     return sampler
 
 def pt_mpi_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
-                  pool=None):
+                  pool=None, betas=None):
     pool = MPIPool()
     if not pool.is_master():
         pool.wait()
         sys.exit(0)
 
     return pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=thin,
-                     pool=pool)
+                     pool=pool, betas=betas)
 
 def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
-              pool=None):
+              pool=None, betas=None):
     """Samples from the posterior function.
 
     The emcee sampler containing the chain is stored in gf.sampler.
@@ -346,6 +345,8 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         Pool object for parallelization. Can be instance of emcee.utils.MPIPool
         or multiprocessing.pool (or other pool-like object implementing map
         method).
+    betas : np.array
+        Array containing the values to use for beta = 1/temperature.
     """
 
     # Initialize the parameter array with initial values (in log10 units)
@@ -363,7 +364,8 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
 
     # Create the sampler
     sampler = emcee.PTSampler(ntemps, nwalkers, ndim, likelihood, prior,
-                              loglargs=[gf], logpargs=[gf], pool=pool)
+                              loglargs=[gf], logpargs=[gf], pool=pool,
+                              betas=betas)
 
     # The PTSampler is implemented as a generator, so it is called in a for
     # loop

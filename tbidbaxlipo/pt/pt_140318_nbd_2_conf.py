@@ -27,7 +27,12 @@ bd.global_params = (bd['c1_scaling'],
 bd.local_params = []
 params = {'Vesicles_0': lipo_concs_to_fit}
 gf = emcee_fit.GlobalFit(bd, bg_time, data_to_fit, params, 'NBD')
-sampler = emcee_fit.pt_mpi_sample(gf, 25, 300, 100, 150)
+# With 25 temperatures but with no specification of Tmax, found that
+# temperature swaps were almost always accepted at the high temperatures
+# (90%+ acceptance at 11th temp and above).
+ntemps = 25
+betas = 10 ** np.linspace(0, -7, ntemps)
+sampler = emcee_fit.pt_mpi_sample(gf, 25, 300, 0, 250, betas=betas)
 
 # Get rid of the pool so we can pickle the sampler
 sampler.pool = None
