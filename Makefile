@@ -5,7 +5,8 @@ CODEDIR := tbidbaxlipo
 figures: \
 		$(FIGDIR)/fig_141016_1.pdf \
 		$(FIGDIR)/fig_fmax_fit_comparison.pdf \
-		$(FIGDIR)/poisson_bax_fmax.pdf
+		$(FIGDIR)/poisson_bax_fmax.pdf \
+		$(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf
 
 clean:
 	cd $(FIGDIR); rm -f *.pdf
@@ -38,6 +39,14 @@ $(FIGDIR)/fig_fmax_fit_comparison.pdf: \
 # poisson_bax_fmax.pdf, poisson_bax_fmax_fit.pdf
 $(FIGDIR)/poisson_bax_fmax.pdf: \
 		$(CODEDIR)/plots/poisson_bax_fmax.py
-	python $(CODEDIR)/plots/poisson_Bax_fmax.py
+	python $(CODEDIR)/plots/poisson_bax_fmax.py
 	mv *.pdf $(FIGDIR)
 
+# Fits of models to 140318 Bax-NBD/liposome titration data by MCMC
+# pt..._fits.pdf, pt..._tri.pdf
+$(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf: \
+		$(CODEDIR)/pt/pt_140318_nbd_2_conf_3.pck \
+		$(CODEDIR)/plots/layout_140318.py
+	python $(CODEDIR)/plots/layout_140318.py \
+				$(CODEDIR)/pt/pt_140318_nbd_2_conf_3.pck pt_140318_nbd_2_conf
+	mv *.pdf $(FIGDIR)
