@@ -419,11 +419,21 @@ def plot_emcee_fits(gf, sampler):
     gf.plot_func(sampler.flatchain[0,-1,:])
 
 if __name__ == '__main__':
+    import triangle
 
-    plt.ion()
-    import pickle
-    #(gf2, sampler2) = pickle.load(open('../pt/pt_140318_nbd_2_conf_2.pck'))
-    #plot_emcee_fits(gf2, sampler2)
+    if len(sys.argv) == 3:
+        mcmc_path = sys.argv[1]
+        output_base = sys.argv[2]
+        # Load the sampler data
+        (gf, sampler) = pickle.load(open(mcmc_path))
+        # Plot the best fit vs. the data
+        plot_emcee_fits(gf, sampler)
+        plt.savefig('%s_fits.pdf' % output_base)
+        # Triangle plot for parameters
+        plt.figure()
+        triangle.corner(sampler.flatchain[0])
+        plt.savefig('%s_tri.pdf' % output_base)
+        sys.exit()
 
     (gf2, sampler2) = pickle.load(open('../pt/pt_140318_nbd_2_conf_4.pck'))
     plot_emcee_fits(gf2, sampler2)
