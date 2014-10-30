@@ -23,9 +23,8 @@ ysim = odesolve(model, tspan)
 
 # Add error to the underlying data by adding a Gaussian value with a standard
 # deviation of 0.1
-seed = 1
-rs = np.random.mtrand.RandomState(seed).get_state()
-np.random.set_state(rs)
+#np.random.rs = np.random.mtrand.RandomState(seed).get_state()
+#np.random.set_state(rs)
 sigma = 0.1
 ydata = ysim['A_obs'] + (np.random.randn(len(ysim['A_obs'])) * sigma)
 
@@ -46,61 +45,112 @@ def likelihood(x):
     # Calculate the likelihood
     return -np.sum(((ydata - solver.yobs['A_obs'])**2) / (2 * variances))
 
-# Define the parameters of the walk
-nwalkers = 10
-ndim = 2
-# Define the set of initial guesses
-x0 = np.random.uniform(size=(nwalkers, ndim))
-# Log-transform the guesses
-x0 = np.log10(x0)
+def run_sampler(num_steps, random_state, pos=None):
+    # Define the parameters of the walk
+    nwalkers = 10
+    ndim = 2
 
-sampler = emcee.EnsembleSampler(nwalkers, ndim, likelihood)
-sampler.random_state = rs
+    if pos is None:
+        # Initialize the random state here, with a seed? Or pass in the random
+        # state
+        # Define the set of initial guesses
+        x0 = np.random.uniform(size=(nwalkers, ndim))
+        # Log-transform the guesses
+        x0 = np.log10(x0)
+    else:
+        x0 = pos
 
-print "Burn in sampling..."
-pos, prob, state = sampler.run_mcmc(x0, 10)
-sampler.reset()
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, likelihood)
+    sampler.random_state = random_state
 
-print "Main sampling..."
-sampler.run_mcmc(x0, 100)
+    #print "Burn in sampling..."
+    #pos, prob, state = sampler.run_mcmc(x0, 10)
+    #sampler.reset()
 
-print "Done sampling."
+    print "Main sampling..."
+    sampler.run_mcmc(x0, num_steps)
 
-# Shorthand variable
-chain = 10 ** sampler.flatchain
+    print "Done sampling."
+    return sampler
 
-# Plot histograms of the parameters
-plt.ion()
-plt.figure()
-plt.subplot(1, 2, 1)
-plt.hist(chain[:, 0], 100, color='k', histtype='step')
-plt.xlabel('A_0')
-plt.subplot(1, 2, 2)
-plt.hist(chain[:, 1], 100, color='k', histtype='step')
-plt.xlabel('k')
 
-print("Mean acceptance fraction: {0:.3f}".format(
-                    np.mean(sampler.acceptance_fraction)))
+if __name__ == '__main__':
+    # This is what happens when you seed with 1 and then run for 100 steps.
+    seed = 2
+    np.random.seed(seed)
+    rs = np.random.get_state()
 
-# Plot the original data (underlying and noisy)
-# along with the sampled trajectories
-plt.figure()
-plt.plot(tspan, ysim, color='r')
-plt.plot(tspan, ydata, color='g')
+    num_steps = 100
+    sampler1 = run_sampler(num_steps, rs)
+    # Final position
+    x49_1 = sampler1.chain[:, 49]
+    x99_1 = sampler1.chain[:, 99]
 
-# Specify the number of sampled trajectories to plot
-num_to_plot = 100
-if num_to_plot > len(chain):
-    num_to_plot = len(chain)
+    # Now let's see what happens when you seed with 1, run for 50 steps, then
+    # reseed to continue:
+    np.random.seed(seed)
+    rs = np.random.get_state()
+    num_steps = 50
+    sampler2 = run_sampler(num_steps, rs)
+    x49_2 = sampler2.chain[:, 49]
 
-# Plot the sampled trajectories
-for i in range(num_to_plot):
-    # Get a random sample from the walk
-    rand_ix = np.random.randint(len(chain))
-    A0 = chain[rand_ix, 0]
-    k = chain[rand_ix, 1]
-    # Run the solver with the sampled parameters
-    solver.run([A0, k, 1.0])
-    # Plot alongside the data
-    plt.plot(tspan, solver.yobs['A_obs'], alpha=0.05, color='b')
+    #print x49_1
+    #print x49_2
+    #print x49_1 - x49_2
+
+    # Now continue sampling the second half
+    rs = sampler2.random_state
+    sampler3 = run_sampler(num_steps, rs, pos=x49_2)
+    x99_2 = sampler3.chain[:, 49]
+
+    #print x99_1
+    #print x99_2
+    #print x99_1 - x99_2
+
+    # Compare different trajectories
+    plt.ion()
+    plt.plot(np.arange(100), sampler1.chain[:,:,0].T, color='r')
+    plt.plot(np.arange(50), sampler2.chain[:,:,0].T, color='g',
+            linestyle='--')
+    plt.plot(np.arange(50, 100), sampler3.chain[:,:,0].T, color='b',
+            linestyle='--')
+    plt.title('Comparison of continuous vs. interrupted chains')
+
+    # Shorthand variable
+    chain = 10 ** sampler1.flatchain
+
+    # Plot histograms of the parameters
+    plt.ion()
+    plt.figure()
+    plt.subplot(1, 2, 1)
+    plt.hist(chain[:, 0], 100, color='k', histtype='step')
+    plt.xlabel('A_0')
+    plt.subplot(1, 2, 2)
+    plt.hist(chain[:, 1], 100, color='k', histtype='step')
+    plt.xlabel('k')
+
+    print("Mean acceptance fraction: {0:.3f}".format(
+                        np.mean(sampler1.acceptance_fraction)))
+
+    # Plot the original data (underlying and noisy)
+    # along with the sampled trajectories
+    plt.figure()
+    plt.plot(tspan, ysim, color='r')
+    plt.plot(tspan, ydata, color='g')
+
+    # Specify the number of sampled trajectories to plot
+    num_to_plot = 100
+    if num_to_plot > len(chain):
+        num_to_plot = len(chain)
+
+    # Plot the sampled trajectories
+    for i in range(num_to_plot):
+        # Get a random sample from the walk
+        rand_ix = np.random.randint(len(chain))
+        A0 = chain[rand_ix, 0]
+        k = chain[rand_ix, 1]
+        # Run the solver with the sampled parameters
+        solver.run([A0, k, 1.0])
+        # Plot alongside the data
+        plt.plot(tspan, solver.yobs['A_obs'], alpha=0.05, color='b')
 
