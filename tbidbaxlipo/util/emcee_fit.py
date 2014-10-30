@@ -395,7 +395,7 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
     sampler = emcee.PTSampler(ntemps, nwalkers, ndim, likelihood, prior,
                               loglargs=[gf], logpargs=[gf], pool=pool,
                               betas=betas)
-    if random_state is not None
+    if random_state is not None:
         sampler.random_state = random_state
 
     # The PTSampler is implemented as a generator, so it is called in a for
