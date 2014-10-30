@@ -24,9 +24,10 @@ ysim = odesolve(model, tspan)
 # Add error to the underlying data by adding a Gaussian value with a standard
 # deviation of 0.1
 seed = 1
-random = np.random.RandomState(seed)
+rs = np.random.mtrand.RandomState(seed).get_state()
+np.random.set_state(rs)
 sigma = 0.1
-ydata = ysim['A_obs'] + (random.randn(len(ysim['A_obs'])) * sigma)
+ydata = ysim['A_obs'] + (np.random.randn(len(ysim['A_obs'])) * sigma)
 
 # Get an instance of the ODE solver
 solver = Solver(model, tspan)
@@ -54,13 +55,14 @@ x0 = np.random.uniform(size=(nwalkers, ndim))
 x0 = np.log10(x0)
 
 sampler = emcee.EnsembleSampler(nwalkers, ndim, likelihood)
+sampler.random_state = rs
 
 print "Burn in sampling..."
-pos, prob, state = sampler.run_mcmc(x0, 100)
+pos, prob, state = sampler.run_mcmc(x0, 10)
 sampler.reset()
 
 print "Main sampling..."
-sampler.run_mcmc(pos, 1000)
+sampler.run_mcmc(x0, 100)
 
 print "Done sampling."
 
