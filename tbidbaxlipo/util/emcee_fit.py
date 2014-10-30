@@ -222,7 +222,8 @@ class GlobalFit(object):
             else:
                 plt.plot(self.time, s.yobs[self.obs_name], color='r')
 
-def ens_sample(gf, nwalkers, burn_steps, sample_steps, threads=1):
+def ens_sample(gf, nwalkers, burn_steps, sample_steps, threads=1,
+               random_state=None):
     """Samples from the posterior function using emcee.EnsembleSampler.
 
     The EnsembleSampler containing the chain is stored in gf.sampler.
@@ -244,6 +245,9 @@ def ens_sample(gf, nwalkers, burn_steps, sample_steps, threads=1):
         Number of sampling steps.
     threads : int
         Number of threads to use for parallelization. Default is 1.
+    random_state : random state for Mersenne Twister PRNG
+        The random state to use to initialize the sampler's pseudo-random
+        number generator. Can be used to continue runs from previous ones.
     """
 
     # Initialize the parameter array with initial values (in log10 units)
@@ -262,6 +266,8 @@ def ens_sample(gf, nwalkers, burn_steps, sample_steps, threads=1):
     sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior,
                                          args=[gf],
                                          threads=threads)
+    if random_state is not None:
+        sampler.random_state = random_state
 
     print "Burn in sampling..."
     pos, prob, state = sampler.run_mcmc(p0, burn_steps)
@@ -273,7 +279,7 @@ def ens_sample(gf, nwalkers, burn_steps, sample_steps, threads=1):
     print "Done sampling."
     return sampler
 
-def ens_mpi_sample(gf, nwalkers, burn_steps, sample_steps):
+def ens_mpi_sample(gf, nwalkers, burn_steps, sample_steps, random_state=None):
     pool = MPIPool()
     if not pool.is_master():
         pool.wait()
@@ -294,6 +300,8 @@ def ens_mpi_sample(gf, nwalkers, burn_steps, sample_steps):
     # Create the sampler object
     sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior,
                                          args=[gf], pool=pool)
+    if random_state is not None:
+        sampler.random_state = random_state
 
     print "Burn in sampling..."
     pos, prob, state = sampler.run_mcmc(p0, burn_steps)
@@ -309,17 +317,17 @@ def ens_mpi_sample(gf, nwalkers, burn_steps, sample_steps):
     return sampler
 
 def pt_mpi_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
-                  pool=None, betas=None):
+                  pool=None, betas=None, random_state=None):
     pool = MPIPool()
     if not pool.is_master():
         pool.wait()
         sys.exit(0)
 
     return pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=thin,
-                     pool=pool, betas=betas)
+                     pool=pool, betas=betas, random_state=random_state)
 
 def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
-              pool=None, betas=None):
+              pool=None, betas=None, random_state=None):
     """Samples from the posterior function.
 
     The emcee sampler containing the chain is stored in gf.sampler.
@@ -347,6 +355,9 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         method).
     betas : np.array
         Array containing the values to use for beta = 1/temperature.
+    random_state : random state for Mersenne Twister PRNG
+        The random state to use to initialize the sampler's pseudo-random
+        number generator. Can be used to continue runs from previous ones.
     """
 
     # Initialize the parameter array with initial values (in log10 units)
@@ -366,6 +377,8 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
     sampler = emcee.PTSampler(ntemps, nwalkers, ndim, likelihood, prior,
                               loglargs=[gf], logpargs=[gf], pool=pool,
                               betas=betas)
+    if random_state is not None
+        sampler.random_state = random_state
 
     # The PTSampler is implemented as a generator, so it is called in a for
     # loop
