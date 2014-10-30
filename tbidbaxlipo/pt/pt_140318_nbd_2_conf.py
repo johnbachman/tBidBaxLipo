@@ -31,8 +31,8 @@ gf = emcee_fit.GlobalFit(bd, bg_time, data_to_fit, params, 'NBD')
 # temperature swaps were almost always accepted at the high temperatures
 # (90%+ acceptance at 11th temp and above).
 ntemps = 25
-betas = 10 ** np.linspace(0, -7, ntemps)
-sampler = emcee_fit.pt_mpi_sample(gf, ntemps, 300, 10, 250, betas=betas)
+betas = 10 ** np.linspace(0, -5, ntemps)
+sampler = emcee_fit.pt_mpi_sample(gf, ntemps, 300, 550, 250, betas=betas)
 
 # Get rid of the pool so we can pickle the sampler
 sampler.pool = None
