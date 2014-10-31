@@ -277,7 +277,7 @@ def ens_sample(gf, nwalkers, burn_steps, sample_steps, threads=1,
         sampler.random_state = random_state
 
     print "Burn in sampling..."
-    pos, prob, state = sampler.run_mcmc(p0, burn_steps)
+    pos, prob, state = sampler.run_mcmc(p0, burn_steps, storechain=False)
     sampler.reset()
 
     print "Main sampling..."
@@ -315,7 +315,7 @@ def ens_mpi_sample(gf, nwalkers, burn_steps, sample_steps, pos=None,
         sampler.random_state = random_state
 
     print "Burn in sampling..."
-    pos, prob, state = sampler.run_mcmc(p0, burn_steps)
+    pos, prob, state = sampler.run_mcmc(p0, burn_steps, storechain=False)
     sampler.reset()
 
     print "Main sampling..."
@@ -402,7 +402,8 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
     # loop
     print "Burn in sampling..."
     nstep = 0
-    for p, lnprob, lnlike in sampler.sample(p0, iterations=burn_steps):
+    for p, lnprob, lnlike in sampler.sample(p0, iterations=burn_steps,
+                            storechain=False):
         if nstep % 10 == 0:
             print "nstep %d of %d" % (nstep, burn_steps)
         nstep +=1
