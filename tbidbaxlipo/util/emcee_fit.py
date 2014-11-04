@@ -400,23 +400,34 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
 
     # The PTSampler is implemented as a generator, so it is called in a for
     # loop
-    print "Burn in sampling..."
-    nstep = 0
-    for p, lnprob, lnlike in sampler.sample(p0, iterations=burn_steps,
-                            storechain=False):
-        if nstep % 10 == 0:
-            print "nstep %d of %d" % (nstep, burn_steps)
-        nstep +=1
+    # If we're not doing any burn-in, jump straight to sampling
+    if burn_steps == 0:
+        print "Main sampling..."
+        nstep = 0
+        for p, lnprob, lnlike in sampler.sample(p0, iterations=sample_steps,
+                                thin=thin)
+            if nstep % 10 == 0:
+                print "nstep %d of %d" % (nstep, sample_steps)
+            nstep +=1
+    # Otherwise, do the burn-in first
+    else:
+        print "Burn in sampling..."
+        nstep = 0
+        for p, lnprob, lnlike in sampler.sample(p0, iterations=burn_steps,
+                                storechain=False):
+            if nstep % 10 == 0:
+                print "nstep %d of %d" % (nstep, burn_steps)
+            nstep +=1
 
-    sampler.reset()
+        sampler.reset()
 
-    print "Main sampling..."
-    nstep = 0
-    for p, lnprob, lnlike in sampler.sample(p, lnprob0=lnprob, lnlike0=lnlike,
-                            iterations=sample_steps, thin=thin):
-        if nstep % 10 == 0:
-            print "nstep %d of %d" % (nstep, sample_steps)
-        nstep +=1
+        print "Main sampling..."
+        nstep = 0
+        for p, lnprob, lnlike in sampler.sample(p, lnprob0=lnprob, lnlike0=lnlike,
+                                iterations=sample_steps, thin=thin):
+            if nstep % 10 == 0:
+                print "nstep %d of %d" % (nstep, sample_steps)
+            nstep +=1
 
     # Close the pool!
     pool.close()
