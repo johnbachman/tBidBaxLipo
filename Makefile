@@ -43,10 +43,17 @@ $(FIGDIR)/poisson_bax_fmax.pdf: \
 	mv *.pdf $(FIGDIR)
 
 # Fits of models to 140318 Bax-NBD/liposome titration data by MCMC
-# pt..._fits.pdf, pt..._tri.pdf
+# Makes plots pt..._fits.pdf, pt..._tri.pdf
+# (for 2_conf, 2_conf_rev, and 3_conf models)
 $(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf: \
-		$(CODEDIR)/pt/pt_140318_nbd_2_conf_3.pck \
+		$(CODEDIR)/pt/pt_140318_nbd_2_conf_5.pck \
+		$(CODEDIR)/pt/pt_140318_nbd_2_conf_rev_4.pck \
+		$(CODEDIR)/pt/pt_140318_nbd_3_conf_3.pck \
 		$(CODEDIR)/plots/layout_140318.py
 	python $(CODEDIR)/plots/layout_140318.py \
-				$(CODEDIR)/pt/pt_140318_nbd_2_conf_3.pck pt_140318_nbd_2_conf
+			$(CODEDIR)/pt/pt_140318_nbd_2_conf_5.pck pt_140318_nbd_2_conf
+	python $(CODEDIR)/plots/layout_140318.py \
+			$(CODEDIR)/pt/pt_140318_nbd_2_conf_rev_4.pck pt_140318_nbd_2_conf_rev
+	python $(CODEDIR)/plots/layout_140318.py \
+			$(CODEDIR)/pt/pt_140318_nbd_3_conf_3.pck pt_140318_nbd_3_conf
 	mv *.pdf $(FIGDIR)
