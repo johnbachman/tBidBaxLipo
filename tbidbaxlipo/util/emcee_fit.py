@@ -405,9 +405,10 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         print "Main sampling..."
         nstep = 0
         for p, lnprob, lnlike in sampler.sample(p0, iterations=sample_steps,
-                                thin=thin)
+                                            thin=thin):
             if nstep % 10 == 0:
-                print "nstep %d of %d" % (nstep, sample_steps)
+                print("nstep %d of %d, MAP: %f" % (nstep, sample_steps,
+                                                   np.max(lnprob)))
             nstep +=1
     # Otherwise, do the burn-in first
     else:
@@ -416,7 +417,8 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         for p, lnprob, lnlike in sampler.sample(p0, iterations=burn_steps,
                                 storechain=False):
             if nstep % 10 == 0:
-                print "nstep %d of %d" % (nstep, burn_steps)
+                print("nstep %d of %d, MAP: %f" % (nstep, sample_steps,
+                                                   np.max(lnprob)))
             nstep +=1
 
         sampler.reset()
@@ -426,7 +428,9 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         for p, lnprob, lnlike in sampler.sample(p, lnprob0=lnprob, lnlike0=lnlike,
                                 iterations=sample_steps, thin=thin):
             if nstep % 10 == 0:
-                print "nstep %d of %d" % (nstep, sample_steps)
+                print("nstep %d of %d, MAP: %f" % (nstep, sample_steps,
+                                                   np.max(lnprob)))
+
             nstep +=1
 
     # Close the pool!
