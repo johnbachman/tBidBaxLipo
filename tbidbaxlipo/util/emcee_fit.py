@@ -417,7 +417,7 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         for p, lnprob, lnlike in sampler.sample(p0, iterations=burn_steps,
                                 storechain=False):
             if nstep % 10 == 0:
-                print "nstep %d of %d, MAP: %f" % (nstep, sample_steps,
+                print "nstep %d of %d, MAP: %f" % (nstep, burn_steps,
                                                    np.max(lnprob[0]))
             nstep +=1
 
