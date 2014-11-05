@@ -335,7 +335,7 @@ def pt_mpi_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         sys.exit(0)
 
     return pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=thin,
-                     pool=pool, betas=betas, pos=None, random_state=random_state)
+                     pool=pool, betas=betas, pos=pos, random_state=random_state)
 
 def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
               pool=None, betas=None, pos=None, random_state=None):
