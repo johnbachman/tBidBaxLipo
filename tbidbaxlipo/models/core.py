@@ -1180,10 +1180,29 @@ class Builder(pysb.builder.Builder):
                 (c0 * self['cBax'] +
                 c0 * self['mBax'] +
                 c1 * self['iBax_nopore']) / self['Bax_0'].value)
+        self.model.name = 'nbd_2_conf'
 
     def build_model_nbd_2_conf_rev(self):
         self.build_model_nbd_2_conf()
         self.Bax_reverses()
+        self.model.name = 'nbd_2_conf_rev'
+
+    def build_model_nbd_2_conf_auto(self):
+        self.translocate_Bax()
+        self.basal_Bax_activation()
+        self.Bax_auto_activates_one_step()
+        c0 = self.parameter('c0_scaling', 1., prior=None)
+        c1 = self.parameter('c1_scaling', 5., prior=Uniform(0, 1))
+        self.expression('NBD',
+                (c0 * self['cBax'] +
+                c0 * self['mBax'] +
+                c1 * self['iBax_nopore']) / self['Bax_0'].value)
+        self.model.name = 'nbd_2_conf_auto'
+
+    def build_model_nbd_2_conf_auto_rev(self):
+        self.build_model_nbd_2_conf_auto()
+        self.Bax_reverses()
+        self.model.name = 'nbd_2_conf_auto_rev'
 
     # Models incorporating dye release
     def build_model_bax_heat(self):
