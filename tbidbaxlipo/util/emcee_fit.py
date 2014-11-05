@@ -157,7 +157,7 @@ class GlobalFit(object):
             except ValueError:
                 raise ValueError(
                         'The parameter %s, in global_params, must also be '
-                        'present in estimate_params.')
+                        'present in estimate_params.' % p.name)
         # Iterate over the locally fit parameters
         for data_ix, data in enumerate(self.data):
             for l_ix, p in enumerate(self.builder.local_params):

@@ -935,8 +935,8 @@ class Builder(pysb.builder.Builder):
 
         print "core: Bax_auto_activates_one_step"
 
-        iBax_activates_mBax_k = self.parameter('iBax_activates_mBax_k', 1e-4)
-
+        iBax_activates_mBax_k = self.parameter('iBax_activates_mBax_k', 1e-4,
+                                               prior=Normal(-4, 2))
         Bax = self['Bax']
 
         for cpt_name in self.cpt_list:
