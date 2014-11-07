@@ -287,6 +287,7 @@ class Builder(pysb.builder.Builder):
 
         self.observable('cBax', Bax(cpt='sol', conf='aq'))
         self.observable('mBax', Bax(conf='mem'))
+        self.observable('mBax_mono', Bax(conf='mem', bh3=None))
         self.observable('iBax', Bax(conf='ins'))
         self.observable('iBax_nopore', Bax(conf='ins', pore='n'))
         self.observable('tBidBax', tBid(bh3=1) % Bax(bh3=1))
@@ -686,7 +687,7 @@ class Builder(pysb.builder.Builder):
              tBid(loc='m', bh3=1) % Bax(loc='m', bh3=1),
              iBaxtBid_to_mBaxtBid_k)
 
-    def Bax_dimerizes(self, bax_conf='ins'):
+    def Bax_dimerizes(self, bax_conf='ins', reversible=True):
         """
         Notes
         -----
@@ -696,25 +697,35 @@ class Builder(pysb.builder.Builder):
           steady-state at around 12 minutes.
         """
 
-        print("core: Bax_dimerizes(bax_conf=%s)" % bax_conf)
+        print("core: Bax_dimerizes(bax_conf=%s, reversible=%s)" %
+              (bax_conf, reversible))
+
+        Bax = self['Bax']
 
         # Rate of dimerization formation/oligomerization of activated Bax (s^-1)
         Bax_dimerization_kf = self.parameter(
                'Bax_%s_dimerization_kf' % bax_conf, 1e-2,
                factor=self.within_compartment_rsf(),
-               prior=Normal(-2, 2))
-        Bax_dimerization_kr = self.parameter(
-               'Bax_%s_dimerization_kr' % bax_conf, 1e-2,
-               prior=Normal(-2, 2))
+               prior=Normal(-3, 2))
 
-        Bax = self['Bax']
-
-        self.rule('Bax_%s_forms_dimers' % bax_conf,
+        self.rule('Bax_%s_forms_dimers_fwd' % bax_conf,
              Bax(cpt='ves', conf=bax_conf, bh3=None, a6=None) +
-             Bax(cpt='ves', conf=bax_conf, bh3=None, a6=None) <>
+             Bax(cpt='ves', conf=bax_conf, bh3=None, a6=None) >>
              Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None) %
              Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None),
-             Bax_dimerization_kf, Bax_dimerization_kr)
+             Bax_dimerization_kf)
+
+        if reversible:
+            Bax_dimerization_kr = self.parameter(
+                   'Bax_%s_dimerization_kr' % bax_conf, 1e-2,
+                   prior=Normal(-3, 2))
+
+            self.rule('Bax_%s_forms_dimers_fwd' % bax_conf,
+                 Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None) %
+                 Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None) >>
+                 Bax(cpt='ves', conf=bax_conf, bh3=None, a6=None) +
+                 Bax(cpt='ves', conf=bax_conf, bh3=None, a6=None),
+                 Bax_dimerization_kr)
 
     def Bax_tetramerizes(self, bax_conf='ins'):
         """
@@ -1181,6 +1192,17 @@ class Builder(pysb.builder.Builder):
                 c0 * self['mBax'] +
                 c1 * self['iBax_nopore']) / self['Bax_0'].value)
         self.model.name = 'nbd_2_conf'
+
+    def build_model_nbd_2_conf_dimer(self):
+        self.translocate_Bax()
+        self.Bax_dimerizes(bax_conf='mem', reversible=False)
+        c0 = self.parameter('c0_scaling', 1., prior=None)
+        c1 = self.parameter('c1_scaling', 5., prior=Uniform(0, 1))
+        self.expression('NBD',
+                (c0 * self['cBax'] +
+                c0 * self['mBax_mono'] +
+                c1 * self['Bax2']) / self['Bax_0'].value)
+        self.model.name = 'nbd_2_conf_dimer'
 
     def build_model_nbd_2_conf_rev(self):
         self.build_model_nbd_2_conf()
