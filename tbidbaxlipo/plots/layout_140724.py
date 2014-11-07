@@ -157,24 +157,5 @@ def main():
 
 
 
-"""
-(i_avgs, i_sds, fmax_avg, fmax_sd) = \
-        quenching_std_curve(dpx_std_file_list,
-                                    dpx_std_wells, dpx_concs, bg_avgs=bg_avgs)
-(ka, kd) = fit_std_curve(i_avgs, i_sds, dpx_concs)
-
-qd = get_quenching_dict(i_avgs, i_sds, dpx_vols_added)
-
-final_q = qd[dpx_vols_added[-1]]
-
-(fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, bax_requench_wells,
-                                     final_q, final_bg=bg_avgs[-1])
-
-q_outs = np.array(qd.values())
-
-requenching_analysis(dpx_std_file_list, bax_requench_wells, dpx_concs, q_outs,
-                     fmax_avgs, fmax_sds, None, None, None, bg_avgs)
-
-"""
 if __name__ == '__main__':
     main()
