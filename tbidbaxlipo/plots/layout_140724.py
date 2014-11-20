@@ -7,8 +7,7 @@ import tbidbaxlipo.data
 from tbidbaxlipo.util.plate_assay import *
 from os.path import abspath, join
 import collections
-
-plt.ion()
+from tbidbaxlipo.plots import titration_fits as tf
 
 data_path = os.path.dirname(sys.modules['tbidbaxlipo.data'].__file__)
 
@@ -155,7 +154,115 @@ def main():
     requenching_analysis(dpx_std_file_list, bid40_requench_wells, dpx_concs,
             q_outs, fmax_avgs, fmax_sds, None, None, None, bg_avgs)
 
+def bid_bax_kinetic_analysis(bid_wells, bid_layout, bid_conc_str):
+    # Improve this by calculating the Fmax value based on Triton/DPX
 
+    # First normalize by the background
+    # Background is no Bax condition.
+    bg_key_str = 'Bid %s nM, Bax 0.0 nM' % bid_conc_str
+    bg_tc = bid_wells[bid_layout[bg_key_str][0]]
+    bg_time = bg_tc[TIME]
+    bg_value = bg_tc[VALUE]
+
+    fmax_arr = []
+    k1_arr = []
+    k2_arr = []
+    bax_concs = []
+    plt.figure(1)
+    for conc_name, well_list in bid_layout.iteritems():
+        bax_conc = conc_name.split(' ')[4]
+        bax_concs.append(bax_conc)
+        if bax_conc == 0:
+            continue
+        # For this expt, there is only one well per condition (no replicates)
+        well_name = well_list[0]
+        time = bid_wells[well_name][TIME] + 240
+        value = bid_wells[well_name][VALUE]
+        bg_corr_value = value / bg_value
+
+        # In lieu of triton, assume full perm
+        maxval = 113.
+        max_norm_val = maxval / bg_value[-1]
+        norm_value = (bg_corr_value - 1.0) / (max_norm_val - 1.0)
+
+        fit = tf.OneExpFmax()
+        karr = fit.fit_timecourse(time, norm_value)
+        k1_arr.append(karr[0])
+        fmax_arr.append(karr[1])
+        #k2_arr.append(k2)
+        plt.plot(time, norm_value)
+        plt.plot(time, fit.fit_func(time, karr), color='r')
+
+    plt.figure('Titration')
+    plt.subplot(1,2,1)
+    plt.plot(bax_concs, fmax_arr, marker='o')
+    plt.title('Fmax')
+    plt.subplot(1,2,2)
+    plt.plot(bax_concs, k1_arr, marker='o')
+    plt.title('k1')
+    #plt.figure()
+    #plt.plot(bax_concs, k2_arr, marker='o')
+    #plt.title('k2')
+
+def bid_bax_pore_analysis(bid_wells, bid_layout, bid_conc_str):
+    # First normalize by the background
+    # Background is no Bax condition.
+    bg_key_str = 'Bid %s nM, Bax 0.0 nM' % bid_conc_str
+    bg_tc = bid_wells[bid_layout[bg_key_str][0]]
+    bg_time = bg_tc[TIME]
+    bg_value = bg_tc[VALUE]
+
+    fmax_arr = []
+    k1_arr = []
+    k2_arr = []
+    bax_concs = []
+    plt.figure()
+    for conc_name, well_list in bid_layout.iteritems():
+        bax_conc = conc_name.split(' ')[4]
+        bax_concs.append(bax_conc)
+        # For this expt, there is only one well per condition (no replicates)
+        well_name = well_list[0]
+        time = bid_wells[well_name][TIME] + 240
+        value = bid_wells[well_name][VALUE]
+        bg_corr_value = value / bg_value
+
+        # In lieu of triton, assume full perm
+        maxval = 113.
+        max_norm_val = maxval / bg_value[-1]
+        norm_value = (bg_corr_value - 1.0) / (max_norm_val - 1.0)
+
+        # Now calculate pores
+        pores = -np.log(1 - norm_value)
+        plt.plot(time, pores)
+
+        fit = tf.LinkedEq(bax_conc, initial_guesses=[1e-2, 1.25e-4, 2])
+        karr = fit.fit_timecourse(time, pores)
+        k1_arr.append(karr[0])
+        k2_arr.append(karr[1])
+        fmax_arr.append(karr[2])
+        plt.plot(time, fit.fit_func(time, karr), color='r')
+
+    plt.figure('Titration')
+    plt.subplot(1,3,1)
+    plt.plot(bax_concs, fmax_arr, marker='o')
+    plt.title('Fmax')
+    plt.subplot(1,3,2)
+    plt.plot(bax_concs, k1_arr, marker='o')
+    plt.title('k1')
+    plt.subplot(1,3,3)
+    plt.plot(bax_concs, k2_arr, marker='o')
+    plt.title('k2')
+    #plt.figure()
+    #plt.plot(bax_concs, k2_arr, marker='o')
+    #plt.title('k2')
 
 if __name__ == '__main__':
-    main()
+    plt.ion()
+    #main()
+    bid_bax_pore_analysis(bid06_wells, bid06_layout, '0.63')
+    bid_bax_pore_analysis(bid40_wells, bid40_layout, '40')
+
+    #bid_bax_kinetic_analysis(bid06_wells, bid06_layout, '0.63')
+    #bid_bax_kinetic_analysis(bid2_wells, bid2_layout, '2.5')
+    #bid_bax_kinetic_analysis(bid10_wells, bid10_layout, '10')
+    #bid_bax_kinetic_analysis(bid40_wells, bid40_layout, '40')
