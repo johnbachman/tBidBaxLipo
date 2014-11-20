@@ -54,6 +54,7 @@ from matplotlib.font_manager import FontProperties
 import numpy as np
 import collections
 import pandas as pd
+from copy import copy
 
 # We store the well data in a list of lists; the first list
 # has the time coordinates, the second list has the values
@@ -300,7 +301,7 @@ def read_flexstation_kinetics(tsv_file):
     # Now that we're done iterating over the file, iterate over the dict we've
     # created and add the time array to each entry in the dict
     for well_name, entry in wells.iteritems():
-        entry[TIME] = time_array
+        entry[TIME] = copy(time_array)
         if len(entry[VALUE]) == 0:
             del wells[well_name]
     return wells
