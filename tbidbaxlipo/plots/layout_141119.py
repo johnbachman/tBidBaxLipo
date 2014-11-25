@@ -14,6 +14,7 @@ from tbidbaxlipo.models.nbd import multiconf
 from tbidbaxlipo.models import one_cpt
 from scipy.stats import linregress
 from tbidbaxlipo.plots import titration_fits as tf
+from tbidbaxlipo.util import fitting, colors
 
 # All wells with liposomes ~0.15 mg/mL
 
@@ -138,14 +139,57 @@ def plot_data():
     plot_all(bid_80)
     title('Bid 40nM')
 
+def plot_mm(k_data, bax_concs, bid_concs):
+    plt.figure()
+
+    kcat = fitting.Parameter(0.06)
+    km = fitting.Parameter(250.)
+    v0 = fitting.Parameter(5e-5)
+    ekd = fitting.Parameter(2.)
+
+    def plot_fit():
+        figure()
+        for i, bid in enumerate(bid_concs):
+            c = colors[i]
+            bid_bound = bid / (ekd() + bid)
+            plt.plot(np.log10(bax_concs),
+                     ((kcat() * bid_bound) / (km() + bax_concs)) + v0(),
+                     color=c)
+            plt.xlim([1.25, 3.2])
+
+            bid_k = k_data[i]
+            plt.plot(np.log10(bax_concs), bid_k, marker='o', color=c,
+                     linestyle='')
+
+    plot_fit()
+
+    def fit_func(bax_concs):
+        res_list = []
+        for bid in bid_concs:
+           bid_bound = bid / (ekd() + bid)
+           res_list.append(((kcat() * bid_bound) / (km() + bax_concs)) + v0())
+        return np.hstack(res_list)
+
+    fitting.fit(fit_func, [kcat, km, v0, ekd],
+                np.hstack(k_data), np.array(bax_concs))
+
+    plot_fit()
+    plt.xlabel(r'log$_{10}$([Total Bax])')
+    plt.ylabel('k $(sec^{-1})$')
+    plt.text(2.5, 0.00033, '$K_{cat} = %.4f\ sec^{-1}$' % kcat())
+    plt.text(2.5, 0.00030, '$K_m = %.2f\ nM$' % km() )
+    plt.text(2.5, 0.00027, '$V_0 = %f\ sec^{-1}$' % v0())
+    plt.text(2.5, 0.00024, '$Bid/Lipo\ K_D = %.2f\ nM$' % ekd())
+    import ipdb; ipdb.set_trace()
+
 if __name__ == '__main__':
     #plot_data()
-    plt.close('all')
     plt.ion()
     bax_concs = np.array([1000., 500., 250., 125., 62.5, 31.2, 15.6, 7.8,
                           3.9, 2.0, 0.]) + 25.
     fracs_labeled = np.array([25.] * 11) / bax_concs
-    for bid in [bid_80, bid_40, bid_20, bid_10, bid_5, bid_2]:
+    k_data = []
+    for bid in [bid_2, bid_5, bid_10, bid_20, bid_40, bid_80]:
         fmax_list = []
         k_list = []
 
@@ -160,7 +204,6 @@ if __name__ == '__main__':
             intercept = lin_fit[1]
             #plot(t, v, 'k')
             #plot(t[:numpts], intercept + lin_fit[0] * t[:numpts], 'r')
-            title(well_name)
             fit = tf.OneExpFmax()
             (k, fmax) = fit.fit_timecourse(t, v / intercept - 1)
             k_list.append(k)
@@ -169,19 +212,21 @@ if __name__ == '__main__':
             #plot(t, v / intercept - 1)
             #plot(t, fit.fit_func(t, [k, fmax]))
 
-        figure('k')
-        plot(bax_concs, k_list, marker='o')
-        title('k')
+        k_data.append(k_list)
+
+        #figure('k')
+        #plot(bax_concs, k_list, marker='o')
+        #title('k')
 
         figure('k, log scale')
         plot(np.log10(bax_concs), k_list, marker='o')
         title('k, log_scale')
 
-        figure('k, fracs labeled')
-        plot(np.log10(fracs_labeled), k_list, marker='o')
-        title('Fracs labeled')
+        #figure('Fmax')
+        #plot(np.log10(bax_concs), fmax_list, marker='o')
+        #title('Fmax')
+        #ylim([0, 4.5])
 
-        figure('Fmax')
-        plot(np.log10(bax_concs), fmax_list, marker='o')
-        title('Fmax')
-        ylim([0, 4.5])
+    bid_concs = np.array([2., 5., 10., 20., 40., 80.])
+    plot_mm(k_data, bax_concs, bid_concs)
+
