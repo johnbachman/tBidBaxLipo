@@ -14,7 +14,7 @@ from tbidbaxlipo.models.nbd import multiconf
 from tbidbaxlipo.models import one_cpt
 from scipy.stats import linregress
 from tbidbaxlipo.plots import titration_fits as tf
-from tbidbaxlipo.util import fitting, colors
+from tbidbaxlipo.util import fitting, colors, set_fig_params_for_publication
 
 # All wells with liposomes ~0.15 mg/mL
 
@@ -140,7 +140,7 @@ def plot_data():
     title('Bid 40nM')
 
 def plot_mm(k_data, bax_concs, bid_concs):
-    plt.figure()
+    plt.figure('mm fit', figsize=(1.5, 1.5), dpi=300)
 
     kcat = fitting.Parameter(0.06)
     km = fitting.Parameter(250.)
@@ -148,20 +148,19 @@ def plot_mm(k_data, bax_concs, bid_concs):
     ekd = fitting.Parameter(2.)
 
     def plot_fit():
-        figure()
         for i, bid in enumerate(bid_concs):
             c = colors[i]
             bid_bound = bid / (ekd() + bid)
-            plt.plot(np.log10(bax_concs),
+            if bid == 2.5:
+                bid_str = '2.5'
+            else:
+                bid_str = str(int(bid))
+            plt.plot(bax_concs,
                      ((kcat() * bid_bound) / (km() + bax_concs)) + v0(),
-                     color=c)
-            plt.xlim([1.25, 3.2])
-
+                     color=c, label='%s nM' % bid_str)
             bid_k = k_data[i]
-            plt.plot(np.log10(bax_concs), bid_k, marker='o', color=c,
-                     linestyle='')
-
-    plot_fit()
+            plt.plot(bax_concs, bid_k, marker='o', color=c,
+                     linestyle='', markersize=3)
 
     def fit_func(bax_concs):
         res_list = []
@@ -174,21 +173,78 @@ def plot_mm(k_data, bax_concs, bid_concs):
                 np.hstack(k_data), np.array(bax_concs))
 
     plot_fit()
-    plt.xlabel(r'log$_{10}$([Total Bax])')
-    plt.ylabel('k $(sec^{-1})$')
-    plt.text(2.5, 0.00033, '$K_{cat} = %.4f\ sec^{-1}$' % kcat())
-    plt.text(2.5, 0.00030, '$K_m = %.2f\ nM$' % km() )
-    plt.text(2.5, 0.00027, '$V_0 = %f\ sec^{-1}$' % v0())
-    plt.text(2.5, 0.00024, '$Bid/Lipo\ K_D = %.2f\ nM$' % ekd())
+
+    plt.subplots_adjust(left=0.21, bottom=0.19)
+    plt.xlabel('[Total Bax] (nM)')
+    plt.ylabel(r'k (sec$^{-1} \times 10^{-5}$)')
+    ax = plt.gca()
+    ax.set_ylim([5e-5, 37e-5])
+    ax.set_xlim([10, 2000])
+    ax.set_yticks(np.linspace(5e-5, 35e-5, 7))
+    ax.set_yticklabels([int(f) for f in np.linspace(5, 35, 7)])
+    ax.set_xscale('log')
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+    ax.yaxis.set_tick_params(direction='out')
+    ax.xaxis.set_tick_params(which='both', direction='out')
+    label_padding = 2
+    ax.xaxis.labelpad = label_padding
+    ax.yaxis.labelpad = label_padding
+
+    #ax.legend(handles, loc='upper right', ncol=1,
+    #            borderpad=0,
+               #bbox_to_anchor=(0.7, 0.9),
+               #bbox_transform=plt.gcf().transFigure,
+    #           handlelength=1.5, handletextpad=0,
+    #           frameon=False, prop={'size':6})
+
+    #plt.text(2.5, 0.00033, '$K_{cat} = %.4f\ sec^{-1}$' % kcat())
+    #plt.text(2.5, 0.00030, '$K_m = %.2f\ nM$' % km() )
+    #plt.text(2.5, 0.00027, '$V_0 = %f\ sec^{-1}$' % v0())
+    #plt.text(2.5, 0.00024, '$Bid/Lipo\ K_D = %.2f\ nM$' % ekd())
     import ipdb; ipdb.set_trace()
 
 if __name__ == '__main__':
     #plot_data()
     plt.ion()
+
+    set_fig_params_for_publication()
+
     bax_concs = np.array([1000., 500., 250., 125., 62.5, 31.2, 15.6, 7.8,
                           3.9, 2.0, 0.]) + 25.
     fracs_labeled = np.array([25.] * 11) / bax_concs
     k_data = []
+
+    plt.figure('k', figsize=(1.5, 1.5), dpi=300)
+    plt.subplots_adjust(left=0.24, bottom=0.21)
+    plt.xlabel('[Total Bax] (nM)')
+    plt.ylabel(r'k (sec$^{-1} \times 10^{-5}$)')
+    ax = plt.gca()
+    ax.set_ylim([5e-5, 37e-5])
+    ax.set_xlim([10, 2000])
+    ax.set_yticks(np.linspace(5e-5, 35e-5, 7))
+    ax.set_yticklabels([int(f) for f in np.linspace(5, 35, 7)])
+    ax.set_xscale('log')
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+    ax.yaxis.set_tick_params(direction='out')
+    ax.xaxis.set_tick_params(which='both', direction='out')
+
+    plt.figure('fmax', figsize=(1.5, 1.5), dpi=300)
+    plt.subplots_adjust(left=0.24, bottom=0.21)
+    plt.xlabel('[Total Bax] (nM)')
+    plt.ylabel(r'$F_{max}$')
+    ax = plt.gca()
+    ax.set_ylim([1, 5])
+    ax.set_xlim([10, 2000])
+    #ax.set_yticks(np.linspace(5e-5, 35e-5, 7))
+    #ax.set_yticklabels([int(f) for f in np.linspace(5, 35, 7)])
+    ax.set_xscale('log')
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+    ax.yaxis.set_tick_params(direction='out')
+    ax.xaxis.set_tick_params(which='both', direction='out')
+
     for bid in [bid_2, bid_5, bid_10, bid_20, bid_40, bid_80]:
         fmax_list = []
         k_list = []
@@ -217,16 +273,12 @@ if __name__ == '__main__':
         #figure('k')
         #plot(bax_concs, k_list, marker='o')
         #title('k')
+        plt.figure('k')
+        plt.plot(bax_concs, k_list, marker='o', markersize=3)
 
-        figure('k, log scale')
-        plot(np.log10(bax_concs), k_list, marker='o')
-        title('k, log_scale')
+        plt.figure('fmax')
+        plt.plot(bax_concs, fmax_list, marker='o', markersize=3)
 
-        #figure('Fmax')
-        #plot(np.log10(bax_concs), fmax_list, marker='o')
-        #title('Fmax')
-        #ylim([0, 4.5])
-
-    bid_concs = np.array([2., 5., 10., 20., 40., 80.])
+    bid_concs = np.array([2.5, 5., 10., 20., 40., 80.])
     plot_mm(k_data, bax_concs, bid_concs)
 
