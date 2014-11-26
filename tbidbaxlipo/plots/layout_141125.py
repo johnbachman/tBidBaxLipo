@@ -110,8 +110,8 @@ def plot_bg():
 
 def fit_bim_bh3_curves():
     nwalkers = 1000
-    burn_steps = 160
-    sample_steps = 100
+    burn_steps = 250
+    sample_steps = 50
     tc1 = bgsub_bim_bh3_wells['D1']
     time = tc1[TIME]
     data1 = tc1[VALUE]
@@ -119,8 +119,15 @@ def fit_bim_bh3_curves():
     data2 = tc2[VALUE]
     tc3 = bgsub_bim_bh3_wells['D3']
     data3 = tc3[VALUE]
-    data = [data1, data2, data3]
-    ndim = 3 * len(data)
+    tc4 = bgsub_bim_bh3_wells['D4']
+    data4 = tc4[VALUE]
+    tc5 = bgsub_bim_bh3_wells['D5']
+    data5 = tc5[VALUE]
+    tc6 = bgsub_bim_bh3_wells['D6']
+    data6 = tc6[VALUE]
+    data = [data1, data2, data3, data4, data5, data6]
+    num_hyper_params = 2
+    ndim = 3 * len(data) + num_hyper_params
 
     # Estimate SD by calculating SD from last 30 points of trajectory
     data_sd = np.std(data1[-30:])
@@ -134,10 +141,16 @@ def fit_bim_bh3_curves():
     def likelihood(position):
         # Calculate the predicted timecourse
         err = 0
+        fmax_ix = len(data)*3
+        (fmax_mean, fmax_sd) = position[fmax_ix:fmax_ix+2]
         for d_ix, data_i in enumerate(data):
             pos_i = position[(d_ix*3):(3*(d_ix+1))]
             ypred = fit_func(pos_i)
             err += -np.sum((ypred - data_i) **2 / (2 * data_sd **2))
+            (fmax, k, f0) = pos_i
+            fmax_p = dist.norm.logpdf(fmax, loc=fmax_mean, scale=fmax_sd)
+            if np.isnan(fmax_p):
+                return -np.inf
         return err
 
     def prior(position):
@@ -149,6 +162,12 @@ def fit_bim_bh3_curves():
                 return -np.inf
             if f0 < 2 or f0 > 3:
                 return -np.inf
+        fmax_ix = len(data)*3
+        (fmax_mean, fmax_sd) = position[fmax_ix:fmax_ix+2]
+        if fmax_sd < 0:
+            return -np.inf
+        if fmax_mean < 1 or fmax_mean > 6:
+            return -np.inf
         return 0.
 
     def posterior(position):
@@ -161,6 +180,9 @@ def fit_bim_bh3_curves():
             p0[walk_ix, d_ix*3] = np.random.uniform(1, 6)
             p0[walk_ix, d_ix*3 + 1] = np.random.uniform(6e-5, 1e-3)
             p0[walk_ix, d_ix*3 + 2] = np.random.uniform(2, 3)
+        fmax_ix = len(data)*3
+        p0[walk_ix, fmax_ix] = np.random.uniform(1,6)
+        p0[walk_ix, fmax_ix + 1] = np.random.uniform(0,1)
 
     plt.figure()
     for d_ix, data_i in enumerate(data):
@@ -203,7 +225,11 @@ def fit_bim_bh3_curves():
             plt.plot(time, fit_func(p_samp[d_ix*3:(d_ix+1)*3]), alpha=0.1,
                      color='k')
 
-    triangle.corner(sampler.flatchain)
+    # Triangle plots
+    for d_ix in range(len(data)):
+        triangle.corner(sampler.flatchain[:,d_ix*3:(d_ix+1)*3])
+    triangle.corner(sampler.flatchain[:,3*len(data):])
+
     import ipdb; ipdb.set_trace()
     return sampler
 
