@@ -112,10 +112,15 @@ def fit_bim_bh3_curves():
     nwalkers = 1000
     burn_steps = 160
     sample_steps = 100
-    ndim = 4
     tc1 = bgsub_bim_bh3_wells['D1']
     time = tc1[TIME]
     data1 = tc1[VALUE]
+    tc2 = bgsub_bim_bh3_wells['D2']
+    data2 = tc2[VALUE]
+    tc3 = bgsub_bim_bh3_wells['D3']
+    data3 = tc3[VALUE]
+    data = [data1, data2, data3]
+    ndim = 3 * len(data)
 
     # Estimate SD by calculating SD from last 30 points of trajectory
     data_sd = np.std(data1[-30:])
@@ -128,24 +133,22 @@ def fit_bim_bh3_curves():
 
     def likelihood(position):
         # Calculate the predicted timecourse
-        ypred = fit_func(position[:3])
-        sd = position[3]
-        err = np.sum(dist.norm.logpdf(ypred - data1, loc=0, scale=sd))
-        if np.isnan(err):
-            return -np.inf
-        else:
-            return err
+        err = 0
+        for d_ix, data_i in enumerate(data):
+            pos_i = position[(d_ix*3):(3*(d_ix+1))]
+            ypred = fit_func(pos_i)
+            err += -np.sum((ypred - data_i) **2 / (2 * data_sd **2))
+        return err
 
     def prior(position):
-        (fmax, k, f0, sd) = position
-        if fmax < 1 or fmax > 6:
-            return -np.inf
-        if k < 6e-5 or k > 1e-3:
-            return -np.inf
-        if f0 < 2 or f0 > 3:
-            return -np.inf
-        if sd <= 0 or sd > 1:
-            return -np.inf
+        for d_ix in range(len(data)):
+            (fmax, k, f0) = position[(d_ix*3):(3*(d_ix+1))]
+            if fmax < 1 or fmax > 6:
+                return -np.inf
+            if k < 6e-5 or k > 1e-3:
+                return -np.inf
+            if f0 < 2 or f0 > 3:
+                return -np.inf
         return 0.
 
     def posterior(position):
@@ -154,14 +157,15 @@ def fit_bim_bh3_curves():
     # Choose initial position
     p0 = np.zeros((nwalkers, ndim))
     for walk_ix in range(nwalkers):
-        p0[walk_ix, 0] = np.random.uniform(1, 6)
-        p0[walk_ix, 1] = np.random.uniform(6e-5, 1e-3)
-        p0[walk_ix, 2] = np.random.uniform(2, 3)
-        p0[walk_ix, 3] = np.random.uniform(0, 1)
+        for d_ix in range(len(data)):
+            p0[walk_ix, d_ix*3] = np.random.uniform(1, 6)
+            p0[walk_ix, d_ix*3 + 1] = np.random.uniform(6e-5, 1e-3)
+            p0[walk_ix, d_ix*3 + 2] = np.random.uniform(2, 3)
 
     plt.figure()
-    plt.plot(time, data1)
-    plt.plot(time, fit_func(p0[0,:3]))
+    for d_ix, data_i in enumerate(data):
+        plt.plot(time, data_i, color=colors[d_ix])
+        plt.plot(time, fit_func(p0[0, d_ix*3:(d_ix+1)*3]), color='k')
 
     # Get the sampler
     sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior)
@@ -179,11 +183,25 @@ def fit_bim_bh3_curves():
 
     # Plot maximum likelihood
     plt.figure()
-    plt.plot(time, data1)
     ml_ix = np.unravel_index(np.argmax(sampler.lnprobability),
                              sampler.lnprobability.shape)
-    ml_pos = sampler.chain[ml_ix][:3]
-    plt.plot(time, fit_func(ml_pos))
+    ml_pos = sampler.chain[ml_ix]
+    for d_ix, data_i in enumerate(data):
+        plt.plot(time, data_i, color=colors[d_ix])
+        plt.plot(time, fit_func(ml_pos[d_ix*3:(d_ix+1)*3]), color='k')
+
+    # Plot sampling of parameters
+    plt.figure()
+    for d_ix, data_i in enumerate(data):
+        plt.plot(time, data_i, color=colors[d_ix])
+    num_plot_samples = 100
+    num_tot_steps = sampler.flatchain.shape[0]
+    for s_ix in range(num_plot_samples):
+        p_ix = np.random.randint(num_tot_steps)
+        p_samp = sampler.flatchain[p_ix]
+        for d_ix in range(len(data)):
+            plt.plot(time, fit_func(p_samp[d_ix*3:(d_ix+1)*3]), alpha=0.1,
+                     color='k')
 
     triangle.corner(sampler.flatchain)
     import ipdb; ipdb.set_trace()
