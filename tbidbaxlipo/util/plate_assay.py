@@ -760,14 +760,14 @@ def replicate_well_list(start_row=None, end_row=None, start_col=None,
 
     Returns
     -------
-    list of tuples of strings
-        Each tuple in the outer list represents a group of wells with
-        the same condition, e.g. [('A1', 'B1', 'C1'), ('A2', 'B2', 'C2')]
+    list of lists of strings
+        Each list in the outer list represents a group of wells with
+        the same condition, e.g. [['A1', 'B1', 'C1'], ['A2', 'B2', 'C2']]
 
     Examples
     --------
     >>> replicate_well_list('A', 'C', 1, 3)
-    [('A1', 'B1', 'C1'), ('A2', 'B2', 'C2'), ('A3', 'B3', 'C3')]
+    [['A1', 'B1', 'C1'], ['A2', 'B2', 'C2'], ['A3', 'B3', 'C3']]
     """
 
     if None in [start_row, end_row, start_col, end_col]:
@@ -775,11 +775,11 @@ def replicate_well_list(start_row=None, end_row=None, start_col=None,
                          'arguments.')
     replicate_wells = []
     for row_char_num in range(ord(start_row), ord(end_row)+1):
-        well_list = tuple(['%s%d' % (chr(row_char_num), col)
-                     for col in range(start_col, end_col+1)])
+        well_list = ['%s%d' % (chr(row_char_num), col)
+                     for col in range(start_col, end_col+1)]
         replicate_wells.append(well_list)
     if group_by_col:
-        replicate_wells = zip(*replicate_wells)
+        replicate_wells = [list(tup) for tup in zip(*replicate_wells)]
     return replicate_wells
 
 def dose_series_replicate_list(reagent_name=None, initial_dose=None,
@@ -788,9 +788,9 @@ def dose_series_replicate_list(reagent_name=None, initial_dose=None,
                                units='nM', lowest_first=True,
                                start_row=None, end_row=None, start_col=None,
                                end_col=None, group_by_col=True):
-    """Returns strings/tuples specifying a conditions in a plate.
+    """Returns strings/lists specifying a conditions in a plate.
 
-    The strings/tuples can be used to construct an OrderedDict specifying
+    The strings/lists can be used to construct an OrderedDict specifying
     the plate layout.
 
     Expects that replicate wells occupy a rectangular block of contiguous wells
@@ -837,14 +837,14 @@ def dose_series_replicate_list(reagent_name=None, initial_dose=None,
 
     Returns
     -------
-    list of tuples of type (string, (tuple of strings))
+    list of tuples of type (string, [list of strings])
 
     Examples
     --------
     >>> import collections
     >>> layout_dict = dose_series_replicate_list('Bax', 590, (2/3.), num_doses=3, start_row='A', end_row='C', start_col=1, end_col=3)
     >>> collections.OrderedDict(layout_dict)
-    OrderedDict([('Bax 0.0 nM', ('A3', 'B3', 'C3')), ('Bax 393.3 nM', ('A2', 'B2', 'C2')), ('Bax 590.0 nM', ('A1', 'B1', 'C1'))])
+    OrderedDict([('Bax 0.0 nM', ['A3', 'B3', 'C3']), ('Bax 393.3 nM', ['A2', 'B2', 'C2']), ('Bax 590.0 nM', ['A1', 'B1', 'C1'])])
     """
 
     if group_by_col and num_doses != end_col - start_col + 1:
@@ -873,4 +873,26 @@ def plot_endpoints_vs_dose(wells, layout):
     ylabel('RFU')
 
     return (conc_list, endpoints)
+
+def row_wells(row_name, max_col=12):
+    """Returns the list of wells in a row.
+
+    Parameters
+    ----------
+    row_name : string
+        Name of row, e.g. 'C'.
+    max_col : int
+        Maximum column index to use (inclusive). Default is 12.
+
+    Returns
+    -------
+    list of strings containing the well names for the row.
+
+    Examples
+    --------
+    >> row_wells('C', 12)
+    ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'C12']
+    """
+
+    return ['%s%s' % (row_name, i) for i in range(1, max_col+1)]
 
