@@ -110,7 +110,7 @@ def plot_bg():
 
 def fit_bim_bh3_curves():
     nwalkers = 1000
-    burn_steps = 250
+    burn_steps = 1000
     sample_steps = 50
     tc1 = bgsub_bim_bh3_wells['D1']
     time = tc1[TIME]
@@ -125,7 +125,20 @@ def fit_bim_bh3_curves():
     data5 = tc5[VALUE]
     tc6 = bgsub_bim_bh3_wells['D6']
     data6 = tc6[VALUE]
-    data = [data1, data2, data3, data4, data5, data6]
+    tc7 = bgsub_bim_bh3_wells['D7']
+    data7 = tc7[VALUE]
+    tc8 = bgsub_bim_bh3_wells['D8']
+    data8 = tc8[VALUE]
+    tc9 = bgsub_bim_bh3_wells['D9']
+    data9 = tc9[VALUE]
+    tc10 = bgsub_bim_bh3_wells['D10']
+    data10 = tc10[VALUE]
+    tc11 = bgsub_bim_bh3_wells['D11']
+    data11 = tc11[VALUE]
+    tc12 = bgsub_bim_bh3_wells['D12']
+    data12 = tc12[VALUE]
+    data = [data1, data2, data3, data4, data5, data6,
+            data7, data8, data9, data10, data11, data12]
     num_hyper_params = 2
     ndim = 3 * len(data) + num_hyper_params
 
@@ -146,11 +159,14 @@ def fit_bim_bh3_curves():
         for d_ix, data_i in enumerate(data):
             pos_i = position[(d_ix*3):(3*(d_ix+1))]
             ypred = fit_func(pos_i)
+            err += -len(ypred) * np.log(data_sd * np.sqrt(2 * np.pi))
             err += -np.sum((ypred - data_i) **2 / (2 * data_sd **2))
             (fmax, k, f0) = pos_i
             fmax_p = dist.norm.logpdf(fmax, loc=fmax_mean, scale=fmax_sd)
             if np.isnan(fmax_p):
                 return -np.inf
+            else:
+                err += fmax_p
         return err
 
     def prior(position):
@@ -231,6 +247,7 @@ def fit_bim_bh3_curves():
     triangle.corner(sampler.flatchain[:,3*len(data):])
 
     import ipdb; ipdb.set_trace()
+    np.mean(sampler.flatchain[:,:2:])
     return sampler
 
 def get_bim_bh3_curves():
