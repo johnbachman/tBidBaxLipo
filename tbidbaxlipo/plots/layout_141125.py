@@ -2,6 +2,7 @@ import collections
 import sys
 import os
 from copy import deepcopy
+import pickle
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -109,100 +110,101 @@ def plot_bg():
     errorbar(tc_avg[TIME], tc_avg[VALUE], label='Liposomes', yerr=tc_sd)
     legend(loc='lower right')
 
-def fit_bim_bh3_curves():
-    nwalkers = 1000
-    burn_steps = 500
-    sample_steps = 500
-    time = bgsub_bim_bh3_wells['D1'][TIME]
-    data = [bgsub_bim_bh3_wells['D%d' % i][VALUE]
-            for i in range(1, 13)]
-    num_hyper_params = 6
-    ndim = 3 * len(data) + num_hyper_params
+nwalkers = 1000
+burn_steps = 2000
+sample_steps = 150
+time = bgsub_bim_bh3_wells['D1'][TIME]
+data = [bgsub_bim_bh3_wells['D%d' % i][VALUE]
+        for i in range(1, 13)]
+num_hyper_params = 6
+ndim = 3 * len(data) + num_hyper_params
 
-    # Estimate SD of data by calculating SD from last 30 points of
-    # trajectory (I did this with full Bayesian estimation once and found
-    # it to be virtually identical to the value from the SD calculated from
-    # the points).
-    data_sd = np.std(data[0][-30:])
-    print "SD", data_sd
+# Estimate SD of data by calculating SD from last 30 points of
+# trajectory (I did this with full Bayesian estimation once and found
+# it to be virtually identical to the value from the SD calculated from
+# the points).
+data_sd = np.std(data[0][-30:])
+print "SD", data_sd
 
-    # Parameters will be in order (Fmax, k, F0)
-    def fit_func(position):
-        (fmax, k, f0) = position
-        return (fmax*f0) * (1 - np.exp(-k * time)) + f0
+# Parameters will be in order (Fmax, k, F0)
+def fit_func(position):
+    (fmax, k, f0) = position
+    return (fmax*f0) * (1 - np.exp(-k * time)) + f0
 
-    def likelihood(position):
-        # Calculate the predicted timecourse
-        loglkl = 0
-        # The hyperparameters are at the end of the parameter array in the
-        # order defined by the tuple below.
-        hp_ix = len(data)*3
-        (fmax_mean, fmax_sd, k_mean, k_sd, f0_mean, f0_sd) = position[hp_ix:]
-        # Iterate over the trajectories in the dataset
-        for d_ix, data_i in enumerate(data):
-            # Get the parameters for this particular trajectory
-            pos_i = position[(d_ix*3):(3*(d_ix+1))]
-            # Get the predicted timecourse
-            ypred = fit_func(pos_i)
-            # This normalization factor is invariant so it shouldn't matter
-            #err += -len(ypred) * np.log(data_sd * np.sqrt(2 * np.pi))
-            # Calculate the log-likelihood
-            loglkl += -np.sum((ypred - data_i) **2 / (2 * data_sd **2))
-            (fmax, k, f0) = pos_i
-            fmax_p = dist.norm.logpdf(fmax, loc=fmax_mean, scale=fmax_sd)
-            k_p = dist.norm.logpdf(k, loc=k_mean, scale=k_sd)
-            f0_p = dist.norm.logpdf(f0, loc=f0_mean, scale=f0_sd)
-            if np.any(np.isnan([fmax_p, k_p, f0_p])):
-                return -np.inf
-            else:
-                loglkl += fmax_p + k_p + f0_p
-        return loglkl
-
-    def prior(position):
-        """
-        for d_ix in range(len(data)):
-            (fmax, k, f0) = position[(d_ix*3):(3*(d_ix+1))]
-            if fmax < 1 or fmax > 6:
-                return -np.inf
-            if k < 6e-5 or k > 1e-3:
-                return -np.inf
-            if f0 < 2 or f0 > 3:
-                return -np.inf
-        """
-        hp_ix = len(data)*3
-        (fmax_mean, fmax_sd, k_mean, k_sd, f0_mean, f0_sd) = position[hp_ix:]
-        # Make sure all SDs are positive
-        if fmax_sd < 0 or k_sd < 0 or f0_sd < 0:
+def likelihood(position):
+    # Calculate the predicted timecourse
+    loglkl = 0
+    # The hyperparameters are at the end of the parameter array in the
+    # order defined by the tuple below.
+    hp_ix = len(data)*3
+    (fmax_mean, fmax_sd, k_mean, k_sd, f0_mean, f0_sd) = position[hp_ix:]
+    # Iterate over the trajectories in the dataset
+    for d_ix, data_i in enumerate(data):
+        # Get the parameters for this particular trajectory
+        pos_i = position[(d_ix*3):(3*(d_ix+1))]
+        # Get the predicted timecourse
+        ypred = fit_func(pos_i)
+        # This normalization factor is invariant so it shouldn't matter
+        #err += -len(ypred) * np.log(data_sd * np.sqrt(2 * np.pi))
+        # Calculate the log-likelihood
+        loglkl += -np.sum((ypred - data_i) **2 / (2 * data_sd **2))
+        (fmax, k, f0) = pos_i
+        fmax_p = dist.norm.logpdf(fmax, loc=fmax_mean, scale=fmax_sd)
+        k_p = dist.norm.logpdf(k, loc=k_mean, scale=k_sd)
+        f0_p = dist.norm.logpdf(f0, loc=f0_mean, scale=f0_sd)
+        if np.any(np.isnan([fmax_p, k_p, f0_p])):
             return -np.inf
-        # The fmax should be between 1 and 6
-        if fmax_mean < 1 or fmax_mean > 6:
-            return -np.inf
-        # k should be between 6e-5 and 1e-3
-        if k_mean < 6e-5 or k_mean > 1e-3:
-            return -np.inf
-        # f0 should be between 2 and 3
-        if f0_mean < 2 or f0_mean > 3:
-            return -np.inf
-        # Otherwise, the log-prior is 0 because all priors are uniform
-        return 0.
+        else:
+            loglkl += fmax_p + k_p + f0_p
+    return loglkl
 
-    def posterior(position):
-        return likelihood(position) + prior(position)
+def prior(position):
+    """
+    for d_ix in range(len(data)):
+        (fmax, k, f0) = position[(d_ix*3):(3*(d_ix+1))]
+        if fmax < 1 or fmax > 6:
+            return -np.inf
+        if k < 6e-5 or k > 1e-3:
+            return -np.inf
+        if f0 < 2 or f0 > 3:
+            return -np.inf
+    """
+    hp_ix = len(data)*3
+    (fmax_mean, fmax_sd, k_mean, k_sd, f0_mean, f0_sd) = position[hp_ix:]
+    # Make sure all SDs are positive
+    if fmax_sd < 0 or k_sd < 0 or f0_sd < 0:
+        return -np.inf
+    # The fmax should be between 1 and 6
+    if fmax_mean < 1 or fmax_mean > 6:
+        return -np.inf
+    # k should be between 6e-5 and 1e-3
+    if k_mean < 6e-5 or k_mean > 1e-3:
+        return -np.inf
+    # f0 should be between 2 and 3
+    if f0_mean < 2 or f0_mean > 3:
+        return -np.inf
+    # Otherwise, the log-prior is 0 because all priors are uniform
+    return 0.
 
+def posterior(position):
+    return likelihood(position) + prior(position)
+
+def fit_bim_bh3_curves(p0=None):
     # Choose initial position
-    p0 = np.zeros((nwalkers, ndim))
-    for walk_ix in range(nwalkers):
-        for d_ix in range(len(data)):
-            p0[walk_ix, d_ix*3] = np.random.uniform(1, 6)
-            p0[walk_ix, d_ix*3 + 1] = np.random.uniform(6e-5, 1e-3)
-            p0[walk_ix, d_ix*3 + 2] = np.random.uniform(2, 3)
-        hp_ix = len(data)*3
-        p0[walk_ix, hp_ix] = np.random.uniform(1,6) # fmax mean
-        p0[walk_ix, hp_ix + 1] = np.random.uniform(0,1) # fmax sd
-        p0[walk_ix, hp_ix + 2] = np.random.uniform(6e-5, 1e-3) # k mean
-        p0[walk_ix, hp_ix + 3] = np.random.uniform(0,1e-1) # k sd
-        p0[walk_ix, hp_ix + 4] = np.random.uniform(2,3) # f0 mean
-        p0[walk_ix, hp_ix + 5] = np.random.uniform(0,1) # f0 sd
+    if p0 is None:
+        p0 = np.zeros((nwalkers, ndim))
+        for walk_ix in range(nwalkers):
+            for d_ix in range(len(data)):
+                p0[walk_ix, d_ix*3] = np.random.uniform(1, 6)
+                p0[walk_ix, d_ix*3 + 1] = np.random.uniform(6e-5, 1e-3)
+                p0[walk_ix, d_ix*3 + 2] = np.random.uniform(2, 3)
+            hp_ix = len(data)*3
+            p0[walk_ix, hp_ix] = np.random.uniform(1,6) # fmax mean
+            p0[walk_ix, hp_ix + 1] = np.random.uniform(0,1) # fmax sd
+            p0[walk_ix, hp_ix + 2] = np.random.uniform(6e-5, 1e-3) # k mean
+            p0[walk_ix, hp_ix + 3] = np.random.uniform(0,1e-1) # k sd
+            p0[walk_ix, hp_ix + 4] = np.random.uniform(2,3) # f0 mean
+            p0[walk_ix, hp_ix + 5] = np.random.uniform(0,1) # f0 sd
 
     #plt.figure()
     #for d_ix, data_i in enumerate(data):
@@ -225,6 +227,17 @@ def fit_bim_bh3_curves():
     print("Main sampling...")
     sampler.run_mcmc(pos, sample_steps)
 
+    # Close the pool!
+    pool.close()
+
+    # Pickle the sampler
+    sampler.pool = None
+    with open('bimbh3_141125_2.pck','w') as f:
+        pickle.dump(sampler, f)
+
+    return sampler
+
+def plot_chain(sampler):
     # Check convergence
     plt.figure()
     plt.plot(sampler.lnprobability.T)
@@ -235,13 +248,13 @@ def fit_bim_bh3_curves():
                              sampler.lnprobability.shape)
     ml_pos = sampler.chain[ml_ix]
     for d_ix, data_i in enumerate(data):
-        plt.plot(time, data_i, color=colors[d_ix])
+        plt.plot(time, data_i)
         plt.plot(time, fit_func(ml_pos[d_ix*3:(d_ix+1)*3]), color='k')
 
     # Plot sampling of trajectories parameters
     plt.figure()
     for d_ix, data_i in enumerate(data):
-        plt.plot(time, data_i, color=colors[d_ix])
+        plt.plot(time, data_i)
     num_plot_samples = 100
     num_tot_steps = sampler.flatchain.shape[0]
     for s_ix in range(num_plot_samples):
@@ -255,19 +268,6 @@ def fit_bim_bh3_curves():
     for d_ix in range(len(data)):
         triangle.corner(sampler.flatchain[:,d_ix*3:(d_ix+1)*3])
     triangle.corner(sampler.flatchain[:,3*len(data):])
-
-    # Close the pool!
-    pool.close()
-
-    import ipdb; ipdb.set_trace()
-
-    # Pickle the sampler
-    sampler.lnprobfn = None
-    sampler.pool = None
-    with open('bimbh3_141125.pck','w') as f:
-        pickle.dump(sampler, f)
-
-    return sampler
 
 def get_bim_bh3_curves():
     bim_bh3_curves = {}
@@ -301,5 +301,7 @@ if __name__ == '__main__':
     # plot_clean_data()
     # plot_bg()
     # get_bim_bh3_curves()
-    sampler = fit_bim_bh3_curves()
-
+    with open('bimbh3_141125.pck') as f:
+        sampler = pickle.load(f)
+    sampler = fit_bim_bh3_curves(p0=sampler.chain[:,-1,:])
+    #plot_chain(sampler)
