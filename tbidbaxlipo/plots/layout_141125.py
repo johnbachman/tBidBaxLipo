@@ -6,6 +6,7 @@ from copy import deepcopy
 import numpy as np
 from matplotlib import pyplot as plt
 import emcee
+from emcee.utils import MPIPool
 import triangle
 
 from matplotlib.ticker import MultipleLocator, ScalarFormatter
@@ -110,40 +111,19 @@ def plot_bg():
 
 def fit_bim_bh3_curves():
     nwalkers = 1000
-    burn_steps = 1000
-    sample_steps = 50
-    tc1 = bgsub_bim_bh3_wells['D1']
-    time = tc1[TIME]
-    data1 = tc1[VALUE]
-    tc2 = bgsub_bim_bh3_wells['D2']
-    data2 = tc2[VALUE]
-    tc3 = bgsub_bim_bh3_wells['D3']
-    data3 = tc3[VALUE]
-    tc4 = bgsub_bim_bh3_wells['D4']
-    data4 = tc4[VALUE]
-    tc5 = bgsub_bim_bh3_wells['D5']
-    data5 = tc5[VALUE]
-    tc6 = bgsub_bim_bh3_wells['D6']
-    data6 = tc6[VALUE]
-    tc7 = bgsub_bim_bh3_wells['D7']
-    data7 = tc7[VALUE]
-    tc8 = bgsub_bim_bh3_wells['D8']
-    data8 = tc8[VALUE]
-    tc9 = bgsub_bim_bh3_wells['D9']
-    data9 = tc9[VALUE]
-    tc10 = bgsub_bim_bh3_wells['D10']
-    data10 = tc10[VALUE]
-    tc11 = bgsub_bim_bh3_wells['D11']
-    data11 = tc11[VALUE]
-    tc12 = bgsub_bim_bh3_wells['D12']
-    data12 = tc12[VALUE]
-    data = [data1, data2, data3, data4, data5, data6,
-            data7, data8, data9, data10, data11, data12]
-    num_hyper_params = 2
+    burn_steps = 500
+    sample_steps = 500
+    time = bgsub_bim_bh3_wells['D1'][TIME]
+    data = [bgsub_bim_bh3_wells['D%d' % i][VALUE]
+            for i in range(1, 13)]
+    num_hyper_params = 6
     ndim = 3 * len(data) + num_hyper_params
 
-    # Estimate SD by calculating SD from last 30 points of trajectory
-    data_sd = np.std(data1[-30:])
+    # Estimate SD of data by calculating SD from last 30 points of
+    # trajectory (I did this with full Bayesian estimation once and found
+    # it to be virtually identical to the value from the SD calculated from
+    # the points).
+    data_sd = np.std(data[0][-30:])
     print "SD", data_sd
 
     # Parameters will be in order (Fmax, k, F0)
@@ -153,23 +133,33 @@ def fit_bim_bh3_curves():
 
     def likelihood(position):
         # Calculate the predicted timecourse
-        err = 0
-        fmax_ix = len(data)*3
-        (fmax_mean, fmax_sd) = position[fmax_ix:fmax_ix+2]
+        loglkl = 0
+        # The hyperparameters are at the end of the parameter array in the
+        # order defined by the tuple below.
+        hp_ix = len(data)*3
+        (fmax_mean, fmax_sd, k_mean, k_sd, f0_mean, f0_sd) = position[hp_ix:]
+        # Iterate over the trajectories in the dataset
         for d_ix, data_i in enumerate(data):
+            # Get the parameters for this particular trajectory
             pos_i = position[(d_ix*3):(3*(d_ix+1))]
+            # Get the predicted timecourse
             ypred = fit_func(pos_i)
-            err += -len(ypred) * np.log(data_sd * np.sqrt(2 * np.pi))
-            err += -np.sum((ypred - data_i) **2 / (2 * data_sd **2))
+            # This normalization factor is invariant so it shouldn't matter
+            #err += -len(ypred) * np.log(data_sd * np.sqrt(2 * np.pi))
+            # Calculate the log-likelihood
+            loglkl += -np.sum((ypred - data_i) **2 / (2 * data_sd **2))
             (fmax, k, f0) = pos_i
             fmax_p = dist.norm.logpdf(fmax, loc=fmax_mean, scale=fmax_sd)
-            if np.isnan(fmax_p):
+            k_p = dist.norm.logpdf(k, loc=k_mean, scale=k_sd)
+            f0_p = dist.norm.logpdf(f0, loc=f0_mean, scale=f0_sd)
+            if np.any(np.isnan([fmax_p, k_p, f0_p])):
                 return -np.inf
             else:
-                err += fmax_p
-        return err
+                loglkl += fmax_p + k_p + f0_p
+        return loglkl
 
     def prior(position):
+        """
         for d_ix in range(len(data)):
             (fmax, k, f0) = position[(d_ix*3):(3*(d_ix+1))]
             if fmax < 1 or fmax > 6:
@@ -178,12 +168,22 @@ def fit_bim_bh3_curves():
                 return -np.inf
             if f0 < 2 or f0 > 3:
                 return -np.inf
-        fmax_ix = len(data)*3
-        (fmax_mean, fmax_sd) = position[fmax_ix:fmax_ix+2]
-        if fmax_sd < 0:
+        """
+        hp_ix = len(data)*3
+        (fmax_mean, fmax_sd, k_mean, k_sd, f0_mean, f0_sd) = position[hp_ix:]
+        # Make sure all SDs are positive
+        if fmax_sd < 0 or k_sd < 0 or f0_sd < 0:
             return -np.inf
+        # The fmax should be between 1 and 6
         if fmax_mean < 1 or fmax_mean > 6:
             return -np.inf
+        # k should be between 6e-5 and 1e-3
+        if k_mean < 6e-5 or k_mean > 1e-3:
+            return -np.inf
+        # f0 should be between 2 and 3
+        if f0_mean < 2 or f0_mean > 3:
+            return -np.inf
+        # Otherwise, the log-prior is 0 because all priors are uniform
         return 0.
 
     def posterior(position):
@@ -196,17 +196,27 @@ def fit_bim_bh3_curves():
             p0[walk_ix, d_ix*3] = np.random.uniform(1, 6)
             p0[walk_ix, d_ix*3 + 1] = np.random.uniform(6e-5, 1e-3)
             p0[walk_ix, d_ix*3 + 2] = np.random.uniform(2, 3)
-        fmax_ix = len(data)*3
-        p0[walk_ix, fmax_ix] = np.random.uniform(1,6)
-        p0[walk_ix, fmax_ix + 1] = np.random.uniform(0,1)
+        hp_ix = len(data)*3
+        p0[walk_ix, hp_ix] = np.random.uniform(1,6) # fmax mean
+        p0[walk_ix, hp_ix + 1] = np.random.uniform(0,1) # fmax sd
+        p0[walk_ix, hp_ix + 2] = np.random.uniform(6e-5, 1e-3) # k mean
+        p0[walk_ix, hp_ix + 3] = np.random.uniform(0,1e-1) # k sd
+        p0[walk_ix, hp_ix + 4] = np.random.uniform(2,3) # f0 mean
+        p0[walk_ix, hp_ix + 5] = np.random.uniform(0,1) # f0 sd
 
-    plt.figure()
-    for d_ix, data_i in enumerate(data):
-        plt.plot(time, data_i, color=colors[d_ix])
-        plt.plot(time, fit_func(p0[0, d_ix*3:(d_ix+1)*3]), color='k')
+    #plt.figure()
+    #for d_ix, data_i in enumerate(data):
+    #    plt.plot(time, data_i, color=colors[d_ix])
+    #    plt.plot(time, fit_func(p0[0, d_ix*3:(d_ix+1)*3]), color='k')
+
+    # Initialize the MPI pool
+    pool = MPIPool()
+    if not pool.is_master():
+        pool.wait()
+        sys.exit(0)
 
     # Get the sampler
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior)
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior, pool=pool)
     # Burn-in
     print("Burn-in sampling...")
     pos, prob, state = sampler.run_mcmc(p0, burn_steps, storechain=False)
@@ -228,7 +238,7 @@ def fit_bim_bh3_curves():
         plt.plot(time, data_i, color=colors[d_ix])
         plt.plot(time, fit_func(ml_pos[d_ix*3:(d_ix+1)*3]), color='k')
 
-    # Plot sampling of parameters
+    # Plot sampling of trajectories parameters
     plt.figure()
     for d_ix, data_i in enumerate(data):
         plt.plot(time, data_i, color=colors[d_ix])
@@ -246,8 +256,17 @@ def fit_bim_bh3_curves():
         triangle.corner(sampler.flatchain[:,d_ix*3:(d_ix+1)*3])
     triangle.corner(sampler.flatchain[:,3*len(data):])
 
+    # Close the pool!
+    pool.close()
+
     import ipdb; ipdb.set_trace()
-    np.mean(sampler.flatchain[:,:2:])
+
+    # Pickle the sampler
+    sampler.lnprobfn = None
+    sampler.pool = None
+    with open('bimbh3_141125.pck','w') as f:
+        pickle.dump(sampler, f)
+
     return sampler
 
 def get_bim_bh3_curves():
@@ -278,5 +297,9 @@ def get_bim_bh3_curves():
 
 if __name__ == '__main__':
     plt.ion()
+    # plot_raw_data()
+    # plot_clean_data()
+    # plot_bg()
+    # get_bim_bh3_curves()
     sampler = fit_bim_bh3_curves()
 
