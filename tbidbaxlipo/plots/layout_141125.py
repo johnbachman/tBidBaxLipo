@@ -33,10 +33,10 @@ timecourse_wells = read_flexstation_kinetics(timecourse_file)
 
 # The raw layout will contain all wells in the dataset
 raw_layout = collections.OrderedDict(
-            dose_series_replicate_list('cBid', 800, 0.5, 12, True, 'nM',
-                                    lowest_first=False,
-                                    start_row='A', end_row='C',
-                                    start_col=1, end_col=12))
+            reversed(dose_series_replicate_list('cBid', 800, 0.5, 12, True,
+                                                'nM', lowest_first=False,
+                                                start_row='A', end_row='C',
+                                                start_col=1, end_col=12)))
 raw_layout['Bim BH3'] = row_wells('D')
 raw_layout['Bim BH3, No NBD-Bax'] = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6']
 raw_layout['No NBD-Bax'] = ['E7', 'E8', 'E9', 'E10', 'E11', 'E12']
@@ -336,7 +336,7 @@ def fit_timecourses(layout, timecourses, plot=True):
     # We'll be doing a 3 parameter fit
     num_params = 3
     # This is where we'll store the results of the fitting
-    param_dict = {}
+    param_dict = collections.OrderedDict()
     # Iterate over all of the conditions in the layout
     for cond_name, rep_list in layout.iteritems():
         # How many replicates for this condition?
@@ -345,8 +345,6 @@ def fit_timecourses(layout, timecourses, plot=True):
         if plot:
             plt.figure(cond_name, figsize=(6, 2), dpi=150)
         plots_per_row = 3
-        num_plot_rows = np.floor((num_reps + 1) / plots_per_row)
-        print num_plot_rows
         # Create an entry in the resulting param dict for this condition.
         # Results will be stored in a matrix with shape (num_reps, num_params)
         param_matrix = np.zeros((num_reps, num_params))
@@ -370,7 +368,7 @@ def fit_timecourses(layout, timecourses, plot=True):
             param_matrix[rep_ix, 2] = f0()
             # Plot into the appropriate subplot
             if plot:
-                plt.subplot(1, 3, rep_ix+1)
+                plt.subplot(1, num_plots_per_row, rep_ix+1)
                 plt.plot(time, value, color='r')
                 plt.plot(time, exp_func(time), color='k', linewidth=2)
                 plt.xlabel('Time (sec)')
@@ -391,7 +389,7 @@ if __name__ == '__main__':
     #    sampler = pickle.load(f)
     #sampler = fit_bim_bh3_curves(p0=sampler.chain[:,-1,:])
     #plot_chain(sampler)
-    bid_fits = fit_timecourses(clean_bid_layout, bgsub_bid_wells, plot=True)
+    bid_fits = fit_timecourses(clean_bid_layout, bgsub_bid_wells, plot=False)
 
     bid_concs = []
     fmax_means = []
@@ -401,7 +399,7 @@ if __name__ == '__main__':
     f0_means = []
     f0_ses = []
 
-    for cond_name in sorted(bid_fits.keys()):
+    for cond_name in bid_fits.keys():
         fits = bid_fits[cond_name]
         bid_conc = float(cond_name.split(' ')[1])
         bid_concs.append(bid_conc)
@@ -412,10 +410,39 @@ if __name__ == '__main__':
         k_ses.append(np.std(fits[:,1]) / np.sqrt(num_reps))
         f0_means.append(np.mean(fits[:,2]))
         f0_ses.append(np.std(fits[:,2]) / np.sqrt(num_reps))
+
+    bid_concs = np.array(bid_concs)
+    k_means = np.array(k_means)
+    fmax_means = np.array(fmax_means)
+
     plt.figure('fmax')
     plt.errorbar((bid_concs), fmax_means, yerr=fmax_ses, linestyle='')
     plt.figure('k')
     plt.errorbar((bid_concs), k_means, yerr=k_ses, linestyle='')
     plt.figure('f0')
     plt.errorbar((bid_concs), f0_means, yerr=f0_ses, linestyle='')
+
+    kd = fitting.Parameter(1.)
+    k0 = fitting.Parameter(2e-5)
+    kmax = fitting.Parameter(2e-4)
+
+    def hill_func_k(concs):
+        return k0() + ((kmax() * concs) / (kd() + concs))
+
+    res = fitting.fit(hill_func_k, [kd, k0, kmax], np.array(k_means),
+                      np.array(bid_concs))
+    plt.figure('k')
+    plt.plot(bid_concs, hill_func_k(bid_concs), color='k')
+
+    fmaxd = fitting.Parameter(1.)
+    fmax0 = fitting.Parameter(0.7)
+    fmaxmax = fitting.Parameter(2.2)
+
+    def hill_func_fmax(concs):
+        return fmax0() + ((fmaxmax() * concs) / (fmaxd() + concs))
+
+    res = fitting.fit(hill_func_fmax, [fmaxd, fmax0, fmaxmax],
+                      np.array(fmax_means), np.array(bid_concs))
+    plt.figure('fmax')
+    plt.plot(bid_concs, hill_func_fmax(bid_concs), color='k')
 
