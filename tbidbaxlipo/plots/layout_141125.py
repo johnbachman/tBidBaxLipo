@@ -378,24 +378,74 @@ def fit_timecourses(layout, timecourses, plot=True):
 
     return param_dict
 
+def plot_k_titration(fits):
+    bid_concs = []
+    k_means = []
+    k_ses = []
+
+    for cond_name in bid_fits.keys():
+        fits = bid_fits[cond_name]
+        bid_conc = float(cond_name.split(' ')[1])
+        bid_concs.append(bid_conc)
+        num_reps = fits.shape[0]
+        k_means.append(np.mean(fits[:,1]))
+        k_ses.append(np.std(fits[:,1]) / np.sqrt(num_reps))
+
+    bid_concs = np.array(bid_concs)
+    k_means = np.array(k_means)
+
+    plt.figure('k')
+    plt.errorbar(np.log10(bid_concs), k_means, yerr=k_ses, color='k')
+
+    kd1 = fitting.Parameter(1.)
+    k0 = fitting.Parameter(2e-5)
+    kmax1 = fitting.Parameter(2e-4)
+    slope = fitting.Parameter(1e-8)
+
+    def hill_func_line(concs):
+        return (k0() +
+               ((kmax1() * concs) / (kd1() + concs)) +
+                (slope() * concs))
+    res = fitting.fit(hill_func_line, [kd1, k0, kmax1, slope],
+                      np.array(k_means), np.array(bid_concs))
+    plt.figure('k')
+    plt.plot(np.log10(bid_concs), hill_func_line(bid_concs), color='b')
+    #plt.plot(np.log10(bid_concs), slope() * bid_concs, color='r')
+    #plt.plot(np.log10(bid_concs),
+    #         k0() + ((kmax1()*bid_concs) / (kd1() + bid_concs)), color='g')
+
+    kd1 = fitting.Parameter(1.)
+    k0 = fitting.Parameter(7e-5)
+    kmax1 = fitting.Parameter(2e-4)
+
+    def hill_func_k(concs):
+        return (k0() + ((kmax1() * concs) / (kd1() + concs)))
+
+    res = fitting.fit(hill_func_k, [kd1, k0, kmax1],
+                      np.array(k_means), np.array(bid_concs))
+    plt.figure('k')
+    plt.plot(np.log10(bid_concs), hill_func_k(bid_concs), color='r')
+
+
 if __name__ == '__main__':
     plt.ion()
     # plot_raw_data()
     # plot_clean_data()
     # plot_bg()
-    plot_averages()
+    # plot_averages()
     # get_bim_bh3_curves()
     #with open('bimbh3_141125.pck') as f:
     #    sampler = pickle.load(f)
     #sampler = fit_bim_bh3_curves(p0=sampler.chain[:,-1,:])
     #plot_chain(sampler)
     bid_fits = fit_timecourses(clean_bid_layout, bgsub_bid_wells, plot=False)
+    plot_k_titration(bid_fits)
+
+    """
 
     bid_concs = []
     fmax_means = []
     fmax_ses = []
-    k_means = []
-    k_ses = []
     f0_means = []
     f0_ses = []
 
@@ -406,33 +456,16 @@ if __name__ == '__main__':
         num_reps = fits.shape[0]
         fmax_means.append(np.mean(fits[:,0]))
         fmax_ses.append(np.std(fits[:,0]) / np.sqrt(num_reps))
-        k_means.append(np.mean(fits[:,1]))
-        k_ses.append(np.std(fits[:,1]) / np.sqrt(num_reps))
         f0_means.append(np.mean(fits[:,2]))
         f0_ses.append(np.std(fits[:,2]) / np.sqrt(num_reps))
 
     bid_concs = np.array(bid_concs)
-    k_means = np.array(k_means)
     fmax_means = np.array(fmax_means)
 
     plt.figure('fmax')
     plt.errorbar((bid_concs), fmax_means, yerr=fmax_ses, linestyle='')
-    plt.figure('k')
-    plt.errorbar((bid_concs), k_means, yerr=k_ses, linestyle='')
     plt.figure('f0')
     plt.errorbar((bid_concs), f0_means, yerr=f0_ses, linestyle='')
-
-    kd = fitting.Parameter(1.)
-    k0 = fitting.Parameter(2e-5)
-    kmax = fitting.Parameter(2e-4)
-
-    def hill_func_k(concs):
-        return k0() + ((kmax() * concs) / (kd() + concs))
-
-    res = fitting.fit(hill_func_k, [kd, k0, kmax], np.array(k_means),
-                      np.array(bid_concs))
-    plt.figure('k')
-    plt.plot(bid_concs, hill_func_k(bid_concs), color='k')
 
     fmaxd = fitting.Parameter(1.)
     fmax0 = fitting.Parameter(0.7)
@@ -445,4 +478,4 @@ if __name__ == '__main__':
                       np.array(fmax_means), np.array(bid_concs))
     plt.figure('fmax')
     plt.plot(bid_concs, hill_func_fmax(bid_concs), color='k')
-
+    """
