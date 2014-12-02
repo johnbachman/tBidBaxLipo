@@ -3,6 +3,7 @@ import sys
 import os
 from copy import deepcopy
 import pickle
+import itertools
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -20,8 +21,9 @@ from tbidbaxlipo.util import fitting, set_fig_params_for_publication, emcee_fit
 from tbidbaxlipo.plots import titration_fits as tf
 from tbidbaxlipo.util import fitting, colors, set_fig_params_for_publication
 
+#### LOAD THE DATA ####
+
 # All wells with liposomes ~0.1 mg/mL
-# Load the data
 data_path = os.path.dirname(sys.modules['tbidbaxlipo.data'].__file__)
 timecourse_file = os.path.abspath(os.path.join(data_path,
                               '141125_Bid_saturation_NBD_Bax_timecourse.txt'))
@@ -39,12 +41,16 @@ raw_layout['Bim BH3'] = row_wells('D')
 raw_layout['Bim BH3, No NBD-Bax'] = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6']
 raw_layout['No NBD-Bax'] = ['E7', 'E8', 'E9', 'E10', 'E11', 'E12']
 
+#### REMOVE OUTLIERS ####
+
 # We remove a few outliers to make the "clean" list of wells
 clean_layout = deepcopy(raw_layout)
 # Remove E1, which has a break in the timecourse at ~7000 sec
 clean_layout['Bim BH3, No NBD-Bax'].remove('E1')
 # Remove B4, which has a break in the timecourse at ~1000 sec
 clean_layout['cBid 100.0 nM'].remove('B4')
+
+#### ACCOUNT FOR START TIME OFFSET ####
 
 # Because the different rows were pipetted at different times, and the read
 # didn't start right away but after a delay, we account for these delays here
@@ -74,6 +80,8 @@ def add_time_offsets(timecourse_wells, offset_vector):
 # Updates time vector of timecourse wells in place
 add_time_offsets(timecourse_wells, time_offset_vector())
 
+#### DO BACKGROUND SUBTRACTION ####
+
 # Take the average of the Bim BH3 background wells (no NBD-Bax)
 (timecourse_averages, timecourse_stds) = \
                                 averages(timecourse_wells, clean_layout)
@@ -81,8 +89,29 @@ add_time_offsets(timecourse_wells, time_offset_vector())
 # Get the background vector for the Bim BH3 condition
 bim_bh3_bg_arr = timecourse_averages['Bim BH3, No NBD-Bax'][VALUE]
 # Subtract this background from the Bim BH3 wells
-bim_bh3_wells = extract(clean_layout['Bim BH3'], timecourse_wells)
+clean_bim_bh3_layout = extract(['Bim BH3'], clean_layout)
+bim_bh3_well_names = itertools.chain(*clean_bim_bh3_layout.values())
+bim_bh3_wells = extract(bim_bh3_well_names, timecourse_wells)
 bgsub_bim_bh3_wells = subtract_background(bim_bh3_wells, bim_bh3_bg_arr)
+(bgsub_bim_bh3_avgs, bgsub_bim_bh3_stds) = averages(bgsub_bim_bh3_wells,
+                                                    clean_bim_bh3_layout)
+
+# Get the background vector for the Bid conditions
+bid_bg_arr = timecourse_averages['No NBD-Bax'][VALUE]
+# Subtract this background from the Bid wells
+# Get the well names with Bid, and extract these from the full set
+bid_cond_names = [s for s in clean_layout.keys()
+                  if s.split(' ')[0] == 'cBid']
+clean_bid_layout = extract(bid_cond_names, clean_layout)
+# Flatten the well list in the layout to get a list of all Bid well names
+bid_well_names = itertools.chain(*clean_bid_layout.values())
+# Get the well data itself for the Bid wells
+bid_wells = extract(bid_well_names, timecourse_wells)
+# Subtract the Bid background from the Bid wells
+bgsub_bid_wells = subtract_background(bid_wells, bid_bg_arr)
+(bgsub_bid_avgs, bgsub_bid_stds) = averages(bgsub_bid_wells, clean_bid_layout)
+
+#### PLOTTING FUNCTIONS #### 
 
 def plot_raw_data():
     """Plots the raw data and various transformations of it."""
@@ -98,6 +127,11 @@ def plot_clean_data():
         plot_all(extract(clean_layout[condition], timecourse_wells))
         title(condition)
 
+def plot_averages():
+    plt.figure()
+    plot_all(bgsub_bid_avgs)
+    plot_all(bgsub_bim_bh3_avgs)
+
 def plot_bg():
     figure()
     tc_avg = timecourse_averages['Bim BH3, No NBD-Bax']
@@ -109,6 +143,8 @@ def plot_bg():
     tc_sd = timecourse_stds['No NBD-Bax']
     errorbar(tc_avg[TIME], tc_avg[VALUE], label='Liposomes', yerr=tc_sd)
     legend(loc='lower right')
+
+#### FITTING FUNCTIONS ####
 
 nwalkers = 1000
 burn_steps = 2000
@@ -295,13 +331,91 @@ def get_bim_bh3_curves():
 
     return bim_bh3_curves
 
+def fit_timecourses(layout, timecourses, plot=True):
+    """Fit all timecourses in the experiment."""
+    # We'll be doing a 3 parameter fit
+    num_params = 3
+    # This is where we'll store the results of the fitting
+    param_dict = {}
+    # Iterate over all of the conditions in the layout
+    for cond_name, rep_list in layout.iteritems():
+        # How many replicates for this condition?
+        num_reps = len(rep_list)
+        # Set up a plot to show the fits
+        if plot:
+            plt.figure(cond_name, figsize=(6, 2), dpi=150)
+        plots_per_row = 3
+        num_plot_rows = np.floor((num_reps + 1) / plots_per_row)
+        print num_plot_rows
+        # Create an entry in the resulting param dict for this condition.
+        # Results will be stored in a matrix with shape (num_reps, num_params)
+        param_matrix = np.zeros((num_reps, num_params))
+        # Now iterate over every well in the replicate list
+        for rep_ix, well_name in enumerate(rep_list):
+            # Get the time and fluorescence vectors
+            time = timecourses[well_name][TIME]
+            value = timecourses[well_name][VALUE]
+            # Set up the fitting procedure: first define the parameters
+            fmax = fitting.Parameter(2.1)
+            f0 = fitting.Parameter(2.3)
+            k = fitting.Parameter(1.4e-4)
+            # Define the fitting function
+            def exp_func(t):
+                return (fmax() * f0()) * (1 - np.exp(-k() * t)) + f0()
+            # Do the fit
+            res = fitting.fit(exp_func, [fmax, k, f0], value, time)
+            # Save the values in the order: (fmax, k, f0)
+            param_matrix[rep_ix, 0] = fmax()
+            param_matrix[rep_ix, 1] = k()
+            param_matrix[rep_ix, 2] = f0()
+            # Plot into the appropriate subplot
+            if plot:
+                plt.subplot(1, 3, rep_ix+1)
+                plt.plot(time, value, color='r')
+                plt.plot(time, exp_func(time), color='k', linewidth=2)
+                plt.xlabel('Time (sec)')
+                plt.ylabel('RFU')
+        # Store the resulting parameter matrix in the dict entry for this cond
+        param_dict[cond_name] = param_matrix
+
+    return param_dict
+
 if __name__ == '__main__':
     plt.ion()
     # plot_raw_data()
     # plot_clean_data()
     # plot_bg()
+    plot_averages()
     # get_bim_bh3_curves()
-    with open('bimbh3_141125.pck') as f:
-        sampler = pickle.load(f)
-    sampler = fit_bim_bh3_curves(p0=sampler.chain[:,-1,:])
+    #with open('bimbh3_141125.pck') as f:
+    #    sampler = pickle.load(f)
+    #sampler = fit_bim_bh3_curves(p0=sampler.chain[:,-1,:])
     #plot_chain(sampler)
+    bid_fits = fit_timecourses(clean_bid_layout, bgsub_bid_wells, plot=True)
+
+    bid_concs = []
+    fmax_means = []
+    fmax_ses = []
+    k_means = []
+    k_ses = []
+    f0_means = []
+    f0_ses = []
+
+    for cond_name in sorted(bid_fits.keys()):
+        fits = bid_fits[cond_name]
+        bid_conc = float(cond_name.split(' ')[1])
+        bid_concs.append(bid_conc)
+        num_reps = fits.shape[0]
+        fmax_means.append(np.mean(fits[:,0]))
+        fmax_ses.append(np.std(fits[:,0]) / np.sqrt(num_reps))
+        k_means.append(np.mean(fits[:,1]))
+        k_ses.append(np.std(fits[:,1]) / np.sqrt(num_reps))
+        f0_means.append(np.mean(fits[:,2]))
+        f0_ses.append(np.std(fits[:,2]) / np.sqrt(num_reps))
+    plt.figure('fmax')
+    plt.errorbar((bid_concs), fmax_means, yerr=fmax_ses, linestyle='')
+    plt.figure('k')
+    plt.errorbar((bid_concs), k_means, yerr=k_ses, linestyle='')
+    plt.figure('f0')
+    plt.errorbar((bid_concs), f0_means, yerr=f0_ses, linestyle='')
+
