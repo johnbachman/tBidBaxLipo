@@ -39,26 +39,30 @@ def fit_basic_binding_curve():
     print "f0: %f" % f0()
 
 def fit_stoichiometric_comp():
-    kd = fitting.Parameter(6.) # kd for binding lipo sites
-    f = fitting.Parameter(30.) # FRET efficiency
-    f0 = fitting.Parameter(10.) # baseline quenching
+    """Obtained the equation for analyzing competitive binding assays from
+    Motulsky's article published here:
 
+        http://www2.uah.es/farmamol/Public/GraphPad/radiolig.htm
+    """
+
+    f = fitting.Parameter(40.) # FRET efficiency
+    ic50 = fitting.Parameter(6.) # kd for binding lipo sites
+    nonspec = fitting.Parameter(0.1) # baseline quenching
+    total = fitting.Parameter(0.80)
     def fit_func(bid_conc):
-        frac_bound = bid_conc / (bid_conc + kd())
-        frac_dye = 10. / bid_conc
-        frac_dye_bound = frac_bound * frac_dye
-        return f() * frac_dye_bound + f0()
+        frac_bound = nonspec() + ((total() - nonspec()) /
+                               (1 + 10 ** (np.log10(bid_conc) - np.log10(ic50()))))
+        return f() * frac_bound
 
-    fitting.fit(fit_func, [kd, f], fret, bid_concs)
-
-    plt.figure('Bid FRET')
+    fitting.fit(fit_func, [f, ic50, nonspec, total], fret, bid_concs)
+    plt.figure('Bid FRET, competitive')
     plt.plot(np.log10(bid_concs), fret, marker='o')
     plt.plot(np.log10(bid_concs), fit_func(bid_concs))
-    print "Kd: %f" % kd()
+    print "----"
+    print "ic50: %f" % ic50()
+    print "nonspec: %f" % nonspec()
+    print "total: %f" % total()
     print "f: %f" % f()
-    print "f0: %f" % f0()
-
-
 
 
 def fit_gouy_chapman():
@@ -103,7 +107,7 @@ def fit_gouy_chapman():
 
 
 if __name__ == '__main__':
-    fit_basic_binding_curve()
-    fit_gouy_chapman()
-    fit_no_competition()
+    #fit_basic_binding_curve()
+    #fit_gouy_chapman()
+    fit_stoichiometric_comp()
 
