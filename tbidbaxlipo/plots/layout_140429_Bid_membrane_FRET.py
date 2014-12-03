@@ -7,7 +7,7 @@ from tbidbaxlipo.util import fitting
 
 data_path = os.path.dirname(sys.modules['tbidbaxlipo.data'].__file__)
 data_file = os.path.abspath(os.path.join(data_path,
-                                        '140429_Bid568_DiDlipo_FRET.csv'))
+                                        '140429_Bid568_DiDlipo_FRET_120m.csv'))
 fret_data = np.loadtxt(data_file, delimiter=',')
 
 plt.ion()
