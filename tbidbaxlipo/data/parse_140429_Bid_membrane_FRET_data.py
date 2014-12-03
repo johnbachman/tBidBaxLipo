@@ -177,4 +177,15 @@ if __name__ == '__main__':
             plt.plot(time, fd_value)
             plt.plot(time, fit_func(time), color='k', linewidth=2)
 
+# 1. Get residuals from all fits to estimate variance
+
+# 2. Get f0, fmax, and k for all fits (fda and fd separately) to get estimates
+#    of mean and variance of these parameters across replicates
+
+# 3. Do hierarchical emcee fits for each concentration separately
+
+# 4. Make predictive distributions over wells, and estimate equilibrium
+#    FRET
+
+# 5. Plot binding curve with associated error bars
 
