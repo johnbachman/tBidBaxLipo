@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 import collections
+import itertools
+from tbidbaxlipo.util import fitting
 
 # Load the data
 data_file = r'2014-04-29 - cBid-A568 FRET with DiD traced lipos - cBid unlab competition 1%w-w DiD.xlsx'
@@ -22,8 +24,8 @@ LAST_ROW_INDEX = 140
 sheet = wb.worksheets[0]
 
 # Load the time coordinates
-time = [cell.value for cell in
-                 sheet.rows[TIME_ROW_INDEX][FIRST_COL_INDEX:LAST_COL_INDEX]]
+time = np.array([cell.value for cell in
+                 sheet.rows[TIME_ROW_INDEX][FIRST_COL_INDEX:LAST_COL_INDEX]])
 
 # FDA: WT cBid titration, DiD lipos, 10 nM Bid 568
 fda = collections.OrderedDict([
@@ -87,7 +89,6 @@ bg = collections.OrderedDict([
          ('cBid 0 nM', ['H12'])
      ])
 
-
 # The timecourses for each well will go in here
 timecourse_wells = collections.OrderedDict()
 
@@ -100,7 +101,80 @@ for row in sheet.rows[FIRST_ROW_INDEX:LAST_ROW_INDEX]:
 if __name__ == '__main__':
     from tbidbaxlipo.util.plate_assay import *
     plt.ion()
-    plt.figure()
-    (bg_avgs, bg_stds) = averages(timecourse_wells, bg)
-    plot_all(bg_avgs)
+
+    (fd_avgs, fd_stds) = averages(timecourse_wells, fd)
+    plt.figure('FD')
+    plot_all(fd_avgs)
+    # Curiously, the overall level of the signal appears to be strongly
+    # determined by the WT cBid concentration, but not in a monotonic way?
+    bid_concs =  []
+    final_val_avgs = []
+    for conc_name in fd_avgs:
+        bid_concs.append(float(conc_name.split(' ')[1]))
+        final_val_avg = np.mean(fd_avgs[conc_name][VALUE][-10:])
+        final_val_avgs.append(final_val_avg)
+    plt.figure('FD values, final')
+    plt.plot(bid_concs, final_val_avgs, marker='o')
+
+    # Plot the FA well raw data
+    fa_well_names = itertools.chain(*fa.values())
+    fa_wells = extract(fa_well_names, timecourse_wells)
+    plt.figure('FA')
+    plot_all(fa_wells)
+    # The background of the FA condition is not sensitive to the amount of
+    # unlabeled cBid present, so we can calculate our background vector by
+    # averaging across all of the conditions
+    fa_avg = np.zeros((len(fa_wells.keys()), len(time)))
+    for i, well_name in enumerate(fa_wells.keys()):
+        fa_avg[i] = timecourse_wells[well_name][VALUE]
+    fa_avg = np.mean(fa_avg, axis=0)
+    plt.plot(time, fa_avg, linewidth=3, color='k')
+
+    # ...and we can do similarly for the BG condition
+    # Plot the FA well raw data
+    bg_well_names = itertools.chain(*bg.values())
+    bg_wells = extract(bg_well_names, timecourse_wells)
+    plt.figure('BG')
+    plot_all(bg_wells)
+    # Calculate average background
+    bg_avg = np.zeros((len(bg_wells.keys()), len(time)))
+    for i, well_name in enumerate(bg_wells.keys()):
+        bg_avg[i] = timecourse_wells[well_name][VALUE]
+    bg_avg = np.mean(bg_avg, axis=0)
+    plt.plot(time, bg_avg, linewidth=3, color='k')
+
+    # Now, plot the curves, with fits
+    for conc_name in fda.keys():
+        plt.figure()
+        # FDA
+        for well_name in fda[conc_name]:
+            fda_value = np.array(timecourse_wells[well_name][VALUE])
+            # Subtract the FA background:
+            fda_value = fda_value - fa_avg
+            # Do the fit
+            f0 = fitting.Parameter(3500.)
+            fmax = fitting.Parameter(2000.)
+            k = fitting.Parameter(1e-3)
+            def fit_func(t):
+                return fmax()*np.exp(-k()*t) + f0()
+            res = fitting.fit(fit_func, [f0, fmax, k], fda_value, time)
+            # Plot data and fit
+            plt.plot(time, fda_value)
+            plt.plot(time, fit_func(time), color='k', linewidth=2)
+        # FD
+        for well_name in fd[conc_name]:
+            fd_value = np.array(timecourse_wells[well_name][VALUE])
+            # Subtract the BG background:
+            fd_value = fd_value - bg_avg
+            # Do the fit
+            f0 = fitting.Parameter(3500.)
+            fmax = fitting.Parameter(2000.)
+            k = fitting.Parameter(1e-3)
+            def fit_func(t):
+                return fmax()*np.exp(-k()*t) + f0()
+            res = fitting.fit(fit_func, [f0, fmax, k], fd_value, time)
+            # Plot data and fit
+            plt.plot(time, fd_value)
+            plt.plot(time, fit_func(time), color='k', linewidth=2)
+
 
