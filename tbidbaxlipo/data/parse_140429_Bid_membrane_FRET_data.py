@@ -98,10 +98,9 @@ for row in sheet.rows[FIRST_ROW_INDEX:LAST_ROW_INDEX]:
     timecourse = [cell.value for cell in row[FIRST_COL_INDEX:LAST_COL_INDEX]]
     timecourse_wells[well_name] = [time, timecourse]
 
-if __name__ == '__main__':
-    from tbidbaxlipo.util.plate_assay import *
-    plt.ion()
+### PLOTTING FUNCTIONS ### 
 
+def plot_fd_final_values():
     (fd_avgs, fd_stds) = averages(timecourse_wells, fd)
     plt.figure('FD')
     plot_all(fd_avgs)
@@ -116,34 +115,72 @@ if __name__ == '__main__':
     plt.figure('FD values, final')
     plt.plot(bid_concs, final_val_avgs, marker='o')
 
-    # Plot the FA well raw data
+def get_average_fa(plot=True):
+    """Plot all FA (acceptor only, no donor) trajectories and then return the
+    average across all of them. This average is used to do background subtraction
+    for the FDA (donor + acceptor) trajectories.
+
+    The fluorescence of the FA condition is not sensitive to the amount of
+    unlabeled cBid present, so we can calculate our background vector by
+    averaging across all of the conditions.
+
+    Return
+    ------
+    numpy.array containing the average FA timecourse.
+    """
+
+    # Calculate average background
     fa_well_names = itertools.chain(*fa.values())
     fa_wells = extract(fa_well_names, timecourse_wells)
-    plt.figure('FA')
-    plot_all(fa_wells)
-    # The background of the FA condition is not sensitive to the amount of
-    # unlabeled cBid present, so we can calculate our background vector by
-    # averaging across all of the conditions
     fa_avg = np.zeros((len(fa_wells.keys()), len(time)))
     for i, well_name in enumerate(fa_wells.keys()):
         fa_avg[i] = timecourse_wells[well_name][VALUE]
     fa_avg = np.mean(fa_avg, axis=0)
-    plt.plot(time, fa_avg, linewidth=3, color='k')
+    # Plot
+    if plot:
+        plt.figure('FA')
+        plot_all(fa_wells)
+        plt.plot(time, fa_avg, linewidth=3, color='k')
+    # Return
+    return fa_avg
 
-    # ...and we can do similarly for the BG condition
-    # Plot the FA well raw data
+def get_average_bg(plot=True):
+    """Plot all BG (no donor, no acceptor) trajectories and then return the
+    average across all of them. This average is used to do background subtraction
+    for the FD (donor only, no acceptor) trajectories.
+
+    The fluorescence of the BG condition is not sensitive to the amount of
+    unlabeled cBid present, so we can calculate our background vector by
+    averaging across all of the conditions.
+
+    Return
+    ------
+    numpy.array containing the average BG timecourse.
+    """
+    # Calculate average background
     bg_well_names = itertools.chain(*bg.values())
     bg_wells = extract(bg_well_names, timecourse_wells)
-    plt.figure('BG')
-    plot_all(bg_wells)
-    # Calculate average background
     bg_avg = np.zeros((len(bg_wells.keys()), len(time)))
     for i, well_name in enumerate(bg_wells.keys()):
         bg_avg[i] = timecourse_wells[well_name][VALUE]
     bg_avg = np.mean(bg_avg, axis=0)
-    plt.plot(time, bg_avg, linewidth=3, color='k')
+    # Plot
+    if plot:
+        plt.figure('BG')
+        plot_all(bg_wells)
+        plt.plot(time, bg_avg, linewidth=3, color='k')
+    # Return
+    return bg_avg
+
+if __name__ == '__main__':
+    from tbidbaxlipo.util.plate_assay import *
+    plt.ion()
+
+    bg_avg = get_average_bg(plot=True)
+    fa_avg = get_average_fa(plot=True)
 
     # Now, plot the curves, with fits
+
     for conc_name in fda.keys():
         plt.figure()
         # FDA
