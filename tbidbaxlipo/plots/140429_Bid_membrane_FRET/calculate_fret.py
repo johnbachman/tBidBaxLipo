@@ -5,6 +5,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from tbidbaxlipo.util.plate_assay import *
 from tbidbaxlipo.util import fitting
+from tbidbaxlipo.util.error_propagation import calc_ratio_mean_sd
 
 ### PLOTTING FUNCTIONS ### 
 
@@ -100,6 +101,56 @@ def get_average_bg(wells, bg, plot=True):
     # Return
     return bg_avg
 
+def calculate_fret_from_endpoints(fda, fd, wells, bg_avg, fa_avg, num_pts=20):
+    # Initialize a few variables
+    num_concs = len(fda.keys())
+    num_reps = 3
+    bid568_conc = 10. # Concentration of Bid-568, in nM
+    fda_endpoints = np.zeros((num_concs, num_reps))
+    fd_endpoints = np.zeros((num_concs, num_reps))
+    bid_concs = np.zeros(num_concs)
+    # Iterate over the conditions
+    for conc_ix, conc_name in enumerate(fda.keys()):
+        bid_concs[conc_ix] = float(conc_name.split(' ')[1])
+        # FDA
+        for rep_ix, well_name in enumerate(fda[conc_name]):
+            fda_value = np.array(wells[well_name][VALUE])
+            # Subtract the FA background:
+            fda_value = fda_value - fa_avg
+            # Calculate endpoint value over last num_pts
+            endpt = np.mean(fda_value[-num_pts:])
+            fda_endpoints[conc_ix, rep_ix] = endpt
+        # FD
+        for rep_ix, well_name in enumerate(fd[conc_name]):
+            fd_value = np.array(wells[well_name][VALUE])
+            # Subtract the BG background:
+            fd_value = fd_value - bg_avg
+            # Calculate endpoint value over last num_pts
+            endpt = np.mean(fd_value[-num_pts:])
+            fd_endpoints[conc_ix, rep_ix] = endpt
+
+    # Now, calculate the means of the endpts across replicates
+    fda_means = np.mean(fda_endpoints, axis=1)
+    fd_means = np.mean(fd_endpoints, axis=1)
+    fda_ses = np.std(fda_endpoints, axis=1, ddof=1) / float(num_reps)
+    fd_ses = np.std(fd_endpoints, axis=1, ddof=1) / float(num_reps)
+    # Adjust the Bid concentration appropriately
+    bid_concs += bid568_conc
+
+    plt.figure('FDA and FD, mean/SEM over reps')
+    plt.errorbar(np.log10(bid_concs), fda_means, yerr=fda_ses)
+    plt.errorbar(np.log10(bid_concs), fd_means, yerr=fd_ses)
+
+    fret_tuples = [calc_ratio_mean_sd(fda_means[i], fda_ses[i],
+                                      fd_means[i], fd_ses[i])
+                   for i in range(len(fda_means))]
+    (fret_means, fret_ses) = zip(*fret_tuples)
+    fret_means = 1 - np.array(fret_means)
+    fret_ses = np.array(fret_ses)
+
+    plt.figure('FRET')
+    plt.errorbar(np.log10(bid_concs), fret_means, yerr=fret_ses)
+    return (fret_means, fret_ses)
 if __name__ == '__main__':
     plt.ion()
 
@@ -107,8 +158,12 @@ if __name__ == '__main__':
     bg_avg = get_average_bg(timecourse_wells, bg, plot=True)
     fa_avg = get_average_fa(timecourse_wells, fa, plot=True)
 
-    # Now, plot the curves, with fits
+    calculate_fret_from_endpoints(fda, fd, timecourse_wells, bg_avg, fa_avg,
+                                  num_pts=20)
 
+    sys.exit()
+
+    # Now, plot the curves, with fits
     for conc_name in fda.keys():
         plt.figure()
         # FDA
