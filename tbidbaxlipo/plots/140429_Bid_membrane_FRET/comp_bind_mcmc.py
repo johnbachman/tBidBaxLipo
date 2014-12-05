@@ -8,28 +8,28 @@ from scipy.stats import distributions as dist
 (bid_concs, fret_means, fret_ses) = cf.get_fret_from_endpoints()
 bid568_conc = 10.
 
-nwalkers = 500
-burn_steps = 100
-sample_steps = 100
-ndim = 4
+bid_concs = bid_concs - bid568_conc
 
-# Parameters are in order: log10(kd), f, f0, sigma
+nwalkers = 500
+burn_steps = 200
+sample_steps = 100
+ndim = 5
+
+# Parameters are in order: log10(ic50), f, nonspec, total, sigma
 
 def model_func(position, conc):
-    (logkd, f, f0, sigma) = position
-    kd = 10 ** logkd
-    frac_bound = conc / (conc + kd)
-    frac_dye = bid568_conc / conc
-    frac_dye_bound = frac_bound * frac_dye
-    return f * frac_dye_bound + f0
+    (log_ic50, f, nonspec, total, sigma) = position
+    frac_bound = nonspec + ((total - nonspec) /
+                            (1 + 10 ** (np.log10(conc) - log_ic50)))
+    return f * frac_bound
 
 def prior(position):
-    (logkd, f, f0, sigma) = position
-    # log10(kd) should be between -3 and 3, say
-    if logkd < -3 or logkd > 3:
+    (log_ic50, f, nonspec, total, sigma) = position
+    # log10(ic50) should be between -3 and 3, say
+    if log_ic50 < -3 or log_ic50 > 3:
         return -np.inf
-    # F and F0 are percentages, so they should be between 0 and 1
-    if f < 0 or f > 1 or f0 < 0 or f0 > 1:
+    # F, nonspec, and total are percentages, so they should be between 0 and 1
+    if f < 0 or f > 1 or nonspec < 0 or nonspec > 1 or total < 0 or total > 1:
         return -np.inf
     # We don't expect the SD of the error to be greater than 20% FRET
     # when the range of the assay is between 0 and 40% FRET
@@ -55,17 +55,18 @@ def run_mcmc(p0=None):
     if p0 is None:
         p0 = np.zeros((nwalkers, ndim))
         for walk_ix in range(nwalkers):
-            p0[walk_ix, 0] = np.random.uniform(-3, 3) # log10(kd)
-            p0[walk_ix, 1] = np.random.uniform(0, 1) # F
-            p0[walk_ix, 2] = np.random.uniform(0, 1) # F0
-            p0[walk_ix, 3] = np.random.uniform(0, 0.20) # sigma
+            p0[walk_ix, 0] = np.random.uniform(-3, 3) # log10(ic50)
+            p0[walk_ix, 1] = np.random.uniform(0, 1) # f
+            p0[walk_ix, 2] = np.random.uniform(0, 1) # nonspec
+            p0[walk_ix, 3] = np.random.uniform(0, 1) # total
+            p0[walk_ix, 4] = np.random.uniform(0, 0.20) # sigma
 
     sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior)
 
     # Burn-in
     print("Burn-in sampling...")
     pos, prob, state = sampler.run_mcmc(p0, burn_steps, storechain=False)
-    sampler.reset() 
+    sampler.reset()
     # Main sampling
     print("Main sampling...")
     sampler.run_mcmc(pos, sample_steps)
@@ -88,14 +89,15 @@ def plot_chain(sampler):
 
     # Plot sampling of trajectories parameters
     plt.figure()
-    num_plot_samples = 100
+    num_plot_samples = 2500
     num_tot_steps = sampler.flatchain.shape[0]
     for s_ix in range(num_plot_samples):
         p_ix = np.random.randint(num_tot_steps)
         p_samp = sampler.flatchain[p_ix]
         plt.plot(np.log10(bid_pred), model_func(p_samp, bid_pred),
-                 alpha=0.1, color='r')
-    plt.errorbar(np.log10(bid_concs), fret_means, yerr=fret_ses, color='k')
+                 alpha=0.01, color='r')
+    plt.errorbar(np.log10(bid_concs), fret_means, yerr=fret_ses, color='k',
+                 linewidth=2)
 
     # Triangle plots
     triangle.corner(sampler.flatchain)
