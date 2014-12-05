@@ -3,8 +3,10 @@ from matplotlib import pyplot as plt
 import emcee
 import calculate_fret as cf
 import triangle
+from scipy.stats import distributions as dist
 
 (bid_concs, fret_means, fret_ses) = cf.get_fret_from_endpoints()
+bid568_conc = 10.
 
 nwalkers = 500
 burn_steps = 100
@@ -13,8 +15,13 @@ ndim = 4
 
 # Parameters are in order: log10(kd), f, f0, sigma
 
-def model_func(position):
-    pass
+def model_func(position, conc):
+    (logkd, f, f0, sigma) = position
+    kd = 10 ** logkd
+    frac_bound = conc / (conc + kd)
+    frac_dye = bid568_conc / conc
+    frac_dye_bound = frac_bound * frac_dye
+    return f * frac_dye_bound + f0
 
 def prior(position):
     (logkd, f, f0, sigma) = position
@@ -31,8 +38,15 @@ def prior(position):
     return 0
 
 def likelihood(position):
-    loglkl = 0
-    return loglkl
+    sigma = position[-1]
+    # Get the model prediction for this parameter set
+    ypred = model_func(position, bid_concs)
+    errs = ypred - fret_means
+    loglkl = np.sum(dist.norm.logpdf(errs, loc=0, scale=sigma))
+    if np.isnan(loglkl):
+        return -np.inf
+    else:
+        return loglkl
 
 def posterior(position):
     return prior(position) + likelihood(position)
@@ -47,10 +61,48 @@ def run_mcmc(p0=None):
             p0[walk_ix, 3] = np.random.uniform(0, 0.20) # sigma
 
     sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior)
-    pos, prob, state = sampler.run_mcmc(p0, burn_steps, storechain=True)
+
+    # Burn-in
+    print("Burn-in sampling...")
+    pos, prob, state = sampler.run_mcmc(p0, burn_steps, storechain=False)
+    sampler.reset() 
+    # Main sampling
+    print("Main sampling...")
+    sampler.run_mcmc(pos, sample_steps)
 
     return sampler
 
-if __name__ == '__main__':
-    sampler = run_mcmc()
+def plot_chain(sampler):
+    # Check convergence
+    plt.figure()
+    plt.plot(sampler.lnprobability.T)
+
+    # Plot maximum likelihood
+    ml_ix = np.unravel_index(np.argmax(sampler.lnprobability),
+                             sampler.lnprobability.shape)
+    ml_pos = sampler.chain[ml_ix]
+    bid_pred = np.logspace(-1, 3, 100)
+    plt.figure()
+    plt.errorbar(np.log10(bid_concs), fret_means, yerr=fret_ses, color='k')
+    plt.plot(np.log10(bid_pred), model_func(ml_pos, bid_pred), color='r')
+
+    # Plot sampling of trajectories parameters
+    plt.figure()
+    num_plot_samples = 100
+    num_tot_steps = sampler.flatchain.shape[0]
+    for s_ix in range(num_plot_samples):
+        p_ix = np.random.randint(num_tot_steps)
+        p_samp = sampler.flatchain[p_ix]
+        plt.plot(np.log10(bid_pred), model_func(p_samp, bid_pred),
+                 alpha=0.1, color='r')
+    plt.errorbar(np.log10(bid_concs), fret_means, yerr=fret_ses, color='k')
+
+    # Triangle plots
     triangle.corner(sampler.flatchain)
+
+
+
+if __name__ == '__main__':
+    plt.ion()
+    sampler = run_mcmc()
+    plot_chain(sampler)
