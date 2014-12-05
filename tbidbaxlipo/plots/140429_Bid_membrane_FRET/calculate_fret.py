@@ -159,7 +159,7 @@ def calculate_fret_from_endpoints(wells, fda, fd, fa, bg, num_pts=20,
         plt.figure('FRET')
         plt.errorbar(np.log10(bid_concs), fret_means, yerr=fret_ses)
 
-    return (fret_means, fret_ses)
+    return (bid_concs, fret_means, fret_ses)
 
 def fit_fda_and_fd_curves(wells, fda, fd, fa, bg):
     # Get the background averages
