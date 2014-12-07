@@ -1,5 +1,5 @@
-Bid/DiD liposome FRET, by Justin (4/29/14)
-==========================================
+Raw data and FRET calculations
+==============================
 
 1% DiD added to liposomes.
 

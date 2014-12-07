@@ -11,6 +11,8 @@ from matplotlib import pyplot as plt
 import emcee
 import calculate_fret as cf
 import triangle
+import pickle
+from os.path import exists
 
 (bid_concs, fret_means, fret_ses) = cf.get_fret_from_endpoints()
 bid568_conc = 10.
@@ -77,7 +79,7 @@ def likelihood(position):
 def posterior(position):
     return prior(position) + likelihood(position)
 
-def run_mcmc(p0=None):
+def run_mcmc(p0=None, filename=None):
     if p0 is None:
         p0 = np.zeros((nwalkers, ndim))
         for walk_ix in range(nwalkers):
@@ -96,40 +98,63 @@ def run_mcmc(p0=None):
     print("Main sampling...")
     sampler.run_mcmc(pos, sample_steps)
 
+    if filename is not None:
+        with open(filename, 'w') as f:
+            pickle.dump(sampler, f)
+
     return sampler
 
 def plot_chain(sampler):
     # Check convergence
-    plt.figure()
+    plt.figure('Chains')
     plt.plot(sampler.lnprobability.T)
-
-    # Plot maximum likelihood
-    ml_ix = np.unravel_index(np.argmax(sampler.lnprobability),
-                             sampler.lnprobability.shape)
-    ml_pos = sampler.chain[ml_ix]
-    bid_pred = np.logspace(-1, 4, 100)
-    plt.figure()
-    plt.errorbar(np.log10(bid_concs), fret_means, yerr=fret_ses, color='k')
-    plt.plot(np.log10(bid_pred), model_func(ml_pos, bid_pred), color='r')
+    plt.xlabel('MCMC Step')
+    plt.ylabel('log(Posterior)')
+    plt.title('Chain convergence')
 
     # Plot sampling of trajectories parameters
-    plt.figure()
+    plt.figure('Fits')
     num_plot_samples = 2500
     num_tot_steps = sampler.flatchain.shape[0]
+    bid_pred = np.logspace(-1, 3.5, 100)
     for s_ix in range(num_plot_samples):
         p_ix = np.random.randint(num_tot_steps)
         p_samp = sampler.flatchain[p_ix]
         plt.plot(np.log10(bid_pred), model_func(p_samp, bid_pred),
                  alpha=0.01, color='r')
+    # Plot maximum likelihood
+    ml_ix = np.unravel_index(np.argmax(sampler.lnprobability),
+                             sampler.lnprobability.shape)
+    ml_pos = sampler.chain[ml_ix]
+    plt.plot(np.log10(bid_pred), model_func(ml_pos, bid_pred), color='b',
+             linewidth=2)
+    plt.hlines(fret_means[-1], -1, 3.5, linestyle='solid', color='k')
+    plt.hlines(fret_means[-1] + fret_ses[-1], -1, 3.5,
+               linestyle='dashed', color='k')
+    plt.hlines(fret_means[-1] - fret_ses[-1], -1, 3.5,
+               linestyle='dashed', color='k')
+    # Plot data
     plt.errorbar(np.log10(bid_concs), fret_means, yerr=fret_ses, color='k',
                  linewidth=2)
+    # Label axes
+    plt.xlabel('log10([Bid]) (nM)')
+    plt.ylabel('FRET (%)')
+    plt.xlim([-1, 3.5])
+    plt.title('Fits')
 
     # Triangle plots
     triangle.corner(sampler.flatchain)
 
 if __name__ == '__main__':
     plt.ion()
-    sampler = run_mcmc()
+
+    pck_filename = 'exact_comp_bind_mcmc.pck'
+    if exists(pck_filename):
+        with open(pck_filename) as f:
+            sampler = pickle.load(f)
+    else:
+        sampler = run_mcmc(filename=pck_filename)
+
     plot_chain(sampler)
     """
     import sys
