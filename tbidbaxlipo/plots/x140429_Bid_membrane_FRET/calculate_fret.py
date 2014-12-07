@@ -10,9 +10,12 @@ from tbidbaxlipo.util.error_propagation import calc_ratio_mean_sd
 ### PLOTTING FUNCTIONS ### 
 
 def plot_fd_final_values(wells, fd):
+    """Plot the endpoint fluorescence of the FD (donor-only) condition, to show
+    that it fluctuates non-monotonically as a function of the position of the
+    well in the dilution series (i.e., as a function of WT Bid
+    concentration).
+    """
     (fd_avgs, fd_stds) = averages(wells, fd)
-    # Curiously, the overall level of the signal appears to be strongly
-    # determined by the WT cBid concentration, but not in a monotonic way?
     bid_concs =  []
     final_val_avgs = []
     for conc_name in fd_avgs:
@@ -104,6 +107,49 @@ def get_average_bg(wells, bg, plot=True):
 
 def calculate_fret_from_endpoints(wells, fda, fd, fa, bg, num_pts=20,
                                   plot=True):
+    """Calculate FRET using the endpoints of the FDA and FD conditions.
+
+    For the donor + acceptor, subtracts the acceptor-only background average;
+    for the donor-only, subtracts the no donor/no acceptor background average.
+    Then takes the average of the last num_pts of the background-subtracted traces
+    to get the fluorescence value for that condition/replicate.
+
+    To get an estimate of error across replicates, the values for the FDA and
+    FA wells are then averaged across replicates, yielding a mean fluorescence
+    for each with an associated standard error. The FRET is then calculated by
+    taking the ratio, and the standard error of the FRET value is calculated by
+    sampling the standard deviation of the ratio of two normal distributions
+    with means and standard deviations matching those of the mean and standard
+    errors of the FDA and FD conditions.
+
+    Note that this approach accounts for error across replicates, but not for
+    error in determining the mean fluorescence of each individual replicate.
+    However, it appears that the variability between replicates is
+    substantially greater than the variability within a single fluorescence
+    timecourse, and the standard error of the mean could be further reduced by
+    averaging across more points.
+
+    Parameters
+    ----------
+    wells : collections.OrderedDict
+        Dict containing the timecourses for each well in the plate.
+    fda, fd, fa, bg : collections.OrderedDict
+        Dicts mapping the concentration conditions to the well names of the
+        replicates.
+    num_pts : int
+        The number of final points to average across.
+    plot : boolean
+        Whether to plot the FRET results (defaults to True)
+
+    Returns
+    -------
+    tuple : (bid_concs, fret_means, fret_ses)
+        Tuple containing the concentrations of the unlabeled Bid used in each
+        conditions; the mean FRET values calculated for each unabeled Bid
+        concentration; and the standard error of the mean calculated by
+        sampling.
+    """
+
     # Get the background averages
     bg_avg = get_average_bg(wells, bg, plot=False)
     fa_avg = get_average_fa(wells, fa, plot=False)
@@ -137,8 +183,8 @@ def calculate_fret_from_endpoints(wells, fda, fd, fa, bg, num_pts=20,
     # Now, calculate the means of the endpts across replicates
     fda_means = np.mean(fda_endpoints, axis=1)
     fd_means = np.mean(fd_endpoints, axis=1)
-    fda_ses = np.std(fda_endpoints, axis=1, ddof=1) / float(num_reps)
-    fd_ses = np.std(fd_endpoints, axis=1, ddof=1) / float(num_reps)
+    fda_ses = np.std(fda_endpoints, axis=1, ddof=1) / np.sqrt(float(num_reps))
+    fd_ses = np.std(fd_endpoints, axis=1, ddof=1) / np.sqrt(float(num_reps))
     # Calculate the mean and SEM of the FDA/FD ratio distributions
     fret_tuples = [calc_ratio_mean_sd(fda_means[i], fda_ses[i],
                                       fd_means[i], fd_ses[i])
@@ -154,9 +200,17 @@ def calculate_fret_from_endpoints(wells, fda, fd, fa, bg, num_pts=20,
         plt.figure('FDA and FD, mean/SEM over reps')
         plt.errorbar(np.log10(bid_concs), fda_means, yerr=fda_ses)
         plt.errorbar(np.log10(bid_concs), fd_means, yerr=fd_ses)
+        plt.xlabel('log10([WT Bid]) (nM)')
+        plt.ylabel('RFU')
+        plt.xlim([-0.5, 3.1])
+        plt.title('FDA and FD, mean/SEM over reps')
 
         plt.figure('FRET')
         plt.errorbar(np.log10(bid_concs), fret_means, yerr=fret_ses)
+        plt.xlabel('log10([WT Bid]) (nM)')
+        plt.ylabel('FRET (%)')
+        plt.xlim([-0.5, 3.1])
+        plt.title('FRET')
 
     return (bid_concs, fret_means, fret_ses)
 
@@ -208,23 +262,10 @@ def get_fret_from_endpoints(num_pts=20):
 if __name__ == '__main__':
     plt.ion()
 
-    #plot_fd_final_values(timecourse_wells, fd)
-    #bg_avg = get_average_bg(wells, bg, plot=False)
-    #fa_avg = get_average_fa(wells, fa, plot=False)
+    plot_fd_final_values(timecourse_wells, fd)
+    bg_avg = get_average_bg(wells, bg, plot=False)
+    fa_avg = get_average_fa(wells, fa, plot=False)
 
-    #calculate_fret_from_endpoints(timecourse_wells, fda, fd, fa, bg, num_pts=20,
-    #                              plot=True)
-
-# 1. Get residuals from all fits to estimate variance
-
-# 2. Get f0, fmax, and k for all fits (fda and fd separately) to get estimates
-#    of mean and variance of these parameters across replicates
-
-# 3. Do hierarchical emcee fits for each concentration separately
-
-# 4. Make predictive distributions over wells, and estimate equilibrium
-#    FRET
-
-# 5. Plot binding curve with associated error bars
-
+    calculate_fret_from_endpoints(timecourse_wells, fda, fd, fa, bg, num_pts=20,
+                                  plot=True)
 

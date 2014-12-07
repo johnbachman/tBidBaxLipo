@@ -35,8 +35,8 @@ will be subtracted from the donor + acceptor wells.
 Donor-only (FD)
 ---------------
 
-Wells containing unlabeled liposomes, a dilution series of unlabeled Bid,
-and Bid-568. Used to determine the baseline fluorescence in the absence of FRET.
+Wells containing unlabeled liposomes, a dilution series of unlabeled Bid, and
+Bid-568. Used to determine the baseline fluorescence in the absence of FRET.
 
 .. ipython::
 
@@ -111,4 +111,33 @@ the Bid-568 in a way that was no consistent across wells. It is possible that
 this (potential) variability in donor concentration affected the FRET
 measurements.
 
+FRET, calculated from endpoints
+-------------------------------
+
+As a description of how we calculate the FRET, we print docstring for the
+function here:
+
+.. ipython::
+
+    In [1]: print calculate_fret_from_endpoints.__doc__
+
+We run the calculation:
+
+.. ipython::
+
+    In [2]: calculate_fret_from_endpoints(timecourse_wells, fda, fd, fa, bg, num_pts=20, plot=True)
+
+A plot showing the mean/SEM over replicates for the donor + acceptor and donor-only conditions separately:
+
+.. ipython::
+
+    @savefig 140429_bid_did_fret_9.png
+    In [3]: plt.figure('FDA and FD, mean/SEM over reps')
+
+The plot showing the FRET:
+
+.. ipython::
+
+    @savefig 140429_bid_did_fret_10.png
+    In [3]: plt.figure('FRET')
 
