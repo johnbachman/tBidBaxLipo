@@ -13,6 +13,7 @@ import calculate_fret as cf
 import triangle
 import pickle
 from os.path import exists
+from tbidbaxlipo.util import set_fig_params_for_publication, format_axis
 
 (bid_concs, fret_means, fret_ses) = cf.get_fret_from_endpoints()
 bid568_conc = 10.
@@ -106,14 +107,17 @@ def run_mcmc(p0=None, filename=None):
 
 def plot_chain(sampler):
     # Check convergence
+    """
     plt.figure('Chains')
     plt.plot(sampler.lnprobability.T)
     plt.xlabel('MCMC Step')
     plt.ylabel('log(Posterior)')
     plt.title('Chain convergence')
+    """
 
     # Plot sampling of trajectories parameters
-    plt.figure('Fits')
+    set_fig_params_for_publication()
+    plt.figure('Fits', figsize=(1.5, 1.5), dpi=300)
     num_plot_samples = 2500
     num_tot_steps = sampler.flatchain.shape[0]
     bid_pred = np.logspace(-1, 3.5, 100)
@@ -127,23 +131,32 @@ def plot_chain(sampler):
                              sampler.lnprobability.shape)
     ml_pos = sampler.chain[ml_ix]
     plt.plot(np.log10(bid_pred), model_func(ml_pos, bid_pred), color='b',
-             linewidth=2)
-    plt.hlines(fret_means[-1], -1, 3.5, linestyle='solid', color='k')
+             linewidth=0.5)
+    # Plot no competitor line, with stderr
+    plt.hlines(fret_means[-1], -1, 3.5, linestyle='solid', color='k',
+               linewidth=0.5)
     plt.hlines(fret_means[-1] + fret_ses[-1], -1, 3.5,
-               linestyle='dashed', color='k')
+               linestyle='dashed', color='k', linewidth=0.5)
     plt.hlines(fret_means[-1] - fret_ses[-1], -1, 3.5,
-               linestyle='dashed', color='k')
+               linestyle='dashed', color='k', linewidth=0.5)
     # Plot data
     plt.errorbar(np.log10(bid_concs), fret_means, yerr=fret_ses, color='k',
-                 linewidth=2)
+                 linewidth=1, capsize=1.5)
     # Label axes
     plt.xlabel('log10([Bid]) (nM)')
-    plt.ylabel('FRET (%)')
+    plt.ylabel(r'FRET')
     plt.xlim([-1, 3.5])
-    plt.title('Fits')
+    # Format axes
+    ax = plt.gca()
+    format_axis(ax)
+    ax.set_yticks([0.05, 0.15, 0.25, 0.35])
+    ax.set_ylim([0.05, 0.37])
+    ax.set_xticks(np.linspace(-1, 3, 5))
+    ax.set_xticklabels([int(f) for f in np.linspace(-1, 3, 5)])
+    plt.subplots_adjust(bottom=0.18, left=0.25, right=0.94, top=0.94)
 
     # Triangle plots
-    triangle.corner(sampler.flatchain)
+    #triangle.corner(sampler.flatchain)
 
 if __name__ == '__main__':
     plt.ion()

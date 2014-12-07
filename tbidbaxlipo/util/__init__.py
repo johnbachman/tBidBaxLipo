@@ -36,3 +36,8 @@ def set_axis_ticks(ax):
     ax.yaxis.set_tick_params(direction='out')
     ax.xaxis.set_tick_params(direction='out')
 
+def format_axis(ax, label_padding=2):
+    set_axis_ticks(ax)
+    ax.xaxis.labelpad = label_padding
+    ax.yaxis.labelpad = label_padding
+
