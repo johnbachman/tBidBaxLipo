@@ -11,8 +11,6 @@ from tbidbaxlipo.util.error_propagation import calc_ratio_mean_sd
 
 def plot_fd_final_values(wells, fd):
     (fd_avgs, fd_stds) = averages(wells, fd)
-    plt.figure('FD')
-    plot_all(fd_avgs)
     # Curiously, the overall level of the signal appears to be strongly
     # determined by the WT cBid concentration, but not in a monotonic way?
     bid_concs =  []
@@ -23,6 +21,9 @@ def plot_fd_final_values(wells, fd):
         final_val_avgs.append(final_val_avg)
     plt.figure('FD values, final')
     plt.plot(bid_concs, final_val_avgs, marker='o')
+    plt.xlabel('[WT Bid] (nM)')
+    plt.ylabel('RFU')
+    plt.xlim([-10, 1010])
 
 def get_average_fa(wells, fa, plot=True):
     """Plot all FA (acceptor only, no donor) trajectories and then return the
