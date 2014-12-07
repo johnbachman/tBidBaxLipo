@@ -14,7 +14,6 @@ import triangle
 
 (bid_concs, fret_means, fret_ses) = cf.get_fret_from_endpoints()
 bid568_conc = 10.
-bid_concs = bid_concs - bid568_conc
 # A represents the labeled ligand, B the unlabeled ligand.
 A0 = bid568_conc
 

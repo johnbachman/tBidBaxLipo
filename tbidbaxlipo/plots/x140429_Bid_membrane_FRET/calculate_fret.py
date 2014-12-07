@@ -139,8 +139,6 @@ def calculate_fret_from_endpoints(wells, fda, fd, fa, bg, num_pts=20,
     fd_means = np.mean(fd_endpoints, axis=1)
     fda_ses = np.std(fda_endpoints, axis=1, ddof=1) / float(num_reps)
     fd_ses = np.std(fd_endpoints, axis=1, ddof=1) / float(num_reps)
-    # Adjust the Bid concentration appropriately
-    bid_concs += bid568_conc
     # Calculate the mean and SEM of the FDA/FD ratio distributions
     fret_tuples = [calc_ratio_mean_sd(fda_means[i], fda_ses[i],
                                       fd_means[i], fd_ses[i])
