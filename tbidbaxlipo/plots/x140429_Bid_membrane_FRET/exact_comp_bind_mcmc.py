@@ -15,6 +15,7 @@ import triangle
 import pickle
 from os.path import exists
 from tbidbaxlipo.util import set_fig_params_for_publication, format_axis, fontsize
+import sys
 
 (bid_concs, fret_means, fret_ses) = cf.get_fret_from_endpoints()
 bid568_conc = 10.
@@ -179,14 +180,33 @@ def plot_chain(sampler):
 if __name__ == '__main__':
     plt.ion()
 
-    pck_filename = 'exact_comp_bind_mcmc.pck'
-    if exists(pck_filename):
+    usage_msg =  "\nUsage:\n"
+    usage_msg += "To run the fits and save chain to a pickle file:\n"
+    usage_msg += "     python %s sample output_filename\n" % sys.argv[0]
+    usage_msg += "To plot results from a pickled chain:\n"
+    usage_msg += "     python %s plot input_filename\n" % sys.argv[0]
+
+    # Check command-line args
+    if len(sys.argv) < 3:
+        print usage_msg
+        sys.exit()
+
+    # Sample
+    pck_filename = sys.argv[2]
+    if sys.argv[1] == 'sample':
+        sampler = run_mcmc(filename=pck_filename)
+    # Plot
+    elif sys.argv[1] == 'plot':
         with open(pck_filename) as f:
             sampler = pickle.load(f)
+        plot_chain(sampler)
+        for i in plt.get_fignums():
+            plt.figure(i)
+            plt.savefig('%s_%s.pdf' % (sys.argv[0], i))
     else:
-        sampler = run_mcmc(filename=pck_filename)
+        print usage_msg
+        sys.exit()
 
-    plot_chain(sampler)
     """
     import sys
     sys.exit()
