@@ -11,7 +11,7 @@ from tbidbaxlipo.plots import titration_fits
 import pymc
 from scipy import stats
 from tbidbaxlipo.util import fig_orange, fig_purple, \
-                             set_fig_params_for_publication
+                             set_fig_params_for_publication, fontsize, format_axis
 from copy import copy
 import matplotlib
 
@@ -267,25 +267,22 @@ def plot_release_comparisons(plot_abs=True, plot_norm=True, bar_plot=True):
                          color=fig_orange)
             plt.subplots_adjust(left=0.25, bottom=0.23)
             ax = plt.gca()
-            ax.xaxis.set_ticks_position('bottom')
-            ax.yaxis.set_ticks_position('left')
-            ax.xaxis.set_tick_params(direction='out')
-            ax.yaxis.set_tick_params(direction='out')
+            format_axis(ax)
             ax.set_xticks(np.linspace(0, 1e4, 6))
             ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
             plt.ylim([0, 1])
             plt.xlim([-100, 1e4])
-            plt.xlabel(r'Time (sec $\times 10^3$)')
-            plt.ylabel(r'\% ANTS release')
+            plt.xlabel(r'Time (sec $\times 10^3$)', fontsize=fontsize)
+            plt.ylabel(r'\% ANTS release', fontsize=fontsize)
             leg = plt.legend((line_ref[0], line_preinc[0]),
                        ('No preinc.', 'Preinc.'),
                        loc='right',
-                       prop={'size': 7})
+                       prop={'size': fontsize})
             leg.draw_frame(False)
 
     # Make the bar plot that is probably what we would show in a publication
     set_fig_params_for_publication()
-    plt.figure(figsize=(4, 1))
+    plt.figure(figsize=(4, 1), dpi=300)
     plt.subplots_adjust(bottom=0.34, right=0.95, top=0.87)
     loffset = 0.15
     width=0.15
@@ -307,15 +304,20 @@ def plot_release_comparisons(plot_abs=True, plot_norm=True, bar_plot=True):
         ax.set_yticks(np.linspace(0, 1, 6)) # Ticks at 0, 0.2, 0.4, ... 1
         plt.xlim([0, len(ref_fmaxes) / 2])
         plt.ylim([np.min(preinc_fmaxes) * 1.5, 1])
-        plt.xlabel('[Unlabeled liposomes] (nM)')
-        plt.ylabel(r'\% ANTS release')
+        plt.xlabel('[Unlabeled liposomes] (nM)', fontsize=fontsize)
+        plt.ylabel(r'\% ANTS release', fontsize=fontsize)
         ax.xaxis.set_ticks_position('none')
         ax.yaxis.set_ticks_position('left')
-        ax.yaxis.set_tick_params(direction='out')
+        ax.xaxis.set_tick_params(which='both', labelsize=fontsize, pad=2,
+                length=2, width=0.5)
+        ax.yaxis.set_tick_params(which='both', direction='out',
+                        labelsize=fontsize, pad=0, length=2, width=0.5)
+        ax.xaxis.labelpad = 2
+        ax.yaxis.labelpad = 2
         leg = plt.legend((rects_ref[0], rects_preinc[0]),
                    ('No preinc.', 'Preinc.'),
                    loc='upper right',
-                   prop={'size': 7})
+                   prop={'size': fontsize})
         leg.draw_frame(False)
         plt.show()
 
