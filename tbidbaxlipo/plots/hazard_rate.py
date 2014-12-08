@@ -46,12 +46,10 @@ plt.subplots_adjust(bottom=0.19, left=0.21, top=0.94, right=0.94)
 leg = plt.legend(['Data', 'Fit, constant rate', 'Fit, decr. rate'],
                  loc='lower right', prop={'size':6}, frameon=False,
                  handlelength=1.5, handletextpad=0)
-#label_padding = 2
-#ax.xaxis.labelpad = label_padding
-#ax.yaxis.labelpad = label_padding
-
+# Save the figure
 plt.savefig('fig_fmax_fit_comparison.pdf')
 
+# Now plot the hazard rate for data and fits
 def failure_rate(t, y):
     dt = np.diff(t)
     dy = -np.diff(y)
@@ -75,7 +73,6 @@ ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
 ax.set_yticks(np.linspace(-5e-5, 25e-5, 7))
 ax.set_yticklabels([int(f) for f in np.linspace(-5, 25, 7)])
 #ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8])
-
 plt.subplots_adjust(bottom=0.19, left=0.21, top=0.94, right=0.94)
 #leg = plt.legend(['Data', 'Fit, constant rate', 'Fit, decr. rate'],
 #                 loc='lower right', prop={'size':6}, frameon=False,

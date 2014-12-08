@@ -14,7 +14,8 @@ import calculate_fret as cf
 import triangle
 import pickle
 from os.path import exists
-from tbidbaxlipo.util import set_fig_params_for_publication, format_axis, fontsize
+from tbidbaxlipo.util import set_fig_params_for_publication, format_axis, \
+                             fontsize, capsize
 import sys
 
 (bid_concs, fret_means, fret_ses) = cf.get_fret_from_endpoints()
@@ -154,7 +155,7 @@ def plot_chain(sampler):
     """
     # Plot data
     plt.errorbar(bid_concs[:-1], fret_means[:-1], yerr=fret_ses[:-1], color='k',
-                 linewidth=1, capsize=1.5, zorder=3, linestyle='', marker='o',
+                 linewidth=1, capsize=capsize, zorder=3, linestyle='', marker='o',
                  markersize=2)
     # Label axes
     plt.xlabel('[cBid] (nM)', fontsize=fontsize)
@@ -202,27 +203,8 @@ if __name__ == '__main__':
         plot_chain(sampler)
         for i in plt.get_fignums():
             plt.figure(i)
-            plt.savefig('%s_%s.pdf' % (sys.argv[0], i))
+            plt.savefig('140429_%s.pdf' % (sys.argv[0], i))
     else:
         print usage_msg
         sys.exit()
 
-    """
-    import sys
-    sys.exit()
-    plt.figure()
-    plt.errorbar(np.log10(bid_concs), fret_means, yerr=fret_ses, color='k',
-                 linewidth=2)
-    position = np.array([np.log10(1.0), np.log10(1.0), np.log10(1.5),
-                         np.log10(1.5), 0.10, 1.])
-    plt.plot(np.log10(bid_concs), model_func(position, bid_concs), marker='o')
-    insulin = np.logspace(-2, 5, 100)
-    position = np.array([np.log10(1.0), np.log10(1.0), np.log10(1.5),
-                         np.log10(1.5), 0.10, 1.])
-    ypred = model_func(position, insulin)
-    plt.figure()
-    plt.errorbar(np.log10(bid_concs), fret_means, yerr=fret_ses, color='k',
-                 linewidth=2)
-    plt.plot(np.log10(insulin), ypred, marker='o')
-    posterior(position)
-    """

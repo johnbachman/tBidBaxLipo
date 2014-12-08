@@ -12,6 +12,7 @@ fig_gray = '#f7f7f7'
 fig_purple = '#998ec3'
 
 fontsize = 6
+capsize = 1.5
 
 def set_fig_params_for_publication():
     matplotlib.rcParams['font.sans-serif'] = 'Arial'

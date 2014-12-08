@@ -272,8 +272,8 @@ def plot_release_comparisons(plot_abs=True, plot_norm=True, bar_plot=True):
             ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
             plt.ylim([0, 1])
             plt.xlim([-100, 1e4])
-            plt.xlabel(r'Time (sec $\times 10^3$)', fontsize=fontsize)
-            plt.ylabel(r'\% ANTS release', fontsize=fontsize)
+            plt.xlabel(r'Time (sec $\times 10^3$)')
+            plt.ylabel(r'\% ANTS release')
             leg = plt.legend((line_ref[0], line_preinc[0]),
                        ('No preinc.', 'Preinc.'),
                        loc='right',
