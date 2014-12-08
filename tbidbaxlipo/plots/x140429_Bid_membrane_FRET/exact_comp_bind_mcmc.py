@@ -115,48 +115,60 @@ def plot_chain(sampler):
     plt.title('Chain convergence')
     """
 
-    # Plot sampling of trajectories parameters
+    # Get sampling of trajectories parameters
     set_fig_params_for_publication()
     plt.figure('Fits', figsize=(1.5, 1.5), dpi=300)
-    num_plot_samples = 2500
     num_tot_steps = sampler.flatchain.shape[0]
-    bid_pred = np.logspace(-1, 3.5, 100)
+    num_plot_samples = 2500
+    n_pts = 100
+    (x_lb, x_ub) = (0.1, 1500)
+    ypred_samples = np.zeros((num_plot_samples, n_pts))
+    bid_pred = np.logspace(np.log10(x_lb), np.log10(x_ub), n_pts)
     for s_ix in range(num_plot_samples):
         p_ix = np.random.randint(num_tot_steps)
         p_samp = sampler.flatchain[p_ix]
-        plt.plot(np.log10(bid_pred), model_func(p_samp, bid_pred),
-                 alpha=0.01, color='r')
+        ypred = model_func(p_samp, bid_pred)
+        ypred_samples[s_ix] = ypred
+        #plt.plot(bid_pred, ypred, alpha=0.01, color='r')
+    samp_lb = np.zeros(n_pts)
+    samp_ub = np.zeros(n_pts)
+    # Plot 95% confidence interval
+    ax = plt.gca()
+    ypred_lb = np.percentile(ypred_samples, 2.5, axis=0)
+    ypred_ub = np.percentile(ypred_samples, 97.5, axis=0)
+    ax.fill_between(bid_pred, ypred_lb, ypred_ub, color='lightgray')
     # Plot maximum likelihood
     ml_ix = np.unravel_index(np.argmax(sampler.lnprobability),
                              sampler.lnprobability.shape)
     ml_pos = sampler.chain[ml_ix]
-    plt.plot(np.log10(bid_pred), model_func(ml_pos, bid_pred), color='b',
+    plt.plot(bid_pred, model_func(ml_pos, bid_pred), color='r',
              linewidth=0.5)
     # Plot no competitor line, with stderr
-    plt.hlines(fret_means[-1], -1, 3.5, linestyle='solid', color='k',
+    plt.hlines(fret_means[-1], x_lb, x_ub, linestyle='solid', color='k',
                linewidth=0.5)
-    plt.hlines(fret_means[-1] + fret_ses[-1], -1, 3.5,
+    plt.hlines(fret_means[-1] + fret_ses[-1], x_lb, x_ub,
                linestyle='dashed', color='k', linewidth=0.5)
-    plt.hlines(fret_means[-1] - fret_ses[-1], -1, 3.5,
+    plt.hlines(fret_means[-1] - fret_ses[-1], x_lb, x_ub,
                linestyle='dashed', color='k', linewidth=0.5)
     # Plot data
-    plt.errorbar(np.log10(bid_concs), fret_means, yerr=fret_ses, color='k',
-                 linewidth=1, capsize=1.5)
+    plt.errorbar(bid_concs[:-1], fret_means[:-1], yerr=fret_ses[:-1], color='k',
+                 linewidth=1, capsize=1.5, zorder=3)
     # Label axes
-    plt.xlabel('log10([Bid]) (nM)')
-    plt.ylabel(r'FRET')
-    plt.xlim([-1, 3.5])
+    plt.xlabel('[cBid] (nM)')
+    plt.ylabel(r'FRET (\%)')
     # Format axes
-    ax = plt.gca()
     format_axis(ax)
+    ax.set_xscale('log')
+    plt.xlim([x_lb, x_ub])
+    #ax.set_xticks(np.logspace(0.1, 1000, 5))
     ax.set_yticks([0.05, 0.15, 0.25, 0.35])
     ax.set_ylim([0.05, 0.37])
-    ax.set_xticks(np.linspace(-1, 3, 5))
-    ax.set_xticklabels([int(f) for f in np.linspace(-1, 3, 5)])
+    #ax.set_xticklabels([int(f) for f in np.linspace(-1, 3, 5)])
     plt.subplots_adjust(bottom=0.18, left=0.25, right=0.94, top=0.94)
 
     # Triangle plots
     #triangle.corner(sampler.flatchain)
+    import ipdb; ipdb.set_trace()
 
 if __name__ == '__main__':
     plt.ion()

@@ -33,8 +33,8 @@ def set_axis_ticks(ax):
     """Set ticks on left and bottom axis, ticks facing out."""
     ax.xaxis.set_ticks_position('bottom')
     ax.yaxis.set_ticks_position('left')
-    ax.yaxis.set_tick_params(direction='out')
-    ax.xaxis.set_tick_params(direction='out')
+    ax.yaxis.set_tick_params(which='both', direction='out')
+    ax.xaxis.set_tick_params(which='both', direction='out')
 
 def format_axis(ax, label_padding=2):
     set_axis_ticks(ax)
