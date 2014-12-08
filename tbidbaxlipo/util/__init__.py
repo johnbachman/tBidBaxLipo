@@ -11,8 +11,9 @@ fig_orange = '#f1a340'
 fig_gray = '#f7f7f7'
 fig_purple = '#998ec3'
 
+fontsize = 6
+
 def set_fig_params_for_publication():
-    matplotlib.rcParams['font.size'] = 6
     matplotlib.rcParams['font.sans-serif'] = 'Arial'
     matplotlib.rcParams['text.usetex'] = True
     matplotlib.rcParams['text.latex.preamble'] = [
@@ -33,8 +34,10 @@ def set_axis_ticks(ax):
     """Set ticks on left and bottom axis, ticks facing out."""
     ax.xaxis.set_ticks_position('bottom')
     ax.yaxis.set_ticks_position('left')
-    ax.yaxis.set_tick_params(which='both', direction='out')
-    ax.xaxis.set_tick_params(which='both', direction='out')
+    ax.yaxis.set_tick_params(which='both', direction='out', labelsize=fontsize,
+                             pad=2, length=2, width=0.5)
+    ax.xaxis.set_tick_params(which='both', direction='out', labelsize=fontsize,
+                             pad=2, length=2, width=0.5)
 
 def format_axis(ax, label_padding=2):
     set_axis_ticks(ax)

@@ -8,12 +8,13 @@ binding of two different ligands to a protein molecule." FEBS Letters 360
 
 import numpy as np
 from matplotlib import pyplot as plt
+import matplotlib
 import emcee
 import calculate_fret as cf
 import triangle
 import pickle
 from os.path import exists
-from tbidbaxlipo.util import set_fig_params_for_publication, format_axis
+from tbidbaxlipo.util import set_fig_params_for_publication, format_axis, fontsize
 
 (bid_concs, fret_means, fret_ses) = cf.get_fret_from_endpoints()
 bid568_conc = 10.
@@ -139,6 +140,7 @@ def plot_chain(sampler):
     ml_pos = sampler.chain[ml_ix]
     plt.plot(bid_pred, model_func(ml_pos, bid_pred), color='r',
              linewidth=0.5)
+    """
     # Plot no competitor line, with stderr
     plt.hlines(fret_means[-1], x_lb, x_ub, linestyle='solid', color='k',
                linewidth=0.5)
@@ -148,19 +150,14 @@ def plot_chain(sampler):
         plt.hlines([fret_means[-1] + fret_ses[-1], fret_means[-1] - fret_ses[-1]],
                    dash_line_pts[pt_ix], dash_line_pts[pt_ix + 1], color='k',
                    linewidth=0.5, zorder=3)
-        #plt.hlines(fret_means[-1] - fret_ses[-1],
-        #           dash_line_pts[pt_ix], dash_line_pts[pt_ix + 1], color='k',
-        #           linewidth=0.5, zorder=3)
-    #plt.hlines(fret_means[-1] + fret_ses[-1], x_lb, x_ub,
-    #           linestyle='dashed', color='k', linewidth=0.5)
-    #plt.hlines(fret_means[-1] - fret_ses[-1], x_lb, x_ub,
-    #           linestyle='dashed', color='k', linewidth=0.5)
+    """
     # Plot data
     plt.errorbar(bid_concs[:-1], fret_means[:-1], yerr=fret_ses[:-1], color='k',
-                 linewidth=1, capsize=1.5, zorder=3)
+                 linewidth=1, capsize=1.5, zorder=3, linestyle='', marker='o',
+                 markersize=2)
     # Label axes
-    plt.xlabel('[cBid] (nM)')
-    plt.ylabel(r'FRET (\%)')
+    plt.xlabel('[cBid] (nM)', fontsize=fontsize)
+    plt.ylabel(r'FRET (\%)', fontsize=fontsize)
     # Format axes
     format_axis(ax)
     ax.set_xscale('log')
@@ -172,7 +169,11 @@ def plot_chain(sampler):
     plt.subplots_adjust(bottom=0.18, left=0.25, right=0.94, top=0.94)
 
     # Triangle plots
-    #triangle.corner(sampler.flatchain)
+    #(tri_fig, axes) = plt.subplots(4, 4, figsize=(6, 6))
+    triangle.corner(sampler.flatchain,
+                    labels=['$log_{10}(K_D)$ (nM)', '$log_{10}(P)$ (nM)',
+                            '$F_{min}$', '$F_{max}$'])
+    plt.subplots_adjust(right=0.96, top=0.96)
     import ipdb; ipdb.set_trace()
 
 if __name__ == '__main__':
