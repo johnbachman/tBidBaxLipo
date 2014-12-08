@@ -10,7 +10,7 @@ import tbidbaxlipo.data
 
 # Load the data
 data_path = dirname(sys.modules['tbidbaxlipo.data'].__file__)
-data_file = abspath(join(data_path, r'2014-04-29 - cBid-A568 FRET with DiD traced lipos - cBid unlab competition 1%w-w DiD.xlsx'))
+data_file = abspath(join(data_path, '140429_Bid_membrane_FRET.xlsx')
 wb = load_workbook(data_file)
 
 # Layout of the Excel spreadsheet
