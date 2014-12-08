@@ -55,11 +55,7 @@ def prior(position):
     # F is a percentage, so should be between 0 and 1
     if F < 0 or F > 1:
         return -np.inf
-    # N (nonspecific FRET) should also be between 0 and 1 between 0 and 1:
-    # However, after running with bounds between 0 and 1, there was a local
-    # of values around 0.2 (with terrible fits), but with no values greater
-    # than 0.2. Restricting to a max of 0.165 prevents getting stuck in these
-    # bad fits.
+    # N (nonspecific FRET) should also be between 0 and 1:
     if N < 0 or N > 1.0:
         return -np.inf
     # We don't expect the SD of the error to be greater than 20% FRET
@@ -146,10 +142,19 @@ def plot_chain(sampler):
     # Plot no competitor line, with stderr
     plt.hlines(fret_means[-1], x_lb, x_ub, linestyle='solid', color='k',
                linewidth=0.5)
-    plt.hlines(fret_means[-1] + fret_ses[-1], x_lb, x_ub,
-               linestyle='dashed', color='k', linewidth=0.5)
-    plt.hlines(fret_means[-1] - fret_ses[-1], x_lb, x_ub,
-               linestyle='dashed', color='k', linewidth=0.5)
+    # Draw dashed line
+    dash_line_pts = np.logspace(np.log10(x_lb), np.log10(x_ub), 50)
+    for pt_ix in range(0, len(dash_line_pts) - 1, 2):
+        plt.hlines([fret_means[-1] + fret_ses[-1], fret_means[-1] - fret_ses[-1]],
+                   dash_line_pts[pt_ix], dash_line_pts[pt_ix + 1], color='k',
+                   linewidth=0.5, zorder=3)
+        #plt.hlines(fret_means[-1] - fret_ses[-1],
+        #           dash_line_pts[pt_ix], dash_line_pts[pt_ix + 1], color='k',
+        #           linewidth=0.5, zorder=3)
+    #plt.hlines(fret_means[-1] + fret_ses[-1], x_lb, x_ub,
+    #           linestyle='dashed', color='k', linewidth=0.5)
+    #plt.hlines(fret_means[-1] - fret_ses[-1], x_lb, x_ub,
+    #           linestyle='dashed', color='k', linewidth=0.5)
     # Plot data
     plt.errorbar(bid_concs[:-1], fret_means[:-1], yerr=fret_ses[:-1], color='k',
                  linewidth=1, capsize=1.5, zorder=3)
@@ -160,10 +165,10 @@ def plot_chain(sampler):
     format_axis(ax)
     ax.set_xscale('log')
     plt.xlim([x_lb, x_ub])
-    #ax.set_xticks(np.logspace(0.1, 1000, 5))
+    ax.set_xticks([0.1, 1, 10, 100, 1000])
+    ax.set_xticklabels([0.1, 1, 10, 100, 1000])
     ax.set_yticks([0.05, 0.15, 0.25, 0.35])
     ax.set_ylim([0.05, 0.37])
-    #ax.set_xticklabels([int(f) for f in np.linspace(-1, 3, 5)])
     plt.subplots_adjust(bottom=0.18, left=0.25, right=0.94, top=0.94)
 
     # Triangle plots
