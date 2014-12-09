@@ -16,6 +16,7 @@ import pickle
 from os.path import exists
 from tbidbaxlipo.util import set_fig_params_for_publication, format_axis, \
                              fontsize, capsize
+import os.path
 import sys
 
 (bid_concs, fret_means, fret_ses) = cf.get_fret_from_endpoints()
@@ -176,7 +177,6 @@ def plot_chain(sampler):
                     labels=['$log_{10}(K_D)$ (nM)', '$log_{10}(P)$ (nM)',
                             '$F_{min}$', '$F_{max}$'])
     plt.subplots_adjust(right=0.96, top=0.96)
-    import ipdb; ipdb.set_trace()
 
 if __name__ == '__main__':
     plt.ion()
@@ -201,10 +201,12 @@ if __name__ == '__main__':
         with open(pck_filename) as f:
             sampler = pickle.load(f)
         plot_chain(sampler)
-        for i in plt.get_fignums():
-            plt.figure(i)
-            plt.savefig('140429_%s.pdf' % (sys.argv[0], i))
+        plt.figure(1)
+        plt.savefig('140429_exact_comp_bind_fit.pdf')
+        plt.figure(2)
+        plt.savefig('140429_exact_comp_bind_marginals.pdf')
     else:
         print usage_msg
         sys.exit()
+
 

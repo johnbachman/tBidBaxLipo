@@ -62,8 +62,8 @@ $(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf: \
 
 # --- Fits of 140429 Bid FRET competition experiment by MCMC to the exact
 #     competition binding model ----
-# Files: 140429_exact_comp_bind_mcmc_1.pdf, 140429_exact_comp_bind_mcmc_2.pdf
-$(FIGDIR)/140429_exact_comp_bind_mcmc_1.pdf: \
+# Files: 140429_exact_comp_bind_fit.pdf, 140429_exact_comp_bind_marginals.pdf
+$(FIGDIR)/140429_exact_comp_bind_fit.pdf: \
 		$(CODEDIR)/plots/x140429_Bid_membrane_FRET/exact_comp_bind_mcmc.py \
 		$(CODEDIR)/plots/x140429_Bid_membrane_FRET/calculate_fret.py \
 		$(CODEDIR)/data/parse_140429_Bid_membrane_FRET.py \
@@ -72,6 +72,15 @@ $(FIGDIR)/140429_exact_comp_bind_mcmc_1.pdf: \
 		$(MCMCDIR)/140429_exact_comp_bind_mcmc.pck
 	python $(CODEDIR)/plots/x140429_Bid_membrane_FRET/exact_comp_bind_mcmc.py plot $(MCMCDIR)/140429_exact_comp_bind_mcmc.pck
 	mv *.pdf $(FIGDIR)
+
+$(MCMCDIR)/140429_exact_comp_bind_mcmc.pck: \
+		$(CODEDIR)/plots/x140429_Bid_membrane_FRET/exact_comp_bind_mcmc.py \
+		$(CODEDIR)/plots/x140429_Bid_membrane_FRET/calculate_fret.py \
+		$(CODEDIR)/data/parse_140429_Bid_membrane_FRET.py \
+		$(CODEDIR)/data/140429_Bid_membrane_FRET.xlsx
+	echo "Exiting, must remake:"
+	echo $@
+	exit 1
 
 
 
