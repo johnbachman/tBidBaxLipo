@@ -159,16 +159,16 @@ def plot_chain(sampler):
                  linewidth=1, capsize=capsize, zorder=3, linestyle='', marker='o',
                  markersize=2)
     # Label axes
-    plt.xlabel('[cBid] (nM)', fontsize=fontsize)
-    plt.ylabel(r'FRET (\%)', fontsize=fontsize)
+    plt.xlabel('[cBid] (nM)')
+    plt.ylabel(r'FRET (\%)')
     # Format axes
-    format_axis(ax)
     ax.set_xscale('log')
     plt.xlim([x_lb, x_ub])
     ax.set_xticks([0.1, 1, 10, 100, 1000])
     ax.set_xticklabels([0.1, 1, 10, 100, 1000])
     ax.set_yticks([0.05, 0.15, 0.25, 0.35])
     ax.set_ylim([0.05, 0.37])
+    format_axis(ax)
     plt.subplots_adjust(bottom=0.18, left=0.25, right=0.94, top=0.94)
 
     # Triangle plots
@@ -177,6 +177,90 @@ def plot_chain(sampler):
                     labels=['$log_{10}(K_D)$ (nM)', '$log_{10}(P)$ (nM)',
                             '$F_{min}$', '$F_{max}$'])
     plt.subplots_adjust(right=0.96, top=0.96)
+
+def plot_saturation_binding_predictions(sampler):
+    def binding_func(position, bid_tot, lipo_scale=1):
+        # Transform all params to linear scale
+        log_params = 10 ** position[:2]
+        lin_params = position[2:]
+        (kd, l_tot) = log_params
+        (f0, fmax) = lin_params
+        l_tot *= lipo_scale
+        frac_bid_bound = ((1.0 / (2 * bid_tot)) *
+                          (l_tot + bid_tot + kd -
+                           np.sqrt((l_tot + bid_tot + kd)**2 -
+                                   (4 * l_tot * bid_tot))))
+        return frac_bid_bound
+
+    plt.figure('Satbinding', figsize=(1.5, 1.5), dpi=300)
+    num_tot_steps = sampler.flatchain.shape[0]
+    num_plot_samples = 2500
+    n_pts = 100
+    (x_lb, x_ub) = (0.1, 1500)
+    ypred_samples = np.zeros((num_plot_samples, n_pts))
+    bid_pred = np.logspace(np.log10(x_lb), np.log10(x_ub), n_pts)
+    for s_ix in range(num_plot_samples):
+        p_ix = np.random.randint(num_tot_steps)
+        p_samp = sampler.flatchain[p_ix]
+        ypred = binding_func(p_samp, bid_pred, lipo_scale=5.)
+        ypred_samples[s_ix] = ypred
+        #plt.plot(bid_pred, ypred, alpha=0.01, color='r')
+    samp_lb = np.zeros(n_pts)
+    samp_ub = np.zeros(n_pts)
+    # Plot 95% confidence interval
+    ax = plt.gca()
+    # Label axes
+    plt.xlabel('[cBid] (nM)')
+    plt.ylabel(r'FRET (\%)')
+    # Format axes
+    ax.set_xscale('log')
+    plt.xlim([x_lb, x_ub])
+    ax.set_xticks([0.1, 1, 10, 100, 1000])
+    ax.set_xticklabels([0.1, 1, 10, 100, 1000])
+    plt.subplots_adjust(bottom=0.18, left=0.22, right=0.94, top=0.94)
+    ypred_lb = np.percentile(ypred_samples, 2.5, axis=0)
+    ypred_ub = np.percentile(ypred_samples, 97.5, axis=0)
+    ax.fill_between(bid_pred, ypred_lb, ypred_ub, color='lightgray')
+    format_axis(ax)
+    # Plot mean of predictions
+    plt.plot(bid_pred, np.mean(ypred_samples, axis=0), color='r')
+
+    # Plot binding curve for different liposome concentrations
+    plt.figure('Lipobinding', figsize=(1.5, 1.5), dpi=300)
+    num_tot_steps = sampler.flatchain.shape[0]
+    num_plot_samples = 2500
+    n_pts = 100
+    (x_lb, x_ub) = (0.01, 50)
+    ypred_samples = np.zeros((num_plot_samples, n_pts))
+    lipo_pred = np.logspace(np.log10(x_lb), np.log10(x_ub), n_pts)
+    bid_pred = 20.
+    for s_ix in range(num_plot_samples):
+        p_ix = np.random.randint(num_tot_steps)
+        p_samp = sampler.flatchain[p_ix]
+        ypred = binding_func(p_samp, bid_pred, lipo_scale=lipo_pred)
+        ypred_samples[s_ix] = ypred
+        #plt.plot(lipo_pred, ypred, alpha=0.01, color='r')
+    samp_lb = np.zeros(n_pts)
+    samp_ub = np.zeros(n_pts)
+    # Plot 95% confidence interval
+    ax = plt.gca()
+    # Label axes
+    plt.xlabel('[Lipos] (nM)')
+    plt.ylabel(r'FRET (\%)')
+    # Format axes
+    ax.set_xscale('log')
+    plt.xlim([x_lb, x_ub])
+    ax.set_xticks([0.01, 0.1, 1, 10,])
+    ax.set_xticklabels([0.01, 0.1, 1, 10])
+    plt.subplots_adjust(bottom=0.18, left=0.22, right=0.94, top=0.94)
+    ypred_lb = np.percentile(ypred_samples, 2.5, axis=0)
+    ypred_ub = np.percentile(ypred_samples, 97.5, axis=0)
+    ax.fill_between(lipo_pred, ypred_lb, ypred_ub, color='lightgray')
+    format_axis(ax)
+    # Plot mean of predictions
+    plt.plot(lipo_pred, np.mean(ypred_samples, axis=0), color='r')
+    import ipdb; ipdb.set_trace()
+
 
 if __name__ == '__main__':
     plt.ion()
@@ -201,10 +285,13 @@ if __name__ == '__main__':
         with open(pck_filename) as f:
             sampler = pickle.load(f)
         plot_chain(sampler)
+        plot_saturation_binding_predictions(sampler)
+        """
         plt.figure(1)
         plt.savefig('140429_exact_comp_bind_fit.pdf')
         plt.figure(2)
         plt.savefig('140429_exact_comp_bind_marginals.pdf')
+        """
     else:
         print usage_msg
         sys.exit()
