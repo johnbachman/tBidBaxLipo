@@ -8,7 +8,7 @@ figures: \
 		$(FIGDIR)/fig_fmax_fit_comparison.pdf \
 		$(FIGDIR)/poisson_bax_fmax.pdf \
 		$(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf \
-		$(FIGDIR)/140429_exact_comp_bind_mcmc_1.pdf
+		$(FIGDIR)/140429_exact_comp_bind_fit.pdf
 
 clean:
 	cd $(FIGDIR); rm -f *.pdf
@@ -48,16 +48,16 @@ $(FIGDIR)/poisson_bax_fmax.pdf: \
 # Makes plots pt..._fits.pdf, pt..._tri.pdf
 # (for 2_conf, 2_conf_rev, and 3_conf models)
 $(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf: \
-		$(CODEDIR)/pt/pt_140318_nbd_2_conf_5.pck \
-		$(CODEDIR)/pt/pt_140318_nbd_2_conf_rev_4.pck \
-		$(CODEDIR)/pt/pt_140318_nbd_3_conf_3.pck \
+		$(CODEDIR)/pt/pck/pt_140318_nbd_2_conf_5.pck \
+		$(CODEDIR)/pt/pck/pt_140318_nbd_2_conf_rev_4.pck \
+		$(CODEDIR)/pt/pck/pt_140318_nbd_3_conf_3.pck \
 		$(CODEDIR)/plots/layout_140318.py
 	python $(CODEDIR)/plots/layout_140318.py \
-			$(CODEDIR)/pt/pt_140318_nbd_2_conf_5.pck pt_140318_nbd_2_conf
+			$(CODEDIR)/pt/pck/pt_140318_nbd_2_conf_5.pck pt_140318_nbd_2_conf
 	python $(CODEDIR)/plots/layout_140318.py \
-			$(CODEDIR)/pt/pt_140318_nbd_2_conf_rev_4.pck pt_140318_nbd_2_conf_rev
+			$(CODEDIR)/pt/pck/pt_140318_nbd_2_conf_rev_4.pck pt_140318_nbd_2_conf_rev
 	python $(CODEDIR)/plots/layout_140318.py \
-			$(CODEDIR)/pt/pt_140318_nbd_3_conf_3.pck pt_140318_nbd_3_conf
+			$(CODEDIR)/pt/pck/pt_140318_nbd_3_conf_3.pck pt_140318_nbd_3_conf
 	mv *.pdf $(FIGDIR)
 
 # --- Fits of 140429 Bid FRET competition experiment by MCMC to the exact
