@@ -21,6 +21,8 @@ parameters:
        ...:     sampler = pickle.load(f)
        ...:
 
+    In [3]: plt.close('all')
+
     In [3]: plot_chain(sampler.flatchain[0], sampler.lnprobability[0])
 
 We plot the posterior probability of the chains to show that they've

@@ -8,4 +8,4 @@ Contents:
 
     raw_data
     exact_comp_bind_mcmc
-
+    gouy_chap_mcmc
