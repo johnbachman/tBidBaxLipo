@@ -20,7 +20,8 @@ def set_fig_params_for_publication():
     matplotlib.rcParams['text.latex.preamble'] = [
             r'\usepackage{helvet}',
             r'\usepackage{sansmath}',
-            r'\sansmath']
+            r'\sansmath',
+            r'\usepackage{underscore}',]
     #matplotlib.rcParams['xtick.major.size'] = 2
     #matplotlib.rcParams['ytick.major.size'] = 2
     #matplotlib.rcParams['xtick.major.pad'] = 2
