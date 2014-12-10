@@ -19,7 +19,6 @@ thesis/sphinxreport.log
 *species.txt
 .idea
 *.rep
-*.mcmc
 *.png
 *.html
 *.pyc
