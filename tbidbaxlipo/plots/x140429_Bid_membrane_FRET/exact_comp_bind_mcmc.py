@@ -25,7 +25,8 @@ bid568_conc = 10.
 A0 = bid568_conc
 
 nwalkers = 500
-burn_steps = 1500
+burn_steps = 100
+ntemps = 10
 sample_steps = 200
 ndim = 4
 
@@ -44,8 +45,8 @@ def model_func(position, B0):
     c = -K * K * P0
     theta = np.arccos((-2 * a**3 + 9*a*b - 27*c) / (2*np.sqrt((a**2 - 3*b)**3)))
     expr = (2 * np.sqrt(a**2 - 3*b) * np.cos(theta / 3.) - a)
-    frac_A_bound = expr / (3*K + expr)
-    return F * frac_A_bound + N
+    frac_A_bound = (expr / (3*K + expr)) + (N * P0)
+    return F * frac_A_bound
 
 def prior(position):
     (K, P0, N, F) = position
@@ -80,6 +81,43 @@ def likelihood(position):
 def posterior(position):
     return prior(position) + likelihood(position)
 
+def run_pt_mcmc(p0=None, filename=None):
+    if p0 is None:
+        p0 = np.zeros((ntemps, nwalkers, ndim))
+        for temp_ix in range(ntemps):
+            for walk_ix in range(nwalkers):
+                p0[temp_ix, walk_ix, 0] = np.random.uniform(-4, 4) # log(K)
+                p0[temp_ix, walk_ix, 1] = np.random.uniform(-0.5, 3) # log(P0)
+                p0[temp_ix, walk_ix, 2] = np.random.uniform(0, 1) # N
+                p0[temp_ix, walk_ix, 3] = np.random.uniform(0, 1) # F
+
+    sampler = emcee.PTSampler(ntemps, nwalkers, ndim, likelihood, prior,
+                              pool=None)
+
+    print "Burn in sampling..."
+    nstep = 0
+    for p, lnprob, lnlike in sampler.sample(p0, iterations=burn_steps,
+                            storechain=False):
+        if nstep % 10 == 0:
+            print "nstep %d of %d, MAP: %f" % (nstep, burn_steps,
+                                               np.max(lnprob[0]))
+        nstep +=1
+    sampler.reset()
+    print "Main sampling..."
+    nstep = 0
+    for p, lnprob, lnlike in sampler.sample(p, lnprob0=lnprob, lnlike0=lnlike,
+                        iterations=sample_steps):
+        if nstep % 10 == 0:
+            print "nstep %d of %d, MAP: %f" % (nstep, sample_steps,
+                                               np.max(lnprob[0]))
+        nstep +=1
+
+    if filename is not None:
+        with open(filename, 'w') as f:
+            pickle.dump(sampler, f)
+
+    return sampler
+
 def run_mcmc(p0=None, filename=None):
     if p0 is None:
         p0 = np.zeros((nwalkers, ndim))
@@ -105,20 +143,18 @@ def run_mcmc(p0=None, filename=None):
 
     return sampler
 
-def plot_chain(sampler):
+def plot_chain(flatchain, lnprob):
     # Check convergence
-    """
     plt.figure('Chains')
-    plt.plot(sampler.lnprobability.T)
+    plt.plot(lnprob.T)
     plt.xlabel('MCMC Step')
     plt.ylabel('log(Posterior)')
     plt.title('Chain convergence')
-    """
 
     # Get sampling of trajectories parameters
     set_fig_params_for_publication()
     plt.figure('Fits', figsize=(1.5, 1.5), dpi=300)
-    num_tot_steps = sampler.flatchain.shape[0]
+    num_tot_steps = flatchain.shape[0]
     num_plot_samples = 2500
     n_pts = 100
     (x_lb, x_ub) = (0.1, 1500)
@@ -126,7 +162,7 @@ def plot_chain(sampler):
     bid_pred = np.logspace(np.log10(x_lb), np.log10(x_ub), n_pts)
     for s_ix in range(num_plot_samples):
         p_ix = np.random.randint(num_tot_steps)
-        p_samp = sampler.flatchain[p_ix]
+        p_samp = flatchain[p_ix]
         ypred = model_func(p_samp, bid_pred)
         ypred_samples[s_ix] = ypred
         #plt.plot(bid_pred, ypred, alpha=0.01, color='r')
@@ -138,12 +174,10 @@ def plot_chain(sampler):
     ypred_ub = np.percentile(ypred_samples, 97.5, axis=0)
     ax.fill_between(bid_pred, ypred_lb, ypred_ub, color='lightgray')
     # Plot maximum likelihood
-    ml_ix = np.unravel_index(np.argmax(sampler.lnprobability),
-                             sampler.lnprobability.shape)
-    ml_pos = sampler.chain[ml_ix]
+    ml_ix = np.argmax(lnprob)
+    ml_pos = flatchain[ml_ix]
     plt.plot(bid_pred, model_func(ml_pos, bid_pred), color='r',
              linewidth=0.5)
-    """
     # Plot no competitor line, with stderr
     plt.hlines(fret_means[-1], x_lb, x_ub, linestyle='solid', color='k',
                linewidth=0.5)
@@ -153,7 +187,6 @@ def plot_chain(sampler):
         plt.hlines([fret_means[-1] + fret_ses[-1], fret_means[-1] - fret_ses[-1]],
                    dash_line_pts[pt_ix], dash_line_pts[pt_ix + 1], color='k',
                    linewidth=0.5, zorder=3)
-    """
     # Plot data
     plt.errorbar(bid_concs[:-1], fret_means[:-1], yerr=fret_ses[:-1], color='k',
                  linewidth=1, capsize=capsize, zorder=3, linestyle='', marker='o',
@@ -173,18 +206,20 @@ def plot_chain(sampler):
 
     # Triangle plots
     #(tri_fig, axes) = plt.subplots(4, 4, figsize=(6, 6))
-    triangle.corner(sampler.flatchain,
+    triangle.corner(flatchain,
                     labels=['$log_{10}(K_D)$ (nM)', '$log_{10}(P)$ (nM)',
                             '$F_{min}$', '$F_{max}$'])
     plt.subplots_adjust(right=0.96, top=0.96)
 
-def plot_saturation_binding_predictions(sampler):
+def plot_saturation_binding_predictions(flatchain):
     def binding_func(position, bid_tot, lipo_scale=1):
         # Transform all params to linear scale
         log_params = 10 ** position[:2]
         lin_params = position[2:]
         (kd, l_tot) = log_params
         (f0, fmax) = lin_params
+        # 1.55 was concentration of lipos used in the experiment
+        l_tot = l_tot / 1.55
         l_tot *= lipo_scale
         frac_bid_bound = ((1.0 / (2 * bid_tot)) *
                           (l_tot + bid_tot + kd -
@@ -193,7 +228,7 @@ def plot_saturation_binding_predictions(sampler):
         return frac_bid_bound
 
     plt.figure('Satbinding', figsize=(1.5, 1.5), dpi=300)
-    num_tot_steps = sampler.flatchain.shape[0]
+    num_tot_steps = flatchain.shape[0]
     num_plot_samples = 2500
     n_pts = 100
     (x_lb, x_ub) = (0.1, 1500)
@@ -201,8 +236,8 @@ def plot_saturation_binding_predictions(sampler):
     bid_pred = np.logspace(np.log10(x_lb), np.log10(x_ub), n_pts)
     for s_ix in range(num_plot_samples):
         p_ix = np.random.randint(num_tot_steps)
-        p_samp = sampler.flatchain[p_ix]
-        ypred = binding_func(p_samp, bid_pred, lipo_scale=5.)
+        p_samp = flatchain[p_ix]
+        ypred = binding_func(p_samp, bid_pred, lipo_scale=1.55)
         ypred_samples[s_ix] = ypred
         #plt.plot(bid_pred, ypred, alpha=0.01, color='r')
     samp_lb = np.zeros(n_pts)
@@ -211,7 +246,7 @@ def plot_saturation_binding_predictions(sampler):
     ax = plt.gca()
     # Label axes
     plt.xlabel('[cBid] (nM)')
-    plt.ylabel(r'FRET (\%)')
+    plt.ylabel(r'\% [cBid] bound')
     # Format axes
     ax.set_xscale('log')
     plt.xlim([x_lb, x_ub])
@@ -227,7 +262,7 @@ def plot_saturation_binding_predictions(sampler):
 
     # Plot binding curve for different liposome concentrations
     plt.figure('Lipobinding', figsize=(1.5, 1.5), dpi=300)
-    num_tot_steps = sampler.flatchain.shape[0]
+    num_tot_steps = flatchain.shape[0]
     num_plot_samples = 2500
     n_pts = 100
     (x_lb, x_ub) = (0.01, 50)
@@ -236,7 +271,7 @@ def plot_saturation_binding_predictions(sampler):
     bid_pred = 20.
     for s_ix in range(num_plot_samples):
         p_ix = np.random.randint(num_tot_steps)
-        p_samp = sampler.flatchain[p_ix]
+        p_samp = flatchain[p_ix]
         ypred = binding_func(p_samp, bid_pred, lipo_scale=lipo_pred)
         ypred_samples[s_ix] = ypred
         #plt.plot(lipo_pred, ypred, alpha=0.01, color='r')
@@ -246,7 +281,7 @@ def plot_saturation_binding_predictions(sampler):
     ax = plt.gca()
     # Label axes
     plt.xlabel('[Lipos] (nM)')
-    plt.ylabel(r'FRET (\%)')
+    plt.ylabel(r'\% cBid bound')
     # Format axes
     ax.set_xscale('log')
     plt.xlim([x_lb, x_ub])
@@ -259,8 +294,6 @@ def plot_saturation_binding_predictions(sampler):
     format_axis(ax)
     # Plot mean of predictions
     plt.plot(lipo_pred, np.mean(ypred_samples, axis=0), color='r')
-    import ipdb; ipdb.set_trace()
-
 
 if __name__ == '__main__':
     plt.ion()
@@ -279,19 +312,17 @@ if __name__ == '__main__':
     # Sample
     pck_filename = sys.argv[2]
     if sys.argv[1] == 'sample':
-        sampler = run_mcmc(filename=pck_filename)
+        sampler = run_pt_mcmc(filename=pck_filename)
     # Plot
     elif sys.argv[1] == 'plot':
         with open(pck_filename) as f:
             sampler = pickle.load(f)
-        plot_chain(sampler)
-        plot_saturation_binding_predictions(sampler)
-        """
-        plt.figure(1)
+        plot_chain(sampler.flatchain[0], sampler.lnprobability[0])
+        plot_saturation_binding_predictions(sampler.flatchain[0])
+        plt.figure('Fits')
         plt.savefig('140429_exact_comp_bind_fit.pdf')
-        plt.figure(2)
+        plt.figure(3)
         plt.savefig('140429_exact_comp_bind_marginals.pdf')
-        """
     else:
         print usage_msg
         sys.exit()
