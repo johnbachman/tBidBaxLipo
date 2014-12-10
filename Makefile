@@ -82,6 +82,26 @@ $(MCMCDIR)/140429_exact_comp_bind_mcmc.pck: \
 	echo $@
 	exit 1
 
+# Files: 140429_gouy_chap_fit.pdf, 140429_gouy_chap_marginals.pdf
+$(FIGDIR)/140429_gouy_chap_fit.pdf: \
+		$(CODEDIR)/plots/x140429_Bid_membrane_FRET/gouy_chap_mcmc.py \
+		$(CODEDIR)/plots/x140429_Bid_membrane_FRET/calculate_fret.py \
+		$(CODEDIR)/data/parse_140429_Bid_membrane_FRET.py \
+		$(CODEDIR)/data/140429_Bid_membrane_FRET.xlsx \
+		$(CODEDIR)/util/__init__.py \
+		$(MCMCDIR)/140429_gouy_chap_mcmc.pck
+	python $(CODEDIR)/plots/x140429_Bid_membrane_FRET/gouy_chap_mcmc.py plot $(MCMCDIR)/140429_gouy_chap_mcmc.pck
+	mv *.pdf $(FIGDIR)
+
+$(MCMCDIR)/140429_gouy_chap_mcmc.pck: \
+		$(CODEDIR)/plots/x140429_Bid_membrane_FRET/gouy_chap_mcmc.py \
+		$(CODEDIR)/plots/x140429_Bid_membrane_FRET/calculate_fret.py \
+		$(CODEDIR)/data/parse_140429_Bid_membrane_FRET.py \
+		$(CODEDIR)/data/140429_Bid_membrane_FRET.xlsx
+	echo "Exiting, must remake:"
+	echo $@
+	exit 1
+
 
 
 
