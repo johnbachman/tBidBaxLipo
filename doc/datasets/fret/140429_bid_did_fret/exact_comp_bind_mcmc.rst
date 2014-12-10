@@ -17,7 +17,11 @@ parameters:
 
     In [1]: from tbidbaxlipo.plots.x140429_Bid_membrane_FRET.exact_comp_bind_mcmc import *
 
-    In [2]: with open('../results/mcmc/140429_exact_comp_bind_mcmc.pck') as f:
+    In [1]: from os.path import join
+
+    In [1]: import tbidbaxlipo.plots.x140429_Bid_membrane_FRET as bmf
+
+    In [2]: with open(join(bmf.__path__[0], '140429_exact_comp_bind.mcmc')) as f:
        ...:     sampler = pickle.load(f)
        ...:
 

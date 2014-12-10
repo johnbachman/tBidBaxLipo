@@ -17,7 +17,11 @@ parameters:
 
     In [1]: from tbidbaxlipo.plots.x140429_Bid_membrane_FRET.gouy_chap_mcmc import *
 
-    In [2]: with open('../results/mcmc/140429_gouy_chap_mcmc.pck') as f:
+    In [1]: from os.path import join
+
+    In [1]: import tbidbaxlipo.plots.x140429_Bid_membrane_FRET as bmf
+
+    In [2]: with open(join(bmf.__path__[0], '140429_gouy_chap.mcmc')) as f:
        ...:     sampler = pickle.load(f)
        ...:
 
