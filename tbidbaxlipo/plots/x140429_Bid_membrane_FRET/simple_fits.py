@@ -12,6 +12,7 @@ import calculate_fret as cf
 #fret_data = np.loadtxt(data_file, delimiter=',')
 
 (bid_concs, fret_means, fret_ses) = cf.get_fret_from_endpoints()
+bid568_conc = 10.
 
 plt.ion()
 plt.close('all')
@@ -116,7 +117,8 @@ def fit_gouy_chapman_ols(bid_concs, fret_means, fret_ses):
     print pc()
 
 if __name__ == '__main__':
-    fit_basic_binding_curve(bid_concs, fret_means, fret_ses)
-    fit_stoichiometric_comp(bid_concs, fret_means, fret_ses)
-    fit_gouy_chapman(bid_concs, fret_means, fret_ses)
+    #fit_basic_binding_curve(bid_concs, fret_means, fret_ses)
+    #fit_stoichiometric_comp(bid_concs, fret_means, fret_ses)
+    #fit_gouy_chapman_ols(bid_concs + bid568_conc, fret_means, fret_ses)
+    fit_gouy_chapman_ols(bid_concs, fret_means, fret_ses)
 

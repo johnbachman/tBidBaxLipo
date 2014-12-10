@@ -138,7 +138,7 @@ Next, the liposome titration experiment predictions for 20 nM cBid:
 
 Interestingly, the liposome binding experiment looks comparable to the
 Bid/liposome binding experiment reported in Shamas-Din et. al, which reported a
-KD of ~1 nM liposomes when measured in this fashion. In this case the KD would
-appear to be a bit higher, perhaps ~3.5 nM on average, but with 1 nM within the
-95% confidence interval.
+KD of ~1 nM liposomes when measured in this fashion. In this case the apparent
+KD would appear to be a bit higher, perhaps ~3.5 nM on average, but with 1 nM
+close to the 95% confidence interval.
 
