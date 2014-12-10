@@ -48,16 +48,16 @@ $(FIGDIR)/poisson_bax_fmax.pdf: \
 # Makes plots pt..._fits.pdf, pt..._tri.pdf
 # (for 2_conf, 2_conf_rev, and 3_conf models)
 $(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf: \
-		$(CODEDIR)/pt/pck/pt_140318_nbd_2_conf_5.pck \
-		$(CODEDIR)/pt/pck/pt_140318_nbd_2_conf_rev_4.pck \
-		$(CODEDIR)/pt/pck/pt_140318_nbd_3_conf_3.pck \
-		$(CODEDIR)/plots/layout_140318.py
-	python $(CODEDIR)/plots/layout_140318.py \
-			$(CODEDIR)/pt/pck/pt_140318_nbd_2_conf_5.pck pt_140318_nbd_2_conf
-	python $(CODEDIR)/plots/layout_140318.py \
-			$(CODEDIR)/pt/pck/pt_140318_nbd_2_conf_rev_4.pck pt_140318_nbd_2_conf_rev
-	python $(CODEDIR)/plots/layout_140318.py \
-			$(CODEDIR)/pt/pck/pt_140318_nbd_3_conf_3.pck pt_140318_nbd_3_conf
+		$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_2_conf_5.mcmc \
+		$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_2_conf_rev_4.mcmc \
+		$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_3_conf_3.mcmc \
+		$(CODEDIR)/plots/x140318_Bax_liposome_titration/layout_140318.py
+	python $(CODEDIR)/plots/x140318_Bax_liposome_titration/layout_140318.py \
+			$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_2_conf_5.mcmc pt_140318_nbd_2_conf
+	python $(CODEDIR)/plots/x140318_Bax_liposome_titration/layout_140318.py \
+			$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_2_conf_rev_4.mcmc pt_140318_nbd_2_conf_rev
+	python $(CODEDIR)/plots/x140318_Bax_liposome_titration/layout_140318.py \
+			$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_3_conf_3.mcmc pt_140318_nbd_3_conf
 	mv *.pdf $(FIGDIR)
 
 # --- Fits of 140429 Bid FRET competition experiment by MCMC to the exact
@@ -69,11 +69,12 @@ $(FIGDIR)/140429_exact_comp_bind_fit.pdf: \
 		$(CODEDIR)/data/parse_140429_Bid_membrane_FRET.py \
 		$(CODEDIR)/data/140429_Bid_membrane_FRET.xlsx \
 		$(CODEDIR)/util/__init__.py \
-		$(MCMCDIR)/140429_exact_comp_bind_mcmc.pck
-	python $(CODEDIR)/plots/x140429_Bid_membrane_FRET/exact_comp_bind_mcmc.py plot $(MCMCDIR)/140429_exact_comp_bind_mcmc.pck
+		$(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_exact_comp_bind.mcmc
+	python $(CODEDIR)/plots/x140429_Bid_membrane_FRET/exact_comp_bind_mcmc.py plot \
+		   $(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_exact_comp_bind.mcmc
 	mv *.pdf $(FIGDIR)
 
-$(MCMCDIR)/140429_exact_comp_bind_mcmc.pck: \
+$(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_exact_comp_bind.mcmc: \
 		$(CODEDIR)/plots/x140429_Bid_membrane_FRET/exact_comp_bind_mcmc.py \
 		$(CODEDIR)/plots/x140429_Bid_membrane_FRET/calculate_fret.py \
 		$(CODEDIR)/data/parse_140429_Bid_membrane_FRET.py \
@@ -89,11 +90,12 @@ $(FIGDIR)/140429_gouy_chap_fit.pdf: \
 		$(CODEDIR)/data/parse_140429_Bid_membrane_FRET.py \
 		$(CODEDIR)/data/140429_Bid_membrane_FRET.xlsx \
 		$(CODEDIR)/util/__init__.py \
-		$(MCMCDIR)/140429_gouy_chap_mcmc.pck
-	python $(CODEDIR)/plots/x140429_Bid_membrane_FRET/gouy_chap_mcmc.py plot $(MCMCDIR)/140429_gouy_chap_mcmc.pck
+		$(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_gouy_chap.mcmc
+	python $(CODEDIR)/plots/x140429_Bid_membrane_FRET/gouy_chap_mcmc.py plot \
+		   $(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_gouy_chap.mcmc
 	mv *.pdf $(FIGDIR)
 
-$(MCMCDIR)/140429_gouy_chap_mcmc.pck: \
+$(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_gouy_chap.mcmc: \
 		$(CODEDIR)/plots/x140429_Bid_membrane_FRET/gouy_chap_mcmc.py \
 		$(CODEDIR)/plots/x140429_Bid_membrane_FRET/calculate_fret.py \
 		$(CODEDIR)/data/parse_140429_Bid_membrane_FRET.py \
