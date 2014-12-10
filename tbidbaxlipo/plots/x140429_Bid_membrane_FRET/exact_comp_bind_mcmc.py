@@ -45,7 +45,9 @@ def model_func(position, B0):
     c = -K * K * P0
     theta = np.arccos((-2 * a**3 + 9*a*b - 27*c) / (2*np.sqrt((a**2 - 3*b)**3)))
     expr = (2 * np.sqrt(a**2 - 3*b) * np.cos(theta / 3.) - a)
-    frac_A_bound = (expr / (3*K + expr)) + (N * P0)
+    conc_A_spec = ((A0 * expr) / (3*K + expr))
+    conc_A_nonspec = N * A0
+    frac_A_bound = (conc_A_spec + conc_A_nonspec) / float(A0)
     return F * frac_A_bound
 
 def prior(position):
@@ -208,7 +210,7 @@ def plot_chain(flatchain, lnprob):
     #(tri_fig, axes) = plt.subplots(4, 4, figsize=(6, 6))
     triangle.corner(flatchain,
                     labels=['$log_{10}(K_D)$ (nM)', '$log_{10}(P)$ (nM)',
-                            '$F_{min}$', '$F_{max}$'])
+                            'Nonspec', 'FRET'])
     plt.subplots_adjust(right=0.96, top=0.96)
 
 def plot_saturation_binding_predictions(flatchain):

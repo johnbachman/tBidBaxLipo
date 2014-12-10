@@ -97,7 +97,7 @@ Given the initial concentration of liposomes of 0.1 mg/mL ~= 1.55 nM, this gives
     # Sites per liposome, 95% confidence interval
     In [19]: print lipo_site_concs_95 / 1.55
 
-The resulting values are strikingly low, suggesting a maximum of ~5-6 Bids
+The resulting values are strikingly low, suggesting a maximum of ~6 Bids
 per liposome.
 
 Predictions for other types of binding experiments
