@@ -20,7 +20,7 @@ from tbidbaxlipo.util import fitting, colors, set_fig_params_for_publication
 
 data_path = os.path.dirname(sys.modules['tbidbaxlipo.data'].__file__)
 timecourse_file = os.path.abspath(os.path.join(data_path,
-                                        '141119_Bax_Bid_saturation_timecourse.txt'))
+                                  '141119_Bax_Bid_saturation_timecourse.txt'))
 
 # Timecourse wells
 timecourse_wells = read_flexstation_kinetics(timecourse_file)
@@ -128,7 +128,7 @@ def plot_data():
     """
 
     figure()
-    plot_all(bim_bh3_wells)
+    plot_all(bim_bh3)
     title('Bim BH3')
 
     figure()
@@ -136,8 +136,28 @@ def plot_data():
     title('Bid 80nM')
 
     figure()
-    plot_all(bid_80)
-    title('Bid 40nM')
+    plot_all(bid_40)
+    title('Bid 40 nM')
+
+    figure()
+    plot_all(bid_20)
+    title('Bid 20 nM')
+
+    figure()
+    plot_all(bid_10)
+    title('Bid 10 nM')
+
+    figure()
+    plot_all(bid_5)
+    title('Bid 5 nM')
+
+    figure()
+    plot_all(bid_2)
+    title('Bid 2 nM')
+
+    figure()
+    plot_all(bid_0)
+    title('Bid 0 nM')
 
 def plot_mm(k_data, bax_concs, bid_concs):
     plt.figure('mm fit', figsize=(1.5, 1.5), dpi=300)
@@ -205,8 +225,10 @@ def plot_mm(k_data, bax_concs, bid_concs):
     import ipdb; ipdb.set_trace()
 
 if __name__ == '__main__':
-    #plot_data()
     plt.ion()
+    plot_data()
+    sys.exit()
+
 
     set_fig_params_for_publication()
 
@@ -225,10 +247,7 @@ if __name__ == '__main__':
     ax.set_yticks(np.linspace(5e-5, 35e-5, 7))
     ax.set_yticklabels([int(f) for f in np.linspace(5, 35, 7)])
     ax.set_xscale('log')
-    ax.xaxis.set_ticks_position('bottom')
-    ax.yaxis.set_ticks_position('left')
-    ax.yaxis.set_tick_params(direction='out')
-    ax.xaxis.set_tick_params(which='both', direction='out')
+    format_axis(ax)
 
     plt.figure('fmax', figsize=(1.5, 1.5), dpi=300)
     plt.subplots_adjust(left=0.24, bottom=0.21)
