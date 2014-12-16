@@ -7,7 +7,8 @@ import os
 import tbidbaxlipo.data
 from matplotlib import pyplot as plt
 import numpy as np
-from tbidbaxlipo.util import fitting, set_fig_params_for_publication, emcee_fit
+from tbidbaxlipo.util import fitting, set_fig_params_for_publication, \
+                             emcee_fit, format_axis
 from tbidbaxlipo.plots.titration_fits import TwoExp, OneExpFmax
 from matplotlib.ticker import MultipleLocator, ScalarFormatter
 from tbidbaxlipo.models.nbd import multiconf
@@ -406,10 +407,6 @@ def plot_emcee_fits(gf, sampler):
     plt.ylim([0.7, 5.2])
     plt.xlim([0, bg_time[-1] + 500])
     ax = plt.gca()
-    ax.xaxis.set_ticks_position('bottom')
-    ax.yaxis.set_ticks_position('left')
-    ax.yaxis.set_tick_params(direction='out')
-    ax.xaxis.set_tick_params(direction='out')
     ax.set_xticks(np.linspace(0, 1e4, 6))
     ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
     plt.subplots_adjust(bottom=0.24, left=0.21)
@@ -417,6 +414,7 @@ def plot_emcee_fits(gf, sampler):
         plt.plot(bg_time, data, 'k', linewidth=1)
     # Plot the final point
     gf.plot_func(sampler.flatchain[0,-1,:])
+    format_axis(ax)
 
 if __name__ == '__main__':
     import triangle

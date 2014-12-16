@@ -1,7 +1,8 @@
 from matplotlib import pyplot as plt
 import numpy as np
 from scipy.stats import poisson
-from tbidbaxlipo.util import set_fig_params_for_publication
+from tbidbaxlipo.util import set_fig_params_for_publication, format_axis, \
+                             fontsize, capsize
 from tbidbaxlipo.plots.layout_140311 import get_twoexp_fmax_arr
 from tbidbaxlipo.util import fitting
 from matplotlib import ticker
@@ -12,7 +13,6 @@ set_fig_params_for_publication()
 # First, plot the figure showing the relationship between the Poisson
 # distribution and the percent permeabilized
 plt.figure(figsize=(1.5, 1.5), dpi=300)
-label_padding = 2
 min_pore_size = 4
 bax_ratios = [1, 4, 6, 10]
 index = np.arange(21)
@@ -26,34 +26,26 @@ plt.xlabel('Bax*/Liposome')
 plt.ylabel('Probability')
 ax = plt.gca()
 line_top = ax.get_ylim()[1]
-ax.xaxis.set_ticks_position('bottom')
+format_axis(ax)
 ax.yaxis.set_ticks_position('none')
 ax.set_yticklabels([])
-ax.xaxis.labelpad = label_padding
 ax.yaxis.labelpad = 0
-ax.yaxis.set_tick_params(direction='out')
-ax.xaxis.set_tick_params(direction='out')
 plt.vlines(4, 0, line_top, linestyle='--')
 plt.ylim([0, line_top])
 plt.subplots_adjust(left=0.12, bottom=0.17)
-
+# Now make inset plot showing dye release at different average Bax/lipo
+# ratios:
 ax = plt.axes([0.55, 0.55, 0.3, 0.3])
+format_axis(ax)
 bax_ratios2 = np.linspace(0, 20, 50)
 plt.plot(bax_ratios2, poisson.sf(4, bax_ratios2), color='k')
 for br in bax_ratios:
     plt.plot(br, poisson.sf(4, br), marker='o', markersize=4)
-ax.xaxis.labelpad = label_padding
-ax.yaxis.labelpad = label_padding
-ax.xaxis.set_ticks_position('bottom')
-ax.yaxis.set_ticks_position('left')
-ax.yaxis.set_tick_params(direction='out')
-ax.xaxis.set_tick_params(direction='out')
 ax.set_yticks([0, 0.5, 1.0])
-
 plt.ylim([-0.08, 1.05])
 plt.xlabel('Bax*/Lipo')
 plt.ylabel('Max release')
-
+# Save the plot
 plt.savefig('poisson_bax_fmax.pdf')
 
 # Now, plot best fit of 140311 Fmax curve with Poisson funcs
@@ -65,19 +57,15 @@ fmax_arr[:, 0] = [0, 0, 0]
 
 plt.figure(figsize=(1.5, 1.5), dpi=300)
 plt.subplots_adjust(left=0.21, bottom=0.17, top=0.89, right=0.96)
-line_data = plt.errorbar(bax_ratios, fmax_means, yerr=np.std(fmax_arr, axis=0))
+line_data = plt.errorbar(bax_ratios, fmax_means, yerr=np.std(fmax_arr, axis=0),
+                         capsize=capsize)
 plt.xlabel('[Bax]/[Liposome]')
 plt.ylabel('Predicted max release')
 plt.xlim([1, 150])
 plt.ylim([-0.015, 1.015])
 ax = plt.gca()
 ax.set_xscale('log')
-ax.xaxis.set_ticks_position('bottom')
-ax.yaxis.set_ticks_position('left')
-ax.yaxis.set_tick_params(direction='out')
-ax.xaxis.set_tick_params(which='both', direction='out')
-ax.xaxis.labelpad = label_padding
-ax.yaxis.labelpad = label_padding
+format_axis(ax)
 ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
 # Because the poisson.sf only differs at discrete values of the pore size,
 # leastsq fails. So instead we'll just iterate over a range of pore sizes and
@@ -99,22 +87,12 @@ line_4 = plt.plot(smooth_bax_ratios, poisson.sf(4, smooth_bax_ratios),
 line_best = plt.plot(smooth_bax_ratios,
                      poisson.sf(best_pore_size, smooth_bax_ratios),
                      color='r')
-
 leg = ax.legend(['Data', 'Min 4', 'Min 33 (best fit)'], loc=1, ncol=3,
           bbox_to_anchor=(0.0, 0.9, 1, 0.1),
           bbox_transform=plt.gcf().transFigure,
           mode='expand', borderpad=0,
           handlelength=1.5, handletextpad=0, columnspacing=0.5,
-          frameon=False, prop={'size': 6})
-
+          frameon=False, prop={'size': fontsize})
+# Save the plot
 plt.savefig('poisson_bax_fmax_fit.pdf')
 
-"""
-ax = plt.axes([0.05, 0.9, 0.9, 0.1])
-#plt.subplots_adjust(left=0, top=0, bottom=0, right=0)
-ax.set_xlim([0, 1])
-ax.set_ylim([0, 1])
-#plt.setp(ax, xticks=[], yticks=[])
-plt.hlines(0.5, 0, 0, color='b')
-plt.text(0, 0, 'Data')
-"""

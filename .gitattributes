@@ -1,1 +1,2 @@
 *.hdf5 filter=media -crlf
+*.mcmc filter=media -crlf

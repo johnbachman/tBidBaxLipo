@@ -3,7 +3,7 @@ from tbidbaxlipo.util.plate_assay import TIME, VALUE
 from matplotlib import pyplot as plt
 import numpy as np
 from tbidbaxlipo.util import moving_average, set_fig_params_for_publication, \
-                             set_axis_ticks
+        format_axis
 from tbidbaxlipo.util import fitting
 import sys
 
@@ -38,7 +38,7 @@ plt.xlim([0, 11.3e3])
 plt.xlabel(r'Time (sec $\times 10^3$)')
 plt.ylabel(r'\% Release')
 ax = plt.gca()
-set_axis_ticks(ax)
+format_axis(ax)
 ax.set_xticks(np.linspace(0, 1e4, 6))
 ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
 ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8])
@@ -46,12 +46,10 @@ plt.subplots_adjust(bottom=0.19, left=0.21, top=0.94, right=0.94)
 leg = plt.legend(['Data', 'Fit, constant rate', 'Fit, decr. rate'],
                  loc='lower right', prop={'size':6}, frameon=False,
                  handlelength=1.5, handletextpad=0)
-label_padding = 2
-ax.xaxis.labelpad = label_padding
-ax.yaxis.labelpad = label_padding
-
+# Save the figure
 plt.savefig('fig_fmax_fit_comparison.pdf')
 
+# Now plot the hazard rate for data and fits
 def failure_rate(t, y):
     dt = np.diff(t)
     dy = -np.diff(y)
@@ -69,20 +67,19 @@ plt.plot(t[30:], moving_average(failure_rate(t, 1 - fit_func2(t)), n=30),
 plt.ylabel(r'Hazard rate $(\times 10^{-5})$')
 plt.xlabel(r'Time (sec $\times 10^3)$')
 ax = plt.gca()
-set_axis_ticks(ax)
+format_axis(ax)
 ax.set_xticks(np.linspace(0, 1e4, 6))
 ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
 ax.set_yticks(np.linspace(-5e-5, 25e-5, 7))
 ax.set_yticklabels([int(f) for f in np.linspace(-5, 25, 7)])
 #ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8])
-
 plt.subplots_adjust(bottom=0.19, left=0.21, top=0.94, right=0.94)
 #leg = plt.legend(['Data', 'Fit, constant rate', 'Fit, decr. rate'],
 #                 loc='lower right', prop={'size':6}, frameon=False,
 #                 handlelength=1.5, handletextpad=0)
-label_padding = 2
-ax.xaxis.labelpad = label_padding
-ax.yaxis.labelpad = label_padding
+#label_padding = 2
+#ax.xaxis.labelpad = label_padding
+#ax.yaxis.labelpad = label_padding
 
 plt.savefig('fig_hazard_rate.pdf')
 

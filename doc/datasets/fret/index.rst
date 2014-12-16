@@ -10,5 +10,5 @@ Contents:
     131021_Fluorescein
     131028_Fluorescein_384
     131030_Fluorescein_Flex_Dilution
-    140429_bid_did_fret
+    140429_bid_did_fret/index
     140430_Bid_Bax_FRET
