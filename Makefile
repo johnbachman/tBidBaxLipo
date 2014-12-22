@@ -104,6 +104,10 @@ $(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_gouy_chap.mcmc: \
 	echo $@
 	exit 1
 
-
-
+# Slice diagrams
+$(FIGDIR)/slice_bax_fixed.pdf: \
+		$(CODEDIR)/plots/slice_diagrams.py \
+		$(CODEDIR)/util/__init__.py
+	python $(CODEDIR)/plots/slice_diagrams.py
+	mv *.pdf $(FIGDIR)
 
