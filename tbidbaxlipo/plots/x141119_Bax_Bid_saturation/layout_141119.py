@@ -14,13 +14,17 @@ from tbidbaxlipo.models.nbd import multiconf
 from tbidbaxlipo.models import one_cpt
 from scipy.stats import linregress
 from tbidbaxlipo.plots import titration_fits as tf
-from tbidbaxlipo.util import fitting, colors, set_fig_params_for_publication
+from tbidbaxlipo.util import fitting, colors, set_fig_params_for_publication, \
+                             format_axis
 
 # All wells with liposomes ~0.15 mg/mL
 
 data_path = os.path.dirname(sys.modules['tbidbaxlipo.data'].__file__)
 timecourse_file = os.path.abspath(os.path.join(data_path,
                                   '141119_Bax_Bid_saturation_timecourse.txt'))
+
+bax_concs = np.array([1000., 500., 250., 125., 62.5, 31.2, 15.6, 7.8,
+                      3.9, 2.0, 0.]) + 25.
 
 # Timecourse wells
 timecourse_wells = read_flexstation_kinetics(timecourse_file)
@@ -203,13 +207,7 @@ def plot_mm(k_data, bax_concs, bid_concs):
     ax.set_yticks(np.linspace(5e-5, 35e-5, 7))
     ax.set_yticklabels([int(f) for f in np.linspace(5, 35, 7)])
     ax.set_xscale('log')
-    ax.xaxis.set_ticks_position('bottom')
-    ax.yaxis.set_ticks_position('left')
-    ax.yaxis.set_tick_params(direction='out')
-    ax.xaxis.set_tick_params(which='both', direction='out')
-    label_padding = 2
-    ax.xaxis.labelpad = label_padding
-    ax.yaxis.labelpad = label_padding
+    format_axis(ax)
 
     #ax.legend(handles, loc='upper right', ncol=1,
     #            borderpad=0,
@@ -222,19 +220,13 @@ def plot_mm(k_data, bax_concs, bid_concs):
     #plt.text(2.5, 0.00030, '$K_m = %.2f\ nM$' % km() )
     #plt.text(2.5, 0.00027, '$V_0 = %f\ sec^{-1}$' % v0())
     #plt.text(2.5, 0.00024, '$Bid/Lipo\ K_D = %.2f\ nM$' % ekd())
-    import ipdb; ipdb.set_trace()
 
 if __name__ == '__main__':
     plt.ion()
-    plot_data()
-    sys.exit()
-
+    #plot_data()
 
     set_fig_params_for_publication()
 
-    bax_concs = np.array([1000., 500., 250., 125., 62.5, 31.2, 15.6, 7.8,
-                          3.9, 2.0, 0.]) + 25.
-    fracs_labeled = np.array([25.] * 11) / bax_concs
     k_data = []
 
     plt.figure('k', figsize=(1.5, 1.5), dpi=300)
@@ -259,10 +251,7 @@ if __name__ == '__main__':
     #ax.set_yticks(np.linspace(5e-5, 35e-5, 7))
     #ax.set_yticklabels([int(f) for f in np.linspace(5, 35, 7)])
     ax.set_xscale('log')
-    ax.xaxis.set_ticks_position('bottom')
-    ax.yaxis.set_ticks_position('left')
-    ax.yaxis.set_tick_params(direction='out')
-    ax.xaxis.set_tick_params(which='both', direction='out')
+    format_axis(ax)
 
     for bid in [bid_2, bid_5, bid_10, bid_20, bid_40, bid_80]:
         fmax_list = []
@@ -273,7 +262,7 @@ if __name__ == '__main__':
             t = well[TIME]
             v = well[VALUE]
             #figure()
-            # Do linear regression on the first 20 points, normalize to intercept
+            # Do linear regression on the first 20 points, normalize to intcpt
             numpts = 20
             lin_fit = linregress(t[:numpts], v[:numpts])
             intercept = lin_fit[1]
@@ -297,6 +286,8 @@ if __name__ == '__main__':
 
         plt.figure('fmax')
         plt.plot(bax_concs, fmax_list, marker='o', markersize=3)
+    ax = plt.gca()
+    format_axis(ax)
 
     bid_concs = np.array([2.5, 5., 10., 20., 40., 80.])
     plot_mm(k_data, bax_concs, bid_concs)
