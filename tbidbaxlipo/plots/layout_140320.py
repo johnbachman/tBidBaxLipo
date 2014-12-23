@@ -174,8 +174,6 @@ def plot_exp_fits():
         #plt.plot(t, exp_func(t), color='r', linewidth='2')
         #plt.title(conc_name)
 
-    print "Fmax: %f" % ((fmax() + b()) / b())
-
     set_fig_params_for_publication()
 
     plt.figure('exp_fits', figsize=(1.7, 1.5), dpi=300)
