@@ -8,7 +8,9 @@ figures: \
 		$(FIGDIR)/fig_fmax_fit_comparison.pdf \
 		$(FIGDIR)/poisson_bax_fmax.pdf \
 		$(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf \
-		$(FIGDIR)/140429_exact_comp_bind_fit.pdf
+		$(FIGDIR)/slice_bax_fixed.pdf \
+		$(FIGDIR)/140320_exp_fits.pdf: \
+		$(FIGDIR)/140429_exact_comp_bind_fit.pdf \
 
 clean:
 	cd $(FIGDIR); rm -f *.pdf
@@ -60,6 +62,23 @@ $(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf: \
 			$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_3_conf_3.mcmc pt_140318_nbd_3_conf
 	mv *.pdf $(FIGDIR)
 
+# Slice diagrams
+$(FIGDIR)/slice_bax_fixed.pdf: \
+		$(CODEDIR)/plots/slice_diagrams.py \
+		$(CODEDIR)/util/__init__.py
+	python $(CODEDIR)/plots/slice_diagrams.py
+	mv *.pdf $(FIGDIR)
+
+# Exponential fits to Bax titration, 140320
+$(FIGDIR)/140320_exp_fits.pdf: \
+		$(CODEDIR)/plots/layout_140320.py \
+		$(CODEDIR)/data/140320_NBD_Bax_BimBH3_unlab_Bax_titration.txt \
+		$(CODEDIR)/util/fitting.py \
+		$(CODEDIR)/util/plate_assay.py \
+		$(CODEDIR)/util/__init__.py
+	python $(CODEDIR)/plots/layout_140320.py
+	mv *.pdf $(FIGDIR)
+
 # --- Fits of 140429 Bid FRET competition experiment by MCMC to the exact
 #     competition binding model ----
 # Files: 140429_exact_comp_bind_fit.pdf, 140429_exact_comp_bind_marginals.pdf
@@ -103,21 +122,4 @@ $(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_gouy_chap.mcmc: \
 	echo "Exiting, must remake:"
 	echo $@
 	exit 1
-
-# Slice diagrams
-$(FIGDIR)/slice_bax_fixed.pdf: \
-		$(CODEDIR)/plots/slice_diagrams.py \
-		$(CODEDIR)/util/__init__.py
-	python $(CODEDIR)/plots/slice_diagrams.py
-	mv *.pdf $(FIGDIR)
-
-# Exponential fits to Bax titration, 140320
-$(FIGDIR)/140320_exp_fits.pdf: \
-		$(CODEDIR)/plots/layout_140320.py \
-		$(CODEDIR)/data/140320_NBD_Bax_BimBH3_unlab_Bax_titration.txt \
-		$(CODEDIR)/util/fitting.py \
-		$(CODEDIR)/util/plate_assay.py \
-		$(CODEDIR)/util/__init__.py
-	python $(CODEDIR)/plots/layout_140320.py
-	mv *.pdf $(FIGDIR)
 
