@@ -7,8 +7,8 @@ import os
 import tbidbaxlipo.data
 from matplotlib import pyplot as plt
 import numpy as np
-from tbidbaxlipo.util import fitting
-from tbidbaxlipo.plots.titration_fits import TwoExp
+from tbidbaxlipo.util import fitting, format_axis, \
+                             set_fig_params_for_publication
 from pysb import *
 
 layout = collections.OrderedDict([
@@ -138,92 +138,73 @@ def plot_data():
     #plot_all(bgsub_averages)
     #title("Background-subtracted wells")
 
-if __name__ == '__main__':
-    plt.ion()
-    plot_data()
-    sys.exit()
-    #plot_lipo_background(lipo_bg_wells, lipo_bg_layout)
+def plot_exp_fits():
+    fmax_list = []
+    k1_list = []
+    conc_list = []
 
-    # Try fitting the high conc trajectory
-    y = bgsub_wells['A10'][VALUE]
-    t = bgsub_wells['A10'][TIME]
-    b = fitting.Parameter(np.mean(y[0:2]))
-    fmax = fitting.Parameter(25.)
-    k1 = fitting.Parameter(np.log(2)/2000.)
-    k2 = fitting.Parameter(1e-3)
-    k_bleach = fitting.Parameter(1.17e-5)
-    def exp_func(t):
-        return (b() + fmax()*(1 - np.exp(-k1()*(1 - np.exp(-k2()*t))*t))) * \
-                np.exp(-k_bleach()*t)
+    for conc_name in bgsub_wells.keys():
+        conc_list.append(float(conc_name.split(' ')[1]))
+        # Try fitting the high conc trajectory
+        y = bgsub_wells[conc_name][VALUE]
+        y = y / np.mean(y[0:2])
+        t = bgsub_wells[conc_name][TIME]
+        fmax = fitting.Parameter(25.)
+        k1 = fitting.Parameter(np.log(2)/2000.)
+        k2 = fitting.Parameter(1e-3)
+        b = fitting.Parameter(np.mean(y[0:2]))
+        k_bleach = fitting.Parameter(1.17e-5)
+        #def exp_func(t):
+        #    return (b() + fmax()*(1 - np.exp(-k1() *
+        #            (1 - np.exp(-k2()*t))*t))) * np.exp(-k_bleach()*t)
+        # One-parameter exp
+        def exp_func(t):
+            return (b() + fmax()*(1 - np.exp(-k1()*t))) * \
+                    np.exp(-k_bleach()*t)
 
-    # One-parameter exp
-    #def exp_func(t):
-    #    return (b() + fmax()*(1 - np.exp(-k1()*t))) * \
-    #            np.exp(-k_bleach()*t)
+        #fitting.fit(exp_func, [fmax, k1, k2], y, t)
+        fitting.fit(exp_func, [fmax, k1], y, t)
 
-    fitting.fit(exp_func, [fmax, k1, k2], y, t)
+        # Add to list
+        fmax_list.append(fmax())
+        k1_list.append(k1())
 
-    plt.figure()
-    plt.plot(t, y, marker='o', linestyle='')
-    plt.plot(t, exp_func(t), color='r', linewidth='2')
+        #plt.figure()
+        #plt.plot(t, y, marker='o', linestyle='')
+        #plt.plot(t, exp_func(t), color='r', linewidth='2')
+        #plt.title(conc_name)
 
     print "Fmax: %f" % ((fmax() + b()) / b())
 
-    sys.exit()
-    #(fmax_arr, k1_arr, k2_arr, conc_list) = plot_two_exp_fits()
-    #plot_fmax_curve(fmax_arr, conc_list)
+    set_fig_params_for_publication()
 
-    from tbidbaxlipo.plots import titration_fits
-    """
-    fit = TwoExp()
-    pore_df = to_dataframe(pores, bgsub_norm_stds)
-    fit.plot_fits_from_dataframe(pore_df)
-    p = fit.fit_from_dataframe(pore_df)
+    plt.figure('exp_fits', figsize=(1.7, 1.5), dpi=300)
+    plt.plot(conc_list[:-1], fmax_list[:-1], marker='o', markersize=3,
+             color='b')
+    plt.xlabel('[Bax] (nM)')
+    ax1 = plt.gca()
+    ax1.set_xscale('log')
+    ax1.set_xlim([8, 1000])
+    ax1.set_ylabel('$F_{max}$', color='b')
+    for tl in ax1.get_yticklabels():
+        tl.set_color('b')
 
+    ax2 = ax1.twinx()
+    ax2.set_xlim([5, 1000])
+    ax2.plot(conc_list[:-1], k1_list[:-1], marker='o', markersize=3, color='r')
+    ax2.set_ylabel(r'k (sec $\times$ 10^{-3})', color='r')
+    for tl in ax2.get_yticklabels():
+        tl.set_color('r')
+    ax2.set_yticks(np.linspace(6.6e-4, 7.8e-4, 7))
+    ax2.set_yticklabels(['%.1f' % f for f in np.linspace(6.6, 7.8, 7)])
 
-    # Multiply Fmax values by molar concentration of liposomes
-    concs = np.array(pore_df.columns.values, dtype='float')[1:-1]
-    concentration_of_pores = p[1][1:-1] * 0.775
-    plt.figure()
-    plt.plot(concs, concentration_of_pores)
+    format_axis(ax1)
+    format_axis(ax2, yticks_position='right')
+    plt.subplots_adjust(left=0.20, bottom=0.19, right=0.80)
 
-    # Fit a straight line to the concentrations
-    from tbidbaxlipo.util import fitting
-    m = fitting.Parameter(0.025)
-    b = fitting.Parameter(0)
-    def linear(x):
-        return m()*x + b()
-    fitting.fit(linear, [m, b], concentration_of_pores, concs)
-    plt.plot(concs, linear(concs))
-    """
-
-    df = to_dataframe(norm_averages, norm_stds)
-    concs = np.array(df.columns.values, dtype='float')
-    fit = titration_fits.TwoExp()
-
-    # Get background average
-    background_time = norm_averages['Bax 0 nM'][TIME]
-    background = norm_averages['Bax 0 nM'][VALUE]
-
-    bg_rate = fit.fit_timecourse(background_time, background)
-
+if __name__ == '__main__':
     plt.ion()
-    plt.plot(background_time, background)
-    plt.plot(background_time, fit.fit_func(background_time, bg_rate))
-    t = np.linspace(0, 100000, 1000)
-    plt.plot(t, fit.fit_func(t, bg_rate))
-    import pdb; pdb.set_trace()
+    # plot_data()
 
-    fit = titration_fits.TwoExp()
-    #fit.plot_fits_from_dataframe(subset_df)
-    #p = fit.fit_from_dataframe(subset_df)
-    fit.plot_fits_from_dataframe(df)
-    p = fit.fit_from_dataframe(df)
-
-    # With fitting of bg
-    #print "bg_rate %f" % bg_rate
-    fit = titration_fits.TwoExpWithBackground(bg_rate)
-    #fit.plot_fits_from_dataframe(subset_df)
-    #p = fit.fit_from_dataframe(subset_df)
-    fit.plot_fits_from_dataframe(df)
-    p = fit.fit_from_dataframe(df)
+    plot_exp_fits()
+    plt.savefig('140320_exp_fits.pdf')
