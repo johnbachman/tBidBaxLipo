@@ -9,8 +9,8 @@ figures: \
 		$(FIGDIR)/poisson_bax_fmax.pdf \
 		$(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf \
 		$(FIGDIR)/slice_bax_fixed.pdf \
-		$(FIGDIR)/140320_exp_fits.pdf: \
-		$(FIGDIR)/140429_exact_comp_bind_fit.pdf \
+		$(FIGDIR)/140320_exp_fits.pdf \
+		$(FIGDIR)/140429_exact_comp_bind_fit.pdf
 
 clean:
 	cd $(FIGDIR); rm -f *.pdf
