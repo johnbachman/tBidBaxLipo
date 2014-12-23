@@ -111,3 +111,13 @@ $(FIGDIR)/slice_bax_fixed.pdf: \
 	python $(CODEDIR)/plots/slice_diagrams.py
 	mv *.pdf $(FIGDIR)
 
+# Exponential fits to Bax titration, 140320
+$(FIGDIR)/140320_exp_fits.pdf: \
+		$(CODEDIR)/plots/layout_140320.py \
+		$(CODEDIR)/data/140320_NBD_Bax_BimBH3_unlab_Bax_titration.txt \
+		$(CODEDIR)/util/fitting.py \
+		$(CODEDIR)/util/plate_assay.py \
+		$(CODEDIR)/util/__init__.py
+	python $(CODEDIR)/plots/layout_140320.py
+	mv *.pdf $(FIGDIR)
+
