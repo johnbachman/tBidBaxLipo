@@ -1180,7 +1180,7 @@ class Builder(pysb.builder.Builder):
                 (c0 * self['cBax'] +
                 c0 * self['mBax'] +
                 c1 * self['iBax_nopore'] +
-                c2 * self['pBax']) / self['Bax_0'].value)
+                c2 * self['pBax']) / self['Bax_0'])
 
     def build_model_nbd_2_conf(self):
         self.translocate_Bax()
@@ -1190,7 +1190,7 @@ class Builder(pysb.builder.Builder):
         self.expression('NBD',
                 (c0 * self['cBax'] +
                 c0 * self['mBax'] +
-                c1 * self['iBax_nopore']) / self['Bax_0'].value)
+                c1 * self['iBax_nopore']) / self['Bax_0'])
         self.model.name = 'nbd_2_conf'
 
     def build_model_nbd_2_conf_dimer(self):
@@ -1201,7 +1201,7 @@ class Builder(pysb.builder.Builder):
         self.expression('NBD',
                 (c0 * self['cBax'] +
                 c0 * self['mBax_mono'] +
-                c1 * self['Bax2']) / self['Bax_0'].value)
+                c1 * self['Bax2']) / self['Bax_0'])
         self.model.name = 'nbd_2_conf_dimer'
 
     def build_model_nbd_2_conf_rev(self):
@@ -1218,7 +1218,7 @@ class Builder(pysb.builder.Builder):
         self.expression('NBD',
                 (c0 * self['cBax'] +
                 c0 * self['mBax'] +
-                c1 * self['iBax_nopore']) / self['Bax_0'].value)
+                c1 * self['iBax_nopore']) / self['Bax_0'])
         self.model.name = 'nbd_2_conf_auto'
 
     def build_model_nbd_2_conf_auto_rev(self):
