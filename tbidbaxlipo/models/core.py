@@ -290,6 +290,7 @@ class Builder(pysb.builder.Builder):
         self.observable('mBax_mono', Bax(conf='mem', bh3=None))
         self.observable('iBax', Bax(conf='ins'))
         self.observable('iBax_nopore', Bax(conf='ins', pore='n'))
+        self.observable('iBax_mono', Bax(conf='ins', bh3=None))
         self.observable('tBidBax', tBid(bh3=1) % Bax(bh3=1))
         self.observable('Bax2', Bax(bh3=1) % Bax(bh3=1))
         self.observable('Bax4',
@@ -720,7 +721,7 @@ class Builder(pysb.builder.Builder):
                    'Bax_%s_dimerization_kr' % bax_conf, 1e-2,
                    prior=Normal(-3, 2))
 
-            self.rule('Bax_%s_forms_dimers_fwd' % bax_conf,
+            self.rule('Bax_%s_forms_dimers_rev' % bax_conf,
                  Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None) %
                  Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None) >>
                  Bax(cpt='ves', conf=bax_conf, bh3=None, a6=None) +
@@ -1195,12 +1196,14 @@ class Builder(pysb.builder.Builder):
 
     def build_model_nbd_2_conf_dimer(self):
         self.translocate_Bax()
-        self.Bax_dimerizes(bax_conf='mem', reversible=False)
+        self.basal_Bax_activation()
+        self.Bax_dimerizes(bax_conf='ins', reversible=True)
         c0 = self.parameter('c0_scaling', 1., prior=None)
         c1 = self.parameter('c1_scaling', 5., prior=Uniform(0, 1))
         self.expression('NBD',
                 (c0 * self['cBax'] +
                 c0 * self['mBax_mono'] +
+                c0 * self['iBax_mono'] +
                 c1 * self['Bax2']) / self['Bax_0'])
         self.model.name = 'nbd_2_conf_dimer'
 
