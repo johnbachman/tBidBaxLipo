@@ -32,9 +32,9 @@ def moving_average(a, n=3) :
     ret[n:] = ret[n:] - ret[:-n]
     return ret[n - 1:] / n
 
-def format_axis(ax, label_padding=2, tick_padding=0):
+def format_axis(ax, label_padding=2, tick_padding=0, yticks_position='left'):
     ax.xaxis.set_ticks_position('bottom')
-    ax.yaxis.set_ticks_position('left')
+    ax.yaxis.set_ticks_position(yticks_position)
     ax.yaxis.set_tick_params(which='both', direction='out', labelsize=fontsize,
                              pad=tick_padding, length=2, width=0.5)
     ax.xaxis.set_tick_params(which='both', direction='out', labelsize=fontsize,
