@@ -3,7 +3,8 @@ import pickle
 import numpy as np
 from matplotlib import pyplot as plt
 from preprocess_data import timecourse_wells, lipo_bg_wells, bgsub_wells, \
-                            layout, lipo_bg_layout
+                            layout, lipo_bg_layout, bax_lipo_layout, \
+                            data_to_fit, bg_time, lipo_concs_to_fit
 from tbidbaxlipo.util.plate_assay import plot_all, TIME, VALUE
 from tbidbaxlipo.plots.titration_fits import TwoExp, OneExpFmax
 from tbidbaxlipo.util import fitting, set_fig_params_for_publication, \
@@ -13,8 +14,6 @@ from tbidbaxlipo.models import one_cpt
 
 def plot_data():
     """Plots the data and various transformations of it."""
-    plt.ion()
-
     # Timecourse wells
     plt.figure()
     plot_all(timecourse_wells)
@@ -65,40 +64,31 @@ def plot_lipo_background(wells, layout):
     print "b: %f" % b()
     return [m(), b()]
 
-def plot_two_exp_fits():
-    data = bgsub_wells
-    fmax_arr = np.zeros((1, len(layout.keys())))
-    k1_arr = np.zeros((1, len(layout.keys())))
-    k2_arr = np.zeros((1, len(layout.keys())))
-    conc_list = np.zeros(len(layout.keys()))
+def plot_exp_fits(time, data, concs, plot_fits=True):
+    fmax_arr = np.zeros(len(concs))
+    k_arr = np.zeros(len(concs))
+    for i, conc in enumerate(concs):
+        y = data[i]
+        fmax = fitting.Parameter(3.)
+        k = fitting.Parameter(5e-4)
+        def fit_func(t):
+            return 1 + fmax() * (1 - np.exp(-k()*t))
+        fitting.fit(fit_func, [k, fmax], y, time)
 
-    for i, conc_str in enumerate(layout.keys()):
-        plt.figure()
-        wells = layout[conc_str]
-        well_conc = float(conc_str.split(' ')[1])
-        conc_list[i] = well_conc
+        fmax_arr[i] = fmax()
+        k_arr[i] = k()
 
-        for j, well in enumerate(wells):
-            well_data = data[well]
-            time = np.array(well_data[TIME])
-            y = np.array(well_data[VALUE])
-
-            fit = TwoExp()
-            (k1, fmax, k2) = fit.fit_timecourse(time, y)
-
-            fmax_arr[j, i] = fmax
-            k1_arr[j, i] = k1
-            k2_arr[j, i] = k2
-
+        if plot_fits:
+            plt.figure()
             plt.plot(time, y, 'b')
-            plt.plot(time, fit.fit_func(time, (k1, fmax, k2)), 'r')
-            plt.title(well_conc)
+            plt.plot(time, fit_func(time), 'r')
+            plt.title('%f nM liposomes' % conc)
             plt.xticks([0, 2000, 4000, 6000, 8000])
-            plt.ylabel('% Release')
+            plt.ylabel('$F/F_0$')
             plt.xlabel('Time (sec)')
+            plt.show()
 
-    plt.show()
-    return (fmax_arr, k1_arr, k2_arr, conc_list)
+    return (fmax_arr, k_arr)
 
 def plot_k1_curve(k1_arr, conc_list):
     k1_means = np.mean(k1_arr, axis=0)
@@ -310,6 +300,7 @@ def plot_emcee_fits(gf, sampler):
 
 if __name__ == '__main__':
     import triangle
+    plt.ion()
 
     if len(sys.argv) == 3:
         mcmc_path = sys.argv[1]
