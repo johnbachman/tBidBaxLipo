@@ -483,25 +483,6 @@ if __name__ == '__main__':
 
     sys.exit()
 
-    import triangle
-    import pickle
-
-    #(gf, sampler) = plot_timecourse_figure()
-    (gf, sampler) = mpi_fit()
-    chain = sampler.flatchain
-    #fig = triangle.corner(chain)
-    #fig.savefig("triangle0.png")
-
-    with open('140318fit_pt.pck', 'w') as f:
-        pickle.dump((gf, chain), f)
-
-    #plt.figure()
-    #plt.hist(chain[:,0], bins=20)
-    sys.exit()
-
-    #plot_data()
-    #plot_lipo_background(lipo_bg_wells, lipo_bg_layout)
-
     # Try fitting the high conc trajectory
     y = bgsub_wells['A3'][VALUE]
     t = bgsub_wells['A3'][TIME]
@@ -531,57 +512,3 @@ if __name__ == '__main__':
     #(fmax_arr, k1_arr, k2_arr, conc_list) = plot_two_exp_fits()
     #plot_fmax_curve(fmax_arr, conc_list)
 
-    from tbidbaxlipo.plots import titration_fits
-    """
-    fit = TwoExp()
-    pore_df = to_dataframe(pores, bgsub_norm_stds)
-    fit.plot_fits_from_dataframe(pore_df)
-    p = fit.fit_from_dataframe(pore_df)
-
-
-    # Multiply Fmax values by molar concentration of liposomes
-    concs = np.array(pore_df.columns.values, dtype='float')[1:-1]
-    concentration_of_pores = p[1][1:-1] * 0.775
-    plt.figure()
-    plt.plot(concs, concentration_of_pores)
-
-    # Fit a straight line to the concentrations
-    from tbidbaxlipo.util import fitting
-    m = fitting.Parameter(0.025)
-    b = fitting.Parameter(0)
-    def linear(x):
-        return m()*x + b()
-    fitting.fit(linear, [m, b], concentration_of_pores, concs)
-    plt.plot(concs, linear(concs))
-    """
-
-    df = to_dataframe(norm_averages, norm_stds)
-    concs = np.array(df.columns.values, dtype='float')
-    fit = titration_fits.TwoExp()
-
-    # Get background average
-    background_time = norm_averages['Bax 0 nM'][TIME]
-    background = norm_averages['Bax 0 nM'][VALUE]
-
-    bg_rate = fit.fit_timecourse(background_time, background)
-
-    plt.ion()
-    plt.plot(background_time, background)
-    plt.plot(background_time, fit.fit_func(background_time, bg_rate))
-    t = np.linspace(0, 100000, 1000)
-    plt.plot(t, fit.fit_func(t, bg_rate))
-    import pdb; pdb.set_trace()
-
-    fit = titration_fits.TwoExp()
-    #fit.plot_fits_from_dataframe(subset_df)
-    #p = fit.fit_from_dataframe(subset_df)
-    fit.plot_fits_from_dataframe(df)
-    p = fit.fit_from_dataframe(df)
-
-    # With fitting of bg
-    #print "bg_rate %f" % bg_rate
-    fit = titration_fits.TwoExpWithBackground(bg_rate)
-    #fit.plot_fits_from_dataframe(subset_df)
-    #p = fit.fit_from_dataframe(subset_df)
-    fit.plot_fits_from_dataframe(df)
-    p = fit.fit_from_dataframe(df)
