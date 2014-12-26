@@ -86,11 +86,6 @@ bgsub_wells = subtract_background_set(bax_lipo_wells, lipo_bg_wells)
 
 (bgsub_averages, bgsub_sds) = averages(bgsub_wells, bax_lipo_layout)
 
-#bgsub_norm_wells = subtract_background(norm_wells, background)
-
-# Normalized, background subtracted, averaged
-#(bgsub_norm_averages, bgsub_norm_stds) = averages(bgsub_norm_wells, layout)
-
 # First timepoint shifted to 0 (better for fitting)
 #reset_bgsub_means = reset_first_timepoint_to_zero(bgsub_norm_averages)
 """Timecourses normalized, BG-subtracted, averaged, then with first point
