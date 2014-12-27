@@ -17,9 +17,34 @@ def fit_with_2conf(time, data, lipo_concs):
     bd.local_params = []
     params = {}
     gf = emcee_fit.GlobalFit(bd, time, y, params, 'NBD')
-    sampler = emcee_fit.ens_sample(gf, 100, 20, 20)
+    num_temps = 10
+    num_walkers = 100
+    burn_steps = 10
+    sample_steps = 50
+    sampler = emcee_fit.pt_mpi_sample(gf, num_temps, num_walkers, burn_steps,
+                                      sample_steps)
     return (gf, sampler)
 
+def plot_sample_fits(gf, sampler, num_samples=500):
+    # Plot the data
+    plt.figure()
+    plt.plot(gf.time, gf.data[0])
+    # Plot sample trajectories
+    for i in range(num_samples):
+        s_ix = np.random.randint(sampler.flatchain.shape[0])
+        gf.plot_func(sampler.flatchain[s_ix]
+
+def plot_posterior(sampler):
+    plt.figure()
+    plt.plot(sampler.lnprobability.T)
+
 if __name__ == '__main__':
+    import triangle
+    plt.ion()
+
     (gf, sampler) = fit_with_2conf(bg_time, data_to_fit, lipo_concs_to_fit)
+
+    with open('exp_fit_mcmc.mcmc', 'w') as f:
+        pickle.dump((gf, sampler), f)
+
 
