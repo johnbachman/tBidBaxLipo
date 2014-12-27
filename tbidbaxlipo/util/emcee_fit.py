@@ -49,10 +49,6 @@ def likelihood(position, gf):
 
         err += -np.sum(((data - ysim) ** 2) / (2 * 0.2**2))
 
-        #if gf.nstep % 50 == 0:
-        #    print 'err %f, step %d' % (err, gf.nstep)
-        #gf.nstep += 1
-
     return err
 
 class GlobalFit(object):
@@ -160,6 +156,7 @@ class GlobalFit(object):
 
     def init_solver(self):
         """Initialize solver from model and tspan."""
+        Solver._use_inline = True
         self.solver = Solver(self.builder.model, self.time)
 
     def plot_func(self, x, alpha=1.0):
