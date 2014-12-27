@@ -1,26 +1,3 @@
-r"""
-A cookbook wrapper around the parameter optimization algorithm in
-scipy.optimize. Drawn from
-http://www.scipy.org/Cookbook/FittingData#head-5eba0779a34c07f5a596bbcf99dbc7886eac18e5.
-
-This code is very useful for performing basic fitting of various mathematical
-functions to data.
-
-Example usage:
-
-.. ipython:: python
-
-    from tbidbaxlipo.util import fitting
-    import numpy as np
-    t = np.linspace(0, 100, 50)
-    data = 3*t + 4
-    m = fitting.Parameter(2)
-    b = fitting.Parameter(5)
-    def fit_func(x): return (m()*x + b())
-    fitting.fit(fit_func, [m, b], data, t)
-    print "m: %f\nb: %f" % (m(), b())
-"""
-
 import numpy as np
 from scipy import optimize
 from pysb.integrate import Solver
@@ -185,7 +162,7 @@ class GlobalFit(object):
         """Initialize solver from model and tspan."""
         self.solver = Solver(self.builder.model, self.time)
 
-    def plot_func(self, x):
+    def plot_func(self, x, alpha=1.0):
         """Plots the timecourses with the parameter values given by x.
 
         Parameters
@@ -218,9 +195,11 @@ class GlobalFit(object):
             s.run()
             # Plot the observable
             if self.use_expr:
-                plt.plot(self.time, s.yexpr[self.obs_name], color='r')
+                plt.plot(self.time, s.yexpr[self.obs_name], color='r',
+                         alpha=alpha)
             else:
-                plt.plot(self.time, s.yobs[self.obs_name], color='r')
+                plt.plot(self.time, s.yobs[self.obs_name], color='r',
+                         alpha=alpha)
 
 def ens_sample(gf, nwalkers, burn_steps, sample_steps, threads=1,
                pos=None, random_state=None):
@@ -425,8 +404,9 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
 
         print "Main sampling..."
         nstep = 0
-        for p, lnprob, lnlike in sampler.sample(p, lnprob0=lnprob, lnlike0=lnlike,
-                                iterations=sample_steps, thin=thin):
+        for p, lnprob, lnlike in sampler.sample(p, lnprob0=lnprob,
+                                     lnlike0=lnlike,
+                                     iterations=sample_steps, thin=thin):
             if nstep % 10 == 0:
                 print "nstep %d of %d, MAP: %f" % (nstep, sample_steps,
                                                    np.max(lnprob[0]))
