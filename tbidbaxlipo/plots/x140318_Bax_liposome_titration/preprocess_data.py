@@ -6,6 +6,7 @@ import tbidbaxlipo.data
 import sys
 from os.path import dirname, abspath, join
 import itertools
+import numpy as np
 
 layout = collections.OrderedDict([
         ('Bax 185 nM, Lipos 1 mg/ml',  ['A1']),
@@ -107,4 +108,4 @@ for conc_name in bgsub_averages.keys():
     v = bgsub_averages[conc_name][VALUE]
     v_bg = v / bg_tc
     data_to_fit.append(v_bg)
-
+lipo_concs_to_fit = np.array(lipo_concs_to_fit)
