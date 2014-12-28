@@ -8,8 +8,9 @@ from matplotlib import pyplot as plt
 from preprocess_data import data_to_fit, bg_time, lipo_concs_to_fit
 from tbidbaxlipo.util import fitting, set_fig_params_for_publication, \
                              format_axis
+from scipy.stats import linregress
 
-def plot_exp_fits(time, data, concs, plot_fits=True):
+def plot_exp_fits(time, data, concs, plot_fits=True, fmax_value=None):
     """Fit data to exponential, plot and return fitted values.
 
     Parameters
@@ -36,11 +37,20 @@ def plot_exp_fits(time, data, concs, plot_fits=True):
     k_arr = np.zeros(len(concs))
     for i, conc in enumerate(concs):
         y = data[i]
-        fmax = fitting.Parameter(3.85)
+
+        if fmax_value is None:
+            fmax = fitting.Parameter(3.85)
+        else:
+            fmax = fitting.Parameter(fmax_value)
+
         k = fitting.Parameter(5e-4)
         def fit_func(t):
             return 1 + fmax() * (1 - np.exp(-k()*t))
-        fitting.fit(fit_func, [k, fmax], y, time)
+
+        if fmax_value is None:
+            fitting.fit(fit_func, [k, fmax], y, time)
+        else:
+            fitting.fit(fit_func, [k], y, time)
 
         fmax_arr[i] = fmax()
         k_arr[i] = k()
@@ -57,10 +67,12 @@ def plot_exp_fits(time, data, concs, plot_fits=True):
 
     return (fmax_arr, k_arr)
 
-def plot_fmax_k_curves(fmax_arr, k_arr, conc_arr):
-    """Plot Fmax and k vs. liposome concentration."""
+def plot_k_fmax_varying(fmax_arr, k_arr, conc_arr):
+    """Plot Fmax and k vs. liposome concentration for fits with Fmax
+    allowed to vary.
+    """
     set_fig_params_for_publication()
-    plt.figure('exp_fits', figsize=(1.9, 1.5), dpi=300)
+    plt.figure('exp_fits_fmax_var', figsize=(1.9, 1.5), dpi=300)
     # Plot Fmax vs. concentration on the left-hand axis
     plt.plot(conc_arr[:-1], fmax_arr[:-1], marker='o', markersize=3,
              color='b')
@@ -88,14 +100,58 @@ def plot_fmax_k_curves(fmax_arr, k_arr, conc_arr):
 
     plt.show()
 
+def plot_k_fmax_fixed(k_arr, conc_arr):
+    """Plot fits of k with Fmax fixed to a single value."""
+    set_fig_params_for_publication()
+    plt.figure('exp_fits_fmax_fixed', figsize=(1.5, 1.5), dpi=300)
+    # Plot k vs. concentration on the left-hand axis
+    plt.plot(conc_arr[:-1], k_arr[:-1], marker='o', markersize=3,
+             color='r', linestyle='', zorder=3)
+    plt.xlabel('[Liposomes] (nM)')
+    ax1 = plt.gca()
+    ax1.set_ylabel(r'k (sec$^{-1}$)', color='r')
+    ax1.set_xscale('log')
+    ax1.set_xlim([0.05, 30])
+    ax1.set_yscale('log')
+    ax1.set_ylim([1e-6, 1.2e-3])
+    for tl in ax1.get_yticklabels():
+        tl.set_color('r')
+    format_axis(ax1)
+    plt.subplots_adjust(left=0.30, bottom=0.19, right=0.93, top=0.93)
+
+    # Fit to a line
+    (slope, intercept, rval, pval, sem_slope) = \
+                            linregress(conc_arr[:-1], k_arr[:-1])
+    plt.plot(conc_arr[:-1], slope * conc_arr[:-1] + intercept, color='b')
+    print slope, intercept, rval, pval, sem_slope
+
+    lslope = fitting.Parameter(1.0)
+    lintercept = fitting.Parameter(np.exp(-9.6))
+    def power_law(x):
+        return lintercept() * x ** lslope()
+    plaw_fit = fitting.fit(power_law, [lslope, lintercept], k_arr[:-1],
+                           conc_arr[:-1])
+    plt.plot(conc_arr[:-1], power_law(conc_arr[:-1]), color='g')
+
+    log_fit = linregress(np.log(conc_arr[:-1]), np.log(k_arr[:-1]))
+    plt.plot(conc_arr[:-1],
+             np.exp(log_fit[1]) * (conc_arr[:-1] ** log_fit[0]), color='k')
+    plt.show()
+
 if __name__ == '__main__':
     plt.ion()
 
     # First run with fmax free to vary, show that this results in artifacts
     (fmax_arr, k_arr) = plot_exp_fits(bg_time, data_to_fit, lipo_concs_to_fit,
                                       plot_fits=False)
-    plot_fmax_k_curves(fmax_arr, k_arr, lipo_concs_to_fit)
-    plt.figure('exp_fits')
-    plt.savefig('exp_fits_lstsq.pdf')
+    plot_k_fmax_varying(fmax_arr, k_arr, lipo_concs_to_fit)
+    plt.figure('exp_fits_fmax_var')
+    plt.savefig('exp_fits_lstsq_fmax_var.pdf')
+
     # Then re-run with Fmax-fixed
+    (fmax_arr, k_arr) = plot_exp_fits(bg_time, data_to_fit, lipo_concs_to_fit,
+                                      plot_fits=False, fmax_value=3.85)
+    plot_k_fmax_fixed(k_arr, lipo_concs_to_fit)
+    plt.figure('exp_fits_fmax_fixed')
+    plt.savefig('exp_fits_lstsq_fmax_fixed.pdf')
 
