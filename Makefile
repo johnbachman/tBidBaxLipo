@@ -10,7 +10,7 @@ figures: \
 		$(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf \
 		$(FIGDIR)/slice_bax_fixed.pdf \
 		$(FIGDIR)/140320_exp_fits.pdf \
-		$(FIGDIR)/exp_fits_lstsq_fmax_var.pdf \
+		$(FIGDIR)/140318_exp_fits_lstsq_fmax_var.pdf \
 		$(FIGDIR)/140429_exact_comp_bind_fit.pdf \
 		$(FIGDIR)/140429_gouy_chap_fit.pdf \
 
@@ -81,8 +81,11 @@ $(FIGDIR)/140320_exp_fits.pdf: \
 	python $(CODEDIR)/plots/layout_140320.py
 	mv *.pdf $(FIGDIR)
 
-# --- exp_fits_lstsq_fmax_var.pdf, exp_fits_lstsq_fmax_fixed.pdf ---
-$(FIGDIR)/exp_fits_lstsq_fmax_var.pdf: \
+# --- 140318_exp_fits_lstsq_fmax_var.pdf,
+#     140318_exp_fits_lstsq_curves_fmax_var.pdf,
+#     140318_exp_fits_lstsq_fmax_fixed.pdf,
+#     140318_exp_fits_lstsq_curves_fmax_fixed.pdf ---
+$(FIGDIR)/140318_exp_fits_lstsq_fmax_var.pdf: \
 		$(CODEDIR)/plots/x140318_Bax_liposome_titration/exp_fits_lstsq.py \
 		$(CODEDIR)/plots/x140318_Bax_liposome_titration/preprocess_data.py \
 		$(CODEDIR)/util/plate_assay.py \

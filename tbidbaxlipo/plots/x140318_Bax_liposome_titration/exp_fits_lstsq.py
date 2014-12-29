@@ -29,12 +29,24 @@ def plot_exp_fits(time, data, concs, plot_fits=True, fmax_value=None):
 
     Returns
     -------
-    tuple : (fmax_arr, k_arr)
+    tuple : (fmax_arr, k_arr, sum_sq_err)
         fmax_arr and k_arr are numpy arrays containing the fitted values for
-        the fmax and k parameters, respectively.
+        the fmax and k parameters, respectively. sum_sq_err is the sum of the
+        squares of the values of the residuals at the best fit parameters.
     """
     fmax_arr = np.zeros(len(concs))
     k_arr = np.zeros(len(concs))
+
+    # Create the figure, if applicable
+    if plot_fits:
+        set_fig_params_for_publication()
+        if fmax_value is None:
+            figname = 'exp_fits_curves_fmax_var'
+        else:
+            figname = 'exp_fits_curves_fmax_fixed'
+        plt.figure(figname, figsize=(1.5, 1.5), dpi=300)
+
+    # Iterate over all of the liposome concentrations
     for i, conc in enumerate(concs):
         y = data[i]
 
@@ -48,24 +60,37 @@ def plot_exp_fits(time, data, concs, plot_fits=True, fmax_value=None):
             return 1 + fmax() * (1 - np.exp(-k()*t))
 
         if fmax_value is None:
-            fitting.fit(fit_func, [k, fmax], y, time)
+            fit_result = fitting.fit(fit_func, [k, fmax], y, time)
         else:
-            fitting.fit(fit_func, [k], y, time)
+            fit_result = fitting.fit(fit_func, [k], y, time)
 
         fmax_arr[i] = fmax()
         k_arr[i] = k()
 
         if plot_fits:
-            plt.figure()
-            plt.plot(time, y, 'b')
-            plt.plot(time, fit_func(time), 'r')
-            plt.title('%f nM liposomes' % conc)
-            plt.xticks([0, 2000, 4000, 6000, 8000])
-            plt.ylabel('$F/F_0$')
-            plt.xlabel('Time (sec)')
-            plt.show()
+            # Plot the data
+            plt.plot(time, y, 'k')
+            # Plot the fit to the data
+            plt.plot(time, fit_func(time), 'r', zorder=3)
 
-    return (fmax_arr, k_arr)
+    # Format the finished plot
+    if plot_fits:
+        # Axis labels
+        plt.ylabel('$F/F_0$')
+        plt.xlabel(r'Time (sec $\times 10^3$)')
+        # Axis bounds and ticks
+        ax = plt.gca()
+        ax.set_ylim([0.7, 5.2])
+        ax.set_xlim([0, bg_time[-1] + 500])
+        ax.set_xticks(np.linspace(0, 1e4, 6))
+        ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
+        format_axis(ax)
+        plt.subplots_adjust(bottom=0.24, left=0.21)
+        plt.show()
+
+    residuals = fit_result[0]
+    sum_sq_err = np.sum(residuals ** 2)
+    return (fmax_arr, k_arr, sum_sq_err)
 
 def plot_k_fmax_varying(fmax_arr, k_arr, conc_arr):
     """Plot Fmax and k vs. liposome concentration for fits with Fmax
@@ -142,16 +167,21 @@ if __name__ == '__main__':
     plt.ion()
 
     # First run with fmax free to vary, show that this results in artifacts
-    (fmax_arr, k_arr) = plot_exp_fits(bg_time, data_to_fit, lipo_concs_to_fit,
-                                      plot_fits=False)
+    (fmax_arr, k_arr, sum_sq_err) = plot_exp_fits(bg_time, data_to_fit,
+                                        lipo_concs_to_fit, plot_fits=True)
     plot_k_fmax_varying(fmax_arr, k_arr, lipo_concs_to_fit)
     plt.figure('exp_fits_fmax_var')
-    plt.savefig('exp_fits_lstsq_fmax_var.pdf')
+    plt.savefig('140318_exp_fits_lstsq_fmax_var.pdf')
+    plt.figure('exp_fits_curves_fmax_var')
+    plt.savefig('140318_exp_fits_lstsq_curves_fmax_var.pdf')
 
     # Then re-run with Fmax-fixed
-    (fmax_arr, k_arr) = plot_exp_fits(bg_time, data_to_fit, lipo_concs_to_fit,
-                                      plot_fits=False, fmax_value=3.85)
+    (fmax_arr, k_arr, sum_sq_err) = plot_exp_fits(bg_time, data_to_fit,
+                                        lipo_concs_to_fit, plot_fits=True,
+                                        fmax_value=3.85)
     plot_k_fmax_fixed(k_arr, lipo_concs_to_fit)
     plt.figure('exp_fits_fmax_fixed')
-    plt.savefig('exp_fits_lstsq_fmax_fixed.pdf')
+    plt.savefig('140318_exp_fits_lstsq_fmax_fixed.pdf')
+    plt.figure('exp_fits_curves_fmax_fixed')
+    plt.savefig('140318_exp_fits_lstsq_curves_fmax_fixed.pdf')
 
