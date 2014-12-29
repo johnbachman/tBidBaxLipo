@@ -10,7 +10,7 @@ if __name__ == '__main__':
     # provided as an argument.
     # Check that a path to a YAML file was provided
     if len(sys.argv) < 3:
-        print("Usage: %s yaml_file random_seed" % sys.argv[0])
+        print("Usage: %s yaml_file random_seed" % __file__)
         sys.exit()
 
     # Load the args from the YAML file
