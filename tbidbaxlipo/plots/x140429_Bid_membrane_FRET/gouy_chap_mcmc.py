@@ -292,10 +292,10 @@ if __name__ == '__main__':
             sampler = pickle.load(f)
         plot_chain(sampler.flatchain[0], sampler.lnprobability[0])
         plot_saturation_binding_predictions(sampler.flatchain[0])
-        #plt.figure('Fits')
-        #plt.savefig('140429_exact_comp_bind_fit.pdf')
-        #plt.figure(3)
-        #plt.savefig('140429_exact_comp_bind_marginals.pdf')
+        plt.figure('Fits')
+        plt.savefig('140429_exact_comp_bind_fit.pdf')
+        plt.figure(3)
+        plt.savefig('140429_exact_comp_bind_marginals.pdf')
     else:
         print usage_msg
         sys.exit()
