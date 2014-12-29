@@ -67,7 +67,7 @@ if __name__ == '__main__':
     sampler.pool = None
     # The basename of the pickle file is based on the name of the .yaml file
     basename = sys.argv[1].split('.')[0]
-    with open('%s_%d.pck' % (basename, random_seed), 'w') as f:
+    with open('%s_%d.mcmc' % (basename, random_seed), 'w') as f:
         pickle.dump((gf, sampler), f)
 
     # Done
