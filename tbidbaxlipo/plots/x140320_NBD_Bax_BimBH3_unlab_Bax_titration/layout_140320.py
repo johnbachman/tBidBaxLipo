@@ -143,6 +143,10 @@ def plot_exp_fits():
     k1_list = []
     conc_list = []
 
+    # Create figure showing the fits to each timecourse
+    set_fig_params_for_publication()
+    plt.figure('exp_fit_curves', figsize=(1.5, 1.5), dpi=300)
+
     for conc_name in bgsub_wells.keys():
         conc_list.append(float(conc_name.split(' ')[1]))
         # Try fitting the high conc trajectory
@@ -169,13 +173,26 @@ def plot_exp_fits():
         fmax_list.append(fmax())
         k1_list.append(k1())
 
-        #plt.figure()
-        #plt.plot(t, y, marker='o', linestyle='')
-        #plt.plot(t, exp_func(t), color='r', linewidth='2')
-        #plt.title(conc_name)
+        # Plot the data
+        plt.plot(t, y, color='k', linewidth=1)
+        # Plot fits to the data
+        plt.plot(t, exp_func(t), color='r', zorder=3, linewidth=1)
 
-    set_fig_params_for_publication()
+    # Format the finished plot
+    # Axis labels
+    plt.xlabel(r'Time (sec $\times 10^3$)')
+    plt.ylabel('$F/F_0$')
+    # Axis bounds and ticks
+    ax = plt.gca()
+    ax.set_ylim([0.7, 4])
+    ax.set_xlim([0, t[-1] + 500])
+    ax.set_xticks(np.linspace(0, 1e4, 6))
+    ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
+    format_axis(ax)
+    plt.subplots_adjust(bottom=0.21, left=0.23)
+    plt.show()
 
+    # Now, plot the scaling of the parameters with concentration
     plt.figure('exp_fits', figsize=(1.7, 1.5), dpi=300)
     plt.plot(conc_list[:-1], fmax_list[:-1], marker='o', markersize=3,
              color='b')
@@ -205,4 +222,9 @@ if __name__ == '__main__':
     # plot_data()
 
     plot_exp_fits()
+
+    plt.figure('exp_fit_curves')
+    plt.savefig('140320_exp_fit_curves.pdf')
+
+    plt.figure('exp_fits')
     plt.savefig('140320_exp_fits.pdf')
