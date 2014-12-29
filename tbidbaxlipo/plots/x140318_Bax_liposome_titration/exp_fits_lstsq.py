@@ -145,10 +145,11 @@ def plot_k_fmax_fixed(k_arr, conc_arr):
     plt.subplots_adjust(left=0.30, bottom=0.19, right=0.93, top=0.93)
 
     # Fit to a line
-    (slope, intercept, rval, pval, sem_slope) = \
-                            linregress(conc_arr[:-1], k_arr[:-1])
-    plt.plot(conc_arr[:-1], slope * conc_arr[:-1] + intercept, color='b')
-    print slope, intercept, rval, pval, sem_slope
+    lin_fit = linregress(conc_arr[:-1], k_arr[:-1])
+    plt.plot(conc_arr[:-1], lin_fit[0] * conc_arr[:-1] + lin_fit[1], color='b')
+    print("---")
+    print("Linear fit:")
+    print(lin_fit)
 
     lslope = fitting.Parameter(1.0)
     lintercept = fitting.Parameter(np.exp(-9.6))
@@ -156,11 +157,19 @@ def plot_k_fmax_fixed(k_arr, conc_arr):
         return lintercept() * x ** lslope()
     plaw_fit = fitting.fit(power_law, [lslope, lintercept], k_arr[:-1],
                            conc_arr[:-1])
+    print("----")
+    print("Power law fit (y = int * x ** slope):")
+    print("intercept: %s" % lintercept())
+    print("slope: %s" % lslope())
     plt.plot(conc_arr[:-1], power_law(conc_arr[:-1]), color='g')
 
     log_fit = linregress(np.log(conc_arr[:-1]), np.log(k_arr[:-1]))
     plt.plot(conc_arr[:-1],
              np.exp(log_fit[1]) * (conc_arr[:-1] ** log_fit[0]), color='k')
+    print("----")
+    print("Log-log linear fit:")
+    print(log_fit)
+
     plt.show()
 
 if __name__ == '__main__':
@@ -174,6 +183,7 @@ if __name__ == '__main__':
     plt.savefig('140318_exp_fits_lstsq_fmax_var.pdf')
     plt.figure('exp_fits_curves_fmax_var')
     plt.savefig('140318_exp_fits_lstsq_curves_fmax_var.pdf')
+    print("Fmax variable, sum squared error: %s" % sum_sq_err)
 
     # Then re-run with Fmax-fixed
     (fmax_arr, k_arr, sum_sq_err) = plot_exp_fits(bg_time, data_to_fit,
@@ -184,4 +194,5 @@ if __name__ == '__main__':
     plt.savefig('140318_exp_fits_lstsq_fmax_fixed.pdf')
     plt.figure('exp_fits_curves_fmax_fixed')
     plt.savefig('140318_exp_fits_lstsq_curves_fmax_fixed.pdf')
+    print("Fmax fixed, sum squared error: %s" % sum_sq_err)
 
