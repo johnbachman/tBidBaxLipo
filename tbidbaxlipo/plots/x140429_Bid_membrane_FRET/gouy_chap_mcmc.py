@@ -293,9 +293,9 @@ if __name__ == '__main__':
         plot_chain(sampler.flatchain[0], sampler.lnprobability[0])
         plot_saturation_binding_predictions(sampler.flatchain[0])
         plt.figure('Fits')
-        plt.savefig('140429_exact_comp_bind_fit.pdf')
+        plt.savefig('140429_gouy_chap_fit.pdf')
         plt.figure(3)
-        plt.savefig('140429_exact_comp_bind_marginals.pdf')
+        plt.savefig('140429_gouy_chap_marginals.pdf')
     else:
         print usage_msg
         sys.exit()
