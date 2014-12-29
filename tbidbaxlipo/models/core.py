@@ -1197,19 +1197,29 @@ class Builder(pysb.builder.Builder):
     def build_model_nbd_2_conf_dimer(self):
         self.translocate_Bax()
         self.basal_Bax_activation()
-        self.Bax_reverses()
-        self.Bax_dimerizes(bax_conf='ins', reversible=True)
+        #self.Bax_reverses()
+        #self.Bax_dimerizes(bax_conf='ins', reversible=True)
+        self.Bax_dimerizes(bax_conf='ins', reversible=False)
         c0 = self.parameter('c0_scaling', 1., prior=None)
         c1 = self.parameter('c1_scaling', 5., prior=Uniform(0, 1))
-        self.expression('NBD',
-                (c0 * self['cBax'] +
-                c0 * self['mBax_mono'] +
-                c0 * self['iBax_mono'] +
-                c1 * self['Bax2']) / self['Bax_0'])
         #self.expression('NBD',
         #        (c0 * self['cBax'] +
-        #        c0 * self['mBax'] +
-        #        c1 * self['iBax_nopore']) / self['Bax_0'])
+        #        c0 * self['mBax_mono'] +
+        #        c0 * self['iBax_mono'] +
+        #        c1 * self['Bax2']) / self['Bax_0'])
+        # For 140320, special case
+        self.monomer('Bleach', [])
+        self.parameter('Bleach_0', 1.0)
+        self.parameter('Bleach_k', 1.17e-5)
+        self.initial(self['Bleach'](), self['Bleach_0'])
+        self.rule('Bleaching', self['Bleach']() >> None, self['Bleach_k'])
+        self.observable('Bleach_', self['Bleach']())
+        # Expression for NBD fluorescence
+        self.expression('NBD',
+                ((c0 * self['cBax'] +
+                 c0 * self['mBax'] +
+                 c1 * self['iBax_nopore']) / self['Bax_0']) *
+                 self['Bleach_'])
         self.model.name = 'nbd_2_conf_dimer'
 
     def build_model_nbd_2_conf_rev(self):
