@@ -71,14 +71,16 @@ $(FIGDIR)/slice_bax_fixed.pdf: \
 	python $(CODEDIR)/plots/slice_diagrams.py
 	mv *.pdf $(FIGDIR)
 
-# --- Exponential fits to Bax titration, 140320 ---
+# --- Exponential fits to Bax titration, 140320
+#     140320_exp_fit_curves.pdf, 140320_exp_fits.pdf ---
 $(FIGDIR)/140320_exp_fits.pdf: \
-		$(CODEDIR)/plots/layout_140320.py \
+		$(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/preprocess_data.py \
+		$(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/exp_fits_lstsq.py \
 		$(CODEDIR)/data/140320_NBD_Bax_BimBH3_unlab_Bax_titration.txt \
 		$(CODEDIR)/util/fitting.py \
 		$(CODEDIR)/util/plate_assay.py \
 		$(CODEDIR)/util/__init__.py
-	python $(CODEDIR)/plots/layout_140320.py
+	python $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/exp_fits_lstsq.py
 	mv *.pdf $(FIGDIR)
 
 # --- 140318_exp_fits_lstsq_fmax_var.pdf,
