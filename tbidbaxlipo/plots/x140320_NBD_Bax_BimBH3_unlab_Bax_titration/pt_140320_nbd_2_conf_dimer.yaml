@@ -1,0 +1,25 @@
+data:
+    module: tbidbaxlipo.plots.x140320_NBD_Bax_BimBH3_unlab_Bax_titration.preprocess_data
+    data_var: data_to_fit
+    initial_condition_var: bax_concs_to_fit
+    time_var: time
+model_macro: build_model_nbd_2_conf_dimer
+model_observable: NBD
+global_initial_conditions:
+    c0_scaling: 1.0
+    Vesicles_0: 1.9
+local_initial_condition: Bax_0
+global_params: []
+local_params:
+    - c1_scaling
+    - Bax_transloc_kf
+    - Bax_transloc_kr
+    - basal_Bax_kf
+    - Bax_ins_dimerization_kf
+    - Bax_ins_dimerization_kr
+ntemps: 25
+highest_temp: -5
+nwalkers: 50
+nburnin: 10
+nsample: 10
+thin: 1
