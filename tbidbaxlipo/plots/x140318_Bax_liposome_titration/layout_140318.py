@@ -2,16 +2,12 @@ import sys
 import pickle
 import numpy as np
 from matplotlib import pyplot as plt
-from preprocess_data import timecourse_wells, lipo_bg_wells, bgsub_wells, \
-                            layout, lipo_bg_layout, bax_lipo_layout, \
-                            data_to_fit, bg_time, lipo_concs_to_fit
-from tbidbaxlipo.util.plate_assay import plot_all, TIME, VALUE
-from tbidbaxlipo.util import fitting, set_fig_params_for_publication, \
-                             emcee_fit, format_axis
-from tbidbaxlipo.models.nbd import multiconf
-from tbidbaxlipo.models import one_cpt
+from preprocess_data import data_to_fit, bg_time
+from tbidbaxlipo.util import set_fig_params_for_publication, format_axis
+import triangle
 
 def plot_emcee_fits(gf, sampler):
+    """Plot fits from the MCMC chain vs. the data."""
     set_fig_params_for_publication()
     fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
     plt.ylabel('$F/F_0$')
@@ -24,12 +20,11 @@ def plot_emcee_fits(gf, sampler):
     plt.subplots_adjust(bottom=0.24, left=0.21)
     for data in data_to_fit:
         plt.plot(bg_time, data, 'k', linewidth=1)
-    # Plot the final point
+    # Plot the final point (should probably plot max likelihood instead)
     gf.plot_func(sampler.flatchain[0,-1,:])
     format_axis(ax)
 
 if __name__ == '__main__':
-    import triangle
     plt.ion()
 
     if len(sys.argv) == 3:
