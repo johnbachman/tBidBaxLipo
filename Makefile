@@ -10,7 +10,9 @@ figures: \
 		$(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf \
 		$(FIGDIR)/slice_bax_fixed.pdf \
 		$(FIGDIR)/140320_exp_fits.pdf \
-		$(FIGDIR)/140429_exact_comp_bind_fit.pdf
+		$(FIGDIR)/140318_exp_fits_lstsq_fmax_var.pdf \
+		$(FIGDIR)/140429_exact_comp_bind_fit.pdf \
+		$(FIGDIR)/140429_gouy_chap_fit.pdf \
 
 clean:
 	cd $(FIGDIR); rm -f *.pdf
@@ -53,23 +55,23 @@ $(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf: \
 		$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_2_conf_5.mcmc \
 		$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_2_conf_rev_4.mcmc \
 		$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_3_conf_3.mcmc \
-		$(CODEDIR)/plots/x140318_Bax_liposome_titration/layout_140318.py
-	python $(CODEDIR)/plots/x140318_Bax_liposome_titration/layout_140318.py \
+		$(CODEDIR)/plots/x140318_Bax_liposome_titration/plot_mcmc_model_fits.py
+	python $(CODEDIR)/plots/x140318_Bax_liposome_titration/plot_mcmc_model_fits.py \
 			$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_2_conf_5.mcmc pt_140318_nbd_2_conf
-	python $(CODEDIR)/plots/x140318_Bax_liposome_titration/layout_140318.py \
+	python $(CODEDIR)/plots/x140318_Bax_liposome_titration/plot_mcmc_model_fits.py \
 			$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_2_conf_rev_4.mcmc pt_140318_nbd_2_conf_rev
-	python $(CODEDIR)/plots/x140318_Bax_liposome_titration/layout_140318.py \
+	python $(CODEDIR)/plots/x140318_Bax_liposome_titration/plot_mcmc_model_fits.py \
 			$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_3_conf_3.mcmc pt_140318_nbd_3_conf
 	mv *.pdf $(FIGDIR)
 
-# Slice diagrams
+# --- Slice diagrams ---
 $(FIGDIR)/slice_bax_fixed.pdf: \
 		$(CODEDIR)/plots/slice_diagrams.py \
 		$(CODEDIR)/util/__init__.py
 	python $(CODEDIR)/plots/slice_diagrams.py
 	mv *.pdf $(FIGDIR)
 
-# Exponential fits to Bax titration, 140320
+# --- Exponential fits to Bax titration, 140320 ---
 $(FIGDIR)/140320_exp_fits.pdf: \
 		$(CODEDIR)/plots/layout_140320.py \
 		$(CODEDIR)/data/140320_NBD_Bax_BimBH3_unlab_Bax_titration.txt \
@@ -78,6 +80,20 @@ $(FIGDIR)/140320_exp_fits.pdf: \
 		$(CODEDIR)/util/__init__.py
 	python $(CODEDIR)/plots/layout_140320.py
 	mv *.pdf $(FIGDIR)
+
+# --- 140318_exp_fits_lstsq_fmax_var.pdf,
+#     140318_exp_fits_lstsq_curves_fmax_var.pdf,
+#     140318_exp_fits_lstsq_fmax_fixed.pdf,
+#     140318_exp_fits_lstsq_curves_fmax_fixed.pdf ---
+$(FIGDIR)/140318_exp_fits_lstsq_fmax_var.pdf: \
+		$(CODEDIR)/plots/x140318_Bax_liposome_titration/exp_fits_lstsq.py \
+		$(CODEDIR)/plots/x140318_Bax_liposome_titration/preprocess_data.py \
+		$(CODEDIR)/util/plate_assay.py \
+		$(CODEDIR)/data/140318_NBD_Bax_BimBH3_lipo_titration.txt \
+		$(CODEDIR)/util/__init__.py
+	python $(CODEDIR)/plots/x140318_Bax_liposome_titration/exp_fits_lstsq.py
+	mv *.pdf $(FIGDIR)
+
 
 # --- Fits of 140429 Bid FRET competition experiment by MCMC to the exact
 #     competition binding model ----
@@ -98,9 +114,7 @@ $(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_exact_comp_bind.mcmc: \
 		$(CODEDIR)/plots/x140429_Bid_membrane_FRET/calculate_fret.py \
 		$(CODEDIR)/data/parse_140429_Bid_membrane_FRET.py \
 		$(CODEDIR)/data/140429_Bid_membrane_FRET.xlsx
-	echo "Exiting, must remake:"
-	echo $@
-	exit 1
+	bsub -q short -W 12:00 python $(CODEDIR)/plots/x140429_Bid_membrane_FRET/exact_comp_bind_mcmc.py sample $(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_exact_comp_bind.mcmc
 
 # Files: 140429_gouy_chap_fit.pdf, 140429_gouy_chap_marginals.pdf
 $(FIGDIR)/140429_gouy_chap_fit.pdf: \
@@ -119,7 +133,5 @@ $(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_gouy_chap.mcmc: \
 		$(CODEDIR)/plots/x140429_Bid_membrane_FRET/calculate_fret.py \
 		$(CODEDIR)/data/parse_140429_Bid_membrane_FRET.py \
 		$(CODEDIR)/data/140429_Bid_membrane_FRET.xlsx
-	echo "Exiting, must remake:"
-	echo $@
-	exit 1
+	bsub -q short -W 12:00 python $(CODEDIR)/plots/x140429_Bid_membrane_FRET/gouy_chap_mcmc.py sample $(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_gouy_chap.mcmc
 
