@@ -55,12 +55,12 @@ $(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf: \
 		$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_2_conf_5.mcmc \
 		$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_2_conf_rev_4.mcmc \
 		$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_3_conf_3.mcmc \
-		$(CODEDIR)/plots/x140318_Bax_liposome_titration/layout_140318.py
-	python $(CODEDIR)/plots/x140318_Bax_liposome_titration/layout_140318.py \
+		$(CODEDIR)/plots/x140318_Bax_liposome_titration/plot_mcmc_model_fits.py
+	python $(CODEDIR)/plots/x140318_Bax_liposome_titration/plot_mcmc_model_fits.py \
 			$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_2_conf_5.mcmc pt_140318_nbd_2_conf
-	python $(CODEDIR)/plots/x140318_Bax_liposome_titration/layout_140318.py \
+	python $(CODEDIR)/plots/x140318_Bax_liposome_titration/plot_mcmc_model_fits.py \
 			$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_2_conf_rev_4.mcmc pt_140318_nbd_2_conf_rev
-	python $(CODEDIR)/plots/x140318_Bax_liposome_titration/layout_140318.py \
+	python $(CODEDIR)/plots/x140318_Bax_liposome_titration/plot_mcmc_model_fits.py \
 			$(CODEDIR)/plots/x140318_Bax_liposome_titration/pt_140318_nbd_3_conf_3.mcmc pt_140318_nbd_3_conf
 	mv *.pdf $(FIGDIR)
 
