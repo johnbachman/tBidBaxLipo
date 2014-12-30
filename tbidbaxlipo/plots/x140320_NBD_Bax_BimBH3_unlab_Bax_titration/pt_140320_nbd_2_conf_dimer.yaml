@@ -9,14 +9,14 @@ global_initial_conditions:
     c0_scaling: 1.0
     Vesicles_0: 1.9
 local_initial_condition: Bax_0
-global_params: []
-local_params:
+global_params:
     - c1_scaling
     - Bax_transloc_kf
     - Bax_transloc_kr
     - basal_Bax_kf
     - Bax_ins_dimerization_kf
     - Bax_ins_dimerization_kr
+local_params: []
 ntemps: 25
 highest_temp: -5
 nwalkers: 50
