@@ -19,7 +19,7 @@ global_params:
 local_params: []
 ntemps: 25
 highest_temp: -5
-nwalkers: 100
-nburnin: 10
+nwalkers: 500
+nburnin: 100
 nsample: 100
 thin: 1

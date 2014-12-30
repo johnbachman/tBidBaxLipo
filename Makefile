@@ -12,10 +12,13 @@ figures: \
 		$(FIGDIR)/140320_exp_fits.pdf \
 		$(FIGDIR)/140318_exp_fits_lstsq_fmax_var.pdf \
 		$(FIGDIR)/140429_exact_comp_bind_fit.pdf \
-		$(FIGDIR)/140429_gouy_chap_fit.pdf \
+		$(FIGDIR)/140429_gouy_chap_fit.pdf
 
 clean:
 	cd $(FIGDIR); rm -f *.pdf
+
+140320_mcmc:
+		bsub -q sorger_par_unlimited -n 200 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/pt_140320_nbd_2_conf_dimer.yaml 1
 
 # --- Bax depletion figures ----
 # fig_141016_1.pdf, fig_141016_2.pdf
