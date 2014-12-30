@@ -48,7 +48,8 @@ if __name__ == '__main__':
                              args['model_observable'])
 
     # Seed the random number generator
-    np.random.seed(int(sys.argv[2]))
+    random_seed = int(sys.argv[2])
+    np.random.seed(random_seed)
 
     # Make the beta ladder
     ntemps = args['ntemps']
