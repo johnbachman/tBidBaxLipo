@@ -1,10 +1,12 @@
 """A script that shows the triangle plots of the parameters and the posterior
 probability at different steps of the chain for inspection of convergence.
 """
+import sys
 import pickle
 import triangle
+import numpy as np
 from matplotlib import pyplot as plt
-import sys
+from tbidbaxlipo.util import set_fig_params_for_publication, format_axis
 
 def triangle_plots(sampler):
     """Triangle plots of lowest and highest temperature chains."""
@@ -37,6 +39,24 @@ def plot_chain_convergence(sampler):
     plt.title('3rd chain')
     #plt.savefig('chain_convergence.png')
 
+def plot_emcee_fits(gf, sampler):
+    """Plot fits from the MCMC chain vs. the data."""
+    set_fig_params_for_publication()
+    fig = plt.figure(figsize=(3, 3), dpi=300)
+    plt.ylabel('$F/F_0$')
+    plt.xlabel(r'Time (sec $\times 10^3$)')
+    plt.ylim([0.7, 5.2])
+    plt.xlim([0, gf.time[-1] + 500])
+    ax = plt.gca()
+    ax.set_xticks(np.linspace(0, 1e4, 6))
+    ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
+    plt.subplots_adjust(bottom=0.24, left=0.21)
+    for data in gf.data:
+        plt.plot(gf.time, data, 'k', linewidth=1)
+    # Plot the final point (should probably plot max likelihood instead)
+    gf.plot_func(sampler.flatchain[0,-1,:])
+    format_axis(ax)
+
 if __name__ == '__main__':
 
     usage_msg =  "Usage:\n"
@@ -56,4 +76,5 @@ if __name__ == '__main__':
     plt.ion()
     triangle_plots(sampler)
     plot_chain_convergence(sampler)
+    plot_emcee_fits(gf, sampler)
 
