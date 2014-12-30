@@ -20,6 +20,6 @@ local_params: []
 ntemps: 25
 highest_temp: -5
 nwalkers: 500
-nburnin: 100
+nburnin: 200
 nsample: 100
 thin: 1
