@@ -101,11 +101,14 @@ bgsub_wells = subtract_background_set(nbd_wells, bax_bg_wells)
 #shifted to t = 0.
 #reset_bgsub_sds = reset_first_timepoint_to_zero(bgsub_norm_stds)
 
+# Normalize data by the initial values
 bax_concs_to_fit = []
 data_to_fit = []
 nbd_bax_conc = 96.
-for conc_name in nbd_wells.keys():
+for conc_name in bgsub_wells.keys():
     bax_concs_to_fit.append(float(conc_name.split(' ')[1]))
-    time = nbd_wells[conc_name][TIME]
-    data_to_fit.append(nbd_wells[conc_name][VALUE])
+    time = bgsub_wells[conc_name][TIME]
+    y = bgsub_wells[conc_name][VALUE]
+    y = y / np.mean(y[0:2])
+    data_to_fit.append(y)
 bax_concs_to_fit = np.array(bax_concs_to_fit) + nbd_bax_conc
