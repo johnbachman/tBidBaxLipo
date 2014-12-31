@@ -1032,6 +1032,11 @@ class Builder(pysb.builder.Builder):
         for feature in sorted(model_dict.keys(),
                               key=lambda x: model_attribute_sort_order[x]):
             implementation = model_dict[feature]
+            # Regardless of what the feature is, if the implementation flag
+            # is 0, that means don't implement it; skip to the next one
+            if implementation == 0:
+                continue
+            # Build up a useful string notation for the model features
             model_substring = feature[0:3] + str(implementation)
             model_string += feature[0].upper() + feature[1:3] + \
                             str(implementation)
