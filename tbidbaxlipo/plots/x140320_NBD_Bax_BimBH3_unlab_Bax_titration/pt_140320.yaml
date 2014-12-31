@@ -4,11 +4,13 @@ data:
     initial_condition_var: bax_concs_to_fit
     time_var: time
 model:
-    translocation: 1
-    activation: 1
-    dimerization: 2
-    nbd: 2
-    bleach: 1
+    translocation: [1]
+    activation: [1]
+    reversal: [0, 1]
+    autoactivation: [0, 1, 2]
+    dimerization: [0, 1, 2]
+    nbd: [1, 2]
+    bleach: [1]
 model_observable: NBD_bleach
 global_initial_conditions:
     tBid_0: 0
