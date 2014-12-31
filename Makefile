@@ -2,6 +2,7 @@ FIGDIR := results/figures
 DATADIR := tbidbaxlipo/data
 CODEDIR := tbidbaxlipo
 MCMCDIR := results/mcmc
+PQUEUE := parallel
 
 figures: \
 		$(FIGDIR)/fig_141016_1.pdf \
@@ -18,8 +19,21 @@ clean:
 	cd $(FIGDIR); rm -f *.pdf
 
 140320_mcmc:
-		python -m tbidbaxlipo.pt.compile_models $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/*.yaml
-		bsub -q sorger_par_unlimited -n 200 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/pt_140320_nbd_2_conf_dimer.yaml 1
+		python -m tbidbaxlipo.pt.compile_models $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/*.yaml
+		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Dim1Nbd1Ble1.yaml
+		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Rev1Dim1Nbd1Ble1.yaml
+		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Dim1Nbd2Ble1.yaml
+		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Dim1Nbd2Ble1.yaml
+		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Rev1Dim1Nbd2Ble1.yaml
+		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Rev1Dim1Nbd2Ble1.yaml
+		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Dim2Nbd1Ble1.yaml
+		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Rev1Dim2Nbd1Ble1.yaml
+		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Dim2Nbd2Ble1.yaml
+		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Rev1Dim2Nbd2Ble1.yaml
+		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Nbd1Ble1.yaml
+		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Rev1Nbd1Ble1.yaml
+		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Nbd2Ble1.yaml
+		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Rev1Nbd2Ble1.yaml
 
 # --- Bax depletion figures ----
 # fig_141016_1.pdf, fig_141016_2.pdf
