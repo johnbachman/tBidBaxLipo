@@ -30,8 +30,8 @@ if __name__ == '__main__':
     ### MODEL
     # Call the appropriate model-building macro
     bd = Builder()
-    model_macro = getattr(bd, args['model_macro'])
-    model_macro()
+    bd.build_model_from_dict(args['model'])
+
     # Set the initial conditions
     for ic_name, ic_value in args['global_initial_conditions'].iteritems():
         bd.model.parameters[ic_name].value = ic_value

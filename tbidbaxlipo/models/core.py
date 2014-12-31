@@ -1071,7 +1071,7 @@ class Builder(pysb.builder.Builder):
             elif feature == 'nbd':
                 c0 = self.parameter('c0_scaling', 1., prior=None)
                 c1 = self.parameter('c1_scaling', 5., prior=Uniform(0, 1))
-                if implementation == 1: # iBax only
+                if implementation == 1: # all iBax
                     self.expression('NBD',
                             (c0 * self['cBax'] +
                             c0 * self['mBax'] +

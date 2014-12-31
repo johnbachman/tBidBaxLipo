@@ -3,9 +3,15 @@ data:
     data_var: data_to_fit
     initial_condition_var: bax_concs_to_fit
     time_var: time
-model_macro: build_model_nbd_2_conf_dimer
-model_observable: NBD
+model:
+    translocation: 1
+    activation: 1
+    dimerization: 2
+    nbd: 2
+    bleach: 1
+model_observable: NBD_bleach
 global_initial_conditions:
+    tBid_0: 0
     c0_scaling: 1.0
     Vesicles_0: 1.9
 local_initial_condition: Bax_0
