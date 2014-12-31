@@ -18,6 +18,7 @@ clean:
 	cd $(FIGDIR); rm -f *.pdf
 
 140320_mcmc:
+		python -m tbidbaxlipo.pt.compile_models $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/*.yaml
 		bsub -q sorger_par_unlimited -n 200 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/pt_140320_nbd_2_conf_dimer.yaml 1
 
 # --- Bax depletion figures ----

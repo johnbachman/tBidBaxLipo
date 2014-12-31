@@ -4,11 +4,15 @@ and give a pilot run to pre-compile the RHS functions."""
 from pysb.integrate import Solver
 import numpy as np
 import yaml
-import glob
-
+import sys
 from tbidbaxlipo.models.one_cpt import Builder
 
-yaml_filenames = glob.glob('./*.yaml')
+if len(sys.argv) == 1:
+    print("Please specify one or model .yaml files with model information "
+          "for pre-compilation.")
+    sys.exit(1)
+
+yaml_filenames = sys.argv[1:]
 
 for yaml_filename in yaml_filenames:
     with open(yaml_filename) as yaml_file:
