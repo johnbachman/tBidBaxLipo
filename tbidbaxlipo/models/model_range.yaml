@@ -1,0 +1,8 @@
+model:
+    translocation: [1]
+    activation: [1]
+    reversal: [0, 1]
+    autoactivation: [0, 1, 2]
+    dimerization: [0, 1, 2]
+    nbd: [1, 2]
+    bleach: [1]
