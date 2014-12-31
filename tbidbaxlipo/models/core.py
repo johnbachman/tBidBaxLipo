@@ -1043,7 +1043,7 @@ class Builder(pysb.builder.Builder):
             # Call the appropriate model macros based on the dict entries
             if feature == 'translocation':
                 if implementation == 1:
-                    self.translocate_tBid_Bax()
+                    self.translocate_Bax()
                 else:
                     unrecognized_implementation(feature, implementation)
             elif feature == 'activation':
