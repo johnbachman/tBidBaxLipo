@@ -1010,6 +1010,87 @@ class Builder(pysb.builder.Builder):
       (which can subsequently dissociate) - or dissociate immediately
       leading to
     """
+
+    def build_model_from_dict(self, model_dict):
+        model_attribute_sort_order = {
+            'translocation': 0,
+            'activation': 1,
+            'reversal': 2,
+            'autoactivation': 3,
+            'dimerization': 4,
+            'nbd': 5,
+            'bleach': 6,
+        }
+        model_string = ''
+
+        def unrecognized_implementation(feature, implementation):
+            raise ValueError("Don't know how to implement %s for feature %s" %
+                             (implementation, feature))
+
+        # Canonicalize the order of the model features based on the sort order
+        # defined in the dict
+        for feature in sorted(model_dict.keys(),
+                              key=lambda x: model_attribute_sort_order[x]):
+            implementation = model_dict[feature]
+            model_substring = feature[0:3] + str(implementation)
+            model_string += feature[0].upper() + feature[1:3] + \
+                            str(implementation)
+            # Call the appropriate model macros based on the dict entries
+            if feature == 'translocation':
+                if implementation == 1:
+                    self.translocate_tBid_Bax()
+                else:
+                    unrecognized_implementation(feature, implementation)
+            elif feature == 'activation':
+                if implementation == 1:
+                    self.basal_Bax_activation()
+                else:
+                    unrecognized_implementation(feature, implementation)
+            elif feature == 'reversal':
+                if implementation == 1:
+                    self.Bax_reverses()
+                else:
+                    unrecognized_implementation(feature, implementation)
+            elif feature == 'autoactivation':
+                if implementation == 1:
+                    self.Bax_auto_activates_one_step()
+                elif implementation == 2:
+                    self.Bax_auto_activates()
+                else:
+                    unrecognized_implementation(feature, implementation)
+            elif feature == 'dimerization':
+                if implementation == 1:
+                    self.Bax_dimerizes(bax_conf='ins', reversible=False)
+                elif implementation == 2:
+                    self.Bax_dimerizes(bax_conf='ins', reversible=True)
+            elif feature == 'nbd':
+                c0 = self.parameter('c0_scaling', 1., prior=None)
+                c1 = self.parameter('c1_scaling', 5., prior=Uniform(0, 1))
+                if implementation == 1: # iBax only
+                    self.expression('NBD',
+                            (c0 * self['cBax'] +
+                            c0 * self['mBax'] +
+                            c1 * self['iBax_nopore']) / self['Bax_0'])
+                elif implementation == 2: # dimer only
+                    self.expression('NBD',
+                            (c0 * self['cBax'] +
+                             c0 * self['mBax'] +
+                             c0 * self['iBax_mono'] +
+                             c1 * self['Bax2'])  / self['Bax_0'])
+            elif feature == 'bleach': # Requires NBD to be present
+                if implementation == 1:
+                    self.monomer('Bleach', [])
+                    self.parameter('Bleach_0', 1.0)
+                    self.parameter('Bleach_k', 1.17e-5)
+                    self.initial(self['Bleach'](), self['Bleach_0'])
+                    self.rule('Bleaching', self['Bleach']() >> None,
+                              self['Bleach_k'])
+                    self.observable('Bleach_', self['Bleach']())
+                    self.expression('NBD_bleach',
+                                    self['NBD'] * self['Bleach_'])
+
+        self.model_name = model_string
+
     def build_model_t(self):
         print "---------------------------"
         print "core: Building model t:"
