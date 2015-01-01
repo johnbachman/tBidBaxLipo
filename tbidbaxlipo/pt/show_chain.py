@@ -8,13 +8,15 @@ import numpy as np
 from matplotlib import pyplot as plt
 from tbidbaxlipo.util import set_fig_params_for_publication, format_axis
 
-def triangle_plots(sampler):
+def triangle_plots(gf, sampler):
     """Triangle plots of lowest and highest temperature chains."""
     chain = sampler.flatchain
-    fig = triangle.corner(chain[0])
+    fig = triangle.corner(chain[0],
+                          labels=[p.name for p in gf.builder.global_params])
     fig.suptitle('Triangle plot, lowest temp')
     #fig.savefig('triangle_low.png')
-    fig = triangle.corner(chain[-1])
+    fig = triangle.corner(chain[-1],
+                          labels=[p.name for p in gf.builder.global_params])
     fig.suptitle('Triangle plot, highest temp')
     #fig.savefig('triangle_high.png')
 
@@ -74,7 +76,7 @@ if __name__ == '__main__':
 
     # Show plots
     plt.ion()
-    triangle_plots(sampler)
+    triangle_plots(gf, sampler)
     plot_chain_convergence(sampler)
     plot_emcee_fits(gf, sampler)
 
