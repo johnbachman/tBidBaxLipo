@@ -23,8 +23,6 @@ clean:
 		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Dim1Nbd1Ble1.yaml 1
 		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Rev1Dim1Nbd1Ble1.yaml 1
 		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Dim1Nbd2Ble1.yaml 1
-		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Dim1Nbd2Ble1.yaml 1
-		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Rev1Dim1Nbd2Ble1.yaml 1
 		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Rev1Dim1Nbd2Ble1.yaml 1
 		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Dim2Nbd1Ble1.yaml 1
 		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Rev1Dim2Nbd1Ble1.yaml 1

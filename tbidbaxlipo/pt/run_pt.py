@@ -37,7 +37,6 @@ if __name__ == '__main__':
         bd.model.parameters[ic_name].value = ic_value
 
     ### PARAMETERS TO FIT
-    import pdb; pdb.set_trace()
     if args['global_params'] == 'all':
         bd.global_params = bd.estimate_params
         bd.local_params = []
