@@ -4,6 +4,8 @@ CODEDIR := tbidbaxlipo
 MCMCDIR := results/mcmc
 PQUEUE := sorger_par_unlimited
 
+x140320 := $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration
+
 figures: \
 		$(FIGDIR)/fig_141016_1.pdf \
 		$(FIGDIR)/fig_fmax_fit_comparison.pdf \
@@ -18,20 +20,22 @@ figures: \
 clean:
 	cd $(FIGDIR); rm -f *.pdf
 
-140320_mcmc:
-		python -m tbidbaxlipo.pt.compile_models $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/*.yaml
-		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Dim1Nbd1Ble1.yaml 1
-		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Rev1Dim1Nbd1Ble1.yaml 1
-		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Dim1Nbd2Ble1.yaml 1
-		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Rev1Dim1Nbd2Ble1.yaml 1
-		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Dim2Nbd1Ble1.yaml 1
-		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Rev1Dim2Nbd1Ble1.yaml 1
-		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Dim2Nbd2Ble1.yaml 1
-		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Rev1Dim2Nbd2Ble1.yaml 1
-		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Nbd1Ble1.yaml 1
-		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Rev1Nbd1Ble1.yaml 1
-		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Nbd2Ble1.yaml 1
-		bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/yaml/pt_140320_Tra1Act1Rev1Nbd2Ble1.yaml 1
+# This step ensures that a re-run is performed if the model ensemble
+# specification (or fit parameters) has changed. Also ensures that the
+# dependency file exists before we try to include it:
+pt_140320: $(x140320)/pt_140320.deps.txt
+
+# Running this script generates both the dependency list and the .yaml files
+# specifying the fit parameters for each individual model
+%.deps.txt: %.yaml
+	python -m tbidbaxlipo.pt.generate_model_ensemble_fit_files $<
+
+# This file would say that 140320 depends on a whole list of *.mcmc files
+-include $(x140320)/pt_140320.deps.txt
+
+%.mcmc: %.yaml
+		#python -m tbidbaxlipo.pt.compile_models $<
+		#bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $< 1
 
 # --- Bax depletion figures ----
 # fig_141016_1.pdf, fig_141016_2.pdf
