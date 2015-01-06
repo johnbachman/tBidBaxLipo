@@ -10,6 +10,9 @@ thesis/_build
 thesis/_static
 thesis/sphinxreport.log
 
+*.deps.txt
+*.fit
+*.md5
 *.net
 *.gdat
 *.cdat

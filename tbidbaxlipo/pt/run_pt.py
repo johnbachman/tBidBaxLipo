@@ -10,7 +10,7 @@ if __name__ == '__main__':
     # provided as an argument.
     # Check that a path to a YAML file was provided
     if len(sys.argv) < 3:
-        print("Usage: %s yaml_file random_seed" % sys.argv[0])
+        print("Usage: %s yaml_file random_seed" % __file__)
         sys.exit()
 
     # Load the args from the YAML file
@@ -30,17 +30,22 @@ if __name__ == '__main__':
     ### MODEL
     # Call the appropriate model-building macro
     bd = Builder()
-    model_macro = getattr(bd, args['model_macro'])
-    model_macro()
+    bd.build_model_from_dict(args['model'])
+
     # Set the initial conditions
     for ic_name, ic_value in args['global_initial_conditions'].iteritems():
         bd.model.parameters[ic_name].value = ic_value
 
     ### PARAMETERS TO FIT
-    bd.global_params = [bd.model.parameters[p_name]
-                        for p_name in args['global_params']]
-    bd.local_params = [bd.model.parameters[p_name]
-                       for p_name in args['local_params']]
+    if args['global_params'] == 'all':
+        bd.global_params = bd.estimate_params
+        bd.local_params = []
+    else:
+        bd.global_params = [bd.model.parameters[p_name]
+                            for p_name in args['global_params']]
+        bd.local_params = [bd.model.parameters[p_name]
+                           for p_name in args['local_params']]
+
     params = {args['local_initial_condition']: ic_var}
 
     # Create the global fit instance
@@ -48,7 +53,8 @@ if __name__ == '__main__':
                              args['model_observable'])
 
     # Seed the random number generator
-    np.random.seed(int(sys.argv[2]))
+    random_seed = int(sys.argv[2])
+    np.random.seed(random_seed)
 
     # Make the beta ladder
     ntemps = args['ntemps']
@@ -67,7 +73,7 @@ if __name__ == '__main__':
     sampler.pool = None
     # The basename of the pickle file is based on the name of the .yaml file
     basename = sys.argv[1].split('.')[0]
-    with open('%s_%d.pck' % (basename, random_seed), 'w') as f:
+    with open('%s_%d.mcmc' % (basename, random_seed), 'w') as f:
         pickle.dump((gf, sampler), f)
 
     # Done

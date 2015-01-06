@@ -4,7 +4,8 @@ from tbidbaxlipo.util import fitting, format_axis, \
                              set_fig_params_for_publication
 from tbidbaxlipo.util.plate_assay import plot_all, TIME, VALUE
 from preprocess_data import timecourse_wells, nbd_wells, bax_bg_wells, \
-                            timecourse_averages, bgsub_wells
+                            timecourse_averages, bgsub_wells, \
+                            bax_concs_to_fit, time, data_to_fit
 
 def plot_data():
     """Plots the data and various transformations of it."""
@@ -34,21 +35,18 @@ def plot_data():
     plot_all(bgsub_wells)
     plt.title("Background-subtracted wells")
 
-def plot_exp_fits():
+def plot_exp_fits(time, data_to_fit, bax_concs_to_fit):
     fmax_list = []
     k1_list = []
-    conc_list = []
 
     # Create figure showing the fits to each timecourse
     set_fig_params_for_publication()
     plt.figure('exp_fit_curves', figsize=(1.5, 1.5), dpi=300)
 
-    for conc_name in bgsub_wells.keys():
-        conc_list.append(float(conc_name.split(' ')[1]))
+    for i, bax_conc in enumerate(bax_concs_to_fit):
         # Try fitting the high conc trajectory
-        y = bgsub_wells[conc_name][VALUE]
+        y = data_to_fit[i]
         y = y / np.mean(y[0:2])
-        t = bgsub_wells[conc_name][TIME]
         fmax = fitting.Parameter(25.)
         k1 = fitting.Parameter(np.log(2)/2000.)
         k2 = fitting.Parameter(1e-3)
@@ -63,16 +61,16 @@ def plot_exp_fits():
                     np.exp(-k_bleach()*t)
 
         #fitting.fit(exp_func, [fmax, k1, k2], y, t)
-        fitting.fit(exp_func, [fmax, k1], y, t)
+        fitting.fit(exp_func, [fmax, k1], y, time)
 
         # Add to list
         fmax_list.append(fmax())
         k1_list.append(k1())
 
         # Plot the data
-        plt.plot(t, y, color='k', linewidth=1)
+        plt.plot(time, y, color='k', linewidth=1)
         # Plot fits to the data
-        plt.plot(t, exp_func(t), color='r', zorder=3, linewidth=1)
+        plt.plot(time, exp_func(time), color='r', zorder=3, linewidth=1)
 
     # Format the finished plot
     # Axis labels
@@ -81,7 +79,7 @@ def plot_exp_fits():
     # Axis bounds and ticks
     ax = plt.gca()
     ax.set_ylim([0.7, 4])
-    ax.set_xlim([0, t[-1] + 500])
+    ax.set_xlim([0, time[-1] + 500])
     ax.set_xticks(np.linspace(0, 1e4, 6))
     ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
     format_axis(ax)
@@ -90,7 +88,7 @@ def plot_exp_fits():
 
     # Now, plot the scaling of the parameters with concentration
     plt.figure('exp_fits', figsize=(1.7, 1.5), dpi=300)
-    plt.plot(conc_list[:-1], fmax_list[:-1], marker='o', markersize=3,
+    plt.plot(bax_concs_to_fit[:-1], fmax_list[:-1], marker='o', markersize=3,
              color='b')
     plt.xlabel('[Bax] (nM)')
     ax1 = plt.gca()
@@ -102,7 +100,8 @@ def plot_exp_fits():
 
     ax2 = ax1.twinx()
     ax2.set_xlim([5, 1000])
-    ax2.plot(conc_list[:-1], k1_list[:-1], marker='o', markersize=3, color='r')
+    ax2.plot(bax_concs_to_fit[:-1], k1_list[:-1], marker='o', markersize=3,
+             color='r')
     ax2.set_ylabel(r'k (sec $\times$ 10^{-3})', color='r')
     for tl in ax2.get_yticklabels():
         tl.set_color('r')
@@ -117,7 +116,7 @@ if __name__ == '__main__':
     plt.ion()
     # plot_data()
 
-    plot_exp_fits()
+    plot_exp_fits(time, data_to_fit, bax_concs_to_fit)
 
     plt.figure('exp_fit_curves')
     plt.savefig('140320_exp_fit_curves.pdf')

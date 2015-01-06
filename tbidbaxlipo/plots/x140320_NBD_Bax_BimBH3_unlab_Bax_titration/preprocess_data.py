@@ -2,9 +2,11 @@ import sys
 from os.path import dirname, abspath, join
 import itertools
 import collections
+import numpy as np
 import tbidbaxlipo.data
 from tbidbaxlipo.util.plate_assay import read_flexstation_kinetics, averages, \
-                                         extract, subtract_background_set
+                                         extract, subtract_background_set, \
+                                         TIME, VALUE
 
 layout = collections.OrderedDict([
         ('Bax 590 nM, NBD-Bax 96 nM',  ['A1', 'B1']),
@@ -99,4 +101,14 @@ bgsub_wells = subtract_background_set(nbd_wells, bax_bg_wells)
 #shifted to t = 0.
 #reset_bgsub_sds = reset_first_timepoint_to_zero(bgsub_norm_stds)
 
-
+# Normalize data by the initial values
+bax_concs_to_fit = []
+data_to_fit = []
+nbd_bax_conc = 96.
+for conc_name in bgsub_wells.keys():
+    bax_concs_to_fit.append(float(conc_name.split(' ')[1]))
+    time = bgsub_wells[conc_name][TIME]
+    y = bgsub_wells[conc_name][VALUE]
+    y = y / np.mean(y[0:2])
+    data_to_fit.append(y)
+bax_concs_to_fit = np.array(bax_concs_to_fit) + nbd_bax_conc

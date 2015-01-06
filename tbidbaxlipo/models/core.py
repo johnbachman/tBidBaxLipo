@@ -290,6 +290,7 @@ class Builder(pysb.builder.Builder):
         self.observable('mBax_mono', Bax(conf='mem', bh3=None))
         self.observable('iBax', Bax(conf='ins'))
         self.observable('iBax_nopore', Bax(conf='ins', pore='n'))
+        self.observable('iBax_mono', Bax(conf='ins', bh3=None))
         self.observable('tBidBax', tBid(bh3=1) % Bax(bh3=1))
         self.observable('Bax2', Bax(bh3=1) % Bax(bh3=1))
         self.observable('Bax4',
@@ -669,7 +670,7 @@ class Builder(pysb.builder.Builder):
 
         # Reversion of active Bax (P -> S)
         # Estimated at 2e-4 +/- 1e-4 in Shamas-Din doi:10.1038/cddis.2014.234
-        krev = self.parameter('iBax_reverse_k', 2e-4, prior=Normal(-3, 2))
+        krev = self.parameter('iBax_reverse_k', 2e-4, prior=Normal(-4, 2))
 
         # iBax reverses back to mBax
         self.rule('iBax_reverses',
@@ -717,10 +718,10 @@ class Builder(pysb.builder.Builder):
 
         if reversible:
             Bax_dimerization_kr = self.parameter(
-                   'Bax_%s_dimerization_kr' % bax_conf, 1e-2,
+                   'Bax_%s_dimerization_kr' % bax_conf, 1e-3,
                    prior=Normal(-3, 2))
 
-            self.rule('Bax_%s_forms_dimers_fwd' % bax_conf,
+            self.rule('Bax_%s_forms_dimers_rev' % bax_conf,
                  Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None) %
                  Bax(cpt='ves', conf=bax_conf, bh3=1, a6=None) >>
                  Bax(cpt='ves', conf=bax_conf, bh3=None, a6=None) +
@@ -1009,6 +1010,92 @@ class Builder(pysb.builder.Builder):
       (which can subsequently dissociate) - or dissociate immediately
       leading to
     """
+
+    def build_model_from_dict(self, model_dict):
+        model_attribute_sort_order = {
+            'translocation': 0,
+            'activation': 1,
+            'reversal': 2,
+            'autoactivation': 3,
+            'dimerization': 4,
+            'nbd': 5,
+            'bleach': 6,
+        }
+        model_string = ''
+
+        def unrecognized_implementation(feature, implementation):
+            raise ValueError("Don't know how to implement %s for feature %s" %
+                             (implementation, feature))
+
+        # Canonicalize the order of the model features based on the sort order
+        # defined in the dict
+        for feature in sorted(model_dict.keys(),
+                              key=lambda x: model_attribute_sort_order[x]):
+            implementation = model_dict[feature]
+            # Regardless of what the feature is, if the implementation flag
+            # is 0, that means don't implement it; skip to the next one
+            if implementation == 0:
+                continue
+            # Build up a useful string notation for the model features
+            model_substring = feature[0:3] + str(implementation)
+            model_string += feature[0].upper() + feature[1:3] + \
+                            str(implementation)
+            # Call the appropriate model macros based on the dict entries
+            if feature == 'translocation':
+                if implementation == 1:
+                    self.translocate_Bax()
+                else:
+                    unrecognized_implementation(feature, implementation)
+            elif feature == 'activation':
+                if implementation == 1:
+                    self.basal_Bax_activation()
+                else:
+                    unrecognized_implementation(feature, implementation)
+            elif feature == 'reversal':
+                if implementation == 1:
+                    self.Bax_reverses()
+                else:
+                    unrecognized_implementation(feature, implementation)
+            elif feature == 'autoactivation':
+                if implementation == 1:
+                    self.Bax_auto_activates_one_step()
+                elif implementation == 2:
+                    self.Bax_auto_activates()
+                else:
+                    unrecognized_implementation(feature, implementation)
+            elif feature == 'dimerization':
+                if implementation == 1:
+                    self.Bax_dimerizes(bax_conf='ins', reversible=False)
+                elif implementation == 2:
+                    self.Bax_dimerizes(bax_conf='ins', reversible=True)
+            elif feature == 'nbd':
+                c0 = self.parameter('c0_scaling', 1., prior=None)
+                c1 = self.parameter('c1_scaling', 5., prior=Uniform(0, 1))
+                if implementation == 1: # all iBax
+                    self.expression('NBD',
+                            (c0 * self['cBax'] +
+                            c0 * self['mBax'] +
+                            c1 * self['iBax_nopore']) / self['Bax_0'])
+                elif implementation == 2: # dimer only
+                    self.expression('NBD',
+                            (c0 * self['cBax'] +
+                             c0 * self['mBax'] +
+                             c0 * self['iBax_mono'] +
+                             c1 * self['Bax2'])  / self['Bax_0'])
+            elif feature == 'bleach': # Requires NBD to be present
+                if implementation == 1:
+                    self.monomer('Bleach', [])
+                    self.parameter('Bleach_0', 1.0)
+                    self.parameter('Bleach_k', 1.17e-5)
+                    self.initial(self['Bleach'](), self['Bleach_0'])
+                    self.rule('Bleaching', self['Bleach']() >> None,
+                              self['Bleach_k'])
+                    self.observable('Bleach_', self['Bleach']())
+                    self.expression('NBD_bleach',
+                                    self['NBD'] * self['Bleach_'])
+
+        self.model_name = model_string
+
     def build_model_t(self):
         print "---------------------------"
         print "core: Building model t:"
@@ -1180,7 +1267,7 @@ class Builder(pysb.builder.Builder):
                 (c0 * self['cBax'] +
                 c0 * self['mBax'] +
                 c1 * self['iBax_nopore'] +
-                c2 * self['pBax']) / self['Bax_0'].value)
+                c2 * self['pBax']) / self['Bax_0'])
 
     def build_model_nbd_2_conf(self):
         self.translocate_Bax()
@@ -1190,18 +1277,41 @@ class Builder(pysb.builder.Builder):
         self.expression('NBD',
                 (c0 * self['cBax'] +
                 c0 * self['mBax'] +
-                c1 * self['iBax_nopore']) / self['Bax_0'].value)
+                c1 * self['iBax_nopore']) / self['Bax_0'])
         self.model.name = 'nbd_2_conf'
 
     def build_model_nbd_2_conf_dimer(self):
         self.translocate_Bax()
-        self.Bax_dimerizes(bax_conf='mem', reversible=False)
+        self.basal_Bax_activation()
+        #self.Bax_reverses()
+        self.Bax_dimerizes(bax_conf='ins', reversible=True)
+        #self.Bax_dimerizes(bax_conf='ins', reversible=False)
         c0 = self.parameter('c0_scaling', 1., prior=None)
         c1 = self.parameter('c1_scaling', 5., prior=Uniform(0, 1))
+        # For 140320, special case
+        self.monomer('Bleach', [])
+        self.parameter('Bleach_0', 1.0)
+        self.parameter('Bleach_k', 1.17e-5)
+        self.initial(self['Bleach'](), self['Bleach_0'])
+        self.rule('Bleaching', self['Bleach']() >> None, self['Bleach_k'])
+        self.observable('Bleach_', self['Bleach']())
+        # Expression for NBD fluorescence
+        #self.expression('NBD',
+        #        ((c0 * self['cBax'] +
+        #         c0 * self['mBax'] +
+        #         c1 * self['iBax_nopore']) / self['Bax_0']) *
+        #         self['Bleach_'])
+        #self.expression('NBD',
+        #        (c0 * self['cBax'] +
+        #        c0 * self['mBax_mono'] +
+        #        c0 * self['iBax_mono'] +
+        #        c1 * self['Bax2']) / self['Bax_0'])
         self.expression('NBD',
-                (c0 * self['cBax'] +
-                c0 * self['mBax_mono'] +
-                c1 * self['Bax2']) / self['Bax_0'].value)
+                ((c0 * self['cBax'] +
+                 c0 * self['mBax'] +
+                 c0 * self['iBax_mono'] +
+                 c1 * self['Bax2'])  / self['Bax_0']) *
+                 self['Bleach_'])
         self.model.name = 'nbd_2_conf_dimer'
 
     def build_model_nbd_2_conf_rev(self):
@@ -1218,7 +1328,7 @@ class Builder(pysb.builder.Builder):
         self.expression('NBD',
                 (c0 * self['cBax'] +
                 c0 * self['mBax'] +
-                c1 * self['iBax_nopore']) / self['Bax_0'].value)
+                c1 * self['iBax_nopore']) / self['Bax_0'])
         self.model.name = 'nbd_2_conf_auto'
 
     def build_model_nbd_2_conf_auto_rev(self):

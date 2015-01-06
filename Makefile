@@ -2,6 +2,9 @@ FIGDIR := results/figures
 DATADIR := tbidbaxlipo/data
 CODEDIR := tbidbaxlipo
 MCMCDIR := results/mcmc
+PQUEUE := sorger_par_unlimited
+
+x140320 := $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/mcmc
 
 figures: \
 		$(FIGDIR)/fig_141016_1.pdf \
@@ -12,10 +15,49 @@ figures: \
 		$(FIGDIR)/140320_exp_fits.pdf \
 		$(FIGDIR)/140318_exp_fits_lstsq_fmax_var.pdf \
 		$(FIGDIR)/140429_exact_comp_bind_fit.pdf \
-		$(FIGDIR)/140429_gouy_chap_fit.pdf \
+		$(FIGDIR)/140429_gouy_chap_fit.pdf
 
 clean:
 	cd $(FIGDIR); rm -f *.pdf
+
+# This bit here allows us to only rebuild when the hash of a file changes.
+# See blog post describing the approach here:
+# http://blog.jgc.org/2006/04/rebuilding-when-hash-has-changed-not.html
+to-md5 = $(patsubst %,%.md5,$1)
+from-md5 = $(patsubst %.md5,%,$1)
+
+# The .md5 file is updated only if the hash has changed
+%.md5: FORCE
+	@$(if $(filter-out $(shell cat $@ 2>/dev/null), $(shell md5sum $*)),md5sum $* > $@)
+
+# Dummy target so the .md5 step is always run
+FORCE:
+
+# Keying the MCMC execution on the dependency file ensures that a re-run is
+# performed if the model ensemble specification (or fit parameters) has
+# changed. Also ensures that the dependency file exists before we try to
+# include it. As a convention, the target used here should correspond to the
+# basename of the .yaml file specifying the fit for the model ensemble
+# (e.g., pt_140320.yaml --> pt_140320)
+pt_140320: $(x140320)/pt_140320.deps.txt
+# This file specifies the list of *.mcmc files that pt_140320 depends on
+-include $(x140320)/pt_140320.deps.txt
+
+# Running this script generates both the dependency list and the .yaml files
+# specifying the fit parameters for each individual model
+%.deps.txt: %.fit.ensemble
+	python -m tbidbaxlipo.pt.generate_model_ensemble_fit_files $<
+
+# In this case, we know that the .yaml file exists, since it has been
+# regenerated in the step that regenerated the dependency file. What
+# we care about is whether the hash is any different.
+%.mcmc: $(call to-md5, %.fit)
+	python -m tbidbaxlipo.pt.compile_models $(call from-md5, $<)
+	bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1
+
+# Don't delete the .md5 files! Without this rule they are treated as
+# intermediates and deleted.
+.PRECIOUS: %.md5
 
 # --- Bax depletion figures ----
 # fig_141016_1.pdf, fig_141016_2.pdf
