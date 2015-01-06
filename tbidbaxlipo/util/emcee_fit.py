@@ -46,8 +46,11 @@ def likelihood(position, gf):
             ysim = gf.solver.yexpr[gf.obs_name]
         else:
             ysim = gf.solver.yobs[gf.obs_name]
-
-        err += -np.sum(((data - ysim) ** 2) / (2 * 0.2**2))
+        # If integrator fails to converge, the results will contain NaN
+        if np.any(np.isnan(ysim)):
+            err = -np.inf
+        else:
+            err += -np.sum(((data - ysim) ** 2) / (2 * 0.2**2))
 
     return err
 
