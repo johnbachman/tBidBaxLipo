@@ -670,7 +670,7 @@ class Builder(pysb.builder.Builder):
 
         # Reversion of active Bax (P -> S)
         # Estimated at 2e-4 +/- 1e-4 in Shamas-Din doi:10.1038/cddis.2014.234
-        krev = self.parameter('iBax_reverse_k', 2e-4, prior=Normal(-3, 2))
+        krev = self.parameter('iBax_reverse_k', 2e-4, prior=Normal(-4, 2))
 
         # iBax reverses back to mBax
         self.rule('iBax_reverses',
