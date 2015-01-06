@@ -52,7 +52,7 @@ pt_140320: $(x140320)/pt_140320.deps.txt
 # regenerated in the step that regenerated the dependency file. What
 # we care about is whether the hash is any different.
 %.mcmc: $(call to-md5, %.fit)
-	python -m tbidbaxlipo.pt.compile_models $(call from_md5, $<)
+	python -m tbidbaxlipo.pt.compile_models $(call from-md5, $<)
 	bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1
 
 # Don't delete the .md5 files! Without this rule they are treated as
