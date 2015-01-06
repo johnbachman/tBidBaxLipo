@@ -11,9 +11,9 @@ if len(sys.argv) == 1:
     sys.exit(1)
 
 # Open the master .yaml file specifying the model ensemble
-yaml_filename = sys.argv[1]
-with open(yaml_filename) as yaml_file:
-    args = yaml.load(yaml_file)
+ens_filename = sys.argv[1]
+with open(ens_filename) as ens_file:
+    args = yaml.load(ens_file)
 
 # Get the dict specifying the model ensemble feature set
 m = args['model']
@@ -28,7 +28,7 @@ def model_product(model_dict):
 m_ensemble = model_product(m)
 model_names = []
 dependencies_list = []
-basename = yaml_filename.split('.')[0]
+basename = ens_filename.split('.')[0]
 for m in m_ensemble:
     # Build the model from the dict
     bd = Builder()
@@ -38,7 +38,7 @@ for m in m_ensemble:
     # ...and then filling in the parameters specifying this particular model
     yaml_dict['model'] = m
     model_filename = '%s_%s' % (basename, bd.model_name)
-    with open('%s.yaml' % model_filename, 'w') as output_file:
+    with open('%s.fit' % model_filename, 'w') as output_file:
         output_file.write(yaml.dump(yaml_dict, default_flow_style=False))
     dependencies_list.append(model_filename)
 
