@@ -36,9 +36,9 @@ def plot_chain_convergence(sampler):
     plt.subplot(2, 2, 3)
     plt.plot(sampler._lnprob[2,:,:].T, alpha=0.1)
     plt.title('2nd chain')
-    plt.subplot(2, 2, 4)
-    plt.plot(sampler._lnprob[3,:,:].T, alpha=0.1)
-    plt.title('3rd chain')
+    #plt.subplot(2, 2, 4)
+    #plt.plot(sampler._lnprob[3,:,:].T, alpha=0.1)
+    #plt.title('3rd chain')
     #plt.savefig('chain_convergence.png')
 
 def plot_emcee_fits(gf, sampler):
