@@ -916,5 +916,5 @@ def add_offset_vector(wells, offset_vector):
     wells_copy = copy(wells)
     for well_name in wells_copy.keys():
         well = wells_copy[well_name]
-        wells_copy[TIME] += offset_vector[well_name]
+        well[TIME] += offset_vector[well_name]
     return wells_copy
