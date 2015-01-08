@@ -16,6 +16,7 @@ timecourse_file = abspath(join(data_path,
 bax_concs = np.array([1000., 500., 250., 125., 62.5, 31.2, 15.6, 7.8,
                       3.9, 2.0, 0.]) + 25.
 
+
 # Timecourse wells
 timecourse_wells = read_flexstation_kinetics(timecourse_file)
 """The raw (unnormalized) timecourses."""
@@ -94,4 +95,13 @@ bid_2 = extract(row_wells('F', 11), bg_sub_wells)
 bid_0 = extract(row_wells('G', 11), bg_sub_wells)
 bim_bh3 = extract(row_wells('H', 11), bg_sub_wells)
 
-
+# Fit the  20 nM Bid condition
+data_to_fit = []
+numpts = 20
+for well in bid_20.keys():
+    t = bid_20[well][TIME]
+    v = bid_20[well][VALUE]
+    lin_fit = linregress(t[:numpts], v[:numpts])
+    intercept = lin_fit[1]
+    norm_data = (v / intercept)
+    data_to_fit.append(norm_data)
