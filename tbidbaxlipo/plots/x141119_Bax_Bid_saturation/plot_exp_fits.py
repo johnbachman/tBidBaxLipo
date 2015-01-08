@@ -1,28 +1,14 @@
-from tbidbaxlipo.util.plate_assay import plot_all
-from matplotlib import pyplot as plt
-from preprocess_data import bim_bh3, bid_80, bid_40, bid_20, bid_10, \
-                            bid_5, bid_2, bid_0
 import sys
-
-"""
-import itertools
-import pickle
-import collections
-import sys
-import os
-import tbidbaxlipo.data
-from matplotlib import pyplot as plt
 import numpy as np
-from tbidbaxlipo.util import fitting, set_fig_params_for_publication, emcee_fit
-from tbidbaxlipo.plots.titration_fits import TwoExp, OneExpFmax
-from matplotlib.ticker import MultipleLocator, ScalarFormatter
-from tbidbaxlipo.models.nbd import multiconf
-from tbidbaxlipo.models import one_cpt
+from matplotlib import pyplot as plt
 from scipy.stats import linregress
-from tbidbaxlipo.plots import titration_fits as tf
+
+from tbidbaxlipo.util.plate_assay import plot_all, TIME, VALUE
 from tbidbaxlipo.util import fitting, colors, set_fig_params_for_publication, \
                              format_axis
-"""
+from preprocess_data import bim_bh3, bid_80, bid_40, bid_20, bid_10, \
+                            bid_5, bid_2, bid_0, bax_concs
+from tbidbaxlipo.plots import titration_fits as tf
 
 def plot_data():
     """Plots the data and various transformations of it."""
@@ -118,8 +104,7 @@ def plot_mm(k_data, bax_concs, bid_concs):
 
 if __name__ == '__main__':
     plt.ion()
-    plot_data()
-    sys.exit()
+    #plot_data()
 
     set_fig_params_for_publication()
 
