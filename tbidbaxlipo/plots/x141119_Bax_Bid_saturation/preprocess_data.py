@@ -105,3 +105,4 @@ for well in bid_20.keys():
     intercept = lin_fit[1]
     norm_data = (v / intercept)
     data_to_fit.append(norm_data)
+time = t
