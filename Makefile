@@ -6,6 +6,7 @@ PQUEUE := sorger_par_unlimited
 
 x140320 := $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/mcmc
 x140318 := $(CODEDIR)/plots/x140318_Bax_liposome_titration/mcmc
+x141119 := $(CODEDIR)/plots/x141119_Bax_Bid_saturation/mcmc
 
 figures: \
 		$(FIGDIR)/fig_141016_1.pdf \
@@ -34,7 +35,7 @@ from-md5 = $(patsubst %.md5,%,$1)
 # Dummy target so the .md5 step is always run
 FORCE:
 
-.PHONY: clean pt_140320 pt_140318
+.PHONY: clean pt_140320 pt_140318 pt_141119
 
 # Keying the MCMC execution on the dependency file ensures that a re-run is
 # performed if the model ensemble specification (or fit parameters) has
@@ -50,6 +51,11 @@ pt_140320: $(x140320)/pt_140320.deps.txt
 pt_140318: $(x140318)/pt_140318.deps.txt
 # See comments for pt_140320, above
 -include $(x140318)/pt_140318.deps.txt
+
+# See comments for pt_140320, above
+pt_141119: $(x141119)/pt_141119.deps.txt
+# See comments for pt_140320, above
+-include $(x141119)/pt_141119.deps.txt
 
 # Running this script generates both the dependency list and the .yaml files
 # specifying the fit parameters for each individual model
