@@ -41,6 +41,13 @@ def plot_chain_convergence(sampler):
     #plt.title('3rd chain')
     #plt.savefig('chain_convergence.png')
 
+def plot_emcee_fits_subplots(gf, sampler):
+    plt.figure()
+    for data_ix, data in enumerate(gf.data):
+        plt.subplot(3, 4, data_ix + 1)
+        plt.plot(gf.time, data)
+        gf.plot_func_single(sampler.flatchain[0,-1,:], data_ix)
+
 def plot_emcee_fits(gf, sampler):
     """Plot fits from the MCMC chain vs. the data."""
     set_fig_params_for_publication()
@@ -79,4 +86,5 @@ if __name__ == '__main__':
     triangle_plots(gf, sampler)
     plot_chain_convergence(sampler)
     plot_emcee_fits(gf, sampler)
+    plot_emcee_fits_subplots(gf, sampler)
 
