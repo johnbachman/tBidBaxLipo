@@ -6,6 +6,7 @@ import tbidbaxlipo.data
 from tbidbaxlipo.util.plate_assay import read_flexstation_kinetics, \
                         add_offset_vector, row_wells, extract, averages, \
                         subtract_background, TIME, VALUE
+from scipy.stats import linregress
 
 # All wells with liposomes ~0.15 mg/mL
 
