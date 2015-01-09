@@ -1049,6 +1049,9 @@ class Builder(pysb.builder.Builder):
             elif feature == 'activation':
                 if implementation == 1:
                     self.basal_Bax_activation()
+                elif implementation == 2:
+                    self.tBid_activates_Bax(bax_site='bh3', bax_bind_conf='mem',
+                                            bax_active_conf='ins')
                 else:
                     unrecognized_implementation(feature, implementation)
             elif feature == 'reversal':
