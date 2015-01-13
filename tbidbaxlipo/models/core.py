@@ -1020,7 +1020,8 @@ class Builder(pysb.builder.Builder):
             'autoactivation': 4,
             'dimerization': 5,
             'nbd': 6,
-            'bleach': 7,
+            'baxfret': 7,
+            'bleach': 8,
         }
         model_string = ''
 
@@ -1090,6 +1091,12 @@ class Builder(pysb.builder.Builder):
                              c0 * self['mBax'] +
                              c0 * self['iBax_mono'] +
                              c1 * self['Bax2'])  / self['Bax_0'])
+            elif feature == 'baxfret':
+                bax_fret_scaling = self.parameter('bax_fret_scaling', 50.,
+                                                  prior=Uniform(0, 2))
+                if implementation == 1: # all Bax dimers
+                    self.expression('BaxFRET',
+                            (self['Bax2'] / self['Bax_0']) * bax_fret_scaling)
             elif feature == 'bleach': # Requires NBD to be present
                 if implementation == 1:
                     self.monomer('Bleach', [])
