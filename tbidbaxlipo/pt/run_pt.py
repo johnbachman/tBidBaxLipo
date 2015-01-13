@@ -24,8 +24,14 @@ if __name__ == '__main__':
     data_module = sys.modules[data_args['module']]
     # Get the relevant variables from the module containing the data
     data_var = data_module.__dict__[data_args['data_var']]
-    ic_var = data_module.__dict__[data_args['initial_condition_var']]
     time_var = data_module.__dict__[data_args['time_var']]
+    # Get the name of the variable containing the initial conditions vector,
+    # which may not exist
+    ic_var_name = data_args['initial_condition_var']
+    if ic_var_name is None:
+        ic_var = None
+    else:
+        ic_var = data_module.__dict__[ic_var_name]
 
     ### MODEL
     # Call the appropriate model-building macro
@@ -46,7 +52,13 @@ if __name__ == '__main__':
         bd.local_params = [bd.model.parameters[p_name]
                            for p_name in args['local_params']]
 
-    params = {args['local_initial_condition']: ic_var}
+    local_ic_name = args['local_initial_condition']
+    if ic_var is None or local_ic_name is None:
+        params = None
+    else:
+        params = {local_ic_name: ic_var}
+
+    import ipdb; ipdb.set_trace()
 
     # Create the global fit instance
     gf = emcee_fit.GlobalFit(bd, time_var, data_var, params,
