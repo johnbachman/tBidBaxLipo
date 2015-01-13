@@ -1,0 +1,29 @@
+data:
+    module: tbidbaxlipo.plots.x141203_Bax_Bax_FRET.preprocess_data
+    data_var: data_54
+    initial_condition_var:
+    time_var: time_54
+model:
+    translocation: [1]
+    activation: [1]
+    reversal: [0, 1]
+    autoactivation: [0, 1]
+    dimerization: [0, 1, 2]
+    nbd: [1, 2]
+    baxfret: [1]
+    bleach: [0]
+model_observable: [NBD, BaxFRET]
+global_initial_conditions:
+    tBid_0: 20.0
+    c0_scaling: 1.0
+    Bax_0: 100.0
+    Vesicles_0: 1.55
+local_initial_condition:
+global_params: all
+local_params: []
+ntemps: 3
+highest_temp: -2
+nwalkers: 200
+nburnin: 100
+nsample: 30
+thin: 1
