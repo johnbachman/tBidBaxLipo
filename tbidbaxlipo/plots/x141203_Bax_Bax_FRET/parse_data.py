@@ -9,7 +9,7 @@ data_path = dirname(sys.modules['tbidbaxlipo.data'].__file__)
 data_file = abspath(join(data_path,
             '2014-12-3 - Bax-Bax FRET with NBD and TbDPA RLS 126C and 54C.xlsx'))
 
-nbd_residues = ['126', '54']
+nbd_residues = ['126', '54'] # This must match the spreadsheet
 datatypes_time = ['Time', 'Release', 'FRET', 'NBD']
 
 FIRST_ROW_INDEX = 2
@@ -44,8 +44,8 @@ for nbd_ix, nbd_residue in enumerate(nbd_residues):
         # Otherwise, get the data and add it along with a time column
         else:
             assert time_vector is not None
-            time_tuple = (dtype, nbd_residue, 'TIME')
-            value_tuple = (dtype, nbd_residue, 'VALUE')
+            time_tuple = (nbd_residue, dtype, 'TIME')
+            value_tuple = (nbd_residue, dtype, 'VALUE')
             col_tuples.append(time_tuple)
             col_tuples.append(value_tuple)
             data.append(time_vector)
@@ -56,7 +56,7 @@ for nbd_ix, nbd_residue in enumerate(nbd_residues):
 # Create the Pandas dataframe
 data_matrix = np.array(data)
 col_index = pd.MultiIndex.from_tuples(col_tuples,
-                    names=('Datatype', 'NBD Site', 'Column'))
+                    names=('NBD Site', 'Datatype', 'Column'))
 df = pd.DataFrame(data_matrix.T,
                   index=range(LAST_ROW_INDEX - FIRST_ROW_INDEX),
                   columns=col_index)
