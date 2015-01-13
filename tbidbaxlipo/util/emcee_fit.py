@@ -24,8 +24,8 @@ def likelihood(position, gf):
     tc_length = len(gf.data[0])
     err = 0
 
-    # Iterate over each entry in the data array
-    for data_ix, data in enumerate(gf.data):
+    # Iterate over each condition (1st dimension of the data matrix)
+    for cond_ix in range(gf.data.shape[0]):
         # Set the parameters appropriately for the simulation:
         # Iterate over the globally fit parameters
         for g_ix, p in enumerate(gf.builder.global_params):
@@ -33,24 +33,35 @@ def likelihood(position, gf):
         # Iterate over the locally fit parameters
         for l_ix, p in enumerate(gf.builder.local_params):
             ix_offset = len(gf.builder.global_params) + \
-                        data_ix * len(gf.builder.local_params)
+                        cond_ix * len(gf.builder.local_params)
             p.value = 10 ** position[l_ix + ix_offset]
         # Now fill in the initial condition parameters
-        for p_name, values in gf.params.iteritems():
-            p = gf.builder.model.parameters[p_name]
-            p.value = values[data_ix]
+        if gf.params is not None:
+            for p_name, values in gf.params.iteritems():
+                p = gf.builder.model.parameters[p_name]
+                p.value = values[cond_ix]
         # Now run the simulation
         gf.solver.run()
-        # Calculate the squared error
-        if gf.use_expr:
-            ysim = gf.solver.yexpr[gf.obs_name]
-        else:
-            ysim = gf.solver.yobs[gf.obs_name]
-        # If integrator fails to converge, the results will contain NaN
-        if np.any(np.isnan(ysim)):
-            err = -np.inf
-        else:
-            err += -np.sum(((data - ysim) ** 2) / (2 * 0.2**2))
+        # Calculate the squared error over all the observables
+        err = 0
+        for obs_ix, obs_name in enumerate(gf.obs_name):
+            if gf.use_expr:
+                ysim = gf.solver.yexpr[obs_name]
+            else:
+                ysim = gf.solver.yobs[obs_name]
+            # If integrator fails to converge, the results will contain NaN
+            if np.any(np.isnan(ysim)):
+                err = -np.inf
+                continue
+            # Get the data slice we want
+            data = gf.data[cond_ix, obs_ix, :]
+            # Otherwise, calculate the log-likelihood at each point
+            loglkl = ((data - ysim) ** 2) / (2 * 0.2**2)
+            # Filter out the NaNs...
+            filt_loglkl = loglkl[~np.isnan(loglkl)]
+            # Take the sum
+            err += -np.sum(filt_loglkl)
+                # and take the sum
 
     return err
 
