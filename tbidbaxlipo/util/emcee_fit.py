@@ -67,12 +67,12 @@ class GlobalFit(object):
         The time vector.
     data : list of np.array
         The experimental timecourses to fit.
-    params : dict of lists
+    params : dict of lists, or None
         The keys to the dict should be names of parameters in the PySB model
         (e.g., initial conditions); each value should be a list containing
         values for the parameter for each of the entries in the data list. The
         length of each value in the dict should match the length of the data
-        list.
+        list. If None, indicates that there are no local initial conditions.
     obs_name : string
         The name of the model observable to compare against the data.
     obs_type : string, "Expression" or "Observable"
@@ -96,14 +96,31 @@ class GlobalFit(object):
     def __init__(self, builder, time, data, params, obs_name,
                  obs_type='Expression'):
         # Check that the dimensions of everything that has been provided matches
-        for tc in data:
-            if not len(time) == len(tc):
-                raise ValueError("Length of time vector must match the length "
-                                 "of each data vector.")
-        for p, vals in params.iteritems():
-            if not len(vals) == len(data):
-                raise ValueError("Each parameter in the params dict must have "
-                                 "an entry for each entry in the data list.")
+        # Check that the time vector matches the 3rd dimension of the data
+        # vector
+        if len(time) != data.shape[2]:
+            raise ValueError("Length of time vector must match the length "
+                             "of each data vector.")
+        # Check that we don't have more than one condition but only set of
+        # initial conditions
+        if params is None and data.shape[0] != 1:
+            raise ValueError("There are no initial condition parameters but "
+                             "there is more than one condition in the data "
+                             "matrix.")
+        # Check that the number of initial conditions specified in the params
+        # dict matches the first dimension of the data matrix
+        if params is not None:
+            for p, vals in params.iteritems():
+                if not len(vals) == data.shape[0]:
+                    raise ValueError("Each parameter in the params dict must "
+                                     "have an entry for each entry in the "
+                                     "data list.")
+        # Check that the number of observables matches the 2nd dimension of
+        # the data matrix
+        if len(obs_name) != data.shape[1]:
+            raise ValueError("The number of observables (%s) must match the "
+                             "second dimension of the data matrix (%s)" %
+                             (len(obs_name), data.shape[1]))
         self.builder = builder
         self.time = time
         self.data = data
