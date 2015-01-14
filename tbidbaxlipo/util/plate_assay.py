@@ -896,3 +896,25 @@ def row_wells(row_name, max_col=12):
 
     return ['%s%s' % (row_name, i) for i in range(1, max_col+1)]
 
+def add_offset_vector(wells, offset_vector):
+    """Add an offset vector to the time coordinates of each well.
+
+    Parameters
+    ----------
+    wells : dict
+        A dict containing well names as keys and [[time], [value]] pairs
+        (list consisting of two numpy.arrays) as values.
+    offset_vector : dict
+        A dict containing well names as keys (matching the keys in the wells
+        argument) and numbers as values, specifying the time offset for
+        each well.
+
+    Returns
+    -------
+    A copy of the wells dict with appropriately offset time coordinates.
+    """
+    wells_copy = copy(wells)
+    for well_name in wells_copy.keys():
+        well = wells_copy[well_name]
+        well[TIME] += offset_vector[well_name]
+    return wells_copy

@@ -21,15 +21,29 @@ m = args['model']
 # A function to take the cross product of all feature implementations and
 # return the set of dicts specifying one implementation for each feature
 def model_product(model_dict):
-    return (dict(izip(model_dict, x))
-            for x in product(*model_dict.itervalues()))
+    return [dict(zip(model_dict, x))
+            for x in product(*model_dict.values())]
 
 # Get the set of dict specifying each individual implementation
 m_ensemble = model_product(m)
 model_names = []
 dependencies_list = []
 basename = ens_filename.split('.')[0]
+
 for m in m_ensemble:
+    # If Bid doesn't get to the membrane, activation by bound Bid will
+    # never happen
+    if m['bidtranslocation'] == 0 and m['activation'] == 2:
+        continue
+    # If activation is pseudo-first order (not Bid-dependent) don't use
+    # models where we waste steps on translocating Bid
+    if m['activation'] == 1 and m['bidtranslocation'] != 0:
+        continue
+    # If we're monitoring NBD as resulting from a dimer, but dimerization
+    # doesn't happen, then we'll get nothing
+    if m['nbd'] == 2 and m['dimerization'] == 0:
+        continue
+
     # Build the model from the dict
     bd = Builder()
     bd.build_model_from_dict(m)

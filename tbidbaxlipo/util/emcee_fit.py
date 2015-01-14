@@ -162,6 +162,33 @@ class GlobalFit(object):
         Solver._use_inline = True
         self.solver = Solver(self.builder.model, self.time)
 
+    def plot_func_single(self, x, data_ix, alpha=1.0):
+        x = 10 ** x
+
+        s = Solver(self.builder.model, self.time)
+        # Set the parameters appropriately for the simulation:
+        # Iterate over the globally fit parameters
+        for g_ix, p in enumerate(self.builder.global_params):
+            p.value = x[g_ix]
+        # Iterate over the locally fit parameters
+        for l_ix, p in enumerate(self.builder.local_params):
+            ix_offset = len(self.builder.global_params) + \
+                        data_ix * len(self.builder.local_params)
+            p.value = x[l_ix + ix_offset]
+        # Now fill in the initial condition parameters
+        for p_name, values in self.params.iteritems():
+            p = self.builder.model.parameters[p_name]
+            p.value = values[data_ix]
+        # Now run the simulation
+        s.run()
+        # Plot the observable
+        if self.use_expr:
+            plt.plot(self.time, s.yexpr[self.obs_name], color='r',
+                     alpha=alpha)
+        else:
+            plt.plot(self.time, s.yobs[self.obs_name], color='r',
+                     alpha=alpha)
+
     def plot_func(self, x, alpha=1.0):
         """Plots the timecourses with the parameter values given by x.
 

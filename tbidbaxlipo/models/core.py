@@ -1013,13 +1013,14 @@ class Builder(pysb.builder.Builder):
 
     def build_model_from_dict(self, model_dict):
         model_attribute_sort_order = {
-            'translocation': 0,
-            'activation': 1,
-            'reversal': 2,
-            'autoactivation': 3,
-            'dimerization': 4,
-            'nbd': 5,
-            'bleach': 6,
+            'bidtranslocation': 0,
+            'baxtranslocation': 1,
+            'activation': 2,
+            'reversal': 3,
+            'autoactivation': 4,
+            'dimerization': 5,
+            'nbd': 6,
+            'bleach': 7,
         }
         model_string = ''
 
@@ -1037,18 +1038,25 @@ class Builder(pysb.builder.Builder):
             if implementation == 0:
                 continue
             # Build up a useful string notation for the model features
-            model_substring = feature[0:3] + str(implementation)
-            model_string += feature[0].upper() + feature[1:3] + \
+            model_string += feature[0].upper() + feature[1:5] + \
                             str(implementation)
             # Call the appropriate model macros based on the dict entries
-            if feature == 'translocation':
+            if feature == 'baxtranslocation':
                 if implementation == 1:
                     self.translocate_Bax()
+                else:
+                    unrecognized_implementation(feature, implementation)
+            elif feature == 'bidtranslocation':
+                if implementation == 1:
+                    self.translocate_tBid()
                 else:
                     unrecognized_implementation(feature, implementation)
             elif feature == 'activation':
                 if implementation == 1:
                     self.basal_Bax_activation()
+                elif implementation == 2:
+                    self.tBid_activates_Bax(bax_site='bh3', bax_bind_conf='mem',
+                                            bax_active_conf='ins')
                 else:
                     unrecognized_implementation(feature, implementation)
             elif feature == 'reversal':
