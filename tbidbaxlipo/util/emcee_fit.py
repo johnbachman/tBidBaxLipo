@@ -230,9 +230,8 @@ class GlobalFit(object):
         """
         x = 10 ** x
 
-        s = Solver(self.builder.model, self.time)
         # Iterate over each entry in the data array
-        for data_ix, data in enumerate(self.data):
+        for cond_ix in range(self.data.shape[0]):
             # Set the parameters appropriately for the simulation:
             # Iterate over the globally fit parameters
             for g_ix, p in enumerate(self.builder.global_params):
@@ -240,21 +239,24 @@ class GlobalFit(object):
             # Iterate over the locally fit parameters
             for l_ix, p in enumerate(self.builder.local_params):
                 ix_offset = len(self.builder.global_params) + \
-                            data_ix * len(self.builder.local_params)
+                            cond_ix * len(self.builder.local_params)
                 p.value = x[l_ix + ix_offset]
             # Now fill in the initial condition parameters
-            for p_name, values in self.params.iteritems():
-                p = self.builder.model.parameters[p_name]
-                p.value = values[data_ix]
+            if self.params is not None:
+                for p_name, values in self.params.iteritems():
+                    p = self.builder.model.parameters[p_name]
+                    p.value = values[data_ix]
             # Now run the simulation
-            s.run()
+            self.solver.run()
             # Plot the observable
-            if self.use_expr:
-                plt.plot(self.time, s.yexpr[self.obs_name], color='r',
-                         alpha=alpha)
-            else:
-                plt.plot(self.time, s.yobs[self.obs_name], color='r',
-                         alpha=alpha)
+            obs_colors = ['r', 'g', 'b', 'k']
+            for obs_ix, obs_name in enumerate(self.obs_name):
+                if self.use_expr:
+                    plt.plot(self.time, self.solver.yexpr[obs_name],
+                             color=obs_colors[obs_ix], alpha=alpha)
+                else:
+                    plt.plot(self.time, self.solver.yobs[obs_name],
+                             color=obs_colors[obs_ix], alpha=alpha)
 
 def ens_sample(gf, nwalkers, burn_steps, sample_steps, threads=1,
                pos=None, random_state=None):
