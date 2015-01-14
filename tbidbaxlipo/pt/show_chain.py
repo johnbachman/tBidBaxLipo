@@ -60,8 +60,12 @@ def plot_emcee_fits(gf, sampler):
     ax.set_xticks(np.linspace(0, 1e4, 6))
     ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
     plt.subplots_adjust(bottom=0.24, left=0.21)
-    for data in gf.data:
-        plt.plot(gf.time, data, 'k', linewidth=1)
+    # Plot the different observables
+    for cond_ix in range(gf.data.shape[0]):
+        for obs_ix in range(gf.data.shape[1]):
+            data = gf.data[cond_ix, obs_ix, :]
+            plt.plot(gf.time, data, 'k', linewidth=1)
+
     # Plot the final point (should probably plot max likelihood instead)
     gf.plot_func(sampler.flatchain[0,-1,:])
     format_axis(ax)
