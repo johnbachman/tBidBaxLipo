@@ -58,8 +58,6 @@ if __name__ == '__main__':
     else:
         params = {local_ic_name: ic_var}
 
-    import ipdb; ipdb.set_trace()
-
     # Create the global fit instance
     gf = emcee_fit.GlobalFit(bd, time_var, data_var, params,
                              args['model_observable'])
