@@ -20,8 +20,8 @@ global_initial_conditions:
 local_initial_condition: Bax_0
 global_params: all
 local_params: []
-ntemps: 3
-highest_temp: -2
+ntemps: 25
+highest_temp: -5
 nwalkers: 200
 nburnin: 100
 nsample: 30
