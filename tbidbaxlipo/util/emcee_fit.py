@@ -468,7 +468,8 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
             nstep +=1
 
     # Close the pool!
-    pool.close()
+    if pool is not None:
+        pool.close()
 
     print "Done sampling."
     return sampler
