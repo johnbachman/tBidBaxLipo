@@ -29,7 +29,7 @@ params_dict = {
 
 bd = Builder(params_dict=params_dict)
 
-d = {'translocation': 1,
+d = {'baxtranslocation': 1,
      'activation': 1,
      'dimerization': 1,
      'nbd': 2,
