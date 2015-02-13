@@ -33,15 +33,18 @@ basename = ens_filename.split('.')[0]
 for m in m_ensemble:
     # If Bid doesn't get to the membrane, activation by bound Bid will
     # never happen
-    if m['bidtranslocation'] == 0 and m['activation'] == 2:
+    if 'bidtranslocation' in m and 'activation' in m and \
+       m['bidtranslocation'] == 0 and m['activation'] == 2:
         continue
     # If activation is pseudo-first order (not Bid-dependent) don't use
     # models where we waste steps on translocating Bid
-    if m['activation'] == 1 and m['bidtranslocation'] != 0:
+    if 'bidtranslocation' in m and 'activation' in m and \
+       m['activation'] == 1 and m['bidtranslocation'] != 0:
         continue
     # If we're monitoring NBD as resulting from a dimer, but dimerization
     # doesn't happen, then we'll get nothing
-    if m['nbd'] == 2 and m['dimerization'] == 0:
+    if 'nbd' in m and 'dimerization' in m and \
+       m['nbd'] == 2 and m['dimerization'] == 0:
         continue
 
     # Build the model from the dict
