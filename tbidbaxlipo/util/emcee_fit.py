@@ -26,11 +26,15 @@ def likelihood(position, gf):
 
     # Iterate over each condition (1st dimension of the data matrix)
     for cond_ix in range(gf.data.shape[0]):
+        # Create a placeholder for a time offset, if there is one
+        timeoffset = None
         # Set the parameters appropriately for the simulation:
         # Iterate over the globally fit parameters
         for g_ix, p in enumerate(gf.builder.global_params):
             p.value = 10 ** position[g_ix]
-        # Iterate over the locally fit parameters
+            if p.name == 'timeoffset':
+                timeoffset = 10 ** position[g_ix]
+        # Iterate over the locally fit parameter_s
         for l_ix, p in enumerate(gf.builder.local_params):
             ix_offset = len(gf.builder.global_params) + \
                         cond_ix * len(gf.builder.local_params)
@@ -40,6 +44,9 @@ def likelihood(position, gf):
             for p_name, values in gf.params.iteritems():
                 p = gf.builder.model.parameters[p_name]
                 p.value = values[cond_ix]
+        # Reset the timespan by adding one additional pt at the beginning
+        if timeoffset:
+            gf.solver.tspan = np.insert(gf.time, -timeoffset)
         # Now run the simulation
         gf.solver.run()
         # Calculate the squared error over all the observables
@@ -49,6 +56,10 @@ def likelihood(position, gf):
                 ysim = gf.solver.yexpr[obs_name]
             else:
                 ysim = gf.solver.yobs[obs_name]
+            # If we're using a time offset, skip the first point (the offset)
+            # for the purposes of comparing to data
+            if timeoffset:
+                ysim = ysim[1:]
             # If integrator fails to converge, the results will contain NaN
             if np.any(np.isnan(ysim)):
                 err = -np.inf

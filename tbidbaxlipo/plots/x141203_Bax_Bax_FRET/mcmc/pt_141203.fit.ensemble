@@ -4,7 +4,7 @@ data:
     initial_condition_var:
     time_var: time_126
 model:
-    translocation: [1]
+    baxtranslocation: [1]
     activation: [1]
     reversal: [0]
     autoactivation: [0]
@@ -29,3 +29,4 @@ nwalkers: 200
 nburnin: 10
 nsample: 20
 thin: 1
+timeoffset: fit

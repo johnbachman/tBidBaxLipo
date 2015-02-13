@@ -1044,6 +1044,7 @@ class Builder(pysb.builder.Builder):
             'nbd': 6,
             'baxfret': 7,
             'bleach': 8,
+            'timeoffset': 9,
         }
         model_string = ''
 
@@ -1099,6 +1100,8 @@ class Builder(pysb.builder.Builder):
                     self.Bax_dimerizes(bax_conf='ins', reversible=False)
                 elif implementation == 2:
                     self.Bax_dimerizes(bax_conf='ins', reversible=True)
+                else:
+                    unrecognized_implementation(feature, implementation)
             elif feature == 'nbd':
                 c0 = self.parameter('c0_scaling', 1., prior=None)
                 c1 = self.parameter('c1_scaling', 5., prior=Uniform(0, 1))
@@ -1113,6 +1116,8 @@ class Builder(pysb.builder.Builder):
                              c0 * self['mBax_NBD'] +
                              c0 * self['iBax_mono_NBD'] +
                              c1 * self['Bax2_NBD'])  / self['Bax_NBD_0'])
+                else:
+                    unrecognized_implementation(feature, implementation)
             elif feature == 'baxfret':
                 bax_fret_scaling = self.parameter('bax_fret_scaling', 50.,
                                                   prior=Uniform(0, 2))
@@ -1120,6 +1125,8 @@ class Builder(pysb.builder.Builder):
                     self.expression('BaxFRET',
                             (self['Bax2FRET'] / self['Bax_DAC_0']) *
                             bax_fret_scaling)
+                else:
+                    unrecognized_implementation(feature, implementation)
             elif feature == 'bleach': # Requires NBD to be present
                 if implementation == 1:
                     self.monomer('Bleach', [])
@@ -1131,6 +1138,13 @@ class Builder(pysb.builder.Builder):
                     self.observable('Bleach_', self['Bleach']())
                     self.expression('NBD_bleach',
                                     self['NBD'] * self['Bleach_'])
+                else:
+                    unrecognized_implementation(feature, implementation)
+            elif feature == 'timeoffset':
+                if implementation == 'fit':
+                    self.parameter('timeoffset', prior=Uniform(-1, 3))
+                else:
+                    unrecognized_implementation(feature, implementation)
 
         self.model_name = model_string
 
