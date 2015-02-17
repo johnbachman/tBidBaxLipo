@@ -12,6 +12,7 @@ model:
     nbd: [2]
     baxfret: [1]
     bleach: [0]
+    timeoffset: [fit]
 model_observable: [NBD, BaxFRET]
 global_initial_conditions:
     tBid_0: 0.0
@@ -25,8 +26,7 @@ global_params: all
 local_params: []
 ntemps: 3
 highest_temp: -2
-nwalkers: 200
+nwalkers: 500
 nburnin: 10
-nsample: 20
+nsample: 200
 thin: 1
-timeoffset: fit
