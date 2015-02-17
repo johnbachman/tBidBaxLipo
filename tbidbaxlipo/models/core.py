@@ -1142,9 +1142,12 @@ class Builder(pysb.builder.Builder):
                     unrecognized_implementation(feature, implementation)
             elif feature == 'timeoffset':
                 if implementation == 'fit':
-                    self.parameter('timeoffset', prior=Uniform(-1, 3))
+                    self.parameter('timeoffset', 100, prior=Uniform(-1, 3))
                 else:
                     unrecognized_implementation(feature, implementation)
+            else:
+                raise ValueError("Don't know how to implement feature %s" %
+                                 feature)
 
         self.model_name = model_string
 
