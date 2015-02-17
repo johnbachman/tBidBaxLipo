@@ -46,7 +46,7 @@ def likelihood(position, gf):
                 p.value = values[cond_ix]
         # Reset the timespan by adding one additional pt at the beginning
         if timeoffset:
-            gf.solver.tspan = np.insert(gf.time, -timeoffset)
+            gf.solver.tspan = np.insert(gf.time, 0, -timeoffset)
         # Now run the simulation
         gf.solver.run()
         # Calculate the squared error over all the observables
