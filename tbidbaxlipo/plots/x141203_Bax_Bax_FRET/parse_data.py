@@ -7,13 +7,13 @@ import pandas as pd
 
 data_path = dirname(sys.modules['tbidbaxlipo.data'].__file__)
 data_file = abspath(join(data_path,
-            '2014-12-3 - Bax-Bax FRET with NBD and TbDPA RLS 126C and 54C.xlsx'))
+           '2014-12-3 - Bax-Bax FRET with NBD and TbDPA RLS 126C and 54C.xlsx'))
 
 nbd_residues = ['126', '54'] # This must match the spreadsheet
 datatypes_time = ['Time', 'Release', 'FRET', 'NBD']
 
 FIRST_ROW_INDEX = 2
-LAST_ROW_INDEX = 174 # 54C ends on index 127, so will have a lot of NaNs
+LAST_ROW_INDEX = 128 # 54C ends on index 127, so will have a lot of NaNs
 
 wb = load_workbook(data_file)
 
