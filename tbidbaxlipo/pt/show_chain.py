@@ -48,9 +48,21 @@ def plot_emcee_fits_subplots(gf, sampler):
         plt.plot(gf.time, data)
         gf.plot_func_single(sampler.flatchain[0,-1,:], data_ix)
 
-def plot_emcee_fits(gf, sampler):
+def plot_emcee_fits(gf, sampler, sample=True, burn=None, nsamples=100):
     """Plot fits from the MCMC chain vs. the data."""
     set_fig_params_for_publication()
+
+    # If we're plotting samples, get the indices now and use them for
+    # all observables
+    if sample:
+        nsteps = sampler.flatchain.shape[1]
+        if burn is None:
+            burn_steps = int(nsteps / 2)
+        else:
+            nwalkers = sampler.chain.shape[1]
+            burn_steps = nwalkers * burn
+        rand_indices = np.random.randint(burn, nsteps, nsamples)
+
     for obs_ix in range(gf.data.shape[1]):
         fig = plt.figure(figsize=(3, 3), dpi=300)
         plt.ylabel('$F/F_0$')
@@ -66,8 +78,13 @@ def plot_emcee_fits(gf, sampler):
             data = gf.data[cond_ix, obs_ix, :]
             plt.plot(gf.time, data, 'k', linewidth=1)
 
-        # Plot the final point (should probably plot max likelihood instead)
-        gf.plot_func(sampler.flatchain[0,-1,:], obs_ix=obs_ix)
+        if sample:
+            for rand_ix in rand_indices:
+                gf.plot_func(sampler.flatchain[0, rand_ix, :], obs_ix=obs_ix, alpha=0.1)
+        else:
+            # Plot the final point (should probably plot max likelihood instead)
+            gf.plot_func(sampler.flatchain[0,-1,:], obs_ix=obs_ix)
+
         format_axis(ax)
 
 if __name__ == '__main__':
@@ -88,7 +105,7 @@ if __name__ == '__main__':
     # Show plots
     plt.ion()
     #triangle_plots(gf, sampler)
-    #plot_chain_convergence(sampler)
-    plot_emcee_fits(gf, sampler)
+    plot_chain_convergence(sampler)
+    plot_emcee_fits(gf, sampler, sample=True)
     #plot_emcee_fits_subplots(gf, sampler)
 
