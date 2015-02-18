@@ -6,10 +6,10 @@ data:
 model:
     baxtranslocation: [1]
     activation: [1]
-    reversal: [0]
+    reversal: [0, 1]
     autoactivation: [0]
-    dimerization: [1]
-    nbd: [3]
+    dimerization: [1, 2]
+    nbd: [2, 3]
     baxfret: [1]
     bleach: [0]
 model_observable: [NBD, BaxFRET]
@@ -23,7 +23,7 @@ global_initial_conditions:
 local_initial_condition:
 global_params: all
 local_params: []
-ntemps: 3
+ntemps: 10
 highest_temp: -2
 nwalkers: 500
 nburnin: 10
