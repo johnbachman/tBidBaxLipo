@@ -156,7 +156,12 @@ class GlobalFit(object):
         else:
             raise ValueError('obs_type must be Expression or Observable.')
 
-        self.init_solver()
+        if self.builder.model.parameters.get('timeoffset'):
+            use_time_offset = True
+        else:
+            use_time_offset = False
+
+        self.init_solver(use_time_offset=use_time_offset)
 
         # Used to keep track of the number of steps run
         self.nstep = 0
@@ -194,12 +199,22 @@ class GlobalFit(object):
     def __setstate__(self, state):
         # Re-init the solver which we didn't pickle
         self.__dict__.update(state)
-        self.init_solver()
+        if self.builder.model.parameters.get('timeoffset'):
+            use_time_offset = True
+        else:
+            use_time_offset = False
+        self.init_solver(use_time_offset=use_time_offset)
 
-    def init_solver(self):
+    def init_solver(self, use_time_offset=False):
         """Initialize solver from model and tspan."""
         Solver._use_inline = True
-        self.solver = Solver(self.builder.model, self.time)
+        # If we're using a time offset, note that it doesn't matter what value
+        # goes in here, since it will be filled in by the fitting.
+        if use_time_offset:
+            tspan = np.insert(self.time, 0, 0)
+        else:
+            tspan = self.time
+        self.solver = Solver(self.builder.model, tspan)
 
     def plot_func_single(self, x, data_ix, alpha=1.0):
         x = 10 ** x
@@ -228,7 +243,7 @@ class GlobalFit(object):
             plt.plot(self.time, s.yobs[self.obs_name], color='r',
                      alpha=alpha)
 
-    def plot_func(self, x, alpha=1.0):
+    def plot_func(self, x, alpha=1.0, obs_ix=0):
         """Plots the timecourses with the parameter values given by x.
 
         Parameters
@@ -240,13 +255,15 @@ class GlobalFit(object):
             timecourses being fit.
         """
         x = 10 ** x
-
+        timeoffset = None
         # Iterate over each entry in the data array
         for cond_ix in range(self.data.shape[0]):
             # Set the parameters appropriately for the simulation:
             # Iterate over the globally fit parameters
             for g_ix, p in enumerate(self.builder.global_params):
                 p.value = x[g_ix]
+                if p.name == 'timeoffset':
+                    timeoffset = x[g_ix]
             # Iterate over the locally fit parameters
             for l_ix, p in enumerate(self.builder.local_params):
                 ix_offset = len(self.builder.global_params) + \
@@ -257,17 +274,21 @@ class GlobalFit(object):
                 for p_name, values in self.params.iteritems():
                     p = self.builder.model.parameters[p_name]
                     p.value = values[data_ix]
+            # Fill in the time offset, if there is one
+            if timeoffset:
+                self.solver.tspan = np.insert(self.time, 0, -timeoffset)
             # Now run the simulation
             self.solver.run()
             # Plot the observable
             obs_colors = ['r', 'g', 'b', 'k']
-            for obs_ix, obs_name in enumerate(self.obs_name):
-                if self.use_expr:
-                    plt.plot(self.time, self.solver.yexpr[obs_name],
-                             color=obs_colors[obs_ix], alpha=alpha)
-                else:
-                    plt.plot(self.time, self.solver.yobs[obs_name],
-                             color=obs_colors[obs_ix], alpha=alpha)
+            obs_name = self.obs_name[obs_ix]
+
+            if self.use_expr:
+                plt.plot(self.solver.tspan, self.solver.yexpr[obs_name],
+                         color=obs_colors[obs_ix], alpha=alpha)
+            else:
+                plt.plot(self.solver.tspan, self.solver.yobs[obs_name],
+                         color=obs_colors[obs_ix], alpha=alpha)
 
 def ens_sample(gf, nwalkers, burn_steps, sample_steps, threads=1,
                pos=None, random_state=None):
