@@ -44,7 +44,8 @@ for m in m_ensemble:
     # If we're monitoring NBD as resulting from a dimer, but dimerization
     # doesn't happen, then we'll get nothing
     if 'nbd' in m and 'dimerization' in m and \
-       m['nbd'] == 2 and m['dimerization'] == 0:
+       (m['nbd'] == 2 or m['nbd'] == 3) and \
+       m['dimerization'] == 0:
         continue
 
     # Build the model from the dict

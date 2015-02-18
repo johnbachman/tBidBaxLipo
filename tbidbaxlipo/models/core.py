@@ -1116,6 +1116,13 @@ class Builder(pysb.builder.Builder):
                              c0 * self['mBax_NBD'] +
                              c0 * self['iBax_mono_NBD'] +
                              c1 * self['Bax2_NBD'])  / self['Bax_NBD_0'])
+                elif implementation == 3: # two conf: 1st iBax, 2nd dimer
+                    c2 = self.parameter('c2_scaling', 5., prior=Uniform(0, 1))
+                    self.expression('NBD',
+                            (c0 * self['cBax_NBD'] +
+                             c0 * self['mBax_NBD'] +
+                             c1 * self['iBax_mono_NBD'] +
+                             c2 * self['Bax2_NBD']) / self['Bax_NBD_0'])
                 else:
                     unrecognized_implementation(feature, implementation)
             elif feature == 'baxfret':

@@ -9,10 +9,9 @@ model:
     reversal: [0]
     autoactivation: [0]
     dimerization: [1]
-    nbd: [2]
+    nbd: [2, 3]
     baxfret: [1]
     bleach: [0]
-    timeoffset: [fit]
 model_observable: [NBD, BaxFRET]
 global_initial_conditions:
     tBid_0: 0.0
