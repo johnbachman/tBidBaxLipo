@@ -36,7 +36,7 @@ from-md5 = $(patsubst %.md5,%,$1)
 # Dummy target so the .md5 step is always run
 FORCE:
 
-.PHONY: clean pt_140320 pt_140318 pt_141119 pt_141203
+.PHONY: clean pt_140320 pt_140318 pt_141119 pt_141203_54C pt_141203_126C
 
 # Keying the MCMC execution on the dependency file ensures that a re-run is
 # performed if the model ensemble specification (or fit parameters) has
@@ -57,8 +57,12 @@ pt_141119: $(x141119)/pt_141119.deps.txt
 -include $(x141119)/pt_141119.deps.txt
 
 # See comments for pt_140320, above
-pt_141203: $(x141203)/pt_141203.deps.txt
--include $(x141203)/pt_141203.deps.txt
+pt_141203_54C: $(x141203)/pt_141203_54C.deps.txt
+-include $(x141203)/pt_141203_54C.deps.txt
+
+# See comments for pt_140320, above
+pt_141203_126C: $(x141203)/pt_141203_126C.deps.txt
+-include $(x141203)/pt_141203_126C.deps.txt
 
 # Running this script generates both the dependency list and the .yaml files
 # specifying the fit parameters for each individual model
