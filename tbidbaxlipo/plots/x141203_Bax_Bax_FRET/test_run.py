@@ -38,7 +38,7 @@ d = {'baxtranslocation': 1,
 bd.build_model_from_dict(d)
 
 #t = np.linspace(0, 1e4, 1e3)
-t = time_126 - 200
+t = time_126
 sol = Solver(bd.model, t)
 sol.run()
 

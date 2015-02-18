@@ -10,6 +10,8 @@ thesis/_build
 thesis/_static
 thesis/sphinxreport.log
 
+*.pdf
+*.mcmc
 *.deps.txt
 *.fit
 *.md5

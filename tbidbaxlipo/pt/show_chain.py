@@ -51,24 +51,24 @@ def plot_emcee_fits_subplots(gf, sampler):
 def plot_emcee_fits(gf, sampler):
     """Plot fits from the MCMC chain vs. the data."""
     set_fig_params_for_publication()
-    fig = plt.figure(figsize=(3, 3), dpi=300)
-    plt.ylabel('$F/F_0$')
-    plt.xlabel(r'Time (sec $\times 10^3$)')
-    plt.ylim([0.7, 5.2])
-    plt.xlim([0, gf.time[-1] + 500])
-    ax = plt.gca()
-    ax.set_xticks(np.linspace(0, 1e4, 6))
-    ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
-    plt.subplots_adjust(bottom=0.24, left=0.21)
-    # Plot the different observables
-    for cond_ix in range(gf.data.shape[0]):
-        for obs_ix in range(gf.data.shape[1]):
+    for obs_ix in range(gf.data.shape[1]):
+        fig = plt.figure(figsize=(3, 3), dpi=300)
+        plt.ylabel('$F/F_0$')
+        plt.xlabel(r'Time (sec $\times 10^3$)')
+        #plt.ylim([0.7, 5.2])
+        plt.xlim([0, gf.time[-1] + 500])
+        ax = plt.gca()
+        #ax.set_xticks(np.linspace(0, 1e4, 6))
+        #ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
+        plt.subplots_adjust(bottom=0.24, left=0.21)
+        # Plot the different observables
+        for cond_ix in range(gf.data.shape[0]):
             data = gf.data[cond_ix, obs_ix, :]
             plt.plot(gf.time, data, 'k', linewidth=1)
 
-    # Plot the final point (should probably plot max likelihood instead)
-    gf.plot_func(sampler.flatchain[0,-1,:])
-    format_axis(ax)
+        # Plot the final point (should probably plot max likelihood instead)
+        gf.plot_func(sampler.flatchain[0,-1,:], obs_ix=obs_ix)
+        format_axis(ax)
 
 if __name__ == '__main__':
 
@@ -87,8 +87,8 @@ if __name__ == '__main__':
 
     # Show plots
     plt.ion()
-    triangle_plots(gf, sampler)
-    plot_chain_convergence(sampler)
+    #triangle_plots(gf, sampler)
+    #plot_chain_convergence(sampler)
     plot_emcee_fits(gf, sampler)
-    plot_emcee_fits_subplots(gf, sampler)
+    #plot_emcee_fits_subplots(gf, sampler)
 
