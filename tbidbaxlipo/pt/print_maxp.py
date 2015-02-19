@@ -9,7 +9,7 @@ import numpy as np
 file_list = sys.argv[1:]
 maxp_list = []
 for filename in file_list:
-    print(filename)
+    print("Loading: %s" % filename)
     basename = os.path.basename(filename)
     with open(filename) as f:
         (gf, sampler) = pickle.load(f)
@@ -22,4 +22,6 @@ for filename in file_list:
 # Sort on the probability
 sorted_maxp = sorted(maxp_list, key=lambda tup: tup[1], reverse=True)
 
-print sorted_maxp
+print("")
+for (filename, maxp) in sorted_maxp:
+    print("%s: %s" % (maxp, filename))
