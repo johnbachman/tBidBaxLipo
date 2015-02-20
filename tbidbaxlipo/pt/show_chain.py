@@ -55,13 +55,13 @@ def plot_emcee_fits(gf, sampler, sample=True, burn=None, nsamples=100):
     # If we're plotting samples, get the indices now and use them for
     # all observables
     if sample:
-        nsteps = sampler.flatchain.shape[1]
+        print sampler.chain.shape
+        (nwalkers, nsteps) = sampler.chain.shape[1:3]
         if burn is None:
-            burn_steps = int(nsteps / 2)
-        else:
-            nwalkers = sampler.chain.shape[1]
-            burn_steps = nwalkers * burn
-        rand_indices = np.random.randint(burn, nsteps, nsamples)
+            burn = int(nsteps / 2)
+
+        walker_indices = np.random.randint(0, nwalkers, size=nsamples)
+        step_indices = np.random.randint(burn, nsteps, size=nsamples)
 
     for obs_ix in range(gf.data.shape[1]):
         fig = plt.figure(figsize=(3, 3), dpi=300)
@@ -77,13 +77,23 @@ def plot_emcee_fits(gf, sampler, sample=True, burn=None, nsamples=100):
         for cond_ix in range(gf.data.shape[0]):
             data = gf.data[cond_ix, obs_ix, :]
             plt.plot(gf.time, data, 'k', linewidth=1)
-
+        # Colors for different observables
+        obs_colors = ['r', 'g', 'b', 'k']
+        # If we're plotting samples:
         if sample:
-            for rand_ix in rand_indices:
-                gf.plot_func(sampler.flatchain[0, rand_ix, :], obs_ix=obs_ix, alpha=0.1)
-        else:
-            # Plot the final point (should probably plot max likelihood instead)
-            gf.plot_func(sampler.flatchain[0,-1,:], obs_ix=obs_ix)
+            for i in xrange(nsamples):
+                p = sampler.chain[0, walker_indices[i], step_indices[i], :]
+                plot_args = {'color': obs_colors[obs_ix], 'alpha': 0.1}
+                gf.plot_func(p, obs_ix=obs_ix, plot_args=plot_args)
+
+        # Plot the maximum a posteriori fit
+        maxp_flat_ix = np.argmax(sampler.lnprobability[0])
+        maxp_ix = np.unravel_index(maxp_flat_ix,
+                                   sampler.lnprobability[0].shape)
+        maxp = sampler.lnprobability[0][maxp_ix]
+        plot_args = {'color': 'm', 'alpha': 1}
+        gf.plot_func(sampler.chain[0, maxp_ix[0], maxp_ix[1]], obs_ix=obs_ix,
+                     plot_args=plot_args)
 
         format_axis(ax)
 
@@ -106,6 +116,6 @@ if __name__ == '__main__':
     plt.ion()
     #triangle_plots(gf, sampler)
     plot_chain_convergence(sampler)
-    plot_emcee_fits(gf, sampler, sample=True)
+    plot_emcee_fits(gf, sampler, burn=145, sample=True)
     #plot_emcee_fits_subplots(gf, sampler)
 
