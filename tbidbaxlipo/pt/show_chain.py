@@ -114,7 +114,7 @@ if __name__ == '__main__':
 
     # Show plots
     plt.ion()
-    #triangle_plots(gf, sampler)
+    triangle_plots(gf, sampler)
     plot_chain_convergence(sampler)
     plot_emcee_fits(gf, sampler, burn=145, sample=True)
     #plot_emcee_fits_subplots(gf, sampler)
