@@ -2,6 +2,7 @@ from parse_data import df
 import numpy as np
 from copy import deepcopy
 from matplotlib import pyplot as plt
+from calculate_error_variance import calc_err_var_cubic
 
 # There are a number of outliers in the FRET data that Justin attributes
 # to debris floating in the cuvette that produces momentary spikes. Here
@@ -31,6 +32,17 @@ time_126 = df_pre[('126', 'FRET', 'TIME')].values
 data_126 = np.zeros((1, 2, len(time_126)))
 data_126[0, 0, :] = df_pre[('126', 'NBD', 'VALUE')].values
 data_126[0, 1, :] = df_pre[('126', 'FRET', 'VALUE')].values
+
+# Calculate the prior on standard error of the data by running polynomial
+# fits on the final points
+data_54_sigma = np.zeros((1, 2))
+data_54_sigma[0, 0] = calc_err_var_cubic(data_54[0, 0, :], last_n_pts=80)
+data_54_sigma[0, 1] = calc_err_var_cubic(data_54[0, 1, :], last_n_pts=80)
+
+data_126_sigma = np.zeros((1, 2))
+data_126_sigma[0, 0] = calc_err_var_cubic(data_126[0, 0, :], last_n_pts=80)
+data_126_sigma[0, 1] = calc_err_var_cubic(data_126[0, 1, :], last_n_pts=80)
+
 
 def plot_outliers():
     plt.ion()
