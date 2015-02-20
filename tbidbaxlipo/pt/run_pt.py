@@ -24,7 +24,9 @@ if __name__ == '__main__':
     data_module = sys.modules[data_args['module']]
     # Get the relevant variables from the module containing the data
     data_var = data_module.__dict__[data_args['data_var']]
+    data_sigma_var = data_module.__dict__[data_args['data_sigma_var']]
     time_var = data_module.__dict__[data_args['time_var']]
+
     # Get the name of the variable containing the initial conditions vector,
     # which may not exist
     ic_var_name = data_args['initial_condition_var']

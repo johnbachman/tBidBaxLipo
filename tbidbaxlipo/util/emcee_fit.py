@@ -66,13 +66,14 @@ def likelihood(position, gf):
                 continue
             # Get the data slice we want
             data = gf.data[cond_ix, obs_ix, :]
-            # Otherwise, calculate the log-likelihood at each point
-            loglkl = ((data - ysim) ** 2) / (2 * 0.2**2)
+            # Get the appropriate SD for this data slice
+            sigma = gf.data_sigma[cond_ix, obs_ix]
+            # Calculate the log-likelihood
+            loglkl = ((data - ysim) ** 2) / (2. * sigma ** 2)
             # Filter out the NaNs...
             filt_loglkl = loglkl[~np.isnan(loglkl)]
             # Take the sum
             err += -np.sum(filt_loglkl)
-                # and take the sum
 
     return err
 
@@ -89,6 +90,9 @@ class GlobalFit(object):
         The time vector.
     data : list of np.array
         The experimental timecourses to fit.
+    data_sigma : np.array
+        Array of values with dimension corresponding to data indicating the
+        standard deviation of the data.
     params : dict of lists, or None
         The keys to the dict should be names of parameters in the PySB model
         (e.g., initial conditions); each value should be a list containing
@@ -115,7 +119,7 @@ class GlobalFit(object):
         A solver object used to run the model.
     """
 
-    def __init__(self, builder, time, data, params, obs_name,
+    def __init__(self, builder, time, data, data_sigma, params, obs_name,
                  obs_type='Expression'):
         # Check that the dimensions of everything that has been provided matches
         # Check that the time vector matches the 3rd dimension of the data
@@ -143,9 +147,17 @@ class GlobalFit(object):
             raise ValueError("The number of observables (%s) must match the "
                              "second dimension of the data matrix (%s)" %
                              (len(obs_name), data.shape[1]))
+        # Check that there is a sigma in the data_sigma matrix for every
+        # timecourse in data
+        if data_sigma.shape[0] != data.shape[0] and \
+           data_sigma.shape[1] != data.shape[1]:
+            raise ValueError("data_sigma must specify an error SD for every "
+                             "timecourse in the data matrix.")
+
         self.builder = builder
         self.time = time
         self.data = data
+        self.data_sigma = data_sigma
         self.params = params
         self.obs_name = obs_name
         self.result = None
@@ -243,7 +255,7 @@ class GlobalFit(object):
             plt.plot(self.time, s.yobs[self.obs_name], color='r',
                      alpha=alpha)
 
-    def plot_func(self, x, alpha=1.0, obs_ix=0):
+    def plot_func(self, x, obs_ix=0, plot_args=None):
         """Plots the timecourses with the parameter values given by x.
 
         Parameters
@@ -256,6 +268,8 @@ class GlobalFit(object):
         """
         x = 10 ** x
         timeoffset = None
+        if plot_args is None:
+            plot_args = {}
         # Iterate over each entry in the data array
         for cond_ix in range(self.data.shape[0]):
             # Set the parameters appropriately for the simulation:
@@ -285,10 +299,10 @@ class GlobalFit(object):
 
             if self.use_expr:
                 plt.plot(self.solver.tspan, self.solver.yexpr[obs_name],
-                         color=obs_colors[obs_ix], alpha=alpha)
+                         **plot_args)
             else:
                 plt.plot(self.solver.tspan, self.solver.yobs[obs_name],
-                         color=obs_colors[obs_ix], alpha=alpha)
+                         **plot_args)
 
 def ens_sample(gf, nwalkers, burn_steps, sample_steps, threads=1,
                pos=None, random_state=None):
