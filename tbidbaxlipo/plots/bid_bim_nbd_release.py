@@ -10,8 +10,10 @@ import itertools
 import titration_fits as tf
 import scipy.stats
 import scipy.signal
-from tbidbaxlipo.util.error_propagation import calc_ratio_sd
+from tbidbaxlipo.util.error_propagation import calc_ratio_sd, calc_ratio_mean_sd
 from tbidbaxlipo.util import moving_average
+from tbidbaxlipo.util import set_fig_params_for_publication, format_axis, \
+                             fontsize
 
 font = {'size': 10}
 matplotlib.rc('font', **font)
@@ -106,7 +108,6 @@ params_dict = {'c1_to_c2_k': 1e-4, 'c1_scaling': 2,
                'c0_to_c1_k': 2e-3}
 
 def plot_2conf_fits(activator):
-    plt.ion()
     #nbd_sites = ['15', '54', '62', '68', '79', '126', '138', '175']
     nbd_sites = ['3', '5', '15', '36', '47', '54', '62', '68', '79', '120',
                  '122', '126', '138', '151', '175', '179', '184', '188']
@@ -175,7 +176,6 @@ def plot_2conf_fits(activator):
     return fit_results
 
 def plot_3conf_fits(activator):
-    plt.ion()
     #nbd_sites = ['15', '54', '62', '68', '79', '126', '138', '175']
     nbd_sites = ['3', '5', '15', '36', '47', '54', '62', '68', '79', '120',
                  '122', '126', '138', '151', '175', '179', '184', '188']
@@ -305,14 +305,92 @@ def plot_3conf_fits(activator):
 
     return fit_results
 
-def plot_initial_rates(activator):
-    plt.ion()
-    #nbd_sites = ['WT', '15']
+def plot_endpoints(last_n_pts=3):
+    nbd_sites = ['3', '5', '15', '36', '47', '54', '62', '68', '79',
+                 '120', '122', '126', '138', '151', '175', '179', '184', '188']
+    replicates = range(1, 4)
+    activators = ['Bid', 'Bim']
+    # Matrix for storing the endpoints for all mutants, replicates
+    r_endpts = np.zeros((len(nbd_sites), len(replicates)))
+    n_endpts = np.zeros((len(nbd_sites), len(replicates)))
+    # Figure setup
+    set_fig_params_for_publication()
+    plt.figure('Release endpt', figsize=(4, 1.5), dpi=300) # Release figure
+    plt.ylabel(r'\% Dye Release' + '\n(normalized to WT)',
+               fontsize=fontsize, multialignment='center')
+
+    plt.figure('NBD endpt', figsize=(4, 1.5), dpi=300) # NBD figure
+    plt.ylabel('NBD F/$F_0$', fontsize=fontsize)
+    bar_colors = {'Bid': 'gray', 'Bim': 'black'}
+
+    # For both activators...
+    for act_ix, activator in enumerate(activators):
+        # Get the wild type release as a baseline, averaging over last n pts
+        wt_endpts = []
+        for rep_num in replicates:
+            ry = df[(activator, 'Release', 'WT', rep_num, 'VALUE')].values
+            wt_endpts.append(np.mean(ry[-last_n_pts:]))
+        wt_mean = np.mean(wt_endpts)
+        wt_sd = np.std(wt_endpts, ddof=1)
+
+        # Now iterate over all of the mutants
+        for nbd_index, nbd_site in enumerate(nbd_sites):
+            # Iterate over the replicates for this mutant
+            # Note that rep_num is the 1-indexed number of the replicate
+            # (1, 2, 3) whereas the index is the 0-based index into the array
+            # for the replicates (0, 1, 2)
+            for rep_index, rep_num in enumerate(replicates):
+                # Get the release data
+                ry = df[(activator, 'Release', nbd_site,
+                        rep_num, 'VALUE')].values
+                ny = df[(activator, 'NBD', nbd_site, rep_num, 'VALUE')].values
+                # Fill in entry for this replicate with mean over last n pts
+                r_endpts[nbd_index, rep_index] = np.mean(ry[-last_n_pts:])
+                n_endpts[nbd_index, rep_index] = np.mean(ny[-last_n_pts:])
+
+            # Bar plot of release endpoint
+            plt.figure('Release endpt')
+            # Calculate percent release relative to wild type
+            rel_mean = np.mean(r_endpts[nbd_index, :])
+            rel_sd = np.std(r_endpts[nbd_index, :], ddof=1)
+            (rel_norm_mean, rel_norm_sd) = \
+                        calc_ratio_mean_sd(rel_mean, rel_sd, wt_mean, wt_sd)
+            plt.bar(range(nbd_index*3 + act_ix, (nbd_index*3) + 1 + act_ix),
+                    rel_norm_mean * 100,
+                    width=1, color=bar_colors[activator], linewidth=0,
+                    ecolor='k', capsize=1.5, yerr=rel_norm_sd * 100)
+
+            # Bar plot of NBD endpoint
+            plt.figure('NBD endpt')
+            plt.bar(range(nbd_index*3 + act_ix, (nbd_index*3) + 1 + act_ix),
+                    np.mean(n_endpts[nbd_index, :]),
+                    width=1, color=bar_colors[activator], linewidth=0,
+                    ecolor='k', capsize=1.5,
+                    yerr=np.std(n_endpts[nbd_index, :], ddof=1))
+
+    fig_names = ['Release endpt', 'NBD endpt']
+    for fig_name in fig_names:
+        plt.figure(fig_name)
+        plt.subplots_adjust(left=0.11, bottom=0.10, right=0.97, top=0.94)
+        ax = plt.gca()
+        ax.set_xlim([0, len(nbd_sites) * 3])
+        ax.xaxis.set_ticks_position('none')
+        ax.yaxis.set_ticks_position('left')
+        ax.xaxis.set_tick_params(which='both', labelsize=fontsize, pad=2,
+                length=2, width=0.5)
+        ax.yaxis.set_tick_params(which='both', direction='out',
+                        labelsize=fontsize, pad=0, length=2, width=0.5)
+        ax.xaxis.labelpad = 2
+        ax.yaxis.labelpad = 2
+        ax.set_xticks(np.arange(1, 1 + len(nbd_sites) * 3, 3))
+        ax.set_xticklabels(nbd_sites)
+
+def plot_initial_rates(activator, num_pts=4):
+    #nbd_sites = ['3', '5', '15']
     nbd_sites = ['WT', '3', '5', '15', '36', '47', '54', '62', '68', '79',
                  '120', '122', '126', '138', '151', '175', '179', '184', '188']
     replicates = range(1, 4)
     count = 0
-    num_pts = 4
     fit_results =[]
 
     for nbd_index, nbd_site in enumerate(nbd_sites):
@@ -464,7 +542,6 @@ def plot_initial_rates(activator):
     return fit_results
 
 def plot_peak_slopes(activator):
-    plt.ion()
     #nbd_sites = ['WT', '3', '5', '54', '62', '68']
     nbd_sites = ['WT', '3', '5', '15', '36', '40', '47', '54', '62', '68',
                  '79', '120', '122', '126', '138', '151', '175', '179',
@@ -578,7 +655,6 @@ def plot_peak_slopes(activator):
     """
 
 def plot_filtered_data(activator):
-    plt.ion()
     nbd_sites = ['15', '54']
     #nbd_sites = ['WT', '3', '5', '15', '36', '40', '47', '54', '62', '68',
     #             '79', '120', '122', '126', '138', '151', '175', '179',
@@ -610,10 +686,12 @@ def plot_filtered_data(activator):
 
 
 if __name__ == '__main__':
+    plt.ion()
+    plot_endpoints()
     #plot_initial_rates('Bid')
     #plot_initial_rates('Bim')
     #plot_filtered_data('Bid')
-    fr = plot_3conf_fits('Bid')
+    #fr = plot_3conf_fits('Bid')
     #plot_3conf_fits('Bid')
     #plot_peak_slopes('Bim')
     #plot_derivatives('Bim')
