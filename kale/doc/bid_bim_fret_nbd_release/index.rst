@@ -7,8 +7,6 @@ Data from Justin Kale. Experiments done on PTI. All reps done with
 different liposome preps; reps for Bid and Bim are matched to the
 same liposome prep.
 
-Contents:
-
 .. toctree::
     :maxdepth: 3
 

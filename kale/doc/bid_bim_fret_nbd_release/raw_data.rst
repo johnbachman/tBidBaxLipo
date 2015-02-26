@@ -15,6 +15,7 @@ By replicate
 
 .. plot::
 
-    from tbidbaxlipo.plots.bid_bim_fret_nbd_release import *
-    plot_all_by_replicate()
+    from tbidbaxlipo.plots.nbd_bax_analysis import plot_all_by_replicate
+    from tbidbaxlipo.data.parse_bid_bim_fret_nbd_release import df, nbd_residues
+    plot_all_by_replicate(df, nbd_residues, ['Release', 'NBD', 'FRET'])
 
