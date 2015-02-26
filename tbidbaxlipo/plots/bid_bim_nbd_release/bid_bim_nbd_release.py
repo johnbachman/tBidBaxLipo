@@ -67,42 +67,8 @@ def _mean_sd(p_name, builder, pysb_fit):
 
     return (p_mean, p_sd)
 
-def plot_all():
-    for mutant in nbd_residues:
-        plt.figure(figsize=(11, 5))
-        # Make the release plot
-        plt.subplot(1, 2, 1)
-        for activator in ['Bid', 'Bim']:
-            for i in range(1, 4):
-                t = df[(activator, 'Release', mutant, i, 'TIME')]
-                v = df[(activator, 'Release', mutant, i, 'VALUE')]
-                plt.plot(t, v, label='%s Rep %d' % (activator, i),
-                        color=line_colors[activator],
-                        linestyle=line_styles[i])
-
-                plt.xlabel('Time (sec)')
-                plt.ylabel('Pct. Release')
-                plt.title('Release for NBD-%s-Bax' % mutant)
-                plt.legend(loc='lower right')
-        # There is no NBD curve for WT Bax, so skip the NBD
-        # plot
-        if mutant == 'WT':
-            continue
-        # Make the NBD plot
-        plt.subplot(1, 2, 2)
-        for activator in ['Bid', 'Bim']:
-            for i in range(1, 4):
-                t = df[(activator, 'NBD', mutant, i, 'TIME')]
-                v = df[(activator, 'NBD', mutant, i, 'VALUE')]
-                plt.plot(t, v, label='%s Rep %d' % (activator, i),
-                        color=line_colors[activator],
-                        linestyle=line_styles[i])
-                plt.xlabel('Time (sec)')
-                plt.ylabel('F/F0')
-                plt.title('F/F0 for NBD-%s-Bax' % mutant)
-                plt.legend(loc='lower right')
-        plt.tight_layout()
-        plt.show()
+def plot_all(file_basename=None):
+    nba.plot_all(df, nbd_residues, file_basename=file_basename)
 
 params_dict = {'c1_to_c2_k': 1e-4, 'c1_scaling': 2,
                'c0_to_c1_k': 2e-3}
@@ -305,21 +271,21 @@ def plot_3conf_fits(activator):
 
     return fit_results
 
-def plot_endpoints(last_n_pts=3):
-    nbd_sites = ['3', '5', '15', '36', '47', '54', '62', '68', '79',
-                 '120', '122', '126', '138', '151', '175', '179', '184', '188']
+def plot_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None):
     replicates = range(1, 4)
     activators = ['Bid', 'Bim']
+    # Filter out the WT residue from the list, if its there
+    nbd_sites_no_wt = [s for s in nbd_sites if s != 'WT']
     # Matrix for storing the endpoints for all mutants, replicates
-    r_endpts = np.zeros((len(nbd_sites), len(replicates)))
-    n_endpts = np.zeros((len(nbd_sites), len(replicates)))
+    r_endpts = np.zeros((len(nbd_sites_no_wt), len(replicates)))
+    n_endpts = np.zeros((len(nbd_sites_no_wt), len(replicates)))
     # Figure setup
     set_fig_params_for_publication()
-    plt.figure('Release endpt', figsize=(4, 1.5), dpi=300) # Release figure
+    plt.figure('release_endpt', figsize=(4, 1.5), dpi=300) # Release figure
     plt.ylabel(r'\% Dye Release' + '\n(normalized to WT)',
                fontsize=fontsize, multialignment='center')
 
-    plt.figure('NBD endpt', figsize=(4, 1.5), dpi=300) # NBD figure
+    plt.figure('nbd_endpt', figsize=(4, 1.5), dpi=300) # NBD figure
     plt.ylabel('NBD F/$F_0$', fontsize=fontsize)
     bar_colors = {'Bid': 'gray', 'Bim': 'black'}
 
@@ -334,7 +300,9 @@ def plot_endpoints(last_n_pts=3):
         wt_sd = np.std(wt_endpts, ddof=1)
 
         # Now iterate over all of the mutants
-        for nbd_index, nbd_site in enumerate(nbd_sites):
+        for nbd_index, nbd_site in enumerate(nbd_sites_no_wt):
+            if nbd_site == 'WT':
+                continue
             # Iterate over the replicates for this mutant
             # Note that rep_num is the 1-indexed number of the replicate
             # (1, 2, 3) whereas the index is the 0-based index into the array
@@ -349,7 +317,7 @@ def plot_endpoints(last_n_pts=3):
                 n_endpts[nbd_index, rep_index] = np.mean(ny[-last_n_pts:])
 
             # Bar plot of release endpoint
-            plt.figure('Release endpt')
+            plt.figure('release_endpt')
             # Calculate percent release relative to wild type
             rel_mean = np.mean(r_endpts[nbd_index, :])
             rel_sd = np.std(r_endpts[nbd_index, :], ddof=1)
@@ -361,19 +329,19 @@ def plot_endpoints(last_n_pts=3):
                     ecolor='k', capsize=1.5, yerr=rel_norm_sd * 100)
 
             # Bar plot of NBD endpoint
-            plt.figure('NBD endpt')
+            plt.figure('nbd_endpt')
             plt.bar(range(nbd_index*3 + act_ix, (nbd_index*3) + 1 + act_ix),
                     np.mean(n_endpts[nbd_index, :]),
                     width=1, color=bar_colors[activator], linewidth=0,
                     ecolor='k', capsize=1.5,
                     yerr=np.std(n_endpts[nbd_index, :], ddof=1))
 
-    fig_names = ['Release endpt', 'NBD endpt']
+    fig_names = ['release_endpt', 'nbd_endpt']
     for fig_name in fig_names:
         plt.figure(fig_name)
         plt.subplots_adjust(left=0.11, bottom=0.10, right=0.97, top=0.94)
         ax = plt.gca()
-        ax.set_xlim([0, len(nbd_sites) * 3])
+        ax.set_xlim([0, len(nbd_sites_no_wt) * 3])
         ax.xaxis.set_ticks_position('none')
         ax.yaxis.set_ticks_position('left')
         ax.xaxis.set_tick_params(which='both', labelsize=fontsize, pad=2,
@@ -382,8 +350,9 @@ def plot_endpoints(last_n_pts=3):
                         labelsize=fontsize, pad=0, length=2, width=0.5)
         ax.xaxis.labelpad = 2
         ax.yaxis.labelpad = 2
-        ax.set_xticks(np.arange(1, 1 + len(nbd_sites) * 3, 3))
-        ax.set_xticklabels(nbd_sites)
+        ax.set_xticks(np.arange(1, 1 + len(nbd_sites_no_wt) * 3, 3))
+        ax.set_xticklabels(nbd_sites_no_wt)
+        plt.savefig('%s_%s.pdf' % (file_basename, fig_name))
 
 def plot_initial_rates(activator, num_pts=4):
     #nbd_sites = ['3', '5', '15']
@@ -392,98 +361,110 @@ def plot_initial_rates(activator, num_pts=4):
     replicates = range(1, 4)
     count = 0
     fit_results =[]
-
+    # Lists for storing all of the various fits, slopes
+    r_slopes_all = np.zeros((len(nbd_sites), len(replicates)))
+    n_slopes_all = np.zeros((len(nbd_sites), len(replicates)))
+    r_errs_all = np.zeros((len(nbd_sites), len(replicates)))
+    n_errs_all = np.zeros((len(nbd_sites), len(replicates)))
+    r_max_all = np.zeros((len(nbd_sites), len(replicates)))
+    n_max_all = np.zeros((len(nbd_sites), len(replicates)))
+    # Iterate over all of the mutants
     for nbd_index, nbd_site in enumerate(nbd_sites):
-        rn_ratios = []
-        nr_ratios = []
-        r_maxs = []
-        n_maxs = []
-        rn_errs = []
-        nr_errs = []
-        r_errs = []
-        n_errs = []
-
-        for rep_index in replicates:
-            rt = df[(activator, 'Release', nbd_site, rep_index, 'TIME')].values
-            ry = df[(activator, 'Release', nbd_site, rep_index, 'VALUE')].values
+        # Iterate over the replicates for this mutant
+        # Note that rep_num is the 1-indexed number of the replicate
+        # (1, 2, 3) whereas the index is the 0-based index into the array for
+        # the replicates (0, 1, 2)
+        for rep_index, rep_num in enumerate(replicates):
+            # Get the release data
+            rt = df[(activator, 'Release', nbd_site, rep_num, 'TIME')].values
+            ry = df[(activator, 'Release', nbd_site, rep_num, 'VALUE')].values
+            # Fit line to first n pts
             r_lin = scipy.stats.linregress(rt[0:num_pts], ry[0:num_pts])
             r_int = r_lin[1]
-            r_max = np.max(ry)
+            # Store the maximum release value
+            r_max_all[nbd_index, rep_index] = np.max(ry)
+            # Store the slope of the line
             r_slope = r_lin[0]
-            r_maxs.append(r_slope)
+            r_slopes_all[nbd_index, rep_index] = r_slope
+            # Uncertainty associated with the slope
             r_slope_err = r_lin[4]
-            r_errs.append(r_slope_err)
+            r_errs_all[nbd_index, rep_index] = r_slope_err
 
             tb_param_dict = {'Initial rate (first %d pts)' % num_pts :
                              (r_slope, r_slope_err)}
             fit_results.append(FitResult(None, activator, nbd_site,
-                                        rep_index, 'Tb release', tb_param_dict,
+                                        rep_num, 'Tb release', tb_param_dict,
                                         None, None))
-
+            # Now do the NBD slope calculation, but ignore the WT (since there
+            # is no NBD label)
             if nbd_site == 'WT':
-                n_maxs.append(0)
-                n_errs.append(0)
-                rn_ratios.append(0)
-                rn_errs.append(0)
-                nr_ratios.append(0)
-                nr_errs.append(0)
+                n_max_all[nbd_index, rep_index] = 0
+                n_errs_all[nbd_index, rep_index] = 0
+                n_slopes_all[nbd_index, rep_index] = 0
             else:
-                nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
-                ny = df[(activator, 'NBD', nbd_site, rep_index, 'VALUE')].values
-                # Fit line to first 10 pts
+                # Get the NBD data
+                nt = df[(activator, 'NBD', nbd_site, rep_num, 'TIME')].values
+                ny = df[(activator, 'NBD', nbd_site, rep_num, 'VALUE')].values
+                # Fit line to first n pts
                 n_lin = scipy.stats.linregress(nt[0:num_pts], ny[0:num_pts])
-                n_max = np.max(ny)
-                n_int = n_lin[1]
+                # Maximum NBD F/F0
+                n_max_all[nbd_index, rep_index] = np.max(ny)
+                # Slope and intercept
                 n_slope = n_lin[0]
-                n_maxs.append(n_slope)
+                n_slopes_all[nbd_index, rep_index] = n_slope
+                n_int = n_lin[1]
+                # Uncertainty associated with slope
                 n_slope_err = n_lin[4]
-                n_errs.append(n_slope_err)
+                n_errs_all[nbd_index, rep_index] = n_slope_err
 
+                """
+                # Calculate release to NBD rate ratio
                 rn_ratio = r_slope / n_slope
+                # Calculate error associated with the ratio by sampling
                 rn_err = calc_ratio_sd(r_slope, r_slope_err, n_slope,
                                        n_slope_err)
                 rn_ratios.append(rn_ratio)
                 rn_errs.append(rn_err)
-
+                # Calculate NBD to release rate ratio
                 nr_ratio = n_slope / r_slope
+                # Calculate error associated with the ratio by sampling
                 nr_err = calc_ratio_sd(n_slope, n_slope_err, r_slope,
                                        r_slope_err)
                 nr_ratios.append(nr_ratio)
                 nr_errs.append(nr_err)
-
+                """
                 nbd_param_dict = {'Initial rate (first %d pts)' % num_pts :
                                   (n_slope, n_slope_err)}
                 fit_results.append(FitResult(None, activator, nbd_site,
-                                        rep_index, 'NBD', nbd_param_dict,
+                                        rep_num, 'NBD', nbd_param_dict,
                                         None, None))
-
-            #print "%s, rep %d, Tb slope: %f" % (nbd_site, rep_index, r_slope)
-            #print "%s, rep %d, NBD slope: %f" % (nbd_site, rep_index, n_slope)
-
+            """
+            # Make subpanel showing linear fit for release slope
             plt.figure('%s, NBD-%s-Bax initial rates' % (activator, nbd_site),
                        figsize=(12, 5))
             plt.subplot(1, 2, 1)
             plt.plot(rt[0:num_pts], ry[0:num_pts], linestyle='', marker='.',
-                     color=rep_colors[rep_index])
+                     color=rep_colors[rep_num])
             plt.plot(rt[0:num_pts], r_int + r_slope * rt[0:num_pts],
-                     color=rep_colors[rep_index],
-                     label='%s Rep %d' % (activator, rep_index))
+                     color=rep_colors[rep_num],
+                     label='%s Rep %d' % (activator, rep_num))
             plt.title('NBD-%s-Bax, Tb initial rate' % (nbd_site))
             plt.legend(loc='lower right')
-
+            # Make subpanel showing linear fit for NBD slope
             if nbd_site != 'WT':
                 plt.subplot(1, 2, 2)
                 plt.plot(nt[0:num_pts], ny[0:num_pts], linestyle='', marker='.',
-                         color=rep_colors[rep_index])
+                         color=rep_colors[rep_num])
                 plt.plot(nt[0:num_pts], n_int + n_slope * nt[0:num_pts],
-                         color=rep_colors[rep_index],
-                         label='%s Rep %d' % (activator, rep_index))
+                         color=rep_colors[rep_num],
+                         label='%s Rep %d' % (activator, rep_num))
                 plt.xlabel('Time (sec)')
                 plt.ylabel('$F/F_0$')
                 plt.title('NBD-%s-Bax, NBD initial rate' % (nbd_site))
                 plt.legend(loc='lower right')
-
-        # NBD/Tb ratio
+            """
+        """
+        # Bar plot of NBD/Tb ratio
         plt.figure("NBD/Tb initial rate ratio", figsize=(12,6))
         plt.title("NBD/Tb initial rate ratio")
         plt.ylim((-0.08, 0.58))
@@ -495,7 +476,7 @@ def plot_initial_rates(activator, num_pts=4):
             plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6), nr_ratios,
                     width=1, color='g', ecolor='k',
                     yerr=nr_errs)
-        # Tb/NBD ratio
+        # Bar plot of Tb/NBD ratio
         plt.figure("Tb/NBD initial rate ratio", figsize=(12,6))
         plt.title("Tb/NBD initial rate ratio")
         plt.ylim((-100, 120))
@@ -507,37 +488,67 @@ def plot_initial_rates(activator, num_pts=4):
             plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6), rn_ratios,
                     width=1, color='g', ecolor='k',
                     yerr=rn_errs)
-        # Tb initial rate
-        plt.figure("Tb initial rate", figsize=(12, 6))
-        plt.title('Tb initial rate')
+        """
+    # Bar plot of Tb initial rate
+    plt.figure("Tb initial rate", figsize=(12, 6))
+    plt.title('Tb initial rate')
+    for nbd_index, nbd_site in enumerate(nbd_sites):
         if activator == 'Bid':
-            plt.bar(range(nbd_index*7, (nbd_index*7) + 3), r_maxs,
+            plt.bar(range(nbd_index*7, (nbd_index*7) + 3),
+                    r_slopes_all[nbd_index, :],
                     width=1, color='r', ecolor='k',
-                    yerr=r_errs)
+                    yerr=r_errs_all[nbd_index, :])
         else:
-            plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6), r_maxs,
+            plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6),
+                    r_slopes_all[nbd_index, :],
                     width=1, color='g', ecolor='k',
-                    yerr=r_errs)
-        # NBD initial rate
-        plt.figure("NBD initial rate", figsize=(12, 6))
-        plt.title('NBD initial rate')
+                    yerr=r_errs_all[nbd_index, :])
+    # Bar plot of NBD initial rate
+    plt.figure("NBD initial rate", figsize=(12, 6))
+    plt.title('NBD initial rate')
+    for nbd_index, nbd_site in enumerate(nbd_sites):
         if activator == 'Bid':
-            plt.bar(range(nbd_index*7, (nbd_index*7) + 3), n_maxs,
+            plt.bar(range(nbd_index*7, (nbd_index*7) + 3),
+                    n_slopes_all[nbd_index, :],
                     width=1, color='r', ecolor='k',
-                    yerr=n_errs)
+                    yerr=n_errs_all[nbd_index, :])
         else:
-            plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6), n_maxs,
+            plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6),
+                    n_slopes_all[nbd_index, :],
                     width=1, color='g', ecolor='k',
-                    yerr=n_errs)
-
+                    yerr=n_errs_all[nbd_index, :])
+    # Do some formatting for the bar plots
     num_sites = len(nbd_sites)
-    fig_names = ["NBD/Tb initial rate ratio", "Tb/NBD initial rate ratio",
-                 "Tb initial rate", "NBD initial rate"]
+    #fig_names = ["NBD/Tb initial rate ratio", "Tb/NBD initial rate ratio",
+    #             "Tb initial rate", "NBD initial rate"]
+    fig_names = ["Tb initial rate", "NBD initial rate"]
     for fig_name in fig_names:
         plt.figure(fig_name)
         ax = plt.gca()
         ax.set_xticks(np.arange(3, 3 + num_sites * 7, 7))
         ax.set_xticklabels(nbd_sites)
+
+    # 2D scatter plot of NBD/Tb rates
+    plt.figure("Scatter plot")
+    for rep_index, rep_num in enumerate(replicates):
+        plt.errorbar(r_slopes_all[:,rep_index], n_slopes_all[:, rep_index],
+                xerr=r_errs_all[:, rep_index], yerr=n_errs_all[:, rep_index],
+                marker='o', color='k', linestyle='')
+    plt.xlabel('Release rate')
+    plt.ylabel('NBD rate')
+    # 2D scatter plot of NBD/Tb rates, averaged
+    plt.figure("Scatter plot, averaged")
+    r_slope_avgs = np.mean(r_slopes_all, axis=1)
+    n_slope_avgs = np.mean(n_slopes_all, axis=1)
+    r_err_avgs = np.std(r_slopes_all, axis=1)
+    n_err_avgs = np.std(n_slopes_all, axis=1)
+    plt.errorbar(r_slope_avgs, n_slope_avgs, xerr=r_err_avgs,
+                 yerr=n_err_avgs,
+            marker='o', color='k', linestyle='')
+    plt.xlabel('Release rate')
+    plt.ylabel('NBD rate')
+    for nbd_index, nbd_site in enumerate(nbd_sites):
+        plt.text(r_slope_avgs[nbd_index], n_slope_avgs[nbd_index], nbd_site)
 
     return fit_results
 
@@ -686,8 +697,10 @@ def plot_filtered_data(activator):
 
 
 if __name__ == '__main__':
-    plt.ion()
-    plot_endpoints()
+    #nbd_sites = ['3', '5', '15', '36', '47', '54', '62', '68', '79',
+    #             '120', '122', '126', '138', '151', '175', '179', '184', '188']
+    #plot_all(df, nbd_residues, file_basename='data1_raw')
+    plot_endpoints(df, nbd_residues, file_basename='data1')
     #plot_initial_rates('Bid')
     #plot_initial_rates('Bim')
     #plot_filtered_data('Bid')
