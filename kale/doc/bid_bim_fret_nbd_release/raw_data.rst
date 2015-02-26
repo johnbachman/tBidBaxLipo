@@ -1,0 +1,20 @@
+Raw data
+========
+
+By measurement type
+-------------------
+
+.. plot::
+
+    from tbidbaxlipo.plots.nbd_bax_analysis import plot_all
+    from tbidbaxlipo.data.parse_bid_bim_fret_nbd_release import df, nbd_residues
+    plot_all(df, nbd_residues, ['Release', 'NBD', 'FRET'])
+
+By replicate
+------------
+
+.. plot::
+
+    from tbidbaxlipo.plots.bid_bim_fret_nbd_release import *
+    plot_all_by_replicate()
+
