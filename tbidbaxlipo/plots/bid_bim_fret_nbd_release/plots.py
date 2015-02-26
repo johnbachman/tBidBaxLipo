@@ -1,5 +1,5 @@
 import sys
-from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
+from tbidbaxlipo.data.parse_bid_bim_fret_nbd_release import df, nbd_residues
 import tbidbaxlipo.plots.nbd_bax_analysis as nba
 from matplotlib import pyplot as plt
 
@@ -35,3 +35,4 @@ if __name__ == '__main__':
     else:
         print "Unknown plot type: %s" % plot_type
         sys.exit(1)
+
