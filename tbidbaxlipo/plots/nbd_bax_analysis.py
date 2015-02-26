@@ -86,7 +86,7 @@ def plot_nbd_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None):
     n_endpts = np.zeros((len(nbd_sites_no_wt), len(replicates)))
     # Figure setup
     set_fig_params_for_publication()
-    plt.figure('nbd_endpt', figsize=(4, 1.5), dpi=300) # NBD figure
+    plt.figure(file_basename, figsize=(4, 1.5), dpi=300) # NBD figure
     plt.ylabel('NBD F/$F_0$', fontsize=fontsize)
     bar_colors = {'Bid': 'gray', 'Bim': 'black'}
 
@@ -125,8 +125,8 @@ def plot_nbd_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None):
     ax.set_xticks(np.arange(1, 1 + len(nbd_sites_no_wt) * 3, 3))
     ax.set_xticklabels(nbd_sites_no_wt)
     if file_basename:
-        plt.savefig('%s_%s.pdf' % (file_basename, fig_name))
-        plt.savefig('%s_%s.png' % (file_basename, fig_name))
+        plt.savefig('%s.pdf' % file_basename)
+        plt.savefig('%s.png' % file_basename)
 
 def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
                            last_n_pts=3, file_basename=None):
@@ -145,7 +145,7 @@ def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
     r_endpts = np.zeros((len(nbd_sites_filt), len(replicates)))
     # Figure setup
     set_fig_params_for_publication()
-    plt.figure('release_endpt', figsize=(4, 1.5), dpi=300) # Release figure
+    plt.figure(file_basename, figsize=(4, 1.5), dpi=300) # Release figure
     # Set the yaxis label according to whether we're normalizing
     if normalized_to_wt:
         ylabel_str = r'\% Dye Release' + '\n(normalized to WT)'
@@ -207,8 +207,8 @@ def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
     ax.set_xticks(np.arange(1, 1 + len(nbd_sites_filt) * 3, 3))
     ax.set_xticklabels(nbd_sites_filt)
     if file_basename:
-        plt.savefig('%s_%s.pdf' % (file_basename, fig_name))
-        plt.savefig('%s_%s.png' % (file_basename, fig_name))
+        plt.savefig('%s.pdf' % file_basename)
+        plt.savefig('%s.png' % file_basename)
 
 
 if __name__ == '__main__':

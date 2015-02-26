@@ -25,9 +25,10 @@ if __name__ == '__main__':
     if plot_type == 'raw':
         nba.plot_all(df, nbd_residues, file_basename=file_basename)
     # Plot endpdoints
-    elif plot_type == 'endpoints':
+    elif plot_type == 'nbd_endpoint':
         nba.plot_nbd_endpoints(df, nbd_residues, last_n_pts=3,
                            file_basename=file_basename)
+    elif plot_type == 'release_endpoint':
         nba.plot_release_endpoints(df, nbd_residues, normalized_to_wt=False,
                            last_n_pts=3, file_basename=file_basename)
     # Unknown plot type
