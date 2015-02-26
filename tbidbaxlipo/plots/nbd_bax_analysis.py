@@ -1,4 +1,6 @@
 from matplotlib import pyplot as plt
+import numpy as np
+from tbidbaxlipo.util import set_fig_params_for_publication, fontsize
 
 line_colors = {'Bid': 'r', 'Bim': 'b'}
 line_styles = {1:':', 2:'-', 3:'--'}
@@ -104,8 +106,6 @@ def plot_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None):
 
         # Now iterate over all of the mutants
         for nbd_index, nbd_site in enumerate(nbd_sites_no_wt):
-            if nbd_site == 'WT':
-                continue
             # Iterate over the replicates for this mutant
             # Note that rep_num is the 1-indexed number of the replicate
             # (1, 2, 3) whereas the index is the 0-based index into the array
@@ -155,7 +155,9 @@ def plot_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None):
         ax.yaxis.labelpad = 2
         ax.set_xticks(np.arange(1, 1 + len(nbd_sites_no_wt) * 3, 3))
         ax.set_xticklabels(nbd_sites_no_wt)
-        plt.savefig('%s_%s.pdf' % (file_basename, fig_name))
+        if file_basename:
+            plt.savefig('%s_%s.pdf' % (file_basename, fig_name))
+            plt.savefig('%s_%s.png' % (file_basename, fig_name))
 
 
 if __name__ == '__main__':
