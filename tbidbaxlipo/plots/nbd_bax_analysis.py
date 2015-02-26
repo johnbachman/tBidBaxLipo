@@ -4,6 +4,7 @@ from tbidbaxlipo.util import set_fig_params_for_publication, fontsize
 from tbidbaxlipo.util.error_propagation import calc_ratio_mean_sd
 
 line_colors = {'Bid': 'r', 'Bim': 'b'}
+dtype_line_colors = {'Release':'r', 'NBD':'g', 'FRET':'b'}
 line_styles = {1:':', 2:'-', 3:'--'}
 rep_colors = {1:'r', 2:'g', 3:'b'}
 
@@ -39,6 +40,8 @@ class FitResult(object):
 
 def plot_all(df, nbd_residues, datatypes, file_basename=None):
     """Release should be first in the list of datatypes."""
+    if datatypes[0] != 'Release':
+        raise ValueError("Release should be first in the datatypes list.")
     # Some definitions
     activators = ['Bid', 'Bim']
     num_subplots = len(datatypes)
@@ -85,42 +88,70 @@ def plot_all(df, nbd_residues, datatypes, file_basename=None):
         if file_basename:
             plt.savefig('%s_%s.pdf' % (file_basename, nbd_index))
 
-def plot_all_by_replicate():
-    for mutant in nbd_residues:
-        for activator in ['Bid', 'Bim']:
+def plot_all_by_replicate(df, nbd_residues, datatypes, file_basename=None):
+    """Release should be first in the datatypes list."""
+    if datatypes[0] != 'Release':
+        raise ValueError("Release should be first in the datatypes list.")
+    # Some definitions
+    activators = ['Bid', 'Bim']
+    # Every mutant gets its own plot
+    for nbd_index, nbd_site in enumerate(nbd_residues):
+        for activator in activators:
             plt.figure(figsize=(14, 5))
+            # Each replicate gets its own subplot
+            ax2_list = []
+            nbd_max = -np.inf
+            nbd_min = np.inf
             for rep in [1, 2, 3]:
                 # Make the release plot
                 plt.subplot(1, 3, rep)
                 ax1 = plt.gca()
-
-                r_t = df[(activator, 'Release', mutant, rep, 'TIME')]
-                r_v = df[(activator, 'Release', mutant, rep, 'VALUE')]
-                f_t = df[(activator, 'FRET', mutant, rep, 'TIME')]
-                f_v = df[(activator, 'FRET', mutant, rep, 'VALUE')]
-                n_t = df[(activator, 'NBD', mutant, rep, 'TIME')]
-                n_v = df[(activator, 'NBD', mutant, rep, 'VALUE')]
-
-                ax1.plot(r_t, r_v, label='%s, %s' % (activator, 'Release'),
-                        color=dtype_line_colors['Release'])
-                ax1.plot(f_t, f_v, label='%s, %s' % (activator, 'FRET'),
-                        color=dtype_line_colors['FRET'])
-                ax1.set_ylim([0, 100])
-                ax1.set_ylabel('% FRET, % Release')
-
                 ax2 = ax1.twinx()
-                ax2.plot(n_t, n_v, label='%s, %s' % (activator, 'NBD'),
-                        color=dtype_line_colors['NBD'])
+                ax2_list.append(ax2)
+                for dtype in datatypes:
+                    # Skip WT for NBD and FRET
+                    if (dtype == 'NBD' and nbd_site == 'WT') or \
+                       (dtype == 'FRET' and nbd_site == 'WT'):
+                        continue
+                    # Get the data
+                    t = df[(activator, dtype, nbd_site, rep, 'TIME')]
+                    v = df[(activator, dtype, nbd_site, rep, 'VALUE')]
+                    # Set the axis
+                    if dtype == 'NBD':
+                        ax = ax2
+                        if np.max(v) > nbd_max:
+                            nbd_max = np.max(v)
+                        if np.min(v) < nbd_min:
+                            nbd_min = np.min(v)
+                    elif dtype == 'Release' or dtype == 'FRET':
+                        ax = ax1
+                    else:
+                        raise ValueError("Unknown datatype: %s" % dtype)
+                    # Plot the data
+                    ax.plot(t, v, label='%s, %s' % (activator, dtype),
+                            color=dtype_line_colors[dtype])
+
+                # Adjust and label the figure
+                ax1.set_ylim([0, 100])
+                if 'Release' in datatypes and 'FRET' in datatypes:
+                    ax1.set_ylabel('% FRET, % Release')
+                else:
+                    ax1.set_ylabel('% Release')
+
                 ax2.set_xlabel('Time (sec)')
                 ax2.set_ylabel('NBD $F/F_0$')
-                ax2.set_title('NBD-%s-Bax, %s, Rep %d' % (mutant, activator, rep))
-
+                ax2.set_title('NBD-%s-Bax, %s, Rep %d' %
+                              (nbd_site, activator, rep))
                 ax1_lines, ax1_labels = ax1.get_legend_handles_labels()
                 ax2_lines, ax2_labels = ax2.get_legend_handles_labels()
                 ax2.legend(ax1_lines + ax2_lines, ax1_labels + ax2_labels,
                            loc='lower right', prop={'size':8})
                 plt.xticks([0, 1000, 2000, 3000, 4000])
+            # Give all plots same range for NBD
+            for ax2 in ax2_list:
+                ax2.set_ylim([nbd_min * 0.95, nbd_max * 1.05])
             plt.subplots_adjust(wspace=0.4, left=0.06, right=0.95)
+    plt.show()
 
 def calc_barplot_width(num_sites):
     # I found that these numbers worked for a 4 inch wide figure with the
@@ -285,4 +316,5 @@ def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
 
 if __name__ == '__main__':
     from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
-    plot_all(df, nbd_residues)
+    plt.ion()
+    plot_all_by_replicate(df, nbd_residues, ['Release', 'NBD'])
