@@ -48,7 +48,11 @@ def plot_all(df, nbd_residues, datatypes, file_basename=None):
                'FRET': '% FRET'}
     # Every mutant gets its own plot
     for nbd_index, nbd_site in enumerate(nbd_residues):
-        plt.figure(figsize=(11, 5))
+        if len(datatypes) == 2:
+            fig_width = 11
+        elif len(datatypes) == 3:
+            fig_width = 14
+        plt.figure(figsize=(fig_width, 5))
         # Define the subplot titles
         titles = {'Release': r'Dye release for NBD-%s-Bax' % nbd_site,
                   'NBD': 'NBD F/$F_0$ for NBD-%s-Bax' % nbd_site,
@@ -74,6 +78,9 @@ def plot_all(df, nbd_residues, datatypes, file_basename=None):
                     plt.ylabel(ylabels[dtype])
                     plt.title(titles[dtype])
                     plt.legend(loc='lower right')
+            # Datatype-specific formatting
+            if dtype == 'Release':
+                plt.ylim([0, 100])
         plt.tight_layout()
         if file_basename:
             plt.savefig('%s_%s.pdf' % (file_basename, nbd_index))

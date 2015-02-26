@@ -51,58 +51,6 @@ def _mean_sd(p_name, builder, pysb_fit):
                     np.var(pysb_fit.residuals))
     return (p_mean, p_sd)
 
-def plot_all():
-    for mutant in nbd_residues:
-        plt.figure(figsize=(14, 5))
-        # Make the release plot
-        plt.subplot(1, 3, 1)
-        for activator in ['Bid', 'Bim']:
-            for i in range(1, 4):
-                t = df[(activator, 'Release', mutant, i, 'TIME')]
-                v = df[(activator, 'Release', mutant, i, 'VALUE')]
-                plt.plot(t, v, label='%s Rep %d' % (activator, i),
-                        color=line_colors[activator],
-                        linestyle=line_styles[i])
-
-                plt.xlabel('Time (sec)')
-                plt.ylabel('Pct. Release')
-                plt.ylim([0, 100])
-                plt.title('Release for NBD-%s-Bax' % mutant)
-                plt.legend(loc='lower right')
-        # There is no NBD curve for WT Bax, so skip the NBD
-        # plot
-        if mutant == 'WT':
-            continue
-        # Make the NBD plot
-        plt.subplot(1, 3, 2)
-        for activator in ['Bid', 'Bim']:
-            for i in range(1, 4):
-                t = df[(activator, 'NBD', mutant, i, 'TIME')]
-                v = df[(activator, 'NBD', mutant, i, 'VALUE')]
-                plt.plot(t, v, label='%s Rep %d' % (activator, i),
-                        color=line_colors[activator],
-                        linestyle=line_styles[i])
-                plt.xlabel('Time (sec)')
-                plt.ylabel('NBD $F/F_0$')
-                plt.title('$F/F_0$ for NBD-%s-Bax' % mutant)
-                plt.legend(loc='lower right')
-        # Make the FRET plot
-        plt.subplot(1, 3, 3)
-        for activator in ['Bid', 'Bim']:
-            for i in range(1, 4):
-                t = df[(activator, 'FRET', mutant, i, 'TIME')]
-                v = df[(activator, 'FRET', mutant, i, 'VALUE')]
-                plt.plot(t, v, label='%s Rep %d' % (activator, i),
-                        color=line_colors[activator],
-                        linestyle=line_styles[i])
-                plt.xlabel('Time (sec)')
-                plt.ylabel('% FRET')
-                plt.ylim([0, 50])
-                plt.title('FRET, DAC-Bid/NBD-%s-Bax' % mutant)
-                plt.legend(loc='lower right')
-        plt.tight_layout()
-        plt.show()
-
 def plot_all_by_replicate():
     for mutant in nbd_residues:
         for activator in ['Bid', 'Bim']:
