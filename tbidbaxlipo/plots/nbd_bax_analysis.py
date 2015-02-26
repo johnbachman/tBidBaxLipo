@@ -86,7 +86,7 @@ def plot_all(df, nbd_residues, datatypes, file_basename=None):
                 plt.ylim([0, 100])
         plt.tight_layout()
         if file_basename:
-            plt.savefig('%s_%s.pdf' % (file_basename, nbd_index))
+            plt.savefig('%s_%s.pdf' % (file_basename, nbd_site))
 
 def plot_all_by_replicate(df, nbd_residues, datatypes, file_basename=None):
     """Release should be first in the datatypes list."""
@@ -151,7 +151,10 @@ def plot_all_by_replicate(df, nbd_residues, datatypes, file_basename=None):
             for ax2 in ax2_list:
                 ax2.set_ylim([nbd_min * 0.95, nbd_max * 1.05])
             plt.subplots_adjust(wspace=0.4, left=0.06, right=0.95)
-    plt.show()
+            # Output file, if desired
+            if file_basename:
+                plt.savefig('%s_%s_%s.pdf' %
+                            (file_basename, nbd_site, activator))
 
 def calc_barplot_width(num_sites):
     # I found that these numbers worked for a 4 inch wide figure with the
