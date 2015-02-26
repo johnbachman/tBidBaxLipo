@@ -122,6 +122,20 @@ def plot_all_by_replicate():
                 plt.xticks([0, 1000, 2000, 3000, 4000])
             plt.subplots_adjust(wspace=0.4, left=0.06, right=0.95)
 
+def calc_barplot_width(num_sites):
+    # I found that these numbers worked for a 4 inch wide figure with the
+    # given relative left and right margins and 19 sites. This allows the
+    # same proportions for endpoint plots with different numbers of sites.
+    abs_left = 4 * 0.11
+    abs_right = 4 * 0.03
+    abs_middle = 4 * (1 - 0.11 - 0.03)
+    abs_per_site = abs_middle / 19.
+    fig_width = abs_per_site * num_sites + abs_left + abs_right
+    rel_left = abs_left / float(fig_width)
+    rel_right = 1 - (abs_right / float(fig_width))
+    #import ipdb; ipdb.set_trace()
+    return (fig_width, rel_left, rel_right)
+
 def plot_nbd_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None):
     replicates = range(1, 4)
     activators = ['Bid', 'Bim']
@@ -131,7 +145,9 @@ def plot_nbd_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None):
     n_endpts = np.zeros((len(nbd_sites_no_wt), len(replicates)))
     # Figure setup
     set_fig_params_for_publication()
-    plt.figure(file_basename, figsize=(4, 1.5), dpi=300) # NBD figure
+    (fig_width, rel_left, rel_right) = \
+                        calc_barplot_width(len(nbd_sites_no_wt))
+    plt.figure(file_basename, figsize=(fig_width, 1.5), dpi=300)
     plt.ylabel('NBD F/$F_0$', fontsize=fontsize)
     bar_colors = {'Bid': 'gray', 'Bim': 'black'}
 
@@ -162,7 +178,7 @@ def plot_nbd_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None):
     plt.hlines(range(0, 6), x_lbound, x_ubound, color='0.85', zorder=1,
                linewidth=0.5)
     # Format the plot
-    plt.subplots_adjust(left=0.11, bottom=0.10, right=0.97, top=0.94)
+    plt.subplots_adjust(left=rel_left, bottom=0.10, right=rel_right, top=0.94)
     ax = plt.gca()
     ax.set_xlim([x_lbound, x_ubound])
     ax.xaxis.set_ticks_position('none')
@@ -195,7 +211,9 @@ def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
     r_endpts = np.zeros((len(nbd_sites_filt), len(replicates)))
     # Figure setup
     set_fig_params_for_publication()
-    plt.figure(file_basename, figsize=(4, 1.5), dpi=300) # Release figure
+    (fig_width, rel_left, rel_right) = \
+                        calc_barplot_width(len(nbd_sites_filt))
+    plt.figure(file_basename, figsize=(fig_width, 1.5), dpi=300)
     # Set the yaxis label according to whether we're normalizing
     if normalized_to_wt:
         ylabel_str = r'\% Dye Release' + '\n(normalized to WT)'
@@ -249,7 +267,7 @@ def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
     plt.hlines(range(20, 120, 20), x_lbound, x_ubound, color='0.85',
                zorder=1, linewidth=0.5)
     # Format the plot
-    plt.subplots_adjust(left=0.11, bottom=0.10, right=0.97, top=0.94)
+    plt.subplots_adjust(left=rel_left, bottom=0.10, right=rel_right, top=0.94)
     ax = plt.gca()
     ax.set_xlim([x_lbound, x_ubound])
     ax.xaxis.set_ticks_position('none')
