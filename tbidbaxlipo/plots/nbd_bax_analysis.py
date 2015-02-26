@@ -111,9 +111,15 @@ def plot_nbd_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None):
                     ecolor='k', capsize=1.5,
                     yerr=np.std(n_endpts[nbd_index, :], ddof=1))
 
+    # Add horizontal gridlines
+    x_lbound = -1
+    x_ubound = len(nbd_sites_no_wt) * 3
+    plt.hlines(range(0, 6), x_lbound, x_ubound, color='0.85', zorder=1,
+               linewidth=0.5)
+    # Format the plot
     plt.subplots_adjust(left=0.11, bottom=0.10, right=0.97, top=0.94)
     ax = plt.gca()
-    ax.set_xlim([-1, len(nbd_sites_no_wt) * 3])
+    ax.set_xlim([x_lbound, x_ubound])
     ax.xaxis.set_ticks_position('none')
     ax.yaxis.set_ticks_position('left')
     ax.xaxis.set_tick_params(which='both', labelsize=fontsize, pad=2,
@@ -193,9 +199,15 @@ def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
                     rel_mean, width=1, color=bar_colors[activator],
                     linewidth=0, ecolor='k', capsize=1.5, yerr=rel_sd)
 
+    # Add horizontal gridlines
+    x_lbound = -1
+    x_ubound = len(nbd_sites_filt) * 3
+    plt.hlines(range(20, 120, 20), x_lbound, x_ubound, color='0.85',
+               zorder=1, linewidth=0.5)
+    # Format the plot
     plt.subplots_adjust(left=0.11, bottom=0.10, right=0.97, top=0.94)
     ax = plt.gca()
-    ax.set_xlim([-1, len(nbd_sites_filt) * 3])
+    ax.set_xlim([x_lbound, x_ubound])
     ax.xaxis.set_ticks_position('none')
     ax.yaxis.set_ticks_position('left')
     ax.xaxis.set_tick_params(which='both', labelsize=fontsize, pad=2,
