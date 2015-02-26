@@ -5,7 +5,10 @@ all: nbd_release fret_nbd_release
 clean:
 	rm -f ./*.pdf ./*.png
 
-.PHONY: clean nbd_release fret_nbd_release
+deploy:
+	cp ./*.pdf ~/Dropbox/Bax_insertion_paper/figure_panels_JAB
+
+.PHONY: clean deploy nbd_release fret_nbd_release
 
 nbd_release: nbd_release_endpts
 nbd_release_endpts: data1_release_endpt.pdf data1_nbd_endpt.pdf
