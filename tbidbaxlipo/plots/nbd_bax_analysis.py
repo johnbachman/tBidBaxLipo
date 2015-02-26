@@ -84,7 +84,43 @@ def plot_all(df, nbd_residues, datatypes, file_basename=None):
         plt.tight_layout()
         if file_basename:
             plt.savefig('%s_%s.pdf' % (file_basename, nbd_index))
-            plt.savefig('%s_%s.png' % (file_basename, nbd_index))
+
+def plot_all_by_replicate():
+    for mutant in nbd_residues:
+        for activator in ['Bid', 'Bim']:
+            plt.figure(figsize=(14, 5))
+            for rep in [1, 2, 3]:
+                # Make the release plot
+                plt.subplot(1, 3, rep)
+                ax1 = plt.gca()
+
+                r_t = df[(activator, 'Release', mutant, rep, 'TIME')]
+                r_v = df[(activator, 'Release', mutant, rep, 'VALUE')]
+                f_t = df[(activator, 'FRET', mutant, rep, 'TIME')]
+                f_v = df[(activator, 'FRET', mutant, rep, 'VALUE')]
+                n_t = df[(activator, 'NBD', mutant, rep, 'TIME')]
+                n_v = df[(activator, 'NBD', mutant, rep, 'VALUE')]
+
+                ax1.plot(r_t, r_v, label='%s, %s' % (activator, 'Release'),
+                        color=dtype_line_colors['Release'])
+                ax1.plot(f_t, f_v, label='%s, %s' % (activator, 'FRET'),
+                        color=dtype_line_colors['FRET'])
+                ax1.set_ylim([0, 100])
+                ax1.set_ylabel('% FRET, % Release')
+
+                ax2 = ax1.twinx()
+                ax2.plot(n_t, n_v, label='%s, %s' % (activator, 'NBD'),
+                        color=dtype_line_colors['NBD'])
+                ax2.set_xlabel('Time (sec)')
+                ax2.set_ylabel('NBD $F/F_0$')
+                ax2.set_title('NBD-%s-Bax, %s, Rep %d' % (mutant, activator, rep))
+
+                ax1_lines, ax1_labels = ax1.get_legend_handles_labels()
+                ax2_lines, ax2_labels = ax2.get_legend_handles_labels()
+                ax2.legend(ax1_lines + ax2_lines, ax1_labels + ax2_labels,
+                           loc='lower right', prop={'size':8})
+                plt.xticks([0, 1000, 2000, 3000, 4000])
+            plt.subplots_adjust(wspace=0.4, left=0.06, right=0.95)
 
 def plot_nbd_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None):
     replicates = range(1, 4)
@@ -141,7 +177,6 @@ def plot_nbd_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None):
     ax.set_xticklabels(nbd_sites_no_wt)
     if file_basename:
         plt.savefig('%s.pdf' % file_basename)
-        plt.savefig('%s.png' % file_basename)
 
 def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
                            last_n_pts=3, file_basename=None):
@@ -229,8 +264,6 @@ def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
     ax.set_xticklabels(nbd_sites_filt)
     if file_basename:
         plt.savefig('%s.pdf' % file_basename)
-        plt.savefig('%s.png' % file_basename)
-
 
 if __name__ == '__main__':
     from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
