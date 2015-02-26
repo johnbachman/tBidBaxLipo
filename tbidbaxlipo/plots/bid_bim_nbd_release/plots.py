@@ -26,8 +26,10 @@ if __name__ == '__main__':
         nba.plot_all(df, nbd_residues, file_basename=file_basename)
     # Plot endpdoints
     elif plot_type == 'endpoints':
-        nba.plot_endpoints(df, nbd_residues, last_n_pts=3,
+        nba.plot_nbd_endpoints(df, nbd_residues, last_n_pts=3,
                            file_basename=file_basename)
+        nba.plot_release_endpoints(df, nbd_residues, normalized_to_wt=False,
+                           last_n_pts=3, file_basename=file_basename)
     # Unknown plot type
     else:
         print "Unknown plot type: %s" % plot_type
