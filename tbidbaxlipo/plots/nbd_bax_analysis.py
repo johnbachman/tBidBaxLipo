@@ -37,41 +37,43 @@ class FitResult(object):
         return '%s_%s_r%s_%s.csv' % (self.activator, self.nbd_site, \
                                     str(self.rep_index), self.measurement)
 
-def plot_all(df, nbd_residues, file_basename=None):
+def plot_all(df, nbd_residues, datatypes, file_basename=None):
+    """Release should be first in the list of datatypes."""
+    # Some definitions
+    activators = ['Bid', 'Bim']
+    num_subplots = len(datatypes)
+    # Labels and titles for each datatype
+    ylabels = {'Release': '% Dye Release',
+               'NBD': 'F/$F_0$',
+               'FRET': '% FRET'}
+    # Every mutant gets its own plot
     for nbd_index, nbd_site in enumerate(nbd_residues):
         plt.figure(figsize=(11, 5))
-        # Make the release plot
-        plt.subplot(1, 2, 1)
-        activators = ['Bid', 'Bim']
-        for activator in activators:
-            for i in range(1, 4):
-                t = df[(activator, 'Release', nbd_site, i, 'TIME')]
-                v = df[(activator, 'Release', nbd_site, i, 'VALUE')]
-                plt.plot(t, v, label='%s Rep %d' % (activator, i),
-                        color=line_colors[activator],
-                        linestyle=line_styles[i])
-
-                plt.xlabel('Time (sec)')
-                plt.ylabel('Pct. Release')
-                plt.title('Release for NBD-%s-Bax' % nbd_site)
-                plt.legend(loc='lower right')
-        # There is no NBD curve for WT Bax, so skip the NBD
-        # plot
-        if nbd_site == 'WT':
-            continue
-        # Make the NBD plot
-        plt.subplot(1, 2, 2)
-        for activator in ['Bid', 'Bim']:
-            for i in range(1, 4):
-                t = df[(activator, 'NBD', nbd_site, i, 'TIME')]
-                v = df[(activator, 'NBD', nbd_site, i, 'VALUE')]
-                plt.plot(t, v, label='%s Rep %d' % (activator, i),
-                        color=line_colors[activator],
-                        linestyle=line_styles[i])
-                plt.xlabel('Time (sec)')
-                plt.ylabel('F/F0')
-                plt.title('F/F0 for NBD-%s-Bax' % nbd_site)
-                plt.legend(loc='lower right')
+        # Define the subplot titles
+        titles = {'Release': r'Dye release for NBD-%s-Bax' % nbd_site,
+                  'NBD': 'NBD F/$F_0$ for NBD-%s-Bax' % nbd_site,
+                  'FRET': 'FRET, NBD-%s-Bax' % nbd_site}
+        # Every datatype gets its own subplot
+        for dtype_ix, dtype in enumerate(datatypes):
+            # There is no NBD/FRET curve for WT Bax, so skip
+            if (dtype == 'NBD' and nbd_site == 'WT') or \
+               (dtype == 'FRET' and nbd_site == 'WT'):
+                continue
+            plt.subplot(1, num_subplots, dtype_ix + 1)
+            # Activators and replicates are separate lines on the same plot
+            for activator in activators:
+                # Iterate over replicates...
+                for i in range(1, 4):
+                    # Get the data
+                    t = df[(activator, dtype, nbd_site, i, 'TIME')]
+                    v = df[(activator, dtype, nbd_site, i, 'VALUE')]
+                    plt.plot(t, v, label='%s Rep %d' % (activator, i),
+                            color=line_colors[activator],
+                            linestyle=line_styles[i])
+                    plt.xlabel('Time (sec)')
+                    plt.ylabel(ylabels[dtype])
+                    plt.title(titles[dtype])
+                    plt.legend(loc='lower right')
         plt.tight_layout()
         if file_basename:
             plt.savefig('%s_%s.pdf' % (file_basename, nbd_index))
