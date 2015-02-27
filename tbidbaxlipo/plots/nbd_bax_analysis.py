@@ -2,6 +2,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 from tbidbaxlipo.util import set_fig_params_for_publication, fontsize
 from tbidbaxlipo.util.error_propagation import calc_ratio_mean_sd
+import matplotlib.patches as mpatches
 
 line_colors = {'Bid': 'r', 'Bim': 'b'}
 dtype_line_colors = {'Release':'r', 'NBD':'g', 'FRET':'b'}
@@ -160,9 +161,11 @@ def calc_barplot_width(num_sites):
     # I found that these numbers worked for a 4 inch wide figure with the
     # given relative left and right margins and 19 sites. This allows the
     # same proportions for endpoint plots with different numbers of sites.
-    abs_left = 4 * 0.11
-    abs_right = 4 * 0.03
-    abs_middle = 4 * (1 - 0.11 - 0.03)
+    rmarg = 0.13
+    lmarg = 0.11
+    abs_left = 4 * lmarg
+    abs_right = 4 * rmarg
+    abs_middle = 4 * (1 - lmarg - rmarg)
     abs_per_site = abs_middle / 19.
     fig_width = abs_per_site * num_sites + abs_left + abs_right
     rel_left = abs_left / float(fig_width)
@@ -225,6 +228,14 @@ def plot_nbd_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None):
     ax.yaxis.labelpad = 2
     ax.set_xticks(np.arange(1, 1 + len(nbd_sites_no_wt) * 3, 3))
     ax.set_xticklabels(nbd_sites_no_wt)
+    # Create legend with rectangles to match colors of bars
+    bid_patch = mpatches.Patch(color=bar_colors['Bid'], label='cBid')
+    bim_patch = mpatches.Patch(color=bar_colors['Bim'], label='Bim')
+    leg = plt.legend(handles=[bid_patch, bim_patch],
+            bbox_to_anchor=(1.02, 0.5), loc='center left', borderaxespad=0.,
+            prop={'size': fontsize}, handlelength=1)
+    leg.draw_frame(False)
+    # Output the file, if desired
     if file_basename:
         plt.savefig('%s.pdf' % file_basename)
 
@@ -314,6 +325,14 @@ def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
     ax.yaxis.labelpad = 2
     ax.set_xticks(np.arange(1, 1 + len(nbd_sites_filt) * 3, 3))
     ax.set_xticklabels(nbd_sites_filt)
+    # Create legend with rectangles to match colors of bars
+    bid_patch = mpatches.Patch(color=bar_colors['Bid'], label='cBid')
+    bim_patch = mpatches.Patch(color=bar_colors['Bim'], label='Bim')
+    leg = plt.legend(handles=[bid_patch, bim_patch],
+            bbox_to_anchor=(1.02, 0.5), loc='center left', borderaxespad=0.,
+            prop={'size': fontsize}, handlelength=1)
+    leg.draw_frame(False)
+    # Output the file, if desired
     if file_basename:
         plt.savefig('%s.pdf' % file_basename)
 
