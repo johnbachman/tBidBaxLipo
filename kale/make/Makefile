@@ -23,23 +23,29 @@ fret_nbd_release: fret_nbd_release_endpts
 fret_nbd_release_endpts: data2_release_endpt.pdf data2_nbd_endpt.pdf
 
 # --- Raw data for NBD/release, dataset 1 ---
-# data1_release_endpt.pdf, data1_nbd_endpt.pdf
 data1_release_endpt.pdf: \
-        $(PLOTSDIR)/nbd_bax_analysis.py $(NBD_DATA)
+        $(PLOTSDIR)/nbd_bax_analysis.py \
+        $(PLOTSDIR)/bid_bim_nbd_release/plots.py \
+        $(NBD_DATA)
 	python -m tbidbaxlipo.plots.bid_bim_nbd_release.plots release_endpoint $(basename $@)
 
 data1_nbd_endpt.pdf: \
-        $(PLOTSDIR)/nbd_bax_analysis.py $(NBD_DATA)
+        $(PLOTSDIR)/nbd_bax_analysis.py \
+        $(PLOTSDIR)/bid_bim_nbd_release/plots.py \
+        $(NBD_DATA)
 	python -m tbidbaxlipo.plots.bid_bim_nbd_release.plots nbd_endpoint $(basename $@)
 
 # --- Raw data for NBD/release, dataset 2 ---
-# data2_release_endpt.pdf, data2_nbd_endpt.pdf
 data2_release_endpt.pdf: \
-        $(PLOTSDIR)/nbd_bax_analysis.py $(NBD_FRET_DATA)
+        $(PLOTSDIR)/nbd_bax_analysis.py \
+        $(PLOTSDIR)/bid_bim_fret_nbd_release/plots.py \
+        $(NBD_FRET_DATA)
 	python -m tbidbaxlipo.plots.bid_bim_fret_nbd_release.plots release_endpoint $(basename $@)
 
 data2_nbd_endpt.pdf: \
-        $(PLOTSDIR)/nbd_bax_analysis.py $(NBD_FRET_DATA)
+        $(PLOTSDIR)/nbd_bax_analysis.py \
+        $(PLOTSDIR)/bid_bim_fret_nbd_release/plots.py \
+        $(NBD_FRET_DATA)
 	python -m tbidbaxlipo.plots.bid_bim_fret_nbd_release.plots nbd_endpoint $(basename $@)
 
 
