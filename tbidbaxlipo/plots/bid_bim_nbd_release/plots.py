@@ -31,6 +31,9 @@ if __name__ == '__main__':
     elif plot_type == 'release_endpoint':
         nba.plot_release_endpoints(df, nbd_residues, normalized_to_wt=False,
                            last_n_pts=3, file_basename=file_basename)
+    elif plot_type == 'initial_rate_samples':
+        nba.plot_initial_rate_samples(df, nbd_residues, timepoint_ix=4,
+                                      file_basename=file_basename)
     # Unknown plot type
     else:
         print "Unknown plot type: %s" % plot_type
