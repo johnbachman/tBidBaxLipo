@@ -434,26 +434,49 @@ def plot_initial_rate_fits(df, nbd_sites, activator, num_pts=4, plot=False):
 
     return fit_results
 
-def plot_initial_rate_samples(df, nbd_sites, timepoint_ix=4,
-                              file_basename=None):
-    set_fig_params_for_publication()
+class InitialRateSamples(object):
+    def __init__(self, r_slopes, n_slopes, n_maxes, wt_r_slopes, time):
+        self.r_slopes = r_slopes
+        self.n_slopes = n_slopes
+        self.n_maxes = n_maxes
+        self.time = time
+        self.wt_r_slopes = wt_r_slopes
+
+    def release_avg_std(self):
+        r_slope_avgs = np.mean(self.r_slopes, axis=2)
+        r_slope_stds = np.std(self.r_slopes, axis=2, ddof=1)
+        return (r_slope_avgs, r_slope_stds)
+
+    def nbd_avg_std(self):
+        n_slope_avgs = np.mean(self.n_slopes, axis=2)
+        n_slope_stds = np.std(self.n_slopes, axis=2, ddof=1)
+        return (n_slope_avgs, n_slope_stds)
+
+    def nbd_norm_slopes(self):
+        return (self.n_slopes / self.n_maxes) * 100
+
+    def nbd_norm_avg_std(self):
+        n_norm_slopes = self.nbd_norm_slopes()
+        n_norm_slope_avgs = np.mean(n_norm_slopes, axis=2)
+        n_norm_slope_stds = np.std(n_norm_slopes, axis=2, ddof=1)
+        return (n_norm_slope_avgs, n_norm_slope_stds)
+
+def calc_initial_rate_samples(df, nbd_sites, timepoint_ix=4):
     replicates = range(1, 4)
     activators = ['Bid', 'Bim']
-    # Lists for storing all of the various fits, slopes
     nbd_sites_filt = [s for s in nbd_sites if s != 'WT']
+    # Lists for storing all of the various fits, slopes
     r_slopes = np.zeros((len(activators), len(nbd_sites_filt), len(replicates)))
     n_slopes = np.zeros((len(activators), len(nbd_sites_filt), len(replicates)))
     n_maxes = np.zeros((len(activators), len(nbd_sites_filt), len(replicates)))
+    wt_r_slopes = np.zeros((len(activators), len(replicates)))
     # For both Bid and Bim...
     for act_ix, activator in enumerate(activators):
         # Get release data for WT as a reference
         if 'WT' in nbd_sites:
-            wt_slopes = []
             for rep_index, rep_num in enumerate(replicates):
                 ry = df[(activator, 'Release', 'WT', rep_num, 'VALUE')].values
-                wt_slopes.append(ry[timepoint_ix])
-            wt_avg = np.mean(wt_slopes)
-            wt_sd = np.std(wt_slopes, ddof=1)
+                wt_r_slopes[act_ix, rep_index] = ry[timepoint_ix]
         # Iterate over all of the mutants
         for nbd_index, nbd_site in enumerate(nbd_sites_filt):
             # Iterate over the replicates for this mutant. Note that rep_num is
@@ -483,15 +506,26 @@ def plot_initial_rate_samples(df, nbd_sites, timepoint_ix=4,
                     n_slopes[act_ix, nbd_index, rep_index] = \
                                                         ny[timepoint_ix] - 1
                     n_maxes[act_ix, nbd_index, rep_index] = np.max(ny) - 1
-    # Calculate averages/SDs across replicates
-    r_slope_avgs = np.mean(r_slopes, axis=2)
-    n_slope_avgs = np.mean(n_slopes, axis=2)
-    r_slope_stds = np.std(r_slopes, axis=2, ddof=1)
-    n_slope_stds = np.std(n_slopes, axis=2, ddof=1)
-    # Normalized NBD slopes
-    n_norm_slopes = (n_slopes / n_maxes) * 100
-    n_norm_slope_avgs = np.mean(n_norm_slopes, axis=2)
-    n_norm_slope_stds = np.std(n_norm_slopes, axis=2, ddof=1)
+    # Save the results in the initial rate structure
+    irs = InitialRateSamples(r_slopes, n_slopes, n_maxes, wt_r_slopes, time)
+    return irs
+
+def plot_initial_rate_samples(df, nbd_sites, timepoint_ix=4,
+                              file_basename=None):
+    set_fig_params_for_publication()
+    # Important lists
+    replicates = range(1, 4)
+    activators = ['Bid', 'Bim']
+    nbd_sites_filt = [s for s in nbd_sites if s != 'WT']
+    # Get the initial rate data (copy over to local variables for legacy
+    # reasons)
+    irs = calc_initial_rate_samples(df, nbd_sites, timepoint_ix)
+    (r_slope_avgs, r_slope_stds) = irs.release_avg_std()
+    (n_slope_avgs, n_slope_stds) = irs.nbd_avg_std()
+    n_norm_slopes = irs.nbd_norm_slopes()
+    (n_norm_slope_avgs, n_norm_slope_stds) = irs.nbd_norm_avg_std()
+    r_slopes = irs.r_slopes
+    time = irs.time
 
     # Bar plots of initial points ------------------------------------
     fig_names = {'Release': '%s_init_release_bar' % file_basename,
@@ -679,12 +713,48 @@ def plot_initial_rate_samples(df, nbd_sites, timepoint_ix=4,
                          marker='o', linestyle='', color=pt_color)
     return
 
+def plot_rank_changes(means1, sds1, means2, sds2, nbd_sites):
+    ubounds1 = means1 + sds1
+    lbounds1 = means1 - sds1
+    ubounds2 = means2 + sds2
+    lbounds2 = means2 - sds2
+    ubounds = np.vstack([ubounds1, ubounds2]).T
+    lbounds = np.vstack([lbounds1, lbounds2]).T
+    means = np.vstack([means1, means2]).T
+    plt.figure()
+    num_colors = ubounds.shape[0]
+    colors = color_list = plt.cm.Set3(np.linspace(0, 1, num_colors))
+    for i in range(ubounds.shape[0]):
+        if nbd_sites[i] in ['175', '179', '184', '188']:
+        #if nbd_sites[i] in ['3', '5', '15', '36', '40', '47']:
+            color='k'
+        else:
+            color=colors[i]
+        plt.fill_between([1, 2], ubounds[i], lbounds[i], color=color,
+                         alpha=0.2)
+        plt.plot([1, 2], means[i], color=color)
+        plt.text(0.95, means[i, 0], nbd_sites[i], color='k',
+                 fontsize=8)
+        plt.text(2.05, means[i, 1], nbd_sites[i], color='k',
+                 fontsize=8)
+    plt.xlim(0.5, 2.5)
+
 if __name__ == '__main__':
     from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
     plt.ion()
-    fr = plot_initial_rate_samples(df, nbd_residues, timepoint_ix=4,
-                                   file_basename='data1')
-    #fr = plot_initial_rate_fits(df, ['WT', '3', '5'], 'Bid', plot=True)
-
+    #fr = plot_initial_rate_samples(df, nbd_residues, timepoint_ix=4,
+    #                               file_basename='data1')
+    irs = calc_initial_rate_samples(df, nbd_residues, timepoint_ix=4)
+    (r_slope_avgs, r_slope_stds) = irs.release_avg_std()
+    (n_slope_avgs, n_slope_stds) = irs.nbd_avg_std()
+    #means1 = np.array([1, 2, 3, 4, 5])
+    #means2 = np.array([1, 3, 2, 5, 4])
+    #sds1 = np.array([0.25] * 5)
+    #sds2 = np.array([0.25] * 5)
+    nbd_sites_filt = [s for s in nbd_residues if s != 'WT']
+    plot_rank_changes(r_slope_avgs[0], r_slope_stds[0],
+                      r_slope_avgs[1], r_slope_stds[1], nbd_sites_filt)
+    plot_rank_changes(n_slope_avgs[0], n_slope_stds[0],
+                      n_slope_avgs[1], n_slope_stds[1], nbd_sites_filt)
 
 
