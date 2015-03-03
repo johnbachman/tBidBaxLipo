@@ -447,6 +447,32 @@ class InitialRateSamples(object):
         r_slope_stds = np.std(self.r_slopes, axis=2, ddof=1)
         return (r_slope_avgs, r_slope_stds)
 
+    def release_avg_std_wt_normalized(self):
+        if np.any(np.isnan(self.wt_r_slopes)):
+            raise ValueError("Can't normalize to WT because there are "
+                             "missing entries for initial WT release "
+                             "rates (found NaNs in the matrix).")
+        (wt_r_avgs, wt_r_stds) = self.wt_release_avg_std()
+        (r_slope_avgs, r_slope_stds) = self.release_avg_std()
+        r_norm_avgs = np.zeros(r_slope_avgs.shape)
+        r_norm_stds = np.zeros(r_slope_stds.shape)
+
+        for act_ix in range(r_slope_avgs.shape[0]):
+            for nbd_index in range(r_slope_avgs.shape[1]):
+                (r_norm_avgs[act_ix, nbd_index],
+                 r_norm_stds[act_ix, nbd_index]) = calc_ratio_mean_sd(
+                                            r_slope_avgs[act_ix, nbd_index],
+                                            r_slope_stds[act_ix, nbd_index],
+                                            wt_r_avgs[act_ix],
+                                            wt_r_stds[act_ix])
+
+        return (r_norm_avgs, r_norm_stds)
+
+    def wt_release_avg_std(self):
+        wt_r_avgs = np.mean(self.wt_r_slopes, axis=1)
+        wt_r_stds = np.std(self.wt_r_slopes, axis=1, ddof=1)
+        return (wt_r_avgs, wt_r_stds)
+
     def nbd_avg_std(self):
         n_slope_avgs = np.mean(self.n_slopes, axis=2)
         n_slope_stds = np.std(self.n_slopes, axis=2, ddof=1)
@@ -477,6 +503,10 @@ def calc_initial_rate_samples(df, nbd_sites, timepoint_ix=4):
             for rep_index, rep_num in enumerate(replicates):
                 ry = df[(activator, 'Release', 'WT', rep_num, 'VALUE')].values
                 wt_r_slopes[act_ix, rep_index] = ry[timepoint_ix]
+        # If we don't have an entry for WT, put a NaN into the matrix
+        else:
+            for rep_index, rep_num in enumerate(replicates):
+                wt_r_slopes[act_ix, rep_index] = ry[timepoint_ix] = np.nan
         # Iterate over all of the mutants
         for nbd_index, nbd_site in enumerate(nbd_sites_filt):
             # Iterate over the replicates for this mutant. Note that rep_num is
@@ -489,7 +519,7 @@ def calc_initial_rate_samples(df, nbd_sites, timepoint_ix=4):
                 ry = df[(activator, 'Release',
                          nbd_site, rep_num, 'VALUE')].values
                 time = rt[timepoint_ix]
-                # Store the slope of the line
+                # Store the y value at the given timepoint
                 r_slopes[act_ix, nbd_index, rep_index] = ry[timepoint_ix]
 
                 # Get the NBD data
@@ -511,7 +541,7 @@ def calc_initial_rate_samples(df, nbd_sites, timepoint_ix=4):
     return irs
 
 def plot_initial_rate_samples(df, nbd_sites, timepoint_ix=4,
-                              file_basename=None):
+                              file_basename=None, normalized_to_wt=True):
     set_fig_params_for_publication()
     # Important lists
     replicates = range(1, 4)
@@ -520,7 +550,11 @@ def plot_initial_rate_samples(df, nbd_sites, timepoint_ix=4,
     # Get the initial rate data (copy over to local variables for legacy
     # reasons)
     irs = calc_initial_rate_samples(df, nbd_sites, timepoint_ix)
-    (r_slope_avgs, r_slope_stds) = irs.release_avg_std()
+    if normalized_to_wt:
+        (r_slope_avgs, r_slope_stds) = irs.release_avg_std_wt_normalized()
+    else:
+        (r_slope_avgs, r_slope_stds) = irs.release_avg_std()
+
     (n_slope_avgs, n_slope_stds) = irs.nbd_avg_std()
     n_norm_slopes = irs.nbd_norm_slopes()
     (n_norm_slope_avgs, n_norm_slope_stds) = irs.nbd_norm_avg_std()
@@ -739,22 +773,49 @@ def plot_rank_changes(means1, sds1, means2, sds2, nbd_sites):
                  fontsize=8)
     plt.xlim(0.5, 2.5)
 
+def welch_t_test(means1, sds1, means2, sds2):
+    n1 = 3
+    n2 = 3
+    t_numer = means1 - means2
+    sq_sum = ((sds1**2)/n1) + ((sds2**2)/n2)
+    t_denom = np.sqrt(sq_sum)
+    t = t_numer / t_denom
+    print t
+
+    v_numer = sq_sum ** 2
+    v1 = n1 - 1.0
+    v2 = n2 - 1.0
+    v_denom = ((sds1 ** 4) / ((n1**2) * v1)) / ((sds2 ** 4) / ((n2**2) * v2))
+    v = v_numer / v_denom
+    print v
+
+    p_val = scipy.stats.t.sf(t, v)
+    print p_val
+
+def student_t_test(means1, sds1, means2, sds2, n):
+    n = float(n)
+    t_numer = np.abs(means1 - means2)
+    sx1x2 = np.sqrt(0.5*(sds1**2 + sds2**2))
+    t_denom = sx1x2 * np.sqrt(2/n)
+    t = t_numer / t_denom
+    print t
+
+    p_val = scipy.stats.t.sf(t, n - 1)
+    print p_val * 2
+    return p_val * 2
+
 if __name__ == '__main__':
     from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
     plt.ion()
-    #fr = plot_initial_rate_samples(df, nbd_residues, timepoint_ix=4,
-    #                               file_basename='data1')
-    irs = calc_initial_rate_samples(df, nbd_residues, timepoint_ix=4)
-    (r_slope_avgs, r_slope_stds) = irs.release_avg_std()
-    (n_slope_avgs, n_slope_stds) = irs.nbd_avg_std()
-    #means1 = np.array([1, 2, 3, 4, 5])
-    #means2 = np.array([1, 3, 2, 5, 4])
-    #sds1 = np.array([0.25] * 5)
-    #sds2 = np.array([0.25] * 5)
-    nbd_sites_filt = [s for s in nbd_residues if s != 'WT']
-    plot_rank_changes(r_slope_avgs[0], r_slope_stds[0],
-                      r_slope_avgs[1], r_slope_stds[1], nbd_sites_filt)
-    plot_rank_changes(n_slope_avgs[0], n_slope_stds[0],
-                      n_slope_avgs[1], n_slope_stds[1], nbd_sites_filt)
-
-
+    plot_release_endpoints(df, nbd_residues, normalized_to_wt=True)
+    #irs = calc_initial_rate_samples(df, nbd_residues, timepoint_ix=15)
+    #(r_slope_avgs, r_slope_stds) = irs.release_avg_std()
+    #(n_slope_avgs, n_slope_stds) = irs.nbd_avg_std()
+    #nbd_sites_filt = [s for s in nbd_residues if s != 'WT']
+    #plot_rank_changes(r_slope_avgs[0], r_slope_stds[0],
+    #                  r_slope_avgs[1], r_slope_stds[1], nbd_sites_filt)
+    #plot_rank_changes(n_slope_avgs[0], n_slope_stds[0],
+    #                  n_slope_avgs[1], n_slope_stds[1], nbd_sites_filt)
+    #(ra, rs) = irs.release_avg_std_wt_normalized()
+    #p_vals = student_t_test(ra[0], rs[0], ra[1], rs[1], 3)
+    #print p_vals < 0.1
