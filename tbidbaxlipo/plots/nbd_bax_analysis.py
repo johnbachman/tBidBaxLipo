@@ -9,6 +9,7 @@ import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 from tbidbaxlipo.util import fitting
 from tbidbaxlipo.models.nbd.multiconf import Builder
+import tbidbaxlipo.plots.titration_fits as tf
 
 line_colors = {'Bid': 'r', 'Bim': 'b'}
 dtype_line_colors = {'Release':'r', 'NBD':'g', 'FRET':'b'}
@@ -858,10 +859,42 @@ def plot_bid_vs_bim_release(df, nbd_sites, dtype='Release',
             if file_basename:
                 plt.savefig('%s_%s.pdf' % (file_basename, fig_name))
 
+def welch_t_test(means1, sds1, means2, sds2):
+    n1 = 3
+    n2 = 3
+    t_numer = means1 - means2
+    sq_sum = ((sds1**2)/n1) + ((sds2**2)/n2)
+    t_denom = np.sqrt(sq_sum)
+    t = t_numer / t_denom
+    print t
+
+    v_numer = sq_sum ** 2
+    v1 = n1 - 1.0
+    v2 = n2 - 1.0
+    v_denom = ((sds1 ** 4) / ((n1**2) * v1)) / ((sds2 ** 4) / ((n2**2) * v2))
+    v = v_numer / v_denom
+    print v
+
+    p_val = scipy.stats.t.sf(t, v)
+    print p_val
+
+def student_t_test(means1, sds1, means2, sds2, n):
+    n = float(n)
+    t_numer = np.abs(means1 - means2)
+    sx1x2 = np.sqrt(0.5*(sds1**2 + sds2**2))
+    t_denom = sx1x2 * np.sqrt(2/n)
+    t = t_numer / t_denom
+    print t
+
+    p_val = scipy.stats.t.sf(t, n - 1)
+    print p_val * 2
+    return p_val * 2
+
 # -- Model fits --
+params_dict = {'c1_to_c2_k': 1e-4, 'c1_scaling': 2,
+               'c0_to_c1_k': 2e-3}
+
 def plot_2conf_fits(df, nbd_sites, activator):
-    params_dict = {'c1_to_c2_k': 1e-4, 'c1_scaling': 2,
-                   'c0_to_c1_k': 2e-3}
     replicates = range(1, 4)
     fit_results = []
     # Filter out the WT residue, if present in the list
@@ -924,43 +957,139 @@ def plot_2conf_fits(df, nbd_sites, activator):
 
     return fit_results
 
+def plot_3conf_fits(df, nbd_sites, activator):
+    #nbd_sites = ['15', '54', '62', '68', '79', '126', '138', '175']
+    # Filter out the WT residue, if present in the list
+    nbd_sites_filt = [s for s in nbd_sites if s != 'WT']
+    replicates = range(1, 4)
+    fit_results = []
+    for nbd_index, nbd_site in enumerate(nbd_sites_filt):
+        k1_means = []
+        k2_means = []
+        k1_sds = []
+        k2_sds = []
 
-def welch_t_test(means1, sds1, means2, sds2):
-    n1 = 3
-    n2 = 3
-    t_numer = means1 - means2
-    sq_sum = ((sds1**2)/n1) + ((sds2**2)/n2)
-    t_denom = np.sqrt(sq_sum)
-    t = t_numer / t_denom
-    print t
+        for rep_index in replicates:
+            rt = df[(activator, 'Release', nbd_site, rep_index, 'TIME')].values
+            ry = df[(activator, 'Release', nbd_site, rep_index, 'VALUE')].values
+            nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
+            ny = df[(activator, 'NBD', nbd_site, rep_index, 'VALUE')].values
 
-    v_numer = sq_sum ** 2
-    v1 = n1 - 1.0
-    v2 = n2 - 1.0
-    v_denom = ((sds1 ** 4) / ((n1**2) * v1)) / ((sds2 ** 4) / ((n2**2) * v2))
-    v = v_numer / v_denom
-    print v
+            """
+            plt.figure()
+            plt.plot(rt, ry)
+            plt.figure()
+            plt.plot(nt, ny)
+            plt.figure()
+            plt.plot(nt, ry / ny)
 
-    p_val = scipy.stats.t.sf(t, v)
-    print p_val
+            ry_norm = (ry - np.min(ry)) / (np.max(ry) - np.min(ry))
+            ny_norm = (ny - np.min(ny)) / (np.max(ny) - np.min(ny))
 
-def student_t_test(means1, sds1, means2, sds2, n):
-    n = float(n)
-    t_numer = np.abs(means1 - means2)
-    sx1x2 = np.sqrt(0.5*(sds1**2 + sds2**2))
-    t_denom = sx1x2 * np.sqrt(2/n)
-    t = t_numer / t_denom
-    print t
+            plt.figure()
+            plt.plot(rt, ry_norm, color='g')
+            plt.plot(rt, ny_norm, color='b')
+            """
+            plt.figure('%s, NBD-%s-Bax Fits' % (activator, nbd_site),
+                       figsize=(12, 5))
+            plt.subplot(1, 2, 1)
+            plt.plot(rt, ry,
+                     linestyle='', marker='.',
+                     color=rep_colors[rep_index])
+            twoexp = tf.TwoExpLinear()
+            #twoexp = tf.TwoExp()
+            params = twoexp.fit_timecourse(rt, ry)
+            plt.plot(rt, twoexp.fit_func(rt, params),
+                     label='%s Rep %d' % (activator, rep_index),
+                     color=rep_colors[rep_index])
+            plt.xlabel('Time (sec)')
+            plt.ylabel('% Tb release')
+            plt.title('%% Tb release fits, NBD-%s-Bax' % nbd_site)
+            plt.legend(loc='lower right')
 
-    p_val = scipy.stats.t.sf(t, n - 1)
-    print p_val * 2
-    return p_val * 2
+            builder = Builder(params_dict=params_dict)
+            builder.build_model_multiconf(3, ny[0], normalized_data=True)
+            # Add some initial guesses
+            # Guess that the scaling value for the final conformation is close
+            # to the final data value
+            builder.model.parameters['c2_scaling'].value = ny[-1]
+            # Guess that the scaling value for the intermediate conformation
+            # is close to the value at ~300 sec
+            c1_timescale_seconds = 300
+            c1_timescale_index = np.where(nt > 300)[0].min()
+            builder.model.parameters['c1_scaling'].value = \
+                                                    ny[c1_timescale_index]
+            # Rough guesses for the timescales of the first and second
+            # transitions
+            builder.model.parameters['c0_to_c1_k'].value = 5e-3
+            builder.model.parameters['c1_to_c2_k'].value = 5e-4
+
+            pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', nt, ny)
+            plt.subplot(1, 2, 2)
+            plt.plot(nt, ny, linestyle='', marker='.',
+                    color=rep_colors[rep_index])
+            plt.plot(nt, pysb_fit.ypred,
+                     label='%s Rep %d' % (activator, rep_index),
+                     color=rep_colors[rep_index])
+            plt.xlabel('Time (sec)')
+            plt.ylabel('$F/F_0$')
+            plt.title('NBD $F/F_0$ fits, NBD-%s-Bax' % nbd_site)
+            plt.legend(loc='lower right')
+            # Calculate stderr of parameters (doesn't account for covariance)
+            (k1_mean, k1_sd) = _mean_sd('c0_to_c1_k', builder, pysb_fit)
+            (k2_mean, k2_sd) = _mean_sd('c1_to_c2_k', builder, pysb_fit)
+            (c1_mean, c1_sd) = _mean_sd('c1_scaling', builder, pysb_fit)
+            (c2_mean, c2_sd) = _mean_sd('c2_scaling', builder, pysb_fit)
+
+            param_dict = {'c0_to_c1_k': (k1_mean, k1_sd),
+                          'c1_scaling': (c1_mean, c1_sd),
+                          'c1_to_c2_k': (k2_mean, k2_sd),
+                          'c2_scaling': (c2_mean, c2_sd)}
+
+            fit_results.append(FitResult(builder, activator, nbd_site,
+                                         rep_index, 'NBD', param_dict,
+                                         nt, pysb_fit.ypred))
+
+            k1_means.append(k1_mean)
+            k2_means.append(k2_mean)
+            k1_sds.append(k1_sd)
+            k2_sds.append(k2_sd)
+
+            """
+            plt.figure()
+            s = Solver(builder.model, nt)
+            s.run(param_values=pysb_fit.params)
+            plt.plot(nt, s.yobs['Bax_c0'])
+            plt.plot(nt, s.yobs['Bax_c1'])
+            plt.plot(nt, s.yobs['Bax_c2'])
+            """
+        #plt.title(nbd_site)
+        #plt.xlabel('Time (sec)')
+        #plt.ylabel('$F/F_0$')
+        plt.figure('%s, NBD-%s-Bax Fits' % (activator, nbd_site))
+        plt.tight_layout()
+
+        plt.figure("Fitted k1/k2")
+        plt.bar(range(nbd_index*7, (nbd_index*7) + 3), k1_means,
+                yerr=k1_sds, width=1, color='r', ecolor='k')
+        plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6), k2_means,
+                yerr=k2_sds, width=1, color='g', ecolor='k')
+
+    num_sites = len(nbd_sites_filt)
+    plt.figure("Fitted k1/k2")
+    plt.ylabel('Fitted k1/k2 ($sec^{-1}$)')
+    ax = plt.gca()
+    ax.set_xticks(np.arange(3, 3 + num_sites * 7, 7))
+    ax.set_xticklabels(nbd_sites_filt)
+
+    return fit_results
 
 if __name__ == '__main__':
     from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
     plt.ion()
     #plot_release_endpoints(df, nbd_residues, normalized_to_wt=True)
-    plot_bid_vs_bim_release(df, nbd_residues)
+    #plot_bid_vs_bim_release(df, nbd_residues)
+    #plot_nbd_error_estimates(df, ['54', '62', '68'])
 
     #irs = calc_initial_rate_samples(df, nbd_residues, timepoint_ix=15)
     #(r_slope_avgs, r_slope_stds) = irs.release_avg_std()
