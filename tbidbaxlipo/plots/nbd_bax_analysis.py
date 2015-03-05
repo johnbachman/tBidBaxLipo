@@ -8,11 +8,27 @@ from tbidbaxlipo.util.error_propagation import calc_ratio_mean_sd
 import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 from tbidbaxlipo.util import fitting
+from tbidbaxlipo.models.nbd.multiconf import Builder
 
 line_colors = {'Bid': 'r', 'Bim': 'b'}
 dtype_line_colors = {'Release':'r', 'NBD':'g', 'FRET':'b'}
 line_styles = {1:':', 2:'-', 3:'--'}
 rep_colors = {1:'r', 2:'g', 3:'b'}
+
+def _mean_sd(p_name, builder, pysb_fit):
+    """Given the named parameter and the fit result, get mean and SE."""
+    p = builder.model.parameters[p_name]
+    p_index = builder.model.parameters.index(p)
+    p_est_index = builder.estimate_params.index(p)
+    p_mean = pysb_fit.params[p_index]
+    cov_x = pysb_fit.result[1]
+    if cov_x is not None:
+        p_sd = np.sqrt(cov_x[p_est_index, p_est_index] *
+                        np.var(pysb_fit.residuals))
+    else:
+        p_sd = np.nan
+
+    return (p_mean, p_sd)
 
 class FitResult(object):
     """A helper class for returning and displaying fit results.
@@ -841,6 +857,73 @@ def plot_bid_vs_bim_release(df, nbd_sites, dtype='Release',
             color_ix += 1
             if file_basename:
                 plt.savefig('%s_%s.pdf' % (file_basename, fig_name))
+
+# -- Model fits --
+def plot_2conf_fits(df, nbd_sites, activator):
+    params_dict = {'c1_to_c2_k': 1e-4, 'c1_scaling': 2,
+                   'c0_to_c1_k': 2e-3}
+    replicates = range(1, 4)
+    fit_results = []
+    # Filter out the WT residue, if present in the list
+    nbd_sites_filt = [s for s in nbd_sites if s != 'WT']
+
+    for nbd_index, nbd_site in enumerate(nbd_sites_filt):
+        k1_means = []
+        k1_sds = []
+
+        for rep_index in replicates:
+            nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
+            ny = df[(activator, 'NBD', nbd_site, rep_index, 'VALUE')].values
+
+            plt.figure('%s, NBD-%s-Bax Fits' % (activator, nbd_site),
+                       figsize=(6, 5))
+
+            builder = Builder(params_dict=params_dict)
+            builder.build_model_multiconf(2, ny[0], normalized_data=True)
+            # Rough guesses for parameters
+            # Guess that the final scaling is close to the final data value
+            builder.model.parameters['c1_scaling'].value = ny[-1]
+            # Rough guess for the timescale
+            builder.model.parameters['c0_to_c1_k'].value = 1e-3
+
+            pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', nt, ny)
+            plt.plot(nt, ny, linestyle='', marker='.',
+                    color=rep_colors[rep_index])
+            plt.plot(nt, pysb_fit.ypred,
+                     label='%s Rep %d' % (activator, rep_index),
+                     color=rep_colors[rep_index])
+            plt.xlabel('Time (sec)')
+            plt.ylabel('$F/F_0$')
+            plt.title('NBD $F/F_0$ fits, NBD-%s-Bax' % nbd_site)
+            plt.legend(loc='lower right')
+            # Calculate stderr of parameters (doesn't account for covariance)
+            (k1_mean, k1_sd) = _mean_sd('c0_to_c1_k', builder, pysb_fit)
+            k1_means.append(k1_mean)
+            k1_sds.append(k1_sd)
+            (c1_mean, c1_sd) = _mean_sd('c1_scaling', builder, pysb_fit)
+
+            param_dict = {'c0_to_c1_k': (k1_mean, k1_sd),
+                          'c1_scaling': (c1_mean, c1_sd)}
+            fit_results.append(FitResult(builder, activator, nbd_site,
+                                         rep_index, 'NBD', param_dict,
+                                         nt, pysb_fit.ypred))
+
+        plt.figure('%s, NBD-%s-Bax Fits' % (activator, nbd_site))
+        plt.tight_layout()
+
+        plt.figure("Fitted k1")
+        plt.bar(range(nbd_index*4, (nbd_index*4) + 3), k1_means,
+                yerr=k1_sds, width=1, color='r', ecolor='k')
+
+    num_sites = len(nbd_sites_filt)
+    plt.figure("Fitted k1")
+    plt.ylabel('Fitted k1 ($sec^{-1}$)')
+    ax = plt.gca()
+    ax.set_xticks(np.arange(1.5, 1.5 + num_sites * 4, 4))
+    ax.set_xticklabels(nbd_sites_filt)
+
+    return fit_results
+
 
 def welch_t_test(means1, sds1, means2, sds2):
     n1 = 3

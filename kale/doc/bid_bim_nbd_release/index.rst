@@ -12,3 +12,4 @@ same liposome prep.
 
     raw_data
     bid_vs_bim_release
+    two_conf_fits
