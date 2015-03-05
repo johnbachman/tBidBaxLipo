@@ -11,16 +11,16 @@ Bid
 
 .. plot::
 
-    from tbidbaxlipo.plots.bid_bim_nbd_release import *
-    plot_3conf_fits('Bid')
+    from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
+    from tbidbaxlipo.plots.nbd_bax_analysis import plot_3conf_fits
+    plot_3conf_fits(df, nbd_residues, 'Bid')
 
 Bim
 ---
 
 .. plot::
 
-    from tbidbaxlipo.plots.bid_bim_nbd_release import *
-    plot_3conf_fits('Bim')
-
-
+    from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
+    from tbidbaxlipo.plots.nbd_bax_analysis import plot_3conf_fits
+    plot_3conf_fits(df, nbd_residues, 'Bim')
 
