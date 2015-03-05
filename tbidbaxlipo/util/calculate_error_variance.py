@@ -69,10 +69,10 @@ def calc_err_var_cubic(data, last_n_pts=50, plot=False):
 
 if __name__ == '__main__':
 
-    from preprocess_data import data_126, data_54
+    from tbidbaxlipo.plots.x141203_Bax_Bax_FRET.preprocess_data \
+                                                import data_126, data_54
 
     plt.ion()
-    plt.close('all')
 
     nbd_126_data = data_126[0, 0, :]
     nbd_126_std = calc_err_var_cubic(nbd_126_data, last_n_pts=80, plot=True)
