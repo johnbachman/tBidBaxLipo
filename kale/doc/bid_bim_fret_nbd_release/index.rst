@@ -11,3 +11,4 @@ same liposome prep.
     :maxdepth: 3
 
     raw_data
+    two_conf_fits
