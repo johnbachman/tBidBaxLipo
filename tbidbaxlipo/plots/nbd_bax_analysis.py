@@ -773,7 +773,7 @@ def plot_rank_changes(means1, sds1, means2, sds2, nbd_sites):
                  fontsize=8)
     plt.xlim(0.5, 2.5)
 
-def plot_bid_vs_bim_timecourses(df, nbd_sites, dtype='Release',
+def plot_bid_vs_bim_release(df, nbd_sites, dtype='Release',
                                 file_basename=None):
     replicates = range(1, 4)
     activators = ['Bid', 'Bim']
@@ -877,7 +877,7 @@ if __name__ == '__main__':
     from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
     plt.ion()
     #plot_release_endpoints(df, nbd_residues, normalized_to_wt=True)
-    plot_bid_vs_bim_timecourses(df, nbd_residues)
+    plot_bid_vs_bim_release(df, nbd_residues)
 
     #irs = calc_initial_rate_samples(df, nbd_residues, timepoint_ix=15)
     #(r_slope_avgs, r_slope_stds) = irs.release_avg_std()

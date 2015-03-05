@@ -11,3 +11,4 @@ same liposome prep.
     :maxdepth: 3
 
     raw_data
+    bid_vs_bim_release
