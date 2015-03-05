@@ -773,6 +773,75 @@ def plot_rank_changes(means1, sds1, means2, sds2, nbd_sites):
                  fontsize=8)
     plt.xlim(0.5, 2.5)
 
+def plot_bid_vs_bim_timecourses(df, nbd_sites, dtype='Release',
+                                file_basename=None):
+    replicates = range(1, 4)
+    activators = ['Bid', 'Bim']
+    # Get the length of the timecourses
+    for nbd_index, nbd_site in enumerate(nbd_sites):
+        color_ix = 0
+        for act_ix, activator in enumerate(activators):
+            # Initialization for WT
+            wt_slice = df[activator][dtype]['WT']
+            wt_numpts = wt_slice.shape[0]
+            wt_y = np.zeros((wt_numpts, len(replicates)))
+            # Initialization for mutant
+            mut_slice = df[activator][dtype][nbd_site]
+            mut_numpts = mut_slice.shape[0]
+            mut_y = np.zeros((mut_numpts, len(replicates)))
+            # Iterate over reps and get data
+            for rep_ix, rep_num in enumerate(replicates):
+                # Only get the time coordinates for the first rep
+                if rep_ix == 0:
+                    wt_time = wt_slice[rep_num]['TIME'].values
+                    mut_time = mut_slice[rep_num]['TIME'].values
+                wt_y[:, rep_ix] = wt_slice[rep_num]['VALUE'].values
+                mut_y[:, rep_ix] = mut_slice[rep_num]['VALUE'].values
+            # Now get the averages and SDs
+            wt_avg = np.mean(wt_y, axis=1)
+            wt_sd = np.std(wt_y, axis=1, ddof=1)
+            wt_ubound = wt_avg + wt_sd
+            wt_lbound = wt_avg - wt_sd
+            mut_avg = np.mean(mut_y, axis=1)
+            mut_sd = np.std(mut_y, axis=1, ddof=1)
+            mut_ubound = mut_avg + mut_sd
+            mut_lbound = mut_avg - mut_sd
+
+            #num_colors = 4
+            #colors = plt.cm.Set3(np.linspace(0, 1, num_colors))
+            colors = ['r', 'm', 'b', 'g']
+            fig_name = 'bid_bim_tc_comp_%s' % nbd_site
+            # Plot the ratio
+            plt.figure(fig_name, figsize=(10, 10))
+            plt.subplot(1, 2, 1)
+            (ratio_avg, ratio_sd) = \
+                            calc_ratio_mean_sd(mut_avg, mut_sd, wt_avg, wt_sd)
+            plt.plot(wt_time, ratio_avg, color=colors[color_ix],
+                     label=activator)
+            plt.fill_between(wt_time, ratio_avg + ratio_sd,
+                             ratio_avg - ratio_sd, alpha=0.5,
+                             color=colors[color_ix])
+            plt.legend(loc='upper right', fontsize=10)
+            plt.ylim(0, 5)
+
+            # Plot the raw timecourses for WT and mutant
+            # Plot the mutant
+            plt.subplot(1, 2, 2)
+            plt.plot(wt_time, mut_avg, color=colors[color_ix],
+                     label='%s, NBD-%sC-Bax' % (activator, nbd_site))
+            plt.fill_between(wt_time, mut_ubound, mut_lbound,
+                             color=colors[color_ix], alpha=0.2)
+            color_ix += 1
+            # Plot the WT
+            plt.plot(wt_time, wt_avg, color=colors[color_ix],
+                     label='%s, WT Bax' % activator)
+            plt.fill_between(wt_time, wt_ubound, wt_lbound,
+                             color=colors[color_ix], alpha=0.3)
+            plt.legend(loc='lower right', fontsize=10)
+            color_ix += 1
+            if file_basename:
+                plt.savefig('%s_%s.pdf' % (file_basename, fig_name))
+
 def welch_t_test(means1, sds1, means2, sds2):
     n1 = 3
     n2 = 3
@@ -807,7 +876,9 @@ def student_t_test(means1, sds1, means2, sds2, n):
 if __name__ == '__main__':
     from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
     plt.ion()
-    plot_release_endpoints(df, nbd_residues, normalized_to_wt=True)
+    #plot_release_endpoints(df, nbd_residues, normalized_to_wt=True)
+    plot_bid_vs_bim_timecourses(df, nbd_residues)
+
     #irs = calc_initial_rate_samples(df, nbd_residues, timepoint_ix=15)
     #(r_slope_avgs, r_slope_stds) = irs.release_avg_std()
     #(n_slope_avgs, n_slope_stds) = irs.nbd_avg_std()
