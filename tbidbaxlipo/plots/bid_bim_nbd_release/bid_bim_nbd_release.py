@@ -19,13 +19,11 @@ line_colors = {'Bid': 'r', 'Bim': 'b'}
 line_styles = {1:':', 2:'-', 3:'--'}
 rep_colors = {1:'r', 2:'g', 3:'b'}
 
-def plot_peak_slopes(activator):
-    #nbd_sites = ['WT', '3', '5', '54', '62', '68']
+def plot_derivatives(activator):
     nbd_sites = ['WT', '3', '5', '15', '36', '40', '47', '54', '62', '68',
                  '79', '120', '122', '126', '138', '151', '175', '179',
                  '184', '188']
     replicates = range(1, 4)
-    count = 0
     num_pts = 4
     window = 5 # For moving average
     for nbd_index, nbd_site in enumerate(nbd_sites):
@@ -34,14 +32,17 @@ def plot_peak_slopes(activator):
         n_maxs = []
         #rn_errs = []
         for rep_index in replicates:
-
             rt = df[(activator, 'Release', nbd_site, rep_index, 'TIME')].values
             ry = df[(activator, 'Release', nbd_site, rep_index, 'VALUE')].values
+            # Take the moving average of the timecourse
             r_avg = moving_average(ry, n=window)
+            # Take the derivative
             r_diff = np.diff(r_avg)
+            # Calculate the maximum rate of change
             r_max = np.max(np.abs(r_diff))
             r_maxs.append(r_max)
 
+            # Calculate max NBD slope, but not for WT
             if nbd_site == 'WT':
                 n_maxs.append(0)
                 rn_ratios.append(0)
@@ -55,15 +56,12 @@ def plot_peak_slopes(activator):
 
                 rn_ratio = r_max / n_max
                 rn_ratios.append(rn_ratio)
-            #rn_err = calc_ratio_sd(r_slope, r_lin[4], n_slope, n_lin[4])
-            #rn_errs.append(rn_err)
 
             plt.figure('%s, NBD-%s-Bax derivative' % (activator, nbd_site),
                        figsize=(12, 5))
             plt.subplot(1, 2, 1)
             plt.plot(rt[1+window-1:], r_diff, color=rep_colors[rep_index],
                      label='%s Rep %d' % (activator, rep_index))
-            #plt.plot(rt[1+window-1:], r_avg)
             plt.ylabel('dRel/dt (% rel $sec^{-1}$)')
             plt.title('NBD-%s-Bax, Tb derivative' % nbd_site)
             plt.legend(loc='upper right')
@@ -72,7 +70,6 @@ def plot_peak_slopes(activator):
                 plt.subplot(1, 2, 2)
                 plt.plot(nt[1+window-1:], n_diff, color=rep_colors[rep_index],
                          label='%s Rep %d' % (activator, rep_index))
-                #plt.plot(nt[1+window-1:], n_avg)
                 plt.xlabel('Time (sec)')
                 plt.ylabel('dNBD/dt ($F/F_0\ sec^{-1}$)')
                 plt.title('NBD-%s-Bax, NBD derivative' % nbd_site)
@@ -83,21 +80,20 @@ def plot_peak_slopes(activator):
                            (activator, nbd_site))
                 n_diff_norm = n_diff / np.max(np.abs(n_diff))
                 r_diff_norm = r_diff / np.max(np.abs(r_diff))
-                plt.plot(rt[1+window-1:], r_diff_norm, color=rep_colors[rep_index],
-                        linestyle=line_styles[2],
-                        label='%s Rep %d' % (activator, rep_index))
-                plt.plot(nt[1+window-1:], n_diff_norm, color=rep_colors[rep_index],
-                        linestyle=line_styles[3])
+                plt.plot(rt[1+window-1:], r_diff_norm,
+                         color=rep_colors[rep_index],
+                         linestyle=line_styles[2],
+                         label='%s Rep %d' % (activator, rep_index))
+                plt.plot(nt[1+window-1:], n_diff_norm,
+                         color=rep_colors[rep_index], linestyle=line_styles[3])
                 plt.xlabel('Time (sec)')
                 plt.ylabel('% max rate')
                 plt.title('%s, NBD-%s-Bax normalized derivative' %
                           (activator, nbd_site))
                 plt.legend(loc='upper right')
-
         plt.figure('%s, NBD-%s-Bax derivative' % (activator, nbd_site))
         plt.tight_layout()
-        plt.show()
-        """
+
         plt.figure("Tb/NBD peak slope ratio")
         if activator == 'Bid':
             plt.bar(range(nbd_index*7, (nbd_index*7) + 3), rn_ratios,
@@ -121,8 +117,6 @@ def plot_peak_slopes(activator):
         else:
             plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6), n_maxs,
                     width=1, color='g')
-        """
-    """
     num_sites = len(nbd_sites)
     fig_names = ["Tb/NBD peak slope ratio", "Tb peak slope", "NBD peak slope"]
     for fig_name in fig_names:
@@ -130,7 +124,6 @@ def plot_peak_slopes(activator):
         ax = plt.gca()
         ax.set_xticks(np.arange(3, 3 + num_sites * 7, 7))
         ax.set_xticklabels(nbd_sites)
-    """
 
 def plot_filtered_data(activator):
     nbd_sites = ['15', '54']
@@ -138,7 +131,6 @@ def plot_filtered_data(activator):
     #             '79', '120', '122', '126', '138', '151', '175', '179',
     #             '184', '188']
     replicates = range(1, 4)
-    count = 0
     num_pts = 4
     window = 5 # For moving average
     # Create an order 3 lowpass butterworth filter.
@@ -162,14 +154,13 @@ def plot_filtered_data(activator):
             plt.plot(nt, n_filt)
 
 if __name__ == '__main__':
-    #nbd_sites = ['3', '5', '15', '36', '47', '54', '62', '68', '79',
-    #             '120', '122', '126', '138', '151', '175', '179', '184', '188']
+    plt.ion()
     #plot_all(df, nbd_residues, file_basename='data1_raw')
-    plot_endpoints(df, nbd_residues, file_basename='data1')
+    #plot_endpoints(df, nbd_residues, file_basename='data1')
     #plot_initial_rates('Bid')
     #plot_initial_rates('Bim')
     #plot_filtered_data('Bid')
     #fr = plot_3conf_fits('Bid')
     #plot_3conf_fits('Bid')
     #plot_peak_slopes('Bim')
-    #plot_derivatives('Bim')
+    plot_derivatives('Bid')
