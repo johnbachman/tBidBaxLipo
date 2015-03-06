@@ -2,12 +2,13 @@ import collections
 from matplotlib import pyplot as plt
 import numpy as np
 import scipy.stats
+import scipy.signal # For low-pass filtering in derivatives function
 from tbidbaxlipo.util import set_fig_params_for_publication, fontsize, \
                              format_axis
 from tbidbaxlipo.util.error_propagation import calc_ratio_mean_sd
 import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
-from tbidbaxlipo.util import fitting
+from tbidbaxlipo.util import fitting, moving_average
 from tbidbaxlipo.models.nbd.multiconf import Builder
 import tbidbaxlipo.plots.titration_fits as tf
 import tbidbaxlipo.util.calculate_error_variance as cev
@@ -860,6 +861,80 @@ def plot_bid_vs_bim_release(df, nbd_sites, dtype='Release',
             if file_basename:
                 plt.savefig('%s_%s.pdf' % (file_basename, fig_name))
 
+def plot_derivatives(df, nbd_sites):
+    replicates = range(1, 4)
+    num_pts = 4
+    window = 1 # For moving average
+    activators = ['Bid', 'Bim']
+    # Create an order 3 lowpass butterworth filter.
+    b, a = scipy.signal.butter(1, 0.2)
+    for nbd_index, nbd_site in enumerate(nbd_sites):
+        for activator in activators:
+            for rep_index in replicates:
+                rt = df[(activator, 'Release', nbd_site,
+                         rep_index, 'TIME')].values
+                ry = df[(activator, 'Release', nbd_site,
+                         rep_index, 'VALUE')].values
+                # Filter the timecourse
+                r_filt = scipy.signal.filtfilt(b, a, ry)
+                r_avg = moving_average(r_filt, n=window)
+                # Take the derivative
+                r_diff = np.diff(r_avg)
+
+                # Calculate max NBD slope, but not for WT
+                if nbd_site != 'WT':
+                    nt = df[(activator, 'NBD', nbd_site,
+                             rep_index, 'TIME')].values
+                    ny = df[(activator, 'NBD', nbd_site,
+                             rep_index, 'VALUE')].values
+                    # Filter
+                    n_filt = scipy.signal.filtfilt(b, a, ny)
+                    n_avg = moving_average(n_filt, n=window)
+                    # Take derivative
+                    n_diff = np.diff(n_avg)
+
+                # Terbium subplot
+                plt.figure('%s, NBD-%s-Bax derivative' % (activator, nbd_site),
+                           figsize=(12, 5))
+                plt.subplot(1, 2, 1)
+                plt.plot(rt[1+window-1:], r_diff, color=rep_colors[rep_index],
+                         label='%s Rep %d' % (activator, rep_index))
+                plt.ylabel('dRel/dt (% rel $sec^{-1}$)')
+                plt.title('NBD-%s-Bax, Tb derivative' % nbd_site)
+                plt.legend(loc='upper right')
+
+                if nbd_site != 'WT':
+                    # NBD subplot
+                    plt.subplot(1, 2, 2)
+                    plt.plot(nt[1+window-1:], n_diff,
+                             color=rep_colors[rep_index],
+                             label='%s Rep %d' % (activator, rep_index))
+                    plt.xlabel('Time (sec)')
+                    plt.ylabel('dNBD/dt ($F/F_0\ sec^{-1}$)')
+                    plt.title('NBD-%s-Bax, NBD derivative' % nbd_site)
+                    plt.legend(loc='upper right')
+
+                    # Plot normalized derivatives
+                    plt.figure('%s, NBD-%s-Bax normalized derivative' %
+                               (activator, nbd_site))
+                    n_diff_norm = n_diff / np.max(np.abs(n_diff))
+                    r_diff_norm = r_diff / np.max(np.abs(r_diff))
+                    plt.plot(rt[1+window-1:], r_diff_norm,
+                             color=rep_colors[rep_index],
+                             linestyle=line_styles[2],
+                             label='%s Rep %d' % (activator, rep_index))
+                    plt.plot(nt[1+window-1:], n_diff_norm,
+                             color=rep_colors[rep_index],
+                             linestyle=line_styles[3])
+                    plt.xlabel('Time (sec)')
+                    plt.ylabel('% max rate')
+                    plt.title('%s, NBD-%s-Bax normalized derivative' %
+                              (activator, nbd_site))
+                    plt.legend(loc='upper right')
+                # Call tight_layout for the Tb/NBD 2-panel figure
+                plt.figure('%s, NBD-%s-Bax derivative' % (activator, nbd_site))
+                plt.tight_layout()
+
 def welch_t_test(means1, sds1, means2, sds2):
     n1 = 3
     n2 = 3
@@ -1138,7 +1213,8 @@ def plot_nbd_error_estimates(df, nbd_sites, last_n_pts=50, fit_type='cubic',
 if __name__ == '__main__':
     from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
     plt.ion()
-    plot_nbd_error_estimates(df, ['68'], last_n_pts=80, fit_type='cubic')
+    plot_derivatives(df, ['WT', '3'])
+    #plot_nbd_error_estimates(df, ['68'], last_n_pts=80, fit_type='cubic')
     #plot_release_endpoints(df, nbd_residues, normalized_to_wt=True)
     #plot_bid_vs_bim_release(df, nbd_residues)
     #plot_nbd_error_estimates(df, ['54', '62', '68'])

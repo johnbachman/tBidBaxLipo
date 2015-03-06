@@ -14,4 +14,5 @@ same liposome prep.
     bid_vs_bim_release
     two_conf_fits
     three_conf_fits
+    derivatives
     nbd_error_estimates
