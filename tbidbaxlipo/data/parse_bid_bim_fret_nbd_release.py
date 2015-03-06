@@ -59,7 +59,7 @@ for nbd_ix, nbd_residue in enumerate(nbd_residues):
                     if (cell.value == None):
                         value_vector.append(np.nan)
                     else:
-                        value_vector.append(cell.value)
+                        value_vector.append(float(cell.value))
 
                 # If this is the time column, get and save the time vector
                 if dtype_ix == 0:

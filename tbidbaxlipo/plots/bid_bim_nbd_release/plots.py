@@ -28,7 +28,10 @@ if __name__ == '__main__':
     elif plot_type == 'nbd_endpoint':
         nba.plot_nbd_endpoints(df, nbd_residues, last_n_pts=3,
                            file_basename=file_basename)
-    elif plot_type == 'release_endpoint':
+    elif plot_type == 'release_endpoint_norm':
+        nba.plot_release_endpoints(df, nbd_residues, normalized_to_wt=True,
+                           last_n_pts=3, file_basename=file_basename)
+    elif plot_type == 'release_endpoint_no_norm':
         nba.plot_release_endpoints(df, nbd_residues, normalized_to_wt=False,
                            last_n_pts=3, file_basename=file_basename)
     elif plot_type == 'initial_rate_samples':
