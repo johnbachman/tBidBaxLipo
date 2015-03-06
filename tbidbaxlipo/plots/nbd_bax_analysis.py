@@ -10,6 +10,7 @@ import matplotlib.lines as mlines
 from tbidbaxlipo.util import fitting
 from tbidbaxlipo.models.nbd.multiconf import Builder
 import tbidbaxlipo.plots.titration_fits as tf
+import tbidbaxlipo.util.calculate_error_variance as cev
 
 line_colors = {'Bid': 'r', 'Bim': 'b'}
 dtype_line_colors = {'Release':'r', 'NBD':'g', 'FRET':'b'}
@@ -1084,9 +1085,37 @@ def plot_3conf_fits(df, nbd_sites, activator):
 
     return fit_results
 
+def plot_nbd_error_estimates(df, nbd_sites, last_n_pts=50, fit_type='cubic',
+                             plot=True):
+    replicates = range(1, 4)
+    # Filter out the WT residue, if present in the list
+    nbd_sites_filt = [s for s in nbd_sites if s != 'WT']
+    activators = ['Bid', 'Bim']
+
+    for act_ix, activator in enumerate(activators):
+        for nbd_index, nbd_site in enumerate(nbd_sites_filt):
+            for rep_index, rep_num in enumerate(replicates):
+                ny = df[activator, 'NBD', nbd_site, rep_num, 'VALUE'].values
+                # Get the error value and the fig (if not figure desired, then
+                # fig will be None
+                (nbd_err, fig) = cev.calc_err_var(ny, last_n_pts=last_n_pts,
+                                           fit_type=fit_type, plot=plot)
+                # If we're plotting, we should have a figure object, and if
+                # not, then not
+                assert ((plot is None) == (fig is None))
+                # Add title info to plot
+                if plot:
+                    fig.subplots_adjust(top=0.86)
+                    fig.text(0.5, 0.95,
+                             'Est. Error of NBD for %s, %sC-Bax: %f' %
+                             (activator, nbd_site, nbd_err),
+                             verticalalignment='top',
+                             horizontalalignment='center')
+
 if __name__ == '__main__':
     from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
     plt.ion()
+    plot_nbd_error_estimates(df, ['68'], last_n_pts=80, fit_type='cubic')
     #plot_release_endpoints(df, nbd_residues, normalized_to_wt=True)
     #plot_bid_vs_bim_release(df, nbd_residues)
     #plot_nbd_error_estimates(df, ['54', '62', '68'])
