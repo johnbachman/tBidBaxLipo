@@ -13,4 +13,4 @@ same liposome prep.
     raw_data
     two_conf_fits
     three_conf_fits
-
+    nbd_error_estimates
