@@ -900,7 +900,8 @@ def plot_derivatives(df, nbd_sites):
                 plt.plot(rt[1+window-1:], r_diff, color=rep_colors[rep_index],
                          label='%s Rep %d' % (activator, rep_index))
                 plt.ylabel('dRel/dt (% rel $sec^{-1}$)')
-                plt.title('NBD-%s-Bax, Tb derivative' % nbd_site)
+                plt.title('%s, NBD-%s-Bax, Tb derivative' %
+                          (activator, nbd_site))
                 plt.legend(loc='upper right')
 
                 if nbd_site != 'WT':
@@ -911,7 +912,8 @@ def plot_derivatives(df, nbd_sites):
                              label='%s Rep %d' % (activator, rep_index))
                     plt.xlabel('Time (sec)')
                     plt.ylabel('dNBD/dt ($F/F_0\ sec^{-1}$)')
-                    plt.title('NBD-%s-Bax, NBD derivative' % nbd_site)
+                    plt.title('%s, NBD-%s-Bax, NBD derivative' %
+                              (activator, nbd_site))
                     plt.legend(loc='upper right')
 
                     # Plot normalized derivatives
