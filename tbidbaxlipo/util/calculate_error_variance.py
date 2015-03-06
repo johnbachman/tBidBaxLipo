@@ -21,7 +21,6 @@ def calc_err_var(data, last_n_pts=50, fit_type='cubic', plot=False):
                          "'cubic'.")
     # Run the fit
     params = fit.fit_timecourse(t_subset, data_subset)
-    print params
     # Get the best-fit curve
     ypred = fit.fit_func(t_subset, params)
     # Calculate residuals
@@ -42,5 +41,5 @@ def calc_err_var(data, last_n_pts=50, fit_type='cubic', plot=False):
         scipy.stats.probplot(residuals, dist='norm', plot=plt)
         plt.title('Quantile-quantile plot vs. normal')
         plt.tight_layout()
-    return (np.std(residuals), fig)
+    return (residuals, fig)
 

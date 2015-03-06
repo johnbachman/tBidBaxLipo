@@ -1092,25 +1092,48 @@ def plot_nbd_error_estimates(df, nbd_sites, last_n_pts=50, fit_type='cubic',
     nbd_sites_filt = [s for s in nbd_sites if s != 'WT']
     activators = ['Bid', 'Bim']
 
-    for act_ix, activator in enumerate(activators):
-        for nbd_index, nbd_site in enumerate(nbd_sites_filt):
+    for nbd_index, nbd_site in enumerate(nbd_sites_filt):
+        for act_ix, activator in enumerate(activators):
+            residuals_reps = []
             for rep_index, rep_num in enumerate(replicates):
                 ny = df[activator, 'NBD', nbd_site, rep_num, 'VALUE'].values
                 # Get the error value and the fig (if not figure desired, then
                 # fig will be None
-                (nbd_err, fig) = cev.calc_err_var(ny, last_n_pts=last_n_pts,
+                (residuals, fig) = cev.calc_err_var(ny, last_n_pts=last_n_pts,
                                            fit_type=fit_type, plot=plot)
+                residuals_reps.append(residuals)
                 # If we're plotting, we should have a figure object, and if
                 # not, then not
                 assert ((plot is None) == (fig is None))
                 # Add title info to plot
+                nbd_err = np.std(residuals, ddof=1)
                 if plot:
                     fig.subplots_adjust(top=0.86)
                     fig.text(0.5, 0.95,
-                             'Est. Error of NBD for %s, %sC-Bax: %f' %
-                             (activator, nbd_site, nbd_err),
+                             'Est. Error for %s, %sC-Bax, rep %d: %f' %
+                             (activator, nbd_site, rep_num, nbd_err),
                              verticalalignment='top',
                              horizontalalignment='center')
+            # Combine the three residuals replicates into one big set of
+            # residuals
+            pooled_residuals = np.array(residuals_reps).flatten()
+            pooled_err = np.std(pooled_residuals, ddof=1)
+            if plot:
+                fig = plt.figure(figsize=(8, 5))
+                # Plot of fit and distribution of residuals
+                plt.subplot(1, 2, 1)
+                plt.hist(pooled_residuals)
+                plt.title('Histogram of pooled residuals')
+                plt.subplot(1, 2, 2)
+                scipy.stats.probplot(pooled_residuals, dist='norm', plot=plt)
+                plt.title('Quantile-quantile plot vs. normal')
+                plt.tight_layout()
+                plt.subplots_adjust(top=0.86)
+                fig.text(0.5, 0.95,
+                         'Est. Error of NBD for %s, %sC-Bax: %f' %
+                         (activator, nbd_site, pooled_err),
+                         verticalalignment='top',
+                         horizontalalignment='center')
 
 if __name__ == '__main__':
     from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
