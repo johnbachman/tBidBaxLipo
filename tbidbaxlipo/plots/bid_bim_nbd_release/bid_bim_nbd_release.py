@@ -7,7 +7,7 @@ from tbidbaxlipo.util import fitting
 from tbidbaxlipo.models.nbd.multiconf import Builder
 from pysb.integrate import Solver
 import itertools
-import titration_fits as tf
+import tbidbaxlipo.plots.titration_fits as tf
 import scipy.stats
 import scipy.signal
 from tbidbaxlipo.util.error_propagation import calc_ratio_sd, calc_ratio_mean_sd
@@ -25,7 +25,9 @@ def plot_derivatives(activator):
                  '184', '188']
     replicates = range(1, 4)
     num_pts = 4
-    window = 5 # For moving average
+    window = 1 # For moving average
+    # Create an order 3 lowpass butterworth filter.
+    b, a = scipy.signal.butter(1, 0.2)
     for nbd_index, nbd_site in enumerate(nbd_sites):
         rn_ratios = []
         r_maxs = []
@@ -35,7 +37,8 @@ def plot_derivatives(activator):
             rt = df[(activator, 'Release', nbd_site, rep_index, 'TIME')].values
             ry = df[(activator, 'Release', nbd_site, rep_index, 'VALUE')].values
             # Take the moving average of the timecourse
-            r_avg = moving_average(ry, n=window)
+            r_filt = scipy.signal.filtfilt(b, a, ry)
+            r_avg = moving_average(r_filt, n=window)
             # Take the derivative
             r_diff = np.diff(r_avg)
             # Calculate the maximum rate of change
@@ -49,7 +52,8 @@ def plot_derivatives(activator):
             else:
                 nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
                 ny = df[(activator, 'NBD', nbd_site, rep_index, 'VALUE')].values
-                n_avg = moving_average(ny, n=window)
+                n_filt = scipy.signal.filtfilt(b, a, ny)
+                n_avg = moving_average(n_filt, n=window)
                 n_diff = np.diff(n_avg)
                 n_max = np.max(np.abs(n_diff))
                 n_maxs.append(n_max)
