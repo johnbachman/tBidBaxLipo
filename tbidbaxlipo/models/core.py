@@ -311,6 +311,7 @@ class Builder(pysb.builder.Builder):
         self.observable('iBax_mono', Bax(conf='ins', bh3=None))
         self.observable('iBax_mono_NBD', Bax(conf='ins', bh3=None, dye='nbd'))
         self.observable('tBidBax', tBid(bh3=1) % Bax(bh3=1))
+        self.observable('tBidBax_NBD', tBid(bh3=1) % Bax(bh3=1, dye='nbd'))
         self.observable('Bax2', Bax(bh3=1) % Bax(bh3=1))
         self.observable('Bax2_NBD', Bax(bh3=1, dye='nbd') % Bax(bh3=1))
         self.observable('Bax4',
@@ -1105,24 +1106,35 @@ class Builder(pysb.builder.Builder):
             elif feature == 'nbd':
                 c0 = self.parameter('c0_scaling', 1., prior=None)
                 c1 = self.parameter('c1_scaling', 5., prior=Uniform(0, 1))
-                if implementation == 1: # all iBax
+                if implementation == 1: # two confs: all iBax
                     self.expression('NBD',
                             (c0 * self['cBax_NBD'] +
                             c0 * self['mBax_NBD'] +
                             c1 * self['iBax_nopore_NBD']) / self['Bax_NBD_0'])
-                elif implementation == 2: # dimer only
+                elif implementation == 2: # two confs: dimer only
                     self.expression('NBD',
                             (c0 * self['cBax_NBD'] +
                              c0 * self['mBax_NBD'] +
                              c0 * self['iBax_mono_NBD'] +
                              c1 * self['Bax2_NBD'])  / self['Bax_NBD_0'])
-                elif implementation == 3: # two conf: 1st iBax, 2nd dimer
+                # three confs: 1st iBax_mono, 2nd dimer
+                elif implementation == 3:
                     c2 = self.parameter('c2_scaling', 5., prior=Uniform(0, 1))
                     self.expression('NBD',
                             (c0 * self['cBax_NBD'] +
                              c0 * self['mBax_NBD'] +
                              c1 * self['iBax_mono_NBD'] +
                              c2 * self['Bax2_NBD']) / self['Bax_NBD_0'])
+                # four confs: tBid/Bax, iBax_mono, and dimer
+                elif implementation == 4:
+                    c2 = self.parameter('c2_scaling', 5., prior=Uniform(0, 1))
+                    c3 = self.parameter('c3_scaling', 5., prior=Uniform(0, 1))
+                    self.expression('NBD',
+                            (c0 * self['cBax_NBD'] +
+                             c0 * self['mBax_NBD'] +
+                             c1 * self['tBidBax_NBD'] +
+                             c2 * self['iBax_mono_NBD'] +
+                             c3 * self['Bax2_NBD']) / self['Bax_NBD_0'])
                 else:
                     unrecognized_implementation(feature, implementation)
             elif feature == 'baxfret':
