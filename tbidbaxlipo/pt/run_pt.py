@@ -61,7 +61,7 @@ if __name__ == '__main__':
         params = {local_ic_name: ic_var}
 
     # Create the global fit instance
-    gf = emcee_fit.GlobalFit(bd, time_var, data_var, params,
+    gf = emcee_fit.GlobalFit(bd, time_var, data_var, data_sigma_var, params,
                              args['model_observable'])
 
     # Seed the random number generator
