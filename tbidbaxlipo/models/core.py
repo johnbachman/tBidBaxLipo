@@ -268,36 +268,58 @@ class Builder(pysb.builder.Builder):
         tBid = self.monomer('tBid', ['bh3', 'conf', 'cpt'],
                      {'conf': ['aq', 'mem'],
                       'cpt':  ['sol'] + self.cpt_list})
-        Bax = self.monomer('Bax', ['bh3', 'a6', 'lipo', 'conf', 'cpt', 'pore'],
+        Bax = self.monomer('Bax',
+                     ['bh3', 'a6', 'lipo', 'conf', 'cpt', 'pore', 'dye'],
                      {'conf':  ['aq', 'mem', 'ins'],
                       'cpt': ['sol'] + self.cpt_list,
-                      'pore': ['y', 'n']})
+                      'pore': ['y', 'n'],
+                      'dye': ['none', 'nbd', 'dac']})
         Vesicles = self.monomer('Vesicles', ['bax'])
         Pores = self.monomer('Pores', ['cpt'], {'cpt':self.cpt_list})
 
         self.initial(tBid(cpt='sol', conf='aq', bh3=None), self['tBid_0'])
-        self.initial(Bax(cpt='sol', conf='aq', bh3=None, a6=None,
-                         lipo=None, pore='n'),
-                     self['Bax_0'])
         self.initial(Vesicles(bax=None), self['Vesicles_0'])
+
+        # Initial condition for WT-Bax
+        self.initial(Bax(cpt='sol', conf='aq', bh3=None, a6=None,
+                         lipo=None, pore='n', dye='none'),
+                     self['Bax_0'])
+        # Initial condition for DAC-Bax
+        self.parameter('Bax_DAC_0', 0., prior=None)
+        self.initial(Bax(cpt='sol', conf='aq', bh3=None, a6=None,
+                         lipo=None, pore='n', dye='dac'),
+                     self['Bax_DAC_0'])
+        # Initial condition for NBD-Bax
+        self.parameter('Bax_NBD_0', 0., prior=None)
+        self.initial(Bax(cpt='sol', conf='aq', bh3=None, a6=None,
+                         lipo=None, pore='n', dye='nbd'),
+                     self['Bax_NBD_0'])
 
         # OBSERVABLES
         self.observable('ctBid', tBid(conf='aq'))
         self.observable('mtBid', tBid(conf='mem'))
 
         self.observable('cBax', Bax(cpt='sol', conf='aq'))
+        self.observable('cBax_NBD', Bax(cpt='sol', conf='aq', dye='nbd'))
         self.observable('mBax', Bax(conf='mem'))
+        self.observable('mBax_NBD', Bax(conf='mem', dye='nbd'))
         self.observable('mBax_mono', Bax(conf='mem', bh3=None))
         self.observable('iBax', Bax(conf='ins'))
+        self.observable('iBax_NBD', Bax(conf='ins', dye='nbd'))
         self.observable('iBax_nopore', Bax(conf='ins', pore='n'))
+        self.observable('iBax_nopore_NBD', Bax(conf='ins', pore='n', dye='nbd'))
         self.observable('iBax_mono', Bax(conf='ins', bh3=None))
+        self.observable('iBax_mono_NBD', Bax(conf='ins', bh3=None, dye='nbd'))
         self.observable('tBidBax', tBid(bh3=1) % Bax(bh3=1))
         self.observable('Bax2', Bax(bh3=1) % Bax(bh3=1))
+        self.observable('Bax2_NBD', Bax(bh3=1, dye='nbd') % Bax(bh3=1))
         self.observable('Bax4',
                         Bax(conf='ins', bh3=1, a6=3) %
                         Bax(conf='ins', bh3=1, a6=4) %
                         Bax(conf='ins', bh3=2, a6=3) %
                         Bax(conf='ins', bh3=2, a6=4))
+        self.observable('Bax2FRET',
+                        Bax(bh3=1, dye='dac') % Bax(bh3=1, dye='nbd'))
         # Pore formation
         self.observable('pBax', Bax(pore='y'))
         self.observable('pores', Pores())
@@ -496,7 +518,7 @@ class Builder(pysb.builder.Builder):
                  Bax_transloc_kf)
             self.rule('Bax_mono_translocates_%s_to_sol' % cpt_name,
                  Bax_mono(cpt=cpt_name, conf='mem', pore='n') >>
-                 Bax_mono(cpt='sol', conf='aq', pore='n', lipo=None),
+                 Bax_mono(cpt='sol', conf='aq', pore='n'),
                  Bax_transloc_kr)
         else:
             for cpt_name in self.cpt_list:
@@ -506,7 +528,7 @@ class Builder(pysb.builder.Builder):
                      Bax_transloc_kf)
                 self.rule('Bax_mono_translocates_%s_to_sol' % cpt_name,
                      Bax_mono(cpt=cpt_name, conf='mem', pore='n') >>
-                     Bax_mono(cpt='sol', conf='aq', pore='n', lipo=None),
+                     Bax_mono(cpt='sol', conf='aq', pore='n'),
                      Bax_transloc_kr)
 
 
@@ -1020,7 +1042,9 @@ class Builder(pysb.builder.Builder):
             'autoactivation': 4,
             'dimerization': 5,
             'nbd': 6,
-            'bleach': 7,
+            'baxfret': 7,
+            'bleach': 8,
+            'timeoffset': 9,
         }
         model_string = ''
 
@@ -1076,20 +1100,40 @@ class Builder(pysb.builder.Builder):
                     self.Bax_dimerizes(bax_conf='ins', reversible=False)
                 elif implementation == 2:
                     self.Bax_dimerizes(bax_conf='ins', reversible=True)
+                else:
+                    unrecognized_implementation(feature, implementation)
             elif feature == 'nbd':
                 c0 = self.parameter('c0_scaling', 1., prior=None)
                 c1 = self.parameter('c1_scaling', 5., prior=Uniform(0, 1))
                 if implementation == 1: # all iBax
                     self.expression('NBD',
-                            (c0 * self['cBax'] +
-                            c0 * self['mBax'] +
-                            c1 * self['iBax_nopore']) / self['Bax_0'])
+                            (c0 * self['cBax_NBD'] +
+                            c0 * self['mBax_NBD'] +
+                            c1 * self['iBax_nopore_NBD']) / self['Bax_NBD_0'])
                 elif implementation == 2: # dimer only
                     self.expression('NBD',
-                            (c0 * self['cBax'] +
-                             c0 * self['mBax'] +
-                             c0 * self['iBax_mono'] +
-                             c1 * self['Bax2'])  / self['Bax_0'])
+                            (c0 * self['cBax_NBD'] +
+                             c0 * self['mBax_NBD'] +
+                             c0 * self['iBax_mono_NBD'] +
+                             c1 * self['Bax2_NBD'])  / self['Bax_NBD_0'])
+                elif implementation == 3: # two conf: 1st iBax, 2nd dimer
+                    c2 = self.parameter('c2_scaling', 5., prior=Uniform(0, 1))
+                    self.expression('NBD',
+                            (c0 * self['cBax_NBD'] +
+                             c0 * self['mBax_NBD'] +
+                             c1 * self['iBax_mono_NBD'] +
+                             c2 * self['Bax2_NBD']) / self['Bax_NBD_0'])
+                else:
+                    unrecognized_implementation(feature, implementation)
+            elif feature == 'baxfret':
+                bax_fret_scaling = self.parameter('bax_fret_scaling', 50.,
+                                                  prior=Uniform(0, 2))
+                if implementation == 1: # all Bax dimers
+                    self.expression('BaxFRET',
+                            (self['Bax2FRET'] / self['Bax_DAC_0']) *
+                            bax_fret_scaling)
+                else:
+                    unrecognized_implementation(feature, implementation)
             elif feature == 'bleach': # Requires NBD to be present
                 if implementation == 1:
                     self.monomer('Bleach', [])
@@ -1101,6 +1145,16 @@ class Builder(pysb.builder.Builder):
                     self.observable('Bleach_', self['Bleach']())
                     self.expression('NBD_bleach',
                                     self['NBD'] * self['Bleach_'])
+                else:
+                    unrecognized_implementation(feature, implementation)
+            elif feature == 'timeoffset':
+                if implementation == 'fit':
+                    self.parameter('timeoffset', 100, prior=Uniform(-1, 3))
+                else:
+                    unrecognized_implementation(feature, implementation)
+            else:
+                raise ValueError("Don't know how to implement feature %s" %
+                                 feature)
 
         self.model_name = model_string
 

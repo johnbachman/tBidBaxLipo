@@ -24,33 +24,56 @@ def likelihood(position, gf):
     tc_length = len(gf.data[0])
     err = 0
 
-    # Iterate over each entry in the data array
-    for data_ix, data in enumerate(gf.data):
+    # Iterate over each condition (1st dimension of the data matrix)
+    for cond_ix in range(gf.data.shape[0]):
+        # Create a placeholder for a time offset, if there is one
+        timeoffset = None
         # Set the parameters appropriately for the simulation:
         # Iterate over the globally fit parameters
         for g_ix, p in enumerate(gf.builder.global_params):
             p.value = 10 ** position[g_ix]
-        # Iterate over the locally fit parameters
+            if p.name == 'timeoffset':
+                timeoffset = 10 ** position[g_ix]
+        # Iterate over the locally fit parameter_s
         for l_ix, p in enumerate(gf.builder.local_params):
             ix_offset = len(gf.builder.global_params) + \
-                        data_ix * len(gf.builder.local_params)
+                        cond_ix * len(gf.builder.local_params)
             p.value = 10 ** position[l_ix + ix_offset]
         # Now fill in the initial condition parameters
-        for p_name, values in gf.params.iteritems():
-            p = gf.builder.model.parameters[p_name]
-            p.value = values[data_ix]
+        if gf.params is not None:
+            for p_name, values in gf.params.iteritems():
+                p = gf.builder.model.parameters[p_name]
+                p.value = values[cond_ix]
+        # Reset the timespan by adding one additional pt at the beginning
+        if timeoffset:
+            gf.solver.tspan = np.insert(gf.time, 0, -timeoffset)
         # Now run the simulation
         gf.solver.run()
-        # Calculate the squared error
-        if gf.use_expr:
-            ysim = gf.solver.yexpr[gf.obs_name]
-        else:
-            ysim = gf.solver.yobs[gf.obs_name]
-        # If integrator fails to converge, the results will contain NaN
-        if np.any(np.isnan(ysim)):
-            err = -np.inf
-        else:
-            err += -np.sum(((data - ysim) ** 2) / (2 * 0.2**2))
+        # Calculate the squared error over all the observables
+        err = 0
+        for obs_ix, obs_name in enumerate(gf.obs_name):
+            if gf.use_expr:
+                ysim = gf.solver.yexpr[obs_name]
+            else:
+                ysim = gf.solver.yobs[obs_name]
+            # If we're using a time offset, skip the first point (the offset)
+            # for the purposes of comparing to data
+            if timeoffset:
+                ysim = ysim[1:]
+            # If integrator fails to converge, the results will contain NaN
+            if np.any(np.isnan(ysim)):
+                err = -np.inf
+                continue
+            # Get the data slice we want
+            data = gf.data[cond_ix, obs_ix, :]
+            # Get the appropriate SD for this data slice
+            sigma = gf.data_sigma[cond_ix, obs_ix]
+            # Calculate the log-likelihood
+            loglkl = ((data - ysim) ** 2) / (2. * sigma ** 2)
+            # Filter out the NaNs...
+            filt_loglkl = loglkl[~np.isnan(loglkl)]
+            # Take the sum
+            err += -np.sum(filt_loglkl)
 
     return err
 
@@ -67,12 +90,15 @@ class GlobalFit(object):
         The time vector.
     data : list of np.array
         The experimental timecourses to fit.
-    params : dict of lists
+    data_sigma : np.array
+        Array of values with dimension corresponding to data indicating the
+        standard deviation of the data.
+    params : dict of lists, or None
         The keys to the dict should be names of parameters in the PySB model
         (e.g., initial conditions); each value should be a list containing
         values for the parameter for each of the entries in the data list. The
         length of each value in the dict should match the length of the data
-        list.
+        list. If None, indicates that there are no local initial conditions.
     obs_name : string
         The name of the model observable to compare against the data.
     obs_type : string, "Expression" or "Observable"
@@ -93,20 +119,45 @@ class GlobalFit(object):
         A solver object used to run the model.
     """
 
-    def __init__(self, builder, time, data, params, obs_name,
+    def __init__(self, builder, time, data, data_sigma, params, obs_name,
                  obs_type='Expression'):
         # Check that the dimensions of everything that has been provided matches
-        for tc in data:
-            if not len(time) == len(tc):
-                raise ValueError("Length of time vector must match the length "
-                                 "of each data vector.")
-        for p, vals in params.iteritems():
-            if not len(vals) == len(data):
-                raise ValueError("Each parameter in the params dict must have "
-                                 "an entry for each entry in the data list.")
+        # Check that the time vector matches the 3rd dimension of the data
+        # vector
+        if len(time) != data.shape[2]:
+            raise ValueError("Length of time vector must match the length "
+                             "of each data vector.")
+        # Check that we don't have more than one condition but only set of
+        # initial conditions
+        if params is None and data.shape[0] != 1:
+            raise ValueError("There are no initial condition parameters but "
+                             "there is more than one condition in the data "
+                             "matrix.")
+        # Check that the number of initial conditions specified in the params
+        # dict matches the first dimension of the data matrix
+        if params is not None:
+            for p, vals in params.iteritems():
+                if not len(vals) == data.shape[0]:
+                    raise ValueError("Each parameter in the params dict must "
+                                     "have an entry for each entry in the "
+                                     "data list.")
+        # Check that the number of observables matches the 2nd dimension of
+        # the data matrix
+        if len(obs_name) != data.shape[1]:
+            raise ValueError("The number of observables (%s) must match the "
+                             "second dimension of the data matrix (%s)" %
+                             (len(obs_name), data.shape[1]))
+        # Check that there is a sigma in the data_sigma matrix for every
+        # timecourse in data
+        if data_sigma.shape[0] != data.shape[0] and \
+           data_sigma.shape[1] != data.shape[1]:
+            raise ValueError("data_sigma must specify an error SD for every "
+                             "timecourse in the data matrix.")
+
         self.builder = builder
         self.time = time
         self.data = data
+        self.data_sigma = data_sigma
         self.params = params
         self.obs_name = obs_name
         self.result = None
@@ -117,7 +168,12 @@ class GlobalFit(object):
         else:
             raise ValueError('obs_type must be Expression or Observable.')
 
-        self.init_solver()
+        if self.builder.model.parameters.get('timeoffset'):
+            use_time_offset = True
+        else:
+            use_time_offset = False
+
+        self.init_solver(use_time_offset=use_time_offset)
 
         # Used to keep track of the number of steps run
         self.nstep = 0
@@ -155,12 +211,22 @@ class GlobalFit(object):
     def __setstate__(self, state):
         # Re-init the solver which we didn't pickle
         self.__dict__.update(state)
-        self.init_solver()
+        if self.builder.model.parameters.get('timeoffset'):
+            use_time_offset = True
+        else:
+            use_time_offset = False
+        self.init_solver(use_time_offset=use_time_offset)
 
-    def init_solver(self):
+    def init_solver(self, use_time_offset=False):
         """Initialize solver from model and tspan."""
         Solver._use_inline = True
-        self.solver = Solver(self.builder.model, self.time)
+        # If we're using a time offset, note that it doesn't matter what value
+        # goes in here, since it will be filled in by the fitting.
+        if use_time_offset:
+            tspan = np.insert(self.time, 0, 0)
+        else:
+            tspan = self.time
+        self.solver = Solver(self.builder.model, tspan)
 
     def plot_func_single(self, x, data_ix, alpha=1.0):
         x = 10 ** x
@@ -189,7 +255,7 @@ class GlobalFit(object):
             plt.plot(self.time, s.yobs[self.obs_name], color='r',
                      alpha=alpha)
 
-    def plot_func(self, x, alpha=1.0):
+    def plot_func(self, x, obs_ix=0, plot_args=None):
         """Plots the timecourses with the parameter values given by x.
 
         Parameters
@@ -201,32 +267,42 @@ class GlobalFit(object):
             timecourses being fit.
         """
         x = 10 ** x
-
-        s = Solver(self.builder.model, self.time)
+        timeoffset = None
+        if plot_args is None:
+            plot_args = {}
         # Iterate over each entry in the data array
-        for data_ix, data in enumerate(self.data):
+        for cond_ix in range(self.data.shape[0]):
             # Set the parameters appropriately for the simulation:
             # Iterate over the globally fit parameters
             for g_ix, p in enumerate(self.builder.global_params):
                 p.value = x[g_ix]
+                if p.name == 'timeoffset':
+                    timeoffset = x[g_ix]
             # Iterate over the locally fit parameters
             for l_ix, p in enumerate(self.builder.local_params):
                 ix_offset = len(self.builder.global_params) + \
-                            data_ix * len(self.builder.local_params)
+                            cond_ix * len(self.builder.local_params)
                 p.value = x[l_ix + ix_offset]
             # Now fill in the initial condition parameters
-            for p_name, values in self.params.iteritems():
-                p = self.builder.model.parameters[p_name]
-                p.value = values[data_ix]
+            if self.params is not None:
+                for p_name, values in self.params.iteritems():
+                    p = self.builder.model.parameters[p_name]
+                    p.value = values[data_ix]
+            # Fill in the time offset, if there is one
+            if timeoffset:
+                self.solver.tspan = np.insert(self.time, 0, -timeoffset)
             # Now run the simulation
-            s.run()
+            self.solver.run()
             # Plot the observable
+            obs_colors = ['r', 'g', 'b', 'k']
+            obs_name = self.obs_name[obs_ix]
+
             if self.use_expr:
-                plt.plot(self.time, s.yexpr[self.obs_name], color='r',
-                         alpha=alpha)
+                plt.plot(self.solver.tspan, self.solver.yexpr[obs_name],
+                         **plot_args)
             else:
-                plt.plot(self.time, s.yobs[self.obs_name], color='r',
-                         alpha=alpha)
+                plt.plot(self.solver.tspan, self.solver.yobs[obs_name],
+                         **plot_args)
 
 def ens_sample(gf, nwalkers, burn_steps, sample_steps, threads=1,
                pos=None, random_state=None):
@@ -440,7 +516,8 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
             nstep +=1
 
     # Close the pool!
-    pool.close()
+    if pool is not None:
+        pool.close()
 
     print "Done sampling."
     return sampler

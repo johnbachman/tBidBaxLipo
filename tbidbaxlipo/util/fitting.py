@@ -48,7 +48,7 @@ class Parameter:
         """Get the value by calling the parameter, e.g. k()."""
         return self.value
 
-def fit(function, parameters, y, x = None, maxfev=100000):
+def fit(function, parameters, y, x=None, log_transform=True, maxfev=100000):
     """Fit the function to the data using the given parameters.
 
     Creates a wrapper around the fitting function and passes it to
@@ -88,19 +88,31 @@ def fit(function, parameters, y, x = None, maxfev=100000):
     def f(params):
         i = 0
         for p in parameters:
-            p.set(10 ** params[i])
+            if log_transform:
+                p.set(10 ** params[i])
+            else:
+                p.set(params[i])
             i += 1
         err = y - function(x)
+        err = err[~np.isnan(err)]
         return err
 
     if x is None: x = np.arange(y.shape[0])
-    p = [np.log10(param()) for param in parameters]
+
+    if log_transform:
+        p = [np.log10(param()) for param in parameters]
+    else:
+        p = [param() for param in parameters]
+
     result = optimize.leastsq(f, p, ftol=1e-12, xtol=1e-12, maxfev=maxfev,
                               full_output=True)
     # At this point the parameter instances should have their final fitted
     # values, NOT log transformed. To get the residuals at this final value,
     # we need to pass in log transformed values
-    residuals = f([np.log10(param()) for param in parameters])
+    if log_transform:
+        residuals = f([np.log10(param()) for param in parameters])
+    else:
+        residuals = f([param() for param in parameters])
 
     return (residuals, result)
 
