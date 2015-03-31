@@ -5,15 +5,17 @@ from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
 import pickle
 import sys
 
-time_var = df[('Bid', 'NBD', '54', 1, 'TIME')].values
-data_54 = np.zeros((1, 1, len(time_var)))
-data_54[0, 0, :] = df[('Bid', 'NBD', '54', 1, 'VALUE')].values
+time_var = df[('Bid', 'NBD', '126', 1, 'TIME')].values
+data_var = np.zeros((1, 1, len(time_var)))
+data_var[0, 0, :] = df[('Bid', 'NBD', '126', 1, 'VALUE')].values
 
 model_observable = ['NBD']
 
-# data_54_sigma = np.zeros((1, 1))
-# data_54_sigma[0, 0] = calc_err_var_cubic(data_54[0, 0, :], last_n_pts=80)
-data_54_sigma = np.array([[0.014037]])
+# data_sigma_var = np.zeros((1, 1))
+# data_sigma_var[0, 0] = calc_err_var_cubic(data_var[0, 0, :], last_n_pts=80)
+#54C: data_sigma_var = np.array([[0.014037]])
+# 126C:
+data_sigma_var = np.array([[0.021085]])
 
 highest_temp = -2
 nburnin = 10
@@ -31,7 +33,7 @@ bd.global_params = bd.estimate_params
 bd.local_params = []
 
 # Create the globalfit instance
-gf = emcee_fit.GlobalFit(bd, time_var, data_54, data_54_sigma, ic_params,
+gf = emcee_fit.GlobalFit(bd, time_var, data_var, data_sigma_var, ic_params,
                          model_observable)
 
 random_seed = 1
