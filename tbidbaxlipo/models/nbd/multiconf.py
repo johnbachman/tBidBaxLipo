@@ -1,5 +1,6 @@
+import numpy as np
 from tbidbaxlipo.models import core
-from bayessb.priors import Uniform
+from bayessb.priors import Uniform, UniformLinear
 
 class Builder(core.Builder):
 
@@ -26,9 +27,9 @@ class Builder(core.Builder):
 
         # Set the bounds for the scaling parameters
         if normalized_data:
-            scaling_prior = Uniform(-2, 2)
+            scaling_prior = UniformLinear(-2, np.log10(20))
         else:
-            scaling_prior = Uniform(1, 5)
+            scaling_prior = UniformLinear(1, 5)
 
         # Rules for transitions between other conformations
         for i in range(num_confs-1):
