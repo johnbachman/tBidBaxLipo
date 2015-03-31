@@ -36,6 +36,9 @@ class TitrationFit(object):
         of the initial guesses.
     initial_guesses : list of numbers
         Values to be used as the starting guesses for fitting.
+    log_transform : boolean
+        Whether to log-transform the parameters during fitting. If
+        log-transformed, negative parameter values are not permissible.
 
     Attributes
     ----------
@@ -52,7 +55,7 @@ class TitrationFit(object):
     initial_guesses : list
         Initial values used for fitting.
     """
-    def __init__(self, param_names, initial_guesses):
+    def __init__(self, param_names, initial_guesses, log_transform=True):
         if initial_guesses is None or len(initial_guesses) == 0:
             raise ValueError('initial_guesses cannot be None or empty.')
         if len(param_names) != len(initial_guesses):
@@ -64,6 +67,7 @@ class TitrationFit(object):
         self.concs = None
         self.num_params = len(initial_guesses)
         self.initial_guesses = initial_guesses
+        self.log_transform = log_transform
 
     def fit_timecourse(self, time, y):
         """Fit a single timecourse with the desired function.
@@ -84,7 +88,8 @@ class TitrationFit(object):
                   for i in range(len(self.initial_guesses))]
         def fit_func_closure(t):
             return self.fit_func(t, [p() for p in params])
-        fitting.fit(fit_func_closure, params, y, time)
+        fitting.fit(fit_func_closure, params, y, time,
+                    log_transform=self.log_transform)
         return [p() for p in params]
 
     def fit_from_dataframe(self, df):
@@ -284,6 +289,55 @@ class Linear(TitrationFit):
     def fit_func(self, t, k_arr):
         """Linear fitting function."""
         return k_arr[0]*t
+
+class LinearIntercept(TitrationFit):
+    r"""Fit timecourses to a straight line through a fitted intercept.
+
+    .. math::
+
+        y(t) = k_1 * t + k_2
+    """
+    def __init__(self, initial_guesses=[5e-3, 1.], log_transform=True):
+        super(LinearIntercept, self).__init__(param_names=['$k_1$', '$k_2$'],
+                                              initial_guesses=initial_guesses,
+                                              log_transform=log_transform)
+
+    def fit_func(self, t, k_arr):
+        """Linear (through intercept) fitting function."""
+        return k_arr[0] * t + k_arr[1]
+
+class Quadratic(TitrationFit):
+    r"""Fit timecourses to a quadratic polynomial.
+
+    .. math::
+
+        y(t) = k_1 * t^2 + k_2 * t + k_3
+    """
+    def __init__(self, initial_guesses=[1e-3, 5e-3, 1.], log_transform=True):
+        super(Quadratic, self).__init__(param_names=['$k_1$', '$k_2$', '$k_3$'],
+                                        initial_guesses=initial_guesses,
+                                        log_transform=log_transform)
+
+    def fit_func(self, t, k_arr):
+        """Quadratic fitting function."""
+        return k_arr[0] * t**2 + k_arr[1] * t + k_arr[2]
+
+class Cubic(TitrationFit):
+    r"""Fit timecourses to a cubic polynomial.
+
+    .. math::
+
+        y(t) = k_1 * t^3 + k_2 * t^2 + k_3 * t + k_4
+    """
+    def __init__(self, initial_guesses=[1e-4, 1e-3, 5e-3, 1.],
+                 log_transform=True):
+        super(Cubic, self).__init__(
+                param_names=['$k_1$', '$k_2$', '$k_3$', '$k_4$'],
+                initial_guesses=initial_guesses, log_transform=log_transform)
+
+    def fit_func(self, t, k_arr):
+        """Cubic fitting function."""
+        return k_arr[0] * t**3 + k_arr[1] * t**2 + k_arr[2] * t + k_arr[3]
 
 class OneExpFmax(TitrationFit):
     r"""Fit timecourses to a two-parameter exponential (rate and max).

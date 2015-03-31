@@ -3,16 +3,17 @@ import pandas as pd
 from itertools import product
 import numpy as np
 import tbidbaxlipo.data
+import numpy as np
 
 import os
 import sys
 
 data_path = os.path.dirname(sys.modules['tbidbaxlipo.data'].__file__)
 data_file = os.path.abspath(os.path.join(data_path,
-    'Bid-Bim FRET with Bax NBD mutants in Tb-DPA Liposomes compiled reps.xlsx'))
+        '2015-02-27 - Bid-Bim FRET with Bax NBD mutants in Tb-DPA Liposomes compiled reps+WT Bax.xlsx'))
 
 # These lists must match the order in the spreadsheet exactly
-nbd_residues = ['3', '15', '36', '47', '54', '62', '122', '126', '138',
+nbd_residues = ['WT', '3', '15', '36', '47', '54', '62', '122', '126', '138',
                 '151', '175', '184']
 activators = ['Bid', 'Bim']
 datatypes_time = ['Time', 'Release', 'FRET', 'NBD']
@@ -44,15 +45,21 @@ for nbd_ix, nbd_residue in enumerate(nbd_residues):
             time_vector = None
             # Now iterate over the Time, Release, FRET, NBD columns
             for dtype_ix, dtype in enumerate(datatypes_time):
+                # Skip the FRET and NBD datatypes if we're currently on the
+                # WT Bax section
+                if nbd_residue == 'WT' and (dtype == 'FRET' or dtype == 'NBD'):
+                    col_index += 1
+                    continue
+
                 # Iterate and fill the array of column values
                 value_vector = []
                 data_col = sheet.columns[col_index]\
                                          [FIRST_ROW_INDEX:LAST_ROW_INDEX]
                 for cell in data_col:
                     if (cell.value == None):
-                        value_vector.append(nan)
+                        value_vector.append(np.nan)
                     else:
-                        value_vector.append(cell.value)
+                        value_vector.append(float(cell.value))
 
                 # If this is the time column, get and save the time vector
                 if dtype_ix == 0:
@@ -71,9 +78,9 @@ for nbd_ix, nbd_residue in enumerate(nbd_residues):
 
 # Create the Pandas dataframe
 data_matrix = np.array(data)
-col_index = pd.MultiIndex.from_tuples(col_tuples,
+col_multi_index = pd.MultiIndex.from_tuples(col_tuples,
                     names=('Activator', 'Datatype', 'NBD Site', 'Replicate',
                            'Column'))
 df = pd.DataFrame(data_matrix.T,
                   index=range(LAST_ROW_INDEX - FIRST_ROW_INDEX),
-                  columns=col_index)
+                  columns=col_multi_index)

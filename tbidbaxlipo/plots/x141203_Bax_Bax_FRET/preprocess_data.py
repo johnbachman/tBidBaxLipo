@@ -2,7 +2,7 @@ from parse_data import df
 import numpy as np
 from copy import deepcopy
 from matplotlib import pyplot as plt
-from calculate_error_variance import calc_err_var_cubic
+from tbidbaxlipo.util.calculate_error_variance import calc_err_var_cubic
 
 # There are a number of outliers in the FRET data that Justin attributes
 # to debris floating in the cuvette that produces momentary spikes. Here

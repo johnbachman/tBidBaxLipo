@@ -12,6 +12,11 @@ thesis/sphinxreport.log
 
 *.pdf
 *.mcmc
+kale/doc/_build
+kale/doc/_static
+kale/doc/sphinxreport.log
+kale/make/*.pdf
+kale/make/*.png
 *.deps.txt
 *.fit
 *.md5
