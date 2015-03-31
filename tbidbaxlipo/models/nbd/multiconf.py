@@ -6,8 +6,8 @@ class Builder(core.Builder):
     def __init__(self, params_dict=None):
         core.Builder.__init__(self, params_dict=params_dict)
 
-    def build_model_multiconf(self, num_confs, c0_scaling, normalized_data=False,
-                             reversible=False):
+    def build_model_multiconf(self, num_confs, c0_scaling,
+                              normalized_data=False, reversible=False):
         if num_confs < 2:
             raise ValueError('There must be a minimum of two conformations.')
 
