@@ -26,16 +26,16 @@ def plot_chain_convergence(sampler):
     Useful for determining if the temperature spacing at the lowest part of
     the chain is adequate.
     """
-    plt.figure('Chain convergence')
-    plt.subplot(2, 2, 1)
-    plt.plot(sampler._lnprob[0,:,:].T, alpha=0.1)
-    plt.title('0th chain')
-    plt.subplot(2, 2, 2)
-    plt.plot(sampler._lnprob[1,:,:].T, alpha=0.1)
-    plt.title('1st chain')
-    plt.subplot(2, 2, 3)
-    plt.plot(sampler._lnprob[2,:,:].T, alpha=0.1)
-    plt.title('2nd chain')
+    ntemps = sampler.chain.shape[0]
+    ncols = 5
+    nrows = int(np.ceil(ntemps / 4.0))
+    plt.figure('Chain convergence', figsize=(16,9))
+    for temp_ix in range(ntemps):
+        plt.subplot(nrows, ncols, temp_ix + 1)
+        plt.plot(sampler._lnprob[temp_ix,:,:].T, alpha=0.1)
+        plt.title('Chain %d' % temp_ix)
+    plt.tight_layout()
+
     #plt.subplot(2, 2, 4)
     #plt.plot(sampler._lnprob[3,:,:].T, alpha=0.1)
     #plt.title('3rd chain')
