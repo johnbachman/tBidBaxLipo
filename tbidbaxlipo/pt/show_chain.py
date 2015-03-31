@@ -55,7 +55,6 @@ def plot_emcee_fits(gf, sampler, sample=True, burn=None, nsamples=100):
     # If we're plotting samples, get the indices now and use them for
     # all observables
     if sample:
-        print sampler.chain.shape
         (nwalkers, nsteps) = sampler.chain.shape[1:3]
         if burn is None:
             burn = int(nsteps / 2)
@@ -116,6 +115,6 @@ if __name__ == '__main__':
     plt.ion()
     triangle_plots(gf, sampler)
     plot_chain_convergence(sampler)
-    plot_emcee_fits(gf, sampler, burn=145, sample=True)
+    plot_emcee_fits(gf, sampler, burn=None, sample=True)
     #plot_emcee_fits_subplots(gf, sampler)
 
