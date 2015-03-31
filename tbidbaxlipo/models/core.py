@@ -1168,7 +1168,7 @@ class Builder(pysb.builder.Builder):
                 raise ValueError("Don't know how to implement feature %s" %
                                  feature)
 
-        self.model_name = model_string
+        self.model.name = model_string
 
     def build_model_t(self):
         print "---------------------------"
