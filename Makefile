@@ -69,7 +69,7 @@ pt_141203_126C: $(x141203)/pt_141203_126C.deps.txt
 %.deps.txt: %.fit.ensemble
 	python -m tbidbaxlipo.pt.generate_model_ensemble_fit_files $<
 
-# In this case, we know that the .yaml file exists, since it has been
+# In this case, we know that the .fit file exists, since it has been
 # regenerated in the step that regenerated the dependency file. What
 # we care about is whether the hash is any different.
 %.mcmc: $(call to-md5, %.fit)
