@@ -28,7 +28,10 @@ def model_product(model_dict):
 # Get the set of dicts specifying each individual implementation
 m_ensemble = model_product(m)
 dependencies_list = []
-basename = ens_filename.split('.')[0]
+basedir = os.path.dirname(ens_filename)
+filename = os.path.basename(ens_filename)
+basename = filename.split('.')[0]
+basename = os.path.join(basedir, basename)
 
 for m in m_ensemble:
     # Multiconf model, supercedes any other model features
