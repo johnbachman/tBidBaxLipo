@@ -25,18 +25,18 @@ def model_product(model_dict):
     return [dict(zip(model_dict, x))
             for x in product(*model_dict.values())]
 
-# Get the set of dict specifying each individual implementation
+# Get the set of dicts specifying each individual implementation
 m_ensemble = model_product(m)
 dependencies_list = []
 basename = ens_filename.split('.')[0]
-import pdb; pdb.set_trace()
 
 for m in m_ensemble:
     # Multiconf model, supercedes any other model features
     if 'multiconf' in m:
         num_confs = int(m['multiconf'])
+        norm_data = m['normalized_nbd_data']
         bd = multiconf.Builder()
-        bd.build_model_multiconf(num_confs, 1, normalized_data=True,
+        bd.build_model_multiconf(num_confs, 1, normalized_data=norm_data,
                                  reversible=False)
     # Mechanistic model
     else:
