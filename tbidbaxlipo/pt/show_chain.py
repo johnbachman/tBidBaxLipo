@@ -11,10 +11,17 @@ from tbidbaxlipo.util import set_fig_params_for_publication, format_axis
 def triangle_plots(gf, sampler):
     """Triangle plots of lowest and highest temperature chains."""
     chain = sampler.flatchain
+    # Lowest temp
     fig = triangle.corner(chain[0],
                           labels=[p.name for p in gf.builder.global_params])
     fig.suptitle('Triangle plot, lowest temp')
     #fig.savefig('triangle_low.png')
+    # Intermediate temp
+    temp_ix = 4
+    fig = triangle.corner(chain[temp_ix],
+                          labels=[p.name for p in gf.builder.global_params])
+    fig.suptitle('Triangle plot, temp %s' % temp_ix)
+    # Highest temp
     fig = triangle.corner(chain[-1],
                           labels=[p.name for p in gf.builder.global_params])
     fig.suptitle('Triangle plot, highest temp')
@@ -27,14 +34,17 @@ def plot_chain_convergence(sampler):
     the chain is adequate.
     """
     ntemps = sampler.chain.shape[0]
-    ncols = 5
-    nrows = int(np.ceil(ntemps / 4.0))
+    max_plots = 12
+    interval = int(ntemps / (max_plots - 1))
+    ncols = 4
+    nrows = 3
+    #nrows = int(np.ceil(ntemps / 4.0))
     plt.figure('Chain convergence', figsize=(16,9))
-    for temp_ix in range(ntemps):
-        plt.subplot(nrows, ncols, temp_ix + 1)
+    for fig_ix, temp_ix in enumerate(range(0, ntemps, interval)):
+        plt.subplot(nrows, ncols, fig_ix + 1)
         plt.plot(sampler._lnprob[temp_ix,:,:].T, alpha=0.1)
         plt.title('Chain %d' % temp_ix)
-    plt.tight_layout()
+    #plt.tight_layout()
 
     #plt.subplot(2, 2, 4)
     #plt.plot(sampler._lnprob[3,:,:].T, alpha=0.1)
