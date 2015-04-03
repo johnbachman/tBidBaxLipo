@@ -498,9 +498,10 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         nstep = 0
         for p, lnprob, lnlike in sampler.sample(p0, iterations=burn_steps,
                                 storechain=False):
-            if nstep % 10 == 0:
-                print "nstep %d of %d, MAP: %f" % (nstep, burn_steps,
-                                                   np.max(lnprob[0]))
+            if nstep % 2 == 0:
+                print "nstep %d of %d, MAP: %f, mean post %f" % \
+                     (nstep, burn_steps, np.max(lnprob[0]), np.mean(lnprob[0]))
+                print sampler.tswap_acceptance_fraction
             nstep +=1
 
         sampler.reset()
@@ -510,9 +511,10 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         for p, lnprob, lnlike in sampler.sample(p, lnprob0=lnprob,
                                      lnlike0=lnlike,
                                      iterations=sample_steps, thin=thin):
-            if nstep % 10 == 0:
-                print "nstep %d of %d, MAP: %f" % (nstep, sample_steps,
-                                                   np.max(lnprob[0]))
+            if nstep % 2 == 0:
+                print "nstep %d of %d, MAP: %f, mean post %f" % \
+                     (nstep, burn_steps, np.max(lnprob[0]), np.mean(lnprob[0]))
+                print sampler.tswap_acceptance_fraction
             nstep +=1
 
     # Close the pool!
