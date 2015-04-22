@@ -68,6 +68,17 @@ def get_data_from_sheet(sheet, activator, datatype, first_row_index, num_rows,
         data.append(value_vector)
     return [tuples, np.array(data)]
 
+def get_labeling_ratios(sheet, mutant_name_row, ratio_row):
+    ratios = {}
+    for i, col in enumerate(sheet.columns[FIRST_COL_INDEX:]):
+        mutant_name = str(col[mutant_name_row].value)
+        if mutant_name == '':
+            continue
+        labeling_ratio = col[ratio_row].value
+        if mutant_name not in ratios:
+            ratios[mutant_name] = labeling_ratio
+    return ratios
+
 (bid_release_tuples, bid_release_data) = \
                     get_data_from_sheet(wb.worksheets[0], 'Bid', 'Release',
                                         1, NUM_ROWS, 0)
@@ -82,6 +93,9 @@ def get_data_from_sheet(sheet, activator, datatype, first_row_index, num_rows,
 (bim_nbd_tuples, bim_nbd_data) = \
                     get_data_from_sheet(wb.worksheets[5], 'Bim', 'NBD',
                                         3, NUM_ROWS, 2)
+
+# Get labeling ratios
+labeling_ratios = get_labeling_ratios(wb.worksheets[4], 2, 1)
 
 col_tuples = bid_release_tuples + bim_release_tuples + \
              bid_nbd_tuples + bim_nbd_tuples
