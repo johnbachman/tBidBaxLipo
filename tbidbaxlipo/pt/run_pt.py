@@ -1,7 +1,8 @@
 import yaml
 import pickle
 import sys
-from tbidbaxlipo.models.one_cpt import Builder
+from tbidbaxlipo.models import one_cpt
+from tbidbaxlipo.models.nbd import multiconf
 from tbidbaxlipo.util import emcee_fit
 import numpy as np
 
@@ -37,8 +38,16 @@ if __name__ == '__main__':
 
     ### MODEL
     # Call the appropriate model-building macro
-    bd = Builder()
-    bd.build_model_from_dict(args['model'])
+    # If there is a multiconf attribute, that trumps any other attribute
+    # and determines that this is a multiconf model
+    if 'multiconf' in args['model']:
+        bd = multiconf.Builder()
+        num_confs = args['model']['multiconf']
+        norm_data = args['model']['normalized_nbd_data'] = True
+        bd.build_model_multiconf(num_confs, 1, normalized_data=norm_data)
+    else:
+        bd = one_cpt.Builder()
+        bd.build_model_from_dict(args['model'])
 
     # Set the initial conditions
     for ic_name, ic_value in args['global_initial_conditions'].iteritems():

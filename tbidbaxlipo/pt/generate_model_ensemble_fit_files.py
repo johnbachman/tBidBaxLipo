@@ -1,6 +1,7 @@
 import yaml
 from itertools import product, izip
-from tbidbaxlipo.models.one_cpt import Builder
+from tbidbaxlipo.models import one_cpt
+from tbidbaxlipo.models.nbd import multiconf
 from copy import copy
 import sys
 import os
@@ -24,43 +25,53 @@ def model_product(model_dict):
     return [dict(zip(model_dict, x))
             for x in product(*model_dict.values())]
 
-# Get the set of dict specifying each individual implementation
+# Get the set of dicts specifying each individual implementation
 m_ensemble = model_product(m)
-model_names = []
 dependencies_list = []
-basename = ens_filename.split('.')[0]
+basedir = os.path.dirname(ens_filename)
+filename = os.path.basename(ens_filename)
+basename = filename.split('.')[0]
+basename = os.path.join(basedir, basename)
 
 for m in m_ensemble:
-    # If Bid doesn't get to the membrane, activation by bound Bid will
-    # never happen
-    if 'bidtranslocation' in m and 'activation' in m and \
-       m['bidtranslocation'] == 0 and m['activation'] == 2:
-        continue
-    # If activation is pseudo-first order (not Bid-dependent) don't use
-    # models where we waste steps on translocating Bid
-    if 'bidtranslocation' in m and 'activation' in m and \
-       m['activation'] == 1 and m['bidtranslocation'] != 0:
-        continue
-    # If we're monitoring NBD as resulting from a dimer, but dimerization
-    # doesn't happen, then we'll get nothing
-    if 'nbd' in m and 'dimerization' in m and \
-       (m['nbd'] == 2 or m['nbd'] == 3 or m['nbd'] == 4) and \
-       m['dimerization'] == 0:
-        continue
-    # If we're monitoring NBD as resulting from a tBid/Bax complex, then make
-    # sure that tBid/Bax complex can form
-    if 'nbd' in m and 'activation' in m and \
-        m['nbd'] == 4 and m['activation'] == 1:
-        continue
+    # Multiconf model, supercedes any other model features
+    if 'multiconf' in m:
+        num_confs = int(m['multiconf'])
+        norm_data = m['normalized_nbd_data']
+        bd = multiconf.Builder()
+        bd.build_model_multiconf(num_confs, 1, normalized_data=norm_data,
+                                 reversible=False)
+    # Mechanistic model
+    else:
+        # If Bid doesn't get to the membrane, activation by bound Bid will
+        # never happen
+        if 'bidtranslocation' in m and 'activation' in m and \
+           m['bidtranslocation'] == 0 and m['activation'] == 2:
+            continue
+        # If activation is pseudo-first order (not Bid-dependent) don't use
+        # models where we waste steps on translocating Bid
+        if 'bidtranslocation' in m and 'activation' in m and \
+           m['activation'] == 1 and m['bidtranslocation'] != 0:
+            continue
+        # If we're monitoring NBD as resulting from a dimer, but dimerization
+        # doesn't happen, then we'll get nothing
+        if 'nbd' in m and 'dimerization' in m and \
+           (m['nbd'] == 2 or m['nbd'] == 3 or m['nbd'] == 4) and \
+           m['dimerization'] == 0:
+            continue
+        # If we're monitoring NBD as resulting from a tBid/Bax complex,
+        # then make sure that tBid/Bax complex can form
+        if 'nbd' in m and 'activation' in m and \
+            m['nbd'] == 4 and m['activation'] == 1:
+            continue
+        bd = one_cpt.Builder()
+        bd.build_model_from_dict(m)
 
-    # Build the model from the dict
-    bd = Builder()
-    bd.build_model_from_dict(m)
     # Build up the new yaml dict by copying all fitting parameters over...
     yaml_dict = copy(args)
     # ...and then filling in the parameters specifying this particular model
     yaml_dict['model'] = m
-    model_filename = '%s_%s' % (basename, bd.model_name)
+    model_filename = '%s_%s' % (basename, bd.model.name)
     with open('%s.fit' % model_filename, 'w') as output_file:
         output_file.write(yaml.dump(yaml_dict, default_flow_style=False))
     dependencies_list.append(model_filename)
