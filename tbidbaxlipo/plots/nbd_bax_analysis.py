@@ -63,7 +63,8 @@ class FitResult(object):
         return '%s_%s_r%s_%s.csv' % (self.activator, self.nbd_site, \
                                     str(self.rep_index), self.measurement)
 
-def plot_all(df, nbd_residues, datatypes, file_basename=None):
+def plot_all(df, nbd_residues, datatypes, file_basename=None,
+             normalize_nbd=False):
     """Release should be first in the list of datatypes."""
     if datatypes[0] != 'Release':
         raise ValueError("Release should be first in the datatypes list.")
@@ -99,6 +100,9 @@ def plot_all(df, nbd_residues, datatypes, file_basename=None):
                     # Get the data
                     t = df[(activator, dtype, nbd_site, i, 'TIME')]
                     v = df[(activator, dtype, nbd_site, i, 'VALUE')]
+                    # TODO Do the normalization here if desired TODO
+                    if normalize_nbd:
+                        v = v / v[0]
                     plt.plot(t, v, label='%s Rep %d' % (activator, i),
                             color=line_colors[activator],
                             linestyle=line_styles[i])
@@ -113,7 +117,8 @@ def plot_all(df, nbd_residues, datatypes, file_basename=None):
         if file_basename:
             plt.savefig('%s_%s.pdf' % (file_basename, nbd_site))
 
-def plot_all_by_replicate(df, nbd_residues, datatypes, file_basename=None):
+def plot_all_by_replicate(df, nbd_residues, datatypes, file_basename=None,
+                          normalize_nbd=False):
     """Release should be first in the datatypes list."""
     if datatypes[0] != 'Release':
         raise ValueError("Release should be first in the datatypes list.")
@@ -143,6 +148,8 @@ def plot_all_by_replicate(df, nbd_residues, datatypes, file_basename=None):
                     v = df[(activator, dtype, nbd_site, rep, 'VALUE')]
                     # Set the axis
                     if dtype == 'NBD':
+                        if normalize_nbd:
+                            v = v / v[0]
                         ax = ax2
                         if np.max(v) > nbd_max:
                             nbd_max = np.max(v)
@@ -196,7 +203,8 @@ def calc_barplot_width(num_sites):
     rel_right = 1 - (abs_right / float(fig_width))
     return (fig_width, rel_left, rel_right)
 
-def plot_nbd_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None):
+def plot_nbd_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None,
+                       normalize_nbd=False):
     replicates = range(1, 4)
     activators = ['Bid', 'Bim']
     # Filter out the WT residue from the list, if its there
@@ -223,7 +231,11 @@ def plot_nbd_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None):
                 # Get the release data
                 ny = df[(activator, 'NBD', nbd_site, rep_num, 'VALUE')].values
                 # Fill in entry for this replicate with mean over last n pts
-                n_endpts[nbd_index, rep_index] = np.mean(ny[-last_n_pts:])
+                if normalize_nbd:
+                    endpt_vals = np.mean(ny[-last_n_pts:] / ny[0])
+                else:
+                    endpt_vals = np.mean(ny[-last_n_pts:])
+                n_endpts[nbd_index, rep_index] = endpt_vals
 
             # Bar plot of NBD endpoint
             plt.bar(range(nbd_index*3 + act_ix, (nbd_index*3) + 1 + act_ix),
@@ -506,7 +518,8 @@ class InitialRateSamples(object):
         n_norm_slope_stds = np.std(n_norm_slopes, axis=2, ddof=1)
         return (n_norm_slope_avgs, n_norm_slope_stds)
 
-def calc_initial_rate_samples(df, nbd_sites, timepoint_ix=4):
+def calc_initial_rate_samples(df, nbd_sites, timepoint_ix=4,
+                              normalize_nbd=False):
     replicates = range(1, 4)
     activators = ['Bid', 'Bim']
     nbd_sites_filt = [s for s in nbd_sites if s != 'WT']
@@ -544,6 +557,9 @@ def calc_initial_rate_samples(df, nbd_sites, timepoint_ix=4):
                 # Get the NBD data
                 nt = df[(activator, 'NBD', nbd_site, rep_num, 'TIME')].values
                 ny = df[(activator, 'NBD', nbd_site, rep_num, 'VALUE')].values
+                # Normalize the NBD data
+                if normalize_nbd:
+                    ny = ny / ny[0]
                 # Maximum NBD F/F0
                 # Because NBD-47-Bax actually decreases in fluorescence, we
                 # use the change relative to the minimum.
@@ -861,7 +877,7 @@ def plot_bid_vs_bim_release(df, nbd_sites, dtype='Release',
             if file_basename:
                 plt.savefig('%s_%s.pdf' % (file_basename, fig_name))
 
-def plot_derivatives(df, nbd_sites):
+def plot_derivatives(df, nbd_sites, normalize_nbd=False):
     replicates = range(1, 4)
     num_pts = 4
     window = 1 # For moving average
@@ -887,6 +903,9 @@ def plot_derivatives(df, nbd_sites):
                              rep_index, 'TIME')].values
                     ny = df[(activator, 'NBD', nbd_site,
                              rep_index, 'VALUE')].values
+                    # Normalize NBD to F/F0
+                    if normalize_nbd:
+                        ny = ny / ny[0]
                     # Filter
                     n_filt = scipy.signal.filtfilt(b, a, ny)
                     n_avg = moving_average(n_filt, n=window)
@@ -972,7 +991,7 @@ def student_t_test(means1, sds1, means2, sds2, n):
 params_dict = {'c1_to_c2_k': 1e-4, 'c1_scaling': 2,
                'c0_to_c1_k': 2e-3}
 
-def plot_2conf_fits(df, nbd_sites, activator):
+def plot_2conf_fits(df, nbd_sites, activator, normalize_nbd=False):
     replicates = range(1, 4)
     fit_results = []
     # Filter out the WT residue, if present in the list
@@ -985,6 +1004,9 @@ def plot_2conf_fits(df, nbd_sites, activator):
         for rep_index in replicates:
             nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
             ny = df[(activator, 'NBD', nbd_site, rep_index, 'VALUE')].values
+            # Normalize NBD to F/F0
+            if normalize_nbd:
+                ny = ny / ny[0]
 
             plt.figure('%s, NBD-%s-Bax Fits' % (activator, nbd_site),
                        figsize=(6, 5))
@@ -1035,7 +1057,7 @@ def plot_2conf_fits(df, nbd_sites, activator):
 
     return fit_results
 
-def plot_3conf_fits(df, nbd_sites, activator):
+def plot_3conf_fits(df, nbd_sites, activator, normalize_nbd=False):
     #nbd_sites = ['15', '54', '62', '68', '79', '126', '138', '175']
     # Filter out the WT residue, if present in the list
     nbd_sites_filt = [s for s in nbd_sites if s != 'WT']
@@ -1052,7 +1074,9 @@ def plot_3conf_fits(df, nbd_sites, activator):
             ry = df[(activator, 'Release', nbd_site, rep_index, 'VALUE')].values
             nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
             ny = df[(activator, 'NBD', nbd_site, rep_index, 'VALUE')].values
-
+            # Normalize NBD to F/F0
+            if normalize_nbd:
+                ny = ny / ny[0]
             """
             plt.figure()
             plt.plot(rt, ry)
@@ -1163,7 +1187,7 @@ def plot_3conf_fits(df, nbd_sites, activator):
     return fit_results
 
 def plot_nbd_error_estimates(df, nbd_sites, last_n_pts=50, fit_type='cubic',
-                             plot=True):
+                             plot=True, normalize_nbd=False):
     replicates = range(1, 4)
     # Filter out the WT residue, if present in the list
     nbd_sites_filt = [s for s in nbd_sites if s != 'WT']
@@ -1174,6 +1198,9 @@ def plot_nbd_error_estimates(df, nbd_sites, last_n_pts=50, fit_type='cubic',
             residuals_reps = []
             for rep_index, rep_num in enumerate(replicates):
                 ny = df[activator, 'NBD', nbd_site, rep_num, 'VALUE'].values
+                # Normalize NBD to F/F0
+                if normalize_nbd:
+                    ny = ny / ny[0]
                 # Get the error value and the fig (if not figure desired, then
                 # fig will be None
                 (residuals, fig) = cev.calc_err_var(ny, last_n_pts=last_n_pts,
