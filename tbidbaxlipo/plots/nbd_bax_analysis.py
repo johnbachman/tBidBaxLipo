@@ -504,6 +504,19 @@ class InitialRateSamples(object):
 
         return (r_norm_avgs, r_norm_stds)
 
+    def release_slopes_wt_normalized(self):
+        """Get the release for each individual replicate normalized
+        to the WT release at the timepoint."""
+        if np.any(np.isnan(self.wt_r_slopes)):
+            raise ValueError("Can't normalize to WT because there are "
+                             "missing entries for initial WT release "
+                             "rates (found NaNs in the matrix).")
+        (wt_r_avgs, wt_r_stds) = self.wt_release_avg_std()
+        r_slopes_norm = np.zeros(self.r_slopes.shape)
+        for act_ix in range(r_slopes_norm.shape[0]):
+            r_slopes_norm[act_ix] = self.r_slopes[act_ix] / wt_r_avgs[act_ix]
+        return r_slopes_norm
+
     def wt_release_avg_std(self):
         wt_r_avgs = np.mean(self.wt_r_slopes, axis=1)
         wt_r_stds = np.std(self.wt_r_slopes, axis=1, ddof=1)
@@ -525,6 +538,14 @@ class InitialRateSamples(object):
 
 def calc_initial_rate_samples(df, nbd_sites, timepoint_ix=4,
                               normalize_nbd=False):
+    """Get initial NBD/Tb release values from the data at the given timepoint.
+
+    Returns an instance of InitialRateSamples containing the data at the
+    given timepoint for all of the mutants/replicates.
+
+    If normalize_nbd is set, then the raw NBD fluorescence data is converted to
+    F/F0 values.
+    """
     replicates = range(1, 4)
     activators = ['Bid', 'Bim']
     nbd_sites_filt = [s for s in nbd_sites if s != 'WT']
@@ -565,23 +586,28 @@ def calc_initial_rate_samples(df, nbd_sites, timepoint_ix=4,
                 # Normalize the NBD data
                 if normalize_nbd:
                     ny = ny / ny[0]
+                    f0 = 1.0
+                else:
+                    f0 = ny[0]
                 # Maximum NBD F/F0
                 # Because NBD-47-Bax actually decreases in fluorescence, we
                 # use the change relative to the minimum.
                 if nbd_site == '47':
                     n_slopes[act_ix, nbd_index, rep_index] = \
-                                                        1 - ny[timepoint_ix]
-                    n_maxes[act_ix, nbd_index, rep_index] = 1 - np.min(ny)
+                                                        f0 - ny[timepoint_ix]
+                    n_maxes[act_ix, nbd_index, rep_index] = f0 - np.min(ny)
                 else:
                     n_slopes[act_ix, nbd_index, rep_index] = \
-                                                        ny[timepoint_ix] - 1
-                    n_maxes[act_ix, nbd_index, rep_index] = np.max(ny) - 1
+                                                        ny[timepoint_ix] - f0
+                    n_maxes[act_ix, nbd_index, rep_index] = np.max(ny) - f0
     # Save the results in the initial rate structure
     irs = InitialRateSamples(r_slopes, n_slopes, n_maxes, wt_r_slopes, time)
     return irs
 
 def plot_initial_rate_samples(df, nbd_sites, timepoint_ix=4,
                               file_basename=None, normalized_to_wt=True):
+    """Plot characteristics of initial rates.
+    """
     set_fig_params_for_publication()
     # Important lists
     replicates = range(1, 4)
@@ -589,23 +615,29 @@ def plot_initial_rate_samples(df, nbd_sites, timepoint_ix=4,
     nbd_sites_filt = [s for s in nbd_sites if s != 'WT']
     # Get the initial rate data (copy over to local variables for legacy
     # reasons)
-    irs = calc_initial_rate_samples(df, nbd_sites, timepoint_ix)
+    irs = calc_initial_rate_samples(df, nbd_sites, timepoint_ix,
+                                    normalize_nbd=True)
     if normalized_to_wt:
         (r_slope_avgs, r_slope_stds) = irs.release_avg_std_wt_normalized()
+        r_slopes = irs.release_slopes_wt_normalized()
     else:
         (r_slope_avgs, r_slope_stds) = irs.release_avg_std()
+        r_slopes = irs.r_slopes
 
     (n_slope_avgs, n_slope_stds) = irs.nbd_avg_std()
     n_norm_slopes = irs.nbd_norm_slopes()
     (n_norm_slope_avgs, n_norm_slope_stds) = irs.nbd_norm_avg_std()
-    r_slopes = irs.r_slopes
     time = irs.time
-
     # Bar plots of initial points ------------------------------------
     fig_names = {'Release': '%s_init_release_bar' % file_basename,
                  'NBD': '%s_init_nbd_bar' % file_basename}
-    ylabels = {'Release': '\\%% Dye release at %d sec' % time,
-               'NBD': '\\%% of Max NBD F/$F_0$ at %d sec' % time}
+    if normalized_to_wt:
+        ylabels = {'Release': 'Dye release at %d sec\n(fold-change over WT)' %
+                   time,
+                   'NBD': '\\%% of Max NBD F/$F_0$ at %d sec' % time}
+    else:
+        ylabels = {'Release': '\\%% Dye release at %d sec' % time,
+                   'NBD': '\\%% of Max NBD F/$F_0$ at %d sec' % time}
     # Make both Release and NBD bar plots
     for dtype in ['Release', 'NBD']:
         fig_name = fig_names[dtype]
@@ -671,8 +703,8 @@ def plot_initial_rate_samples(df, nbd_sites, timepoint_ix=4,
                      xerr=r_slope_stds[act_ix], yerr=n_slope_stds[act_ix],
                      marker='o', color='k', markersize=3, linestyle='',
                      capsize=1.5)
-        plt.xlabel('\\%% Dye release at %d sec' % time)
-        plt.ylabel('\\%% of Max NBD F/$F_0$ at %d sec' % time)
+        plt.xlabel('Dye release at %d sec' % time)
+        plt.ylabel('delta F/$F_0$ at %d sec' % time)
         x_offset = 0.4
         y_offset = 0.04
         for nbd_index, nbd_site in enumerate(nbd_sites_filt):
@@ -683,8 +715,7 @@ def plot_initial_rate_samples(df, nbd_sites, timepoint_ix=4,
         ybounds = ax.get_ylim()
         #plt.vlines(wt_avg, ybounds[0], ybounds[1], linestyle='--')
         format_axis(ax)
-        #plt.subplots_adjust(left=rel_left, bottom=0.10, right=rel_right,
-        #                    top=0.94)
+        plt.subplots_adjust(left=0.17, bottom=0.15)
         #if file_basename:
         #    plt.savefig('%s.pdf' % fig_name)
 
@@ -703,7 +734,7 @@ def plot_initial_rate_samples(df, nbd_sites, timepoint_ix=4,
     for act_ix, activator in enumerate(activators):
         fig_name = "%s_init_scatter_norm_%s" % (file_basename, activator)
         plt.figure(fig_name, figsize=(2, 2), dpi=300)
-        plt.xlabel('\\%% Dye release at %d sec' % time)
+        plt.xlabel('Dye release at %d sec\n(fold-change over WT)' % time)
         plt.ylabel('\\%% of Max NBD F/$F_0$ at %d sec' % time)
         # Iterate over the sites, plotting one point at a time
         for nbd_index, nbd_site in enumerate(nbd_sites_filt):
@@ -741,7 +772,7 @@ def plot_initial_rate_samples(df, nbd_sites, timepoint_ix=4,
         # Format the plot
         ax = plt.gca()
         format_axis(ax)
-        plt.subplots_adjust(left=0.22, bottom=0.15, right=0.95, top=0.95)
+        plt.subplots_adjust(left=0.22, bottom=0.19, right=0.95, top=0.95)
         ybounds = ax.get_ylim()
         ax.set_ylim(min(0, ybounds[0]), ybounds[1])
         # Create legend with lines to match colors of points
@@ -1248,9 +1279,12 @@ def plot_nbd_error_estimates(df, nbd_sites, last_n_pts=50, fit_type='cubic',
                          horizontalalignment='center')
 
 if __name__ == '__main__':
-    from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
+    #from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
+    from tbidbaxlipo.data.parse_bid_bim_fret_nbd_release import df, nbd_residues
     plt.ion()
-    plot_derivatives(df, ['WT', '3'])
+    plot_initial_rate_samples(df, nbd_residues, timepoint_ix=4,
+                              file_basename=None, normalized_to_wt=True)
+    #plot_derivatives(df, ['WT', '3'])
     #plot_nbd_error_estimates(df, ['68'], last_n_pts=80, fit_type='cubic')
     #plot_release_endpoints(df, nbd_residues, normalized_to_wt=True)
     #plot_bid_vs_bim_release(df, nbd_residues)
