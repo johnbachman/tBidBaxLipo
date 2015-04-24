@@ -116,6 +116,7 @@ def plot_all(df, nbd_residues, datatypes, file_basename=None,
         plt.tight_layout()
         if file_basename:
             plt.savefig('%s_%s.pdf' % (file_basename, nbd_site))
+            plt.savefig('%s_%s.png' % (file_basename, nbd_site))
 
 def plot_all_by_replicate(df, nbd_residues, datatypes, file_basename=None,
                           normalize_nbd=False):
@@ -186,6 +187,8 @@ def plot_all_by_replicate(df, nbd_residues, datatypes, file_basename=None,
             # Output file, if desired
             if file_basename:
                 plt.savefig('%s_%s_%s.pdf' %
+                            (file_basename, nbd_site, activator))
+                plt.savefig('%s_%s_%s.png' %
                             (file_basename, nbd_site, activator))
 
 def calc_barplot_width(num_sites):
@@ -273,6 +276,7 @@ def plot_nbd_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None,
     # Output the file, if desired
     if file_basename:
         plt.savefig('%s.pdf' % file_basename)
+        plt.savefig('%s.png' % file_basename)
 
 def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
                            last_n_pts=3, file_basename=None):
@@ -370,6 +374,7 @@ def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
     # Output the file, if desired
     if file_basename:
         plt.savefig('%s.pdf' % file_basename)
+        plt.savefig('%s.png' % file_basename)
 
 def plot_initial_rate_fits(df, nbd_sites, activator, num_pts=4, plot=False):
     replicates = range(1, 4)
@@ -656,6 +661,7 @@ def plot_initial_rate_samples(df, nbd_sites, timepoint_ix=4,
         # Output the file, if desired
         if file_basename:
             plt.savefig('%s.pdf' % fig_name)
+            plt.savefig('%s.png' % fig_name)
 
     # 2D scatter plot of NBD/Tb rates, no normalization ----------------------
     for act_ix, activator in enumerate(activators):
@@ -769,6 +775,7 @@ def plot_initial_rate_samples(df, nbd_sites, timepoint_ix=4,
         # Save the fig, if desired
         if file_basename:
             plt.savefig('%s.pdf' % fig_name)
+            plt.savefig('%s.png' % fig_name)
 
     # Plot of all replicates
     for act_ix, activator in enumerate(activators):
@@ -876,6 +883,7 @@ def plot_bid_vs_bim_release(df, nbd_sites, dtype='Release',
             color_ix += 1
             if file_basename:
                 plt.savefig('%s_%s.pdf' % (file_basename, fig_name))
+                plt.savefig('%s_%s.png' % (file_basename, fig_name))
 
 def plot_derivatives(df, nbd_sites, normalize_nbd=False):
     replicates = range(1, 4)
