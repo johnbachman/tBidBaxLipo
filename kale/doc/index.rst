@@ -11,6 +11,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   figures
    bid_bim_nbd_release/index
    bid_bim_fret_nbd_release/index
 

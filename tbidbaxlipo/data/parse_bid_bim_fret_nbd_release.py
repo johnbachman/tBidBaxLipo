@@ -22,7 +22,9 @@ col_types = ['TIME', 'VALUE']
 
 # Zero-indexed
 FIRST_ROW_INDEX = 4
-LAST_ROW_INDEX = 129
+# Should be 128, but chopped off the last few points to avoid massive outliers
+#LAST_ROW_INDEX = 128
+LAST_ROW_INDEX = 123
 
 wb = load_workbook(data_file)
 
@@ -81,6 +83,7 @@ data_matrix = np.array(data)
 col_multi_index = pd.MultiIndex.from_tuples(col_tuples,
                     names=('Activator', 'Datatype', 'NBD Site', 'Replicate',
                            'Column'))
+#import ipdb; ipdb.set_trace()
 df = pd.DataFrame(data_matrix.T,
                   index=range(LAST_ROW_INDEX - FIRST_ROW_INDEX),
                   columns=col_multi_index)
