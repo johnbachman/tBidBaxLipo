@@ -191,12 +191,10 @@ def plot_all_by_replicate(df, nbd_residues, datatypes, file_basename=None,
                 plt.savefig('%s_%s_%s.png' %
                             (file_basename, nbd_site, activator))
 
-def calc_barplot_width(num_sites):
+def calc_barplot_width(num_sites, rmarg=0.13, lmarg=0.11):
     # I found that these numbers worked for a 4 inch wide figure with the
     # given relative left and right margins and 19 sites. This allows the
     # same proportions for endpoint plots with different numbers of sites.
-    rmarg = 0.13
-    lmarg = 0.11
     abs_left = 4 * lmarg
     abs_right = 4 * rmarg
     abs_middle = 4 * (1 - lmarg - rmarg)
@@ -216,10 +214,19 @@ def plot_nbd_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None,
     n_endpts = np.zeros((len(nbd_sites_no_wt), len(replicates)))
     # Figure setup
     set_fig_params_for_publication()
-    (fig_width, rel_left, rel_right) = \
-                        calc_barplot_width(len(nbd_sites_no_wt))
+    if normalize_nbd:
+        yaxis_label = 'NBD F/$F_0$'
+        (fig_width, rel_left, rel_right) = \
+                            calc_barplot_width(len(nbd_sites_no_wt))
+    else:
+        yaxis_label = 'NBD fluorescence (RFU)'
+        # If we're not normalizing the NBD values, then the additional 0s will
+        # push the axis label off the left-hand side. Therefore we adjust the
+        # left margin accordingly.
+        (fig_width, rel_left, rel_right) = \
+                            calc_barplot_width(len(nbd_sites_no_wt), lmarg=0.13)
     plt.figure(file_basename, figsize=(fig_width, 1.5), dpi=300)
-    plt.ylabel('NBD F/$F_0$', fontsize=fontsize)
+    plt.ylabel(yaxis_label, fontsize=fontsize)
     bar_colors = {'Bid': 'gray', 'Bim': 'black'}
 
     # For both activators...

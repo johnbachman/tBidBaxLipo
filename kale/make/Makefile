@@ -62,7 +62,10 @@ test.mcmc:
 	bsub -q $(PQUEUE) -n 100 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.plots.test_mcmc_script
 
 nbd_release: nbd_release_endpts nbd_release_initial_rates
-nbd_release_endpts: data1_release_endpt_norm.pdf data1_release_endpt_no_norm.pdf data1_nbd_endpt.pdf
+nbd_release_endpts: \
+    data1_release_endpt_norm.pdf data1_release_endpt_no_norm.pdf \
+    data1_nbd_endpt_norm.pdf data1_nbd_endpt_no_norm.pdf
+
 nbd_release_initial_rates: data1_init_nbd_bar.pdf
 
 fret_nbd_release: fret_nbd_release_endpts fret_nbd_release_initial_rates
@@ -83,12 +86,19 @@ data1_release_endpt_no_norm.pdf: \
         $(NBD_DATA)
 	python -m tbidbaxlipo.plots.bid_bim_nbd_release.plots release_endpoint_no_norm $(basename $@)
 
-# --- NBD endpoints, dataset 1 ---
-data1_nbd_endpt.pdf: \
+# --- NBD endpoints, dataset 1, normalized to F/F0 ---
+data1_nbd_endpt_norm.pdf: \
         $(PLOTSDIR)/nbd_bax_analysis.py \
         $(PLOTSDIR)/bid_bim_nbd_release/plots.py \
         $(NBD_DATA)
-	python -m tbidbaxlipo.plots.bid_bim_nbd_release.plots nbd_endpoint $(basename $@)
+	python -m tbidbaxlipo.plots.bid_bim_nbd_release.plots nbd_endpoint_norm $(basename $@)
+
+# --- NBD endpoints, dataset 1, no normalization (raw values) ---
+data1_nbd_endpt_no_norm.pdf: \
+        $(PLOTSDIR)/nbd_bax_analysis.py \
+        $(PLOTSDIR)/bid_bim_nbd_release/plots.py \
+        $(NBD_DATA)
+	python -m tbidbaxlipo.plots.bid_bim_nbd_release.plots nbd_endpoint_no_norm $(basename $@)
 
 # NBD/release, initial rates
 # Building this target creates four files:
