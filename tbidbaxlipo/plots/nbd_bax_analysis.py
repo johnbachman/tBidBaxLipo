@@ -348,7 +348,7 @@ def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
     # Add horizontal gridlines
     x_lbound = -1
     x_ubound = len(nbd_sites_filt) * 3
-    plt.hlines(range(20, 120, 20), x_lbound, x_ubound, color='0.85',
+    plt.hlines(range(20, 200, 20), x_lbound, x_ubound, color='0.85',
                zorder=1, linewidth=0.5)
     # Format the plot
     plt.subplots_adjust(left=rel_left, bottom=0.10, right=rel_right, top=0.94)
@@ -501,7 +501,6 @@ class InitialRateSamples(object):
                                             r_slope_stds[act_ix, nbd_index],
                                             wt_r_avgs[act_ix],
                                             wt_r_stds[act_ix])
-
         return (r_norm_avgs, r_norm_stds)
 
     def release_slopes_wt_normalized(self):
@@ -1280,9 +1279,16 @@ def plot_nbd_error_estimates(df, nbd_sites, last_n_pts=50, fit_type='cubic',
 
 if __name__ == '__main__':
     #from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
-    from tbidbaxlipo.data.parse_bid_bim_fret_nbd_release import df, nbd_residues
+    #from tbidbaxlipo.data.parse_bid_bim_fret_nbd_release import df, nbd_residues
     plt.ion()
-    plot_initial_rate_samples(df, nbd_residues, timepoint_ix=4,
+    import pickle
+    #with open('data2.pck', 'w') as f:
+        #pickle.dump((df, nbd_residues), f)
+    with open('data2.pck') as f:
+        (df, nbd_residues) = pickle.load(f)
+    #plot_release_endpoints(df, nbd_residues, normalized_to_wt=True,
+    #                       last_n_pts=3, file_basename=None)
+    plot_initial_rate_samples(df, nbd_residues, timepoint_ix=20,
                               file_basename=None, normalized_to_wt=True)
     #plot_derivatives(df, ['WT', '3'])
     #plot_nbd_error_estimates(df, ['68'], last_n_pts=80, fit_type='cubic')
