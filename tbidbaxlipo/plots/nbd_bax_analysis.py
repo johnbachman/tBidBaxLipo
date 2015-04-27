@@ -355,8 +355,6 @@ def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
     # Add horizontal gridlines
     x_lbound = -1
     x_ubound = len(nbd_sites_filt) * 3
-    plt.hlines(range(20, 200, 20), x_lbound, x_ubound, color='0.85',
-               zorder=1, linewidth=0.5)
     # Format the plot
     plt.subplots_adjust(left=rel_left, bottom=0.10, right=rel_right, top=0.94)
     ax = plt.gca()
@@ -378,6 +376,10 @@ def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
             bbox_to_anchor=(1.02, 0.5), loc='center left', borderaxespad=0.,
             prop={'size': fontsize}, handlelength=1)
     leg.draw_frame(False)
+    # Add hlines every 20 percent until the top of the plot is reached
+    (ymin, ymax) = ax.get_ylim()
+    plt.hlines(range(20, int(ymax), 20), x_lbound, x_ubound, color='0.85',
+               zorder=1, linewidth=0.5)
     # Output the file, if desired
     if file_basename:
         plt.savefig('%s.pdf' % file_basename)

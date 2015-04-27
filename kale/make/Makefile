@@ -65,11 +65,12 @@ nbd_release: nbd_release_endpts nbd_release_initial_rates
 nbd_release_endpts: \
     data1_release_endpt_norm.pdf data1_release_endpt_no_norm.pdf \
     data1_nbd_endpt_norm.pdf data1_nbd_endpt_no_norm.pdf
-
 nbd_release_initial_rates: data1_init_nbd_bar.pdf
 
 fret_nbd_release: fret_nbd_release_endpts fret_nbd_release_initial_rates
-fret_nbd_release_endpts: data2_release_endpt_norm.pdf data2_release_endpt_no_norm.pdf data2_nbd_endpt.pdf
+fret_nbd_release_endpts: \
+    data2_release_endpt_norm.pdf data2_release_endpt_no_norm.pdf \
+    data2_nbd_endpt_norm.pdf data2_nbd_endpt_no_norm.pdf
 fret_nbd_release_initial_rates: data2_init_nbd_bar.pdf
 
 # --- Normalized release endpoint data for release, dataset 1 ---
@@ -126,12 +127,20 @@ data2_release_endpt_no_norm.pdf: \
         $(NBD_FRET_DATA)
 	python -m tbidbaxlipo.plots.bid_bim_fret_nbd_release.plots release_endpoint_no_norm $(basename $@)
 
-# --- NBD endpoints, dataset 2 ---
-data2_nbd_endpt.pdf: \
+# --- NBD endpoints, dataset 2, normalized to F/F0 ---
+data2_nbd_endpt_norm.pdf: \
         $(PLOTSDIR)/nbd_bax_analysis.py \
         $(PLOTSDIR)/bid_bim_fret_nbd_release/plots.py \
         $(NBD_FRET_DATA)
-	python -m tbidbaxlipo.plots.bid_bim_fret_nbd_release.plots nbd_endpoint $(basename $@)
+	python -m tbidbaxlipo.plots.bid_bim_fret_nbd_release.plots nbd_endpoint_norm $(basename $@)
+
+# --- NBD endpoints, dataset 2, no normalization (raw values) ---
+data2_nbd_endpt_no_norm.pdf: \
+        $(PLOTSDIR)/nbd_bax_analysis.py \
+        $(PLOTSDIR)/bid_bim_fret_nbd_release/plots.py \
+        $(NBD_FRET_DATA)
+	python -m tbidbaxlipo.plots.bid_bim_fret_nbd_release.plots nbd_endpoint_no_norm $(basename $@)
+
 
 # FRET/NBD/release, initial rates
 # Building this target creates four files:
