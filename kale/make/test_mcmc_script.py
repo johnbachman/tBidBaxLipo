@@ -2,20 +2,22 @@ import numpy as np
 from tbidbaxlipo.models.nbd.multiconf import Builder
 from tbidbaxlipo.util import emcee_fit
 from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
+import tbidbaxlipo.plots.bid_bim_nbd_release.preprocess_data as ppd
 import pickle
 import sys
 
-time_var = df[('Bid', 'NBD', '126', 1, 'TIME')].values
-data_var = np.zeros((1, 1, len(time_var)))
-data_var[0, 0, :] = df[('Bid', 'NBD', '126', 1, 'VALUE')].values
+activator = 'Bid'
+nbd_site = '126'
+observable = 'NBD'
+rep_num = 1
+
+# Get the preprocessed data, along with the experimental error
+name_pattern = '%s_%s_%s' % (activator, observable, nbd_site)
+time_var = ppd.__dict__['time_%s_r%d' % (name_pattern, rep_num)]
+data_var = ppd.__dict__['data_%s_r%d' % (name_pattern, rep_num)]
+data_sigma_var = ppd.__dict__['data_sigma_%s' % name_pattern]
 
 model_observable = ['NBD']
-
-# data_sigma_var = np.zeros((1, 1))
-# data_sigma_var[0, 0] = calc_err_var_cubic(data_var[0, 0, :], last_n_pts=80)
-#54C: data_sigma_var = np.array([[0.014037]])
-# 126C:
-data_sigma_var = np.array([[0.021085]])
 
 highest_temp = -2
 nburnin = 10
@@ -38,7 +40,6 @@ gf = emcee_fit.GlobalFit(bd, time_var, data_var, data_sigma_var, ic_params,
 
 random_seed = 1
 np.random.seed(random_seed)
-
 betas = 10 ** np.linspace(0, highest_temp, ntemps)
 sampler = emcee_fit.pt_mpi_sample(gf, ntemps, nwalkers, nburnin, nsample,
                                   thin=thin, betas=betas)
