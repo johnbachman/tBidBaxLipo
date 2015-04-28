@@ -64,11 +64,13 @@ for nbd_residue in nbd_residues:
         # Upper and lower bounds for fluorescence parameters
         lbound_name = data_var_name + '_lbound'
         ubound_name = data_var_name + '_ubound'
+        f0_name = data_var_name + '_f0'
         # Add these as module-level variables
         setattr(this_module, time_var_name, time_var)
         setattr(this_module, data_var_name, data_var)
         setattr(this_module, lbound_name, lbound)
         setattr(this_module, ubound_name, ubound)
+        setattr(this_module, f0_name, f0)
 
     # Now that we've got the residuals for all reps, pool them and calculate
     # the standard deviation

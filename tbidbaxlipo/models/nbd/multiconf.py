@@ -7,8 +7,9 @@ class Builder(core.Builder):
     def __init__(self, params_dict=None):
         core.Builder.__init__(self, params_dict=params_dict)
 
-    def build_model_multiconf(self, num_confs, c0_scaling,
-                              normalized_data=False, reversible=False):
+    def build_model_multiconf(self, num_confs, c0_scaling, nbd_lbound=None,
+                              nbd_ubound=None, normalized_data=False,
+                              reversible=False):
         if num_confs < 2:
             raise ValueError('There must be a minimum of two conformations.')
 
@@ -27,9 +28,14 @@ class Builder(core.Builder):
 
         # Set the bounds for the scaling parameters
         if normalized_data:
-            scaling_prior = UniformLinear(-2, np.log10(20))
+            scaling_prior = UniformLinear(-1, 1)
         else:
-            scaling_prior = UniformLinear(1, 5)
+            if nbd_lbound is None or nbd_ubound is None:
+                raise ValueError("If NBD data is not normalized, upper and "
+                                 "lower bounds for the scaling parameters "
+                                 "must be explicitly specified.")
+            scaling_prior = UniformLinear(np.log10(nbd_lbound),
+                                          np.log10(nbd_ubound))
 
         # Rules for transitions between other conformations
         for i in range(num_confs-1):

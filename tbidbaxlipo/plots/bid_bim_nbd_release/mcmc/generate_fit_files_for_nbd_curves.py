@@ -47,7 +47,9 @@ for activator in ['Bid', 'Bim']:
                                           (activator, nbd_residue)
             data_args['nbd_ubound'] = 'data_%s_%s_r%s_ubound' % \
                                 (activator, nbd_residue, rep_num)
-            data_args['nbd_lbound'] = 'data_%s_%s_%s_r%s_lbound' % \
+            data_args['nbd_lbound'] = 'data_%s_%s_r%s_lbound' % \
+                                (activator, nbd_residue, rep_num)
+            data_args['nbd_f0'] = 'data_%s_%s_r%s_f0' % \
                                 (activator, nbd_residue, rep_num)
             args['data'] = data_args
             # Create the YAML file
