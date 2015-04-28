@@ -35,7 +35,12 @@ FORCE:
 
 .PHONY: clean clean_pt deploy nbd_release fret_nbd_release
 
-pt_nbd: pt_data1_Bid_NBD_126_r1
+pt_data1: $(NBD_MCMC_DIR)/pt_data1.deps.txt
+-include $(NBD_MCMC_DIR)/pt_data1.deps.txt
+
+$(NBD_MCMC_DIR)/pt_data1.deps.txt: \
+    $(NBD_MCMC_DIR)/generate_fit_files_for_nbd_curves.py
+	python $(NBD_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_MCMC_DIR)
 
 pt_data1_Bid_NBD_126_r1: $(NBD_MCMC_DIR)/pt_data1_Bid_NBD_126_r1.deps.txt
 # This file specifies the list of *.mcmc files that pt_nbd depends on

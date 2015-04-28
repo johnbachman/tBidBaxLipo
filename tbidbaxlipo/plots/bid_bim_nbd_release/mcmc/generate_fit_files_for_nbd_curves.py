@@ -22,7 +22,8 @@ args = {
 }
 
 basedir = sys.argv[1]
-output_filename_pattern = 'pt_data1_%s_NBD_%s_r%s.fit.ensemble'
+output_target_pattern = 'pt_data1_%s_NBD_%s_r%s'
+output_filename_pattern = output_target_pattern + '.fit.ensemble'
 dependencies_list = []
 
 # Iterate over the activators
@@ -46,20 +47,26 @@ for activator in ['Bid', 'Bim']:
                                           (activator, nbd_residue)
             args['data'] = data_args
             # Create the YAML file
-            output_filename = output_filename_pattern % \
-                              (activator, nbd_residue, rep_num)
+            output_target = output_target_pattern % \
+                                (activator, nbd_residue, rep_num)
+            output_filename = output_target + '.fit.ensemble'
             output_filename = os.path.join(basedir, output_filename)
             with open(output_filename, 'w') as f:
                 f.write(yaml.dump(args, default_flow_style=False))
-            dependencies_list.append(output_filename)
+            dependencies_list.append(output_target)
 
 # Now write the file with the dependencies of the overall target on the
 # list of .mcmc files
 deps_filename = os.path.join(basedir, 'pt_data1.deps.txt')
 target_name = 'pt_data1'
 with open(deps_filename, 'w') as deps_file:
-    ens_fit_file_list = [fname for fname in dependencies_list]
     #base_target = os.path.basename(basedir) # Strip off the directory info
+    # First, specify that the overall target depends on all the sub-targets
     deps_file.write('%s: ' % target_name) # Strip off the directory info
-    deps_file.write(' '.join(ens_fit_file_list))
-
+    deps_file.write(' '.join(dependencies_list) + '\n\n')
+    # Next, for each dependency, specify that it depends on the corresponding
+    # .deps.txt file, and include it
+    for dep in dependencies_list:
+        dep_filename = os.path.join(basedir, '%s.deps.txt' % dep)
+        deps_file.write('%s: %s\n' % (dep, dep_filename))
+        deps_file.write('-include %s\n\n' % dep_filename)
