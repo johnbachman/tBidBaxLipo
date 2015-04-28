@@ -27,7 +27,6 @@ if __name__ == '__main__':
     data_var = data_module.__dict__[data_args['data_var']]
     data_sigma_var = data_module.__dict__[data_args['data_sigma_var']]
     time_var = data_module.__dict__[data_args['time_var']]
-
     # Get the name of the variable containing the initial conditions vector,
     # which may not exist
     ic_var_name = data_args['initial_condition_var']
@@ -43,8 +42,12 @@ if __name__ == '__main__':
     if 'multiconf' in args['model']:
         bd = multiconf.Builder()
         num_confs = args['model']['multiconf']
-        norm_data = args['model']['normalized_nbd_data'] = True
-        bd.build_model_multiconf(num_confs, 1, normalized_data=norm_data)
+        norm_data = args['model']['normalized_nbd_data']
+        nbd_ubound = data_module.__dict__[data_args['nbd_ubound']]
+        nbd_lbound = data_module.__dict__[data_args['nbd_lbound']]
+        nbd_f0 = data_module.__dict__[data_args['nbd_f0']]
+        bd.build_model_multiconf(num_confs, nbd_f0, nbd_lbound, nbd_ubound,
+                                 normalized_data=norm_data, reversible=False)
     else:
         bd = one_cpt.Builder()
         bd.build_model_from_dict(args['model'])
