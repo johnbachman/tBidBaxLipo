@@ -1,6 +1,7 @@
 import sys
 import numpy as np
-from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
+from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues, \
+                                                       labeling_ratios
 from tbidbaxlipo.util.calculate_error_variance import calc_err_var
 from copy import deepcopy
 
@@ -39,6 +40,17 @@ for nbd_residue in nbd_residues:
         data_var = np.zeros((1, 1, len(time_var)))
         timecourse = df[(activator, obs, nbd_residue, rep_num, 'VALUE')].values
         data_var[0, 0, :] = timecourse
+        # Initial fluorescence value
+        f0 = timecourse[0]
+        # Get the minimum fluorescence for this rep: 0.1 * the initial value
+        lbound = f0 * 0.1
+        # Get the maximum fluorescence for this rep: the lesser of 10 times
+        # the initial value or a corrected absolute NBD fluorescence of 300k
+        max_nbd_fluorescence = 300000
+        mutant_absolute_max = \
+                labeling_ratios[nbd_residue] * max_nbd_fluorescence
+        mutant_relative_max = 10 * f0
+        ubound = min(mutant_absolute_max, mutant_relative_max)
         # Get the residuals for this rep
         (residuals, fig) = \
            calc_err_var(timecourse, last_n_pts=50, fit_type='cubic', plot=False)
@@ -49,9 +61,14 @@ for nbd_residue in nbd_residues:
                         (activator, obs, nbd_residue, rep_num)
         data_var_name = 'data_%s_%s_%s_r%s' % \
                         (activator, obs, nbd_residue, rep_num)
+        # Upper and lower bounds for fluorescence parameters
+        lbound_name = data_var_name + '_lbound'
+        ubound_name = data_var_name + '_ubound'
         # Add these as module-level variables
         setattr(this_module, time_var_name, time_var)
         setattr(this_module, data_var_name, data_var)
+        setattr(this_module, lbound_name, lbound)
+        setattr(this_module, ubound_name, ubound)
 
     # Now that we've got the residuals for all reps, pool them and calculate
     # the standard deviation
