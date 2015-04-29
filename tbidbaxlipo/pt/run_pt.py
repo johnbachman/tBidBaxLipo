@@ -1,6 +1,7 @@
 import yaml
 import pickle
 import sys
+import os
 from tbidbaxlipo.models import one_cpt
 from tbidbaxlipo.models.nbd import multiconf
 from tbidbaxlipo.util import emcee_fit
@@ -92,12 +93,15 @@ if __name__ == '__main__':
                                       args['nsample'],
                                       thin=args['thin'],
                                       betas=betas)
-
     # After sampling, get rid of the pool so we can pickle the sampler
     sampler.pool = None
+
     # The basename of the pickle file is based on the name of the .yaml file
-    basename = sys.argv[1].split('.')[0]
-    with open('%s_%d.mcmc' % (basename, random_seed), 'w') as f:
+    basedir = os.path.dirname(sys.argv[1])
+    basename = os.path.basename(sys.argv[1])
+    basename = basename.split('.')[0]
+    filename = os.path.join(basedir, '%s_%d.mcmc' % (basename, random_seed))
+    with open(filename, 'w') as f:
         pickle.dump((gf, sampler), f)
 
     # Done
