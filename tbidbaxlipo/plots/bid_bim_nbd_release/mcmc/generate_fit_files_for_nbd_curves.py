@@ -14,11 +14,11 @@ args = {
     'local_initial_condition': None,
     'global_params': 'all',
     'local_params': [],
-    'ntemps': 20,
-    'highest_temp': -4,
-    'nwalkers': 200,
-    'nburnin': 20,
-    'nsample': 20,
+    'ntemps': 50,
+    'highest_temp': -6,
+    'nwalkers': 400,
+    'nburnin': 1900,
+    'nsample': 100,
     'thin': 1,
 }
 
@@ -30,7 +30,7 @@ dependencies_list = []
 # Iterate over the activators
 for activator in ['Bid']:
     # Iterate over the NBD residues
-    for nbd_residue in ['126']:
+    for nbd_residue in ['54', '126']:
         # Skip the wild type curves since there is no NBD trace
         if nbd_residue == 'WT':
             continue
