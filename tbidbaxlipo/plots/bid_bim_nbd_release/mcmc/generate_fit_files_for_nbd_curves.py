@@ -11,6 +11,7 @@ args = {
     'model_observable': ['NBD'],
     'global_initial_conditions': {
         'c0_scaling': 1.0, },
+    'local_initial_condition': None,
     'global_params': 'all',
     'local_params': [],
     'ntemps': 20,
@@ -27,7 +28,7 @@ output_filename_pattern = output_target_pattern + '.fit.ensemble'
 dependencies_list = []
 
 # Iterate over the activators
-for activator in ['Bid', 'Bim']:
+for activator in ['Bid']:
     # Iterate over the NBD residues
     for nbd_residue in ['126']:
         # Skip the wild type curves since there is no NBD trace
@@ -45,11 +46,11 @@ for activator in ['Bid', 'Bim']:
                                     (activator, nbd_residue, rep_num)
             data_args['data_sigma_var'] = 'data_sigma_%s_NBD_%s' % \
                                           (activator, nbd_residue)
-            data_args['nbd_ubound'] = 'data_%s_%s_r%s_ubound' % \
+            data_args['nbd_ubound'] = 'data_%s_NBD_%s_r%s_ubound' % \
                                 (activator, nbd_residue, rep_num)
-            data_args['nbd_lbound'] = 'data_%s_%s_r%s_lbound' % \
+            data_args['nbd_lbound'] = 'data_%s_NBD_%s_r%s_lbound' % \
                                 (activator, nbd_residue, rep_num)
-            data_args['nbd_f0'] = 'data_%s_%s_r%s_f0' % \
+            data_args['nbd_f0'] = 'data_%s_NBD_%s_r%s_f0' % \
                                 (activator, nbd_residue, rep_num)
             args['data'] = data_args
             # Create the YAML file

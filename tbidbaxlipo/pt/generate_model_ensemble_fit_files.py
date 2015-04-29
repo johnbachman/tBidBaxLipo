@@ -38,9 +38,8 @@ for m in m_ensemble:
     if 'multiconf' in m:
         num_confs = int(m['multiconf'])
         norm_data = m['normalized_nbd_data']
-        bd = multiconf.Builder()
-        bd.build_model_multiconf(num_confs, 1, normalized_data=norm_data,
-                                 reversible=False)
+        # We don't need to build the model just to get the model name
+        model_name = '%dconfs' % num_confs
     # Mechanistic model
     else:
         # If Bid doesn't get to the membrane, activation by bound Bid will
@@ -66,12 +65,13 @@ for m in m_ensemble:
             continue
         bd = one_cpt.Builder()
         bd.build_model_from_dict(m)
+        model_name = bd.model.name
 
     # Build up the new yaml dict by copying all fitting parameters over...
     yaml_dict = copy(args)
     # ...and then filling in the parameters specifying this particular model
     yaml_dict['model'] = m
-    model_filename = '%s_%s' % (basename, bd.model.name)
+    model_filename = '%s_%s' % (basename, model_name)
     with open('%s.fit' % model_filename, 'w') as output_file:
         output_file.write(yaml.dump(yaml_dict, default_flow_style=False))
     dependencies_list.append(model_filename)
