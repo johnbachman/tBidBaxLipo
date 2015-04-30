@@ -43,10 +43,6 @@ $(NBD_MCMC_DIR)/pt_data1.deps.txt: \
     $(NBD_MCMC_DIR)/generate_fit_files_for_nbd_curves.py
 	python $(NBD_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_MCMC_DIR)
 
-pt_data1_Bid_NBD_126_r1: $(NBD_MCMC_DIR)/pt_data1_Bid_NBD_126_r1.deps.txt
-# This file specifies the list of *.mcmc files that pt_nbd depends on
--include $(NBD_MCMC_DIR)/pt_data1_Bid_NBD_126_r1.deps.txt
-
 # Running this script generates both the dependency list and the .yaml files
 # specifying the fit parameters for each individual model
 %.deps.txt: %.fit.ensemble
