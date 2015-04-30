@@ -19,15 +19,11 @@ datatypes = ['Release', 'NBD']
 reps = [1, 2, 3]
 col_types = ['TIME', 'VALUE']
 
-col_tuples = list(product(activators, datatypes, nbd_residues, reps, col_types))
-
 # Zero-indexed
 TIME_COL_INDEX = 0
 FIRST_COL_INDEX = 1
 LAST_COL_INDEX = 61
 NUM_ROWS = 135 # Actually 136, but the Bim sheet is missing a row
-
-wb = load_workbook(data_file)
 
 def get_data_from_sheet(sheet, activator, datatype, first_row_index, num_rows,
                         mutant_name_row):
@@ -79,32 +75,43 @@ def get_labeling_ratios(sheet, mutant_name_row, ratio_row):
             ratios[mutant_name] = labeling_ratio
     return ratios
 
-(bid_release_tuples, bid_release_data) = \
-                    get_data_from_sheet(wb.worksheets[0], 'Bid', 'Release',
-                                        1, NUM_ROWS, 0)
-(bim_release_tuples, bim_release_data) = \
-                    get_data_from_sheet(wb.worksheets[1], 'Bim', 'Release',
-                                        1, NUM_ROWS, 0)
+def load_data():
+    global df, labeling_ratios
 
-# Get data for the raw (uncorrected) values
-(bid_nbd_tuples, bid_nbd_data) = \
-                    get_data_from_sheet(wb.worksheets[4], 'Bid', 'NBD',
-                                        3, NUM_ROWS, 2)
-(bim_nbd_tuples, bim_nbd_data) = \
-                    get_data_from_sheet(wb.worksheets[5], 'Bim', 'NBD',
-                                        3, NUM_ROWS, 2)
+    col_tuples = list(product(activators, datatypes, nbd_residues, reps,
+                              col_types))
 
-# Get labeling ratios
-labeling_ratios = get_labeling_ratios(wb.worksheets[4], 2, 1)
 
-col_tuples = bid_release_tuples + bim_release_tuples + \
-             bid_nbd_tuples + bim_nbd_tuples
-data_matrix = np.concatenate((bid_release_data, bim_release_data,
-                             bid_nbd_data, bim_nbd_data))
+    wb = load_workbook(data_file)
 
-col_index = pd.MultiIndex.from_tuples(col_tuples,
-                    names=('Activator', 'Datatype', 'NBD Site', 'Replicate',
-                           'Column'))
+    (bid_release_tuples, bid_release_data) = \
+                        get_data_from_sheet(wb.worksheets[0], 'Bid', 'Release',
+                                            1, NUM_ROWS, 0)
+    (bim_release_tuples, bim_release_data) = \
+                        get_data_from_sheet(wb.worksheets[1], 'Bim', 'Release',
+                                            1, NUM_ROWS, 0)
 
-df = pd.DataFrame(data_matrix.T, index=range(NUM_ROWS), columns=col_index)
+    # Get data for the raw (uncorrected) values
+    (bid_nbd_tuples, bid_nbd_data) = \
+                        get_data_from_sheet(wb.worksheets[4], 'Bid', 'NBD',
+                                            3, NUM_ROWS, 2)
+    (bim_nbd_tuples, bim_nbd_data) = \
+                        get_data_from_sheet(wb.worksheets[5], 'Bim', 'NBD',
+                                            3, NUM_ROWS, 2)
 
+    # Get labeling ratios
+    labeling_ratios = get_labeling_ratios(wb.worksheets[4], 2, 1)
+
+    col_tuples = bid_release_tuples + bim_release_tuples + \
+                 bid_nbd_tuples + bim_nbd_tuples
+    data_matrix = np.concatenate((bid_release_data, bim_release_data,
+                                 bid_nbd_data, bim_nbd_data))
+
+    col_index = pd.MultiIndex.from_tuples(col_tuples,
+                        names=('Activator', 'Datatype', 'NBD Site', 'Replicate',
+                               'Column'))
+
+    df = pd.DataFrame(data_matrix.T, index=range(NUM_ROWS), columns=col_index)
+
+# Load the data
+load_data()
