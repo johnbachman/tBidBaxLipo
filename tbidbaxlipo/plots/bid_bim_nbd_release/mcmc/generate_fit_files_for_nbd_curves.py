@@ -6,19 +6,18 @@ from tbidbaxlipo.data.parse_bid_bim_nbd_release import nbd_residues
 # Arguments shared across all fits
 args = {
     'model': {
-        'multiconf': [2, 3, 4],
+        'multiconf': [2], # 2, 3, 4
         'normalized_nbd_data': [False]},
     'model_observable': ['NBD'],
-    'global_initial_conditions': {
-        'c0_scaling': 1.0, },
+    'global_initial_conditions': {},
     'local_initial_condition': None,
     'global_params': 'all',
     'local_params': [],
     'ntemps': 50,
     'highest_temp': -6,
-    'nwalkers': 400,
-    'nburnin': 1900,
-    'nsample': 100,
+    'nwalkers': 100, # 400
+    'nburnin': 10,
+    'nsample': 10,
     'thin': 1,
 }
 
@@ -30,7 +29,7 @@ dependencies_list = []
 # Iterate over the activators
 for activator in ['Bid']:
     # Iterate over the NBD residues
-    for nbd_residue in ['54', '126']:
+    for nbd_residue in ['54']: # 54, 126
         # Skip the wild type curves since there is no NBD trace
         if nbd_residue == 'WT':
             continue
