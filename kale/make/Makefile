@@ -7,8 +7,8 @@ NBD_DATA := $(DATADIR)/Compiled\ Release\ percentages\ and\ NBD\ F-F0.xlsx \
             $(DATADIR)/parse_bid_bim_nbd_release.py
 NBD_FRET_DATA := $(DATADIR)/2015-02-27\ -\ Bid-Bim\ FRET\ with\ Bax\ NBD\ mutants\ in\ Tb-DPA\ Liposomes\ compiled\ reps+WT\ Bax.xlsx \
                  $(DATADIR)/parse_bid_bim_fret_nbd_release.py
-#PQUEUE := sorger_par_unlimited
-PQUEUE := parallel
+PQUEUE := sorger_par_unlimited
+#PQUEUE := parallel
 
 all: nbd_release fret_nbd_release
 
@@ -45,15 +45,15 @@ $(NBD_MCMC_DIR)/pt_data1.deps.txt: \
 
 # Running this script generates both the dependency list and the .yaml files
 # specifying the fit parameters for each individual model
-%.deps.txt: %.fit.ensemble
-	python -m tbidbaxlipo.pt.generate_model_ensemble_fit_files $<
+%.deps.txt: $(call to-md5, %.fit.ensemble)
+	python -m tbidbaxlipo.pt.generate_model_ensemble_fit_files $(call from-md5, $<)
 
 # In this case, we know that the .fit file exists, since it has been
 # regenerated in the step that regenerated the dependency file. What
 # we care about is whether the hash is any different.
 %.mcmc: $(call to-md5, %.fit)
 	python -m tbidbaxlipo.pt.compile_models $(call from-md5, $<)
-	bsub -q $(PQUEUE) -n 20 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1
+	bsub -q $(PQUEUE) -n 40 -W 18:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1
 
 # Don't delete the .md5 files! Without this rule they are treated as
 # intermediates and deleted.
