@@ -1,5 +1,5 @@
 from tbidbaxlipo.models import core, one_cpt
-from bayessb.priors import Normal
+from tbidbaxlipo.priors import Normal
 
 class Builder(one_cpt.Builder):
 

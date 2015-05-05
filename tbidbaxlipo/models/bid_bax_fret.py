@@ -1,6 +1,6 @@
 import pysb.builder
 from tbidbaxlipo.util import fitting
-from bayessb.priors import Normal, Uniform
+from tbidbaxlipo.priors import Normal, Uniform
 import numpy as np
 from pysb.integrate import Solver
 import numpy as np

@@ -1,7 +1,7 @@
 from pysb import *
 import numpy as np
 from tbidbaxlipo.models import core
-from bayessb.priors import Uniform, Normal
+from tbidbaxlipo.priors import Uniform, Normal
 from pysb.integrate import Solver
 from matplotlib import pyplot as plt
 

@@ -1,6 +1,6 @@
 import numpy as np
 from tbidbaxlipo.models import core
-from bayessb.priors import Uniform, UniformLinear
+from tbidbaxlipo.priors import Uniform, UniformLinear
 
 class Builder(core.Builder):
 
