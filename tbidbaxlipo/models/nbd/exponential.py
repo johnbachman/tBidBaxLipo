@@ -1,5 +1,5 @@
 from tbidbaxlipo.models import core
-from bayessb.priors import Uniform
+from tbidbaxlipo.priors import Uniform
 
 class Builder(core.Builder):
 

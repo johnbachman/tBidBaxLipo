@@ -40,7 +40,8 @@ def plot_chain_convergence(sampler):
     nrows = 3
     #nrows = int(np.ceil(ntemps / 4.0))
     plt.figure('Chain convergence', figsize=(16,9))
-    for fig_ix, temp_ix in enumerate(range(0, ntemps, interval)):
+    temp_indices = np.round(np.linspace(0, ntemps - 1, max_plots))
+    for fig_ix, temp_ix in enumerate(temp_indices):
         plt.subplot(nrows, ncols, fig_ix + 1)
         plt.plot(sampler._lnprob[temp_ix,:,:].T, alpha=0.1)
         plt.title('Chain %d' % temp_ix)

@@ -1,5 +1,5 @@
 from tbidbaxlipo.models import core, one_cpt
-from bayessb.priors import Normal
+from tbidbaxlipo.priors import Normal
 from pysb.core import Model, Monomer, ComponentSet
 from copy import copy, deepcopy
 

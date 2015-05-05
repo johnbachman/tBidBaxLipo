@@ -246,7 +246,7 @@ __author__ = 'johnbachman'
 from pysb import *
 import numpy as np
 import pysb.builder
-from bayessb.priors import Normal, Uniform
+from tbidbaxlipo.priors import Normal, Uniform
 import sympy
 import math
 import itertools

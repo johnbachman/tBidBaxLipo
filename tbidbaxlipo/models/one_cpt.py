@@ -78,7 +78,7 @@ from tbidbaxlipo.util import color_iter
 from tbidbaxlipo.models import core
 from matplotlib.font_manager import FontProperties
 from pysb.integrate import odesolve, Solver
-from bayessb.priors import Normal
+from tbidbaxlipo.priors import Normal
 
 Solver._use_inline = True
 

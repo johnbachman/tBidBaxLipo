@@ -1,6 +1,6 @@
 #from tbidbaxlipo.models import core, one_cpt
 from pysb import builder
-from bayessb.priors import Normal
+from tbidbaxlipo.priors import Normal
 
 class Builder(builder.Builder):
 

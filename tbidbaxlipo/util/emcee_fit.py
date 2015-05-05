@@ -6,6 +6,7 @@ import emcee
 from emcee.utils import MPIPool
 import mpi4py
 import sys
+from scipy.stats import pearsonr
 
 def posterior(position, gf):
     """A generic posterior function."""
@@ -496,13 +497,21 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
     else:
         print "Burn in sampling..."
         nstep = 0
+        convergence_interval = 50
         for p, lnprob, lnlike in sampler.sample(p0, iterations=burn_steps,
-                                storechain=False):
-            if nstep % 2 == 0:
+                                storechain=True):
+            if nstep % 5 == 0:
                 print "nstep %d of %d, MAP: %f, mean post %f" % \
                      (nstep, burn_steps, np.max(lnprob[0]), np.mean(lnprob[0]))
                 print sampler.tswap_acceptance_fraction
-            nstep +=1
+                # Check to see if the posterior of all temperatures has
+                # flattened out/converged
+                if nstep >= convergence_interval:
+                    converged = check_convergence(sampler, nstep,
+                                                  convergence_interval)
+                    if converged:
+                        break
+            nstep += 1
 
         sampler.reset()
 
@@ -511,11 +520,11 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         for p, lnprob, lnlike in sampler.sample(p, lnprob0=lnprob,
                                      lnlike0=lnlike,
                                      iterations=sample_steps, thin=thin):
-            if nstep % 2 == 0:
+            if nstep % 5 == 0:
                 print "nstep %d of %d, MAP: %f, mean post %f" % \
                      (nstep, burn_steps, np.max(lnprob[0]), np.mean(lnprob[0]))
                 print sampler.tswap_acceptance_fraction
-            nstep +=1
+            nstep += 1
 
     # Close the pool!
     if pool is not None:
@@ -524,5 +533,26 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
     print "Done sampling."
     return sampler
 
+def check_convergence(sampler, cur_step, num_steps, pval_threshold=0.2):
+    # Only do the check if we've got enough steps
+    if sampler.lnprobability is None or \
+       cur_step - num_steps < 0:
+        print "Not enough steps to check convergence."
+        return
 
+    lnpost = sampler.lnprobability[:, :, cur_step-num_steps:cur_step]
+    ntemps = lnpost.shape[0]
+    nwalkers = lnpost.shape[1]
+    nsteps = lnpost.shape[2]
 
+    step_indices = np.repeat(np.arange(0, nsteps), nwalkers)
+    pass_arr = np.zeros(ntemps)
+    for temp_ix in range(0, ntemps):
+        pts = lnpost[temp_ix].flatten(order='F')
+        (rval, pval) = pearsonr(step_indices, pts)
+        print "Temp %d: r = %f, p = %f" % (temp_ix, rval, pval)
+        if rval < 0 or pval > pval_threshold:
+            pass_arr[temp_ix] = True
+    passes = np.all(pass_arr)
+    print "Passes: ", passes
+    return np.all(pass_arr)

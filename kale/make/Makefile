@@ -8,6 +8,7 @@ NBD_DATA := $(DATADIR)/Compiled\ Release\ percentages\ and\ NBD\ F-F0.xlsx \
 NBD_FRET_DATA := $(DATADIR)/2015-02-27\ -\ Bid-Bim\ FRET\ with\ Bax\ NBD\ mutants\ in\ Tb-DPA\ Liposomes\ compiled\ reps+WT\ Bax.xlsx \
                  $(DATADIR)/parse_bid_bim_fret_nbd_release.py
 PQUEUE := sorger_par_unlimited
+#PQUEUE := parallel
 
 all: nbd_release fret_nbd_release
 
@@ -15,7 +16,7 @@ clean:
 	rm -f ./*.pdf ./*.png
 
 clean_pt:
-	cd $(NBD_MCMC_DIR); rm -f *.md5 *.fit *.deps.txt
+	cd $(NBD_MCMC_DIR); rm -f *.md5 *.fit *.deps.txt *.ensemble
 
 deploy:
 	cp ./*.pdf ~/Dropbox/Bax_insertion_paper/figure_panels_JAB
@@ -35,23 +36,24 @@ FORCE:
 
 .PHONY: clean clean_pt deploy nbd_release fret_nbd_release
 
-pt_nbd: pt_data1_Bid_NBD_126_r1
+pt_data1: $(NBD_MCMC_DIR)/pt_data1.deps.txt
+-include $(NBD_MCMC_DIR)/pt_data1.deps.txt
 
-pt_data1_Bid_NBD_126_r1: $(NBD_MCMC_DIR)/pt_data1_Bid_NBD_126_r1.deps.txt
-# This file specifies the list of *.mcmc files that pt_nbd depends on
--include $(NBD_MCMC_DIR)/pt_data1_Bid_NBD_126_r1.deps.txt
+$(NBD_MCMC_DIR)/pt_data1.deps.txt: \
+    $(NBD_MCMC_DIR)/generate_fit_files_for_nbd_curves.py
+	python $(NBD_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_MCMC_DIR)
 
 # Running this script generates both the dependency list and the .yaml files
 # specifying the fit parameters for each individual model
-%.deps.txt: %.fit.ensemble
-	python -m tbidbaxlipo.pt.generate_model_ensemble_fit_files $<
+%.deps.txt: $(call to-md5, %.fit.ensemble)
+	python -m tbidbaxlipo.pt.generate_model_ensemble_fit_files $(call from-md5, $<)
 
 # In this case, we know that the .fit file exists, since it has been
 # regenerated in the step that regenerated the dependency file. What
 # we care about is whether the hash is any different.
 %.mcmc: $(call to-md5, %.fit)
 	python -m tbidbaxlipo.pt.compile_models $(call from-md5, $<)
-	#bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1
+	bsub -q $(PQUEUE) -n 40 -W 18:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1
 
 # Don't delete the .md5 files! Without this rule they are treated as
 # intermediates and deleted.

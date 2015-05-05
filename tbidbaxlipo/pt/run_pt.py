@@ -1,6 +1,7 @@
 import yaml
 import pickle
 import sys
+import os
 from tbidbaxlipo.models import one_cpt
 from tbidbaxlipo.models.nbd import multiconf
 from tbidbaxlipo.util import emcee_fit
@@ -27,7 +28,6 @@ if __name__ == '__main__':
     data_var = data_module.__dict__[data_args['data_var']]
     data_sigma_var = data_module.__dict__[data_args['data_sigma_var']]
     time_var = data_module.__dict__[data_args['time_var']]
-
     # Get the name of the variable containing the initial conditions vector,
     # which may not exist
     ic_var_name = data_args['initial_condition_var']
@@ -43,8 +43,12 @@ if __name__ == '__main__':
     if 'multiconf' in args['model']:
         bd = multiconf.Builder()
         num_confs = args['model']['multiconf']
-        norm_data = args['model']['normalized_nbd_data'] = True
-        bd.build_model_multiconf(num_confs, 1, normalized_data=norm_data)
+        norm_data = args['model']['normalized_nbd_data']
+        nbd_ubound = data_module.__dict__[data_args['nbd_ubound']]
+        nbd_lbound = data_module.__dict__[data_args['nbd_lbound']]
+        nbd_f0 = data_module.__dict__[data_args['nbd_f0']]
+        bd.build_model_multiconf(num_confs, nbd_f0, nbd_lbound, nbd_ubound,
+                                 normalized_data=norm_data, reversible=False)
     else:
         bd = one_cpt.Builder()
         bd.build_model_from_dict(args['model'])
@@ -89,12 +93,15 @@ if __name__ == '__main__':
                                       args['nsample'],
                                       thin=args['thin'],
                                       betas=betas)
-
     # After sampling, get rid of the pool so we can pickle the sampler
     sampler.pool = None
+
     # The basename of the pickle file is based on the name of the .yaml file
-    basename = sys.argv[1].split('.')[0]
-    with open('%s_%d.mcmc' % (basename, random_seed), 'w') as f:
+    basedir = os.path.dirname(sys.argv[1])
+    basename = os.path.basename(sys.argv[1])
+    basename = basename.split('.')[0]
+    filename = os.path.join(basedir, '%s_%d.mcmc' % (basename, random_seed))
+    with open(filename, 'w') as f:
         pickle.dump((gf, sampler), f)
 
     # Done
