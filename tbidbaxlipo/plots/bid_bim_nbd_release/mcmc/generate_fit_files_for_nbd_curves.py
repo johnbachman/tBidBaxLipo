@@ -6,17 +6,17 @@ from tbidbaxlipo.data.parse_bid_bim_nbd_release import nbd_residues
 # Arguments shared across all fits
 args = {
     'model': {
-        'multiconf': [2, 3, 4, 5], # 2, 3, 4
+        'multiconf': [2], # 2, 3, 4
         'normalized_nbd_data': [False]},
     'model_observable': ['NBD'],
     'global_initial_conditions': {},
     'local_initial_condition': None,
     'global_params': 'all',
     'local_params': [],
-    'ntemps': 50,
+    'ntemps': 5,
     'highest_temp': -6,
-    'nwalkers': 400, # 400
-    'nburnin': 5000,
+    'nwalkers': 10, # 400
+    'nburnin': 100,
     'nsample': 100,
     'thin': 1,
 }
