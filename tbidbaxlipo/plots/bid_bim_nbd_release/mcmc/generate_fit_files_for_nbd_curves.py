@@ -13,10 +13,10 @@ args = {
     'local_initial_condition': None,
     'global_params': 'all',
     'local_params': [],
-    'ntemps': 5,
+    'ntemps': 50,
     'highest_temp': -6,
-    'nwalkers': 10, # 400
-    'nburnin': 100,
+    'nwalkers': 400, # 400
+    'nburnin': 5000,
     'nsample': 100,
     'thin': 1,
 }
