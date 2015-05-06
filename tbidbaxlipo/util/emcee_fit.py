@@ -7,6 +7,7 @@ from emcee.utils import MPIPool
 import mpi4py
 import sys
 from scipy.stats import pearsonr
+from tbidbaxlipo.pool import Pool
 
 def posterior(position, gf):
     """A generic posterior function."""
@@ -458,11 +459,14 @@ def pt_mpi_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                   pool=None, betas=None, pos=None, random_state=None):
     pool = MPIPool(loadbalance=True)
     if not pool.is_master():
-        pool.wait()
+        pool.stop()
         sys.exit(0)
 
-    return pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=thin,
-                     pool=pool, betas=betas, pos=pos, random_state=random_state)
+    sampler = pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps,
+                        thin=thin, pool=pool, betas=betas, pos=pos,
+                        random_state=random_state)
+    pool.stop()
+    return sampler
 
 def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
               pool=None, betas=None, pos=None, random_state=None):
@@ -558,6 +562,9 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                          (nstep, burn_steps, np.max(lnprob[0]),
                           np.mean(lnprob[0])))
                     print sampler.tswap_acceptance_fraction
+                if nstep >= burn_steps:
+                    done = True
+                    break
                 nstep += 1
             # Check to see if the posterior of all temperatures has
             # flattened out/converged
@@ -583,8 +590,8 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
             nstep += 1
 
     # Close the pool!
-    if pool is not None:
-        pool.close()
+    #if pool is not None:
+    #    pool.close()
 
     print "Done sampling."
     return sampler
