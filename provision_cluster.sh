@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Exit immediately if a command exits with error
-set +e
+set -e
 
 cluster=$1
 num_nodes=$2

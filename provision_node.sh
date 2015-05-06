@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 
 # Exit immediately if a command exits with error
-set +e
+set -e
 
 if [ -e $SGE_CLUSTER_NAME ]; then
     echo "Run this only on a StarCluster node."
@@ -15,10 +15,13 @@ if [[ $(hostname) == master ]]; then
     unzip bionetgen-2.2.5-stable.zip
     # Get project code
     git clone https://github.com/johnbachman/tBidBaxLipo.git
-    # FIXME
+    # FIXME FIXME
+    cd /home/sgeadmin/tBidBaxLipo
     git checkout starcluster
     #pip install -e tBidBaxLipo
+    # FIXME FIXME
     chown -R sgeadmin /home/sgeadmin
+
 fi
 
 cd /tmp
