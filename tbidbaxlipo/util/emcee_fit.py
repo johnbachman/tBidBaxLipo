@@ -305,6 +305,67 @@ class GlobalFit(object):
                 plt.plot(self.solver.tspan, self.solver.yobs[obs_name],
                          **plot_args)
 
+            # Iterate over the number of conformations FIXME FIXME
+            #for conf_ix in range(self.builder.num_confs):
+            #    conf_y = self.solver.yobs['Bax_c%d' % conf_ix]
+            #    conf_scaling = \
+            #       self.builder.model.parameters['c%d_scaling' % conf_ix].value
+            #    y = conf_y * conf_scaling
+            #    plt.plot(self.solver.tspan, y, label='c%d' % conf_ix,
+            #             color=obs_colors[conf_ix])
+
+    def get_residuals(self, x, obs_ix=0, plot_args=None):
+        """Gets the residuals with the parameter values given by x.
+
+        Parameters
+        ----------
+        x : np.array or list
+            The parameters to use for the simulation, in log10 space.
+            These should be in the same order used by the objective function:
+            globally fit parameters first, then a set of local parameters for
+            each of the timecourses being fit.
+        """
+        x = 10 ** x
+        timeoffset = None
+        if plot_args is None:
+            plot_args = {}
+        num_conditions = self.data.shape[0]
+        num_timepoints = self.data.shape[2]
+        residuals = np.zeros((num_conditions, num_timepoints))
+        # Iterate over each entry in the data array
+        for cond_ix in range(num_conditions):
+            # Set the parameters appropriately for the simulation:
+            # Iterate over the globally fit parameters
+            for g_ix, p in enumerate(self.builder.global_params):
+                p.value = x[g_ix]
+                if p.name == 'timeoffset':
+                    timeoffset = x[g_ix]
+            # Iterate over the locally fit parameters
+            for l_ix, p in enumerate(self.builder.local_params):
+                ix_offset = len(self.builder.global_params) + \
+                            cond_ix * len(self.builder.local_params)
+                p.value = x[l_ix + ix_offset]
+            # Now fill in the initial condition parameters
+            if self.params is not None:
+                for p_name, values in self.params.iteritems():
+                    p = self.builder.model.parameters[p_name]
+                    p.value = values[data_ix]
+            # Fill in the time offset, if there is one
+            if timeoffset:
+                self.solver.tspan = np.insert(self.time, 0, -timeoffset)
+            # Now run the simulation
+            self.solver.run()
+            # Get the simulated timecourse
+            obs_name = self.obs_name[obs_ix]
+            if self.use_expr:
+                y = self.solver.yexpr[obs_name]
+            else:
+                y = self.solver.yobs[obs_name]
+            # Calculate the residuals
+            data = self.data[cond_ix, obs_ix, :]
+            residuals[cond_ix, :] = data - y
+        return residuals
+
 def ens_sample(gf, nwalkers, burn_steps, sample_steps, threads=1,
                pos=None, random_state=None):
     """Samples from the posterior function using emcee.EnsembleSampler.
