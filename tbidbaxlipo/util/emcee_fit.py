@@ -589,14 +589,13 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
     print "Done sampling."
     return sampler
 
-def check_convergence(sampler, cur_step, num_steps, pval_threshold=0.2):
+def check_convergence(sampler, start_step, end_step, pval_threshold=0.2):
     # Only do the check if we've got enough steps
-    if sampler.lnprobability is None or \
-       cur_step - num_steps <= 0:
-        print "Not enough steps to check convergence."
+    if sampler.lnprobability is None:
+        print "sampler.lnprobability is None."
         return
 
-    lnpost = sampler.lnprobability[:, :, cur_step-num_steps:cur_step]
+    lnpost = sampler.lnprobability[:, :, start_step:end_step]
     ntemps = lnpost.shape[0]
     nwalkers = lnpost.shape[1]
     nsteps = lnpost.shape[2]
