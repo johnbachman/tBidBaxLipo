@@ -18,6 +18,7 @@ if [[ $(hostname) == master ]]; then
     # FIXME
     git checkout starcluster
     #pip install -e tBidBaxLipo
+    chown -R sgeadmin /home/sgeadmin
 fi
 
 cd /tmp
