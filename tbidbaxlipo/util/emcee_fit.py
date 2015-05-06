@@ -542,22 +542,34 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         print "Burn in sampling..."
         nstep = 0
         convergence_interval = 50
-        for p, lnprob, lnlike in sampler.sample(p0, iterations=burn_steps,
-                                storechain=True):
-            if nstep % 5 == 0:
-                print "nstep %d of %d, MAP: %f, mean post %f" % \
-                     (nstep, burn_steps, np.max(lnprob[0]), np.mean(lnprob[0]))
-                print sampler.tswap_acceptance_fraction
-                # Check to see if the posterior of all temperatures has
-                # flattened out/converged
-                if nstep >= convergence_interval:
-                    converged = check_convergence(sampler, nstep,
-                                                  convergence_interval)
-                    if converged:
-                        break
-            nstep += 1
-
-        sampler.reset()
+        done = False
+        print_interval = 1
+        cur_start_position = p0
+        # Run the chain for rounds of convergence_interval steps; at the end
+        # of each round, check for convergence. If converged, go on to main
+        # sampling. If not, reinitialize sampler and run again. Running the
+        # sampler in small rounds like this reduces the amount of memory
+        # needed to just enough to store the chain for 1 round.
+        while not done:
+            for p, lnprob, lnlike in sampler.sample(cur_start_position,
+                            iterations=convergence_interval, storechain=True):
+                if nstep % print_interval == 0:
+                    print("nstep %d of %d, MAP: %f, mean post %f" %
+                         (nstep, burn_steps, np.max(lnprob[0]),
+                          np.mean(lnprob[0])))
+                    print sampler.tswap_acceptance_fraction
+                nstep += 1
+            # Check to see if the posterior of all temperatures has
+            # flattened out/converged
+            converged = check_convergence(sampler, nstep, convergence_interval)
+            # If we've converged or reached the limit of our burn steps,
+            # we're done; move on to main sampling
+            if converged or nstep >= burn_steps:
+                done = True
+            # Reset the initial position to our last position
+            cur_start_position = p
+            # Reset the sampler
+            sampler.reset()
 
         print "Main sampling..."
         nstep = 0
