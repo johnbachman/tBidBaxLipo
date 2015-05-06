@@ -561,7 +561,7 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                 nstep += 1
             # Check to see if the posterior of all temperatures has
             # flattened out/converged
-            converged = check_convergence(sampler, nstep, convergence_interval)
+            converged = check_convergence(sampler, 0, convergence_interval)
             # If we've converged or reached the limit of our burn steps,
             # we're done; move on to main sampling
             if converged or nstep >= burn_steps:
@@ -592,7 +592,7 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
 def check_convergence(sampler, cur_step, num_steps, pval_threshold=0.2):
     # Only do the check if we've got enough steps
     if sampler.lnprobability is None or \
-       cur_step - num_steps < 0:
+       cur_step - num_steps <= 0:
         print "Not enough steps to check convergence."
         return
 
