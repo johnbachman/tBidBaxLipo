@@ -1,5 +1,12 @@
+#!/bin/sh
+
 # Exit immediately if a command exits with error
 set +e
+
+if [ -e $SGE_CLUSTER_NAME ]; then
+    echo "Run this only on a StarCluster node."
+    exit -1
+fi
 
 if [[ $(hostname) == master ]]; then
     # Put any temp/downloaded files into /home/sgeadmin
@@ -11,6 +18,7 @@ if [[ $(hostname) == master ]]; then
     # FIXME
     git checkout starcluster
     #pip install -e tBidBaxLipo
+fi
 
 cd /tmp
 
