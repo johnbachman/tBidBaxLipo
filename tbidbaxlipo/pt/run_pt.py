@@ -100,7 +100,7 @@ if __name__ == '__main__':
     basedir = os.path.dirname(sys.argv[1])
     basename = os.path.basename(sys.argv[1])
     basename = basename.split('.')[0]
-    filename = os.path.join(basedir, '%s_%d.mcmc' % (basename, random_seed))
+    filename = os.path.join(basedir, '%s.mcmc' % basename)
     with open(filename, 'w') as f:
         pickle.dump((gf, sampler), f)
 
