@@ -53,7 +53,7 @@ $(NBD_MCMC_DIR)/pt_data1.deps.txt: \
 # we care about is whether the hash is any different.
 %.mcmc: $(call to-md5, %.fit)
 	python -m tbidbaxlipo.pt.compile_models $(call from-md5, $<)
-	bsub -q $(PQUEUE) -n 10 -W 100 -N -oo $(call from-md5, $<).out -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1
+	bsub -q $(PQUEUE) -n 10 -W 100:00 -N -oo $(call from-md5, $<).out -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1
 
 # Don't delete the .md5 files! Without this rule they are treated as
 # intermediates and deleted.
