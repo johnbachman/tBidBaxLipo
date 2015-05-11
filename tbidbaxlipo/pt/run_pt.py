@@ -11,8 +11,8 @@ if __name__ == '__main__':
     # Parameters for the job are specified in a YAML file, which should be
     # provided as an argument.
     # Check that a path to a YAML file was provided
-    if len(sys.argv) < 3:
-        print("Usage: %s yaml_file random_seed" % __file__)
+    if len(sys.argv) < 4:
+        print("Usage: %s yaml_file random_seed pos_filename" % __file__)
         sys.exit()
 
     # Load the args from the YAML file
@@ -86,13 +86,31 @@ if __name__ == '__main__':
     betas = 10 ** np.linspace(0, args['highest_temp'], ntemps)
 
     ### RUN the sampler!
+    pos_filename = sys.argv[3]
+    # If the file does exist, load the position as the start position
+    if os.path.isfile(pos_filename):
+        # Open the position/random state file
+        with open(pos_filename) as f:
+            (pos, rs) = pickle.load(f)
+        # Set the global random state from the saved value
+        np.random.set_state(rs)
+        print("Continuing run with position and random state found in "
+              "position file %s" % pos_filename)
+    # If the file does not exist
+    else:
+        print("Position file %s does not exist, it will be created." %
+              pos_filename)
+        pos = None
+
     sampler = emcee_fit.pt_mpi_sample(gf,
                                       ntemps,
                                       args['nwalkers'],
                                       args['nburnin'],
                                       args['nsample'],
                                       thin=args['thin'],
-                                      betas=betas)
+                                      betas=betas,
+                                      pos_filename=pos_filename,
+                                      pos=pos)
     # After sampling, get rid of the pool so we can pickle the sampler
     sampler.pool = None
 

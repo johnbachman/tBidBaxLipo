@@ -7,7 +7,8 @@ from emcee.utils import MPIPool
 import mpi4py
 import sys
 from scipy.stats import pearsonr
-from tbidbaxlipo.pool import Pool
+import cPickle
+import warnings
 
 def posterior(position, gf):
     """A generic posterior function."""
@@ -456,17 +457,19 @@ def ens_mpi_sample(gf, nwalkers, burn_steps, sample_steps, pos=None,
     return sampler
 
 def pt_mpi_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
-                  pool=None, betas=None, pos=None, random_state=None):
+                  pool=None, betas=None, pos=None, random_state=None,
+                  pos_filename=None):
     pool = MPIPool(loadbalance=True)
     if not pool.is_master():
-        pool.stop()
+        pool.wait()
         sys.exit(0)
     return pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps,
                      thin=thin, pool=pool, betas=betas, pos=pos,
-                     random_state=random_state)
+                     random_state=random_state, pos_filename=pos_filename)
 
 def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
-              pool=None, betas=None, pos=None, random_state=None):
+              pool=None, betas=None, pos=None, random_state=None,
+              pos_filename=None):
     """Samples from the posterior function.
 
     The emcee sampler containing the chain is stored in gf.sampler.
@@ -502,6 +505,9 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         The random state to use to initialize the sampler's pseudo-random
         number generator. Can be used to continue runs from previous ones.
     """
+    if pos_filename is None:
+        warnings.warn('pos_filename was not specified, will not be able to '
+                      'save intermediate burn-in positions.')
 
     # Initialize the parameter array with initial values (in log10 units)
     # Number of parameters to estimate
@@ -523,8 +529,6 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
     sampler = emcee.PTSampler(ntemps, nwalkers, ndim, likelihood, prior,
                               loglargs=[gf], logpargs=[gf], pool=pool,
                               betas=betas)
-    if random_state is not None:
-        sampler.random_state = random_state
 
     # The PTSampler is implemented as a generator, so it is called in a for
     # loop
@@ -559,6 +563,13 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                          (nstep, burn_steps, np.max(lnprob[0]),
                           np.mean(lnprob[0])))
                     print sampler.tswap_acceptance_fraction
+                    # Save the current position
+                    if pos_filename is not None:
+                        with open(pos_filename, 'w') as f:
+                            rs = np.random.get_state()
+                            cPickle.dump((p, rs), f)
+                # Have we gone over the maximum number of burn-in steps?
+                # If so, we're done
                 if nstep >= burn_steps:
                     done = True
                     break
