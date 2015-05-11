@@ -461,12 +461,9 @@ def pt_mpi_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
     if not pool.is_master():
         pool.stop()
         sys.exit(0)
-
-    sampler = pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps,
-                        thin=thin, pool=pool, betas=betas, pos=pos,
-                        random_state=random_state)
-    pool.stop()
-    return sampler
+    return pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps,
+                     thin=thin, pool=pool, betas=betas, pos=pos,
+                     random_state=random_state)
 
 def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
               pool=None, betas=None, pos=None, random_state=None):
@@ -590,8 +587,8 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
             nstep += 1
 
     # Close the pool!
-    #if pool is not None:
-    #    pool.close()
+    if pool is not None:
+        pool.close()
 
     print "Done sampling."
     return sampler
