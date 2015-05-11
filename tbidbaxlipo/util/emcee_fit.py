@@ -473,7 +473,7 @@ def ens_mpi_sample(gf, nwalkers, burn_steps, sample_steps, pos=None,
 
 def pt_mpi_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                   pool=None, betas=None, pos=None, random_state=None):
-    pool = MPIPool()
+    pool = MPIPool(loadbalance=True)
     if not pool.is_master():
         pool.wait()
         sys.exit(0)
