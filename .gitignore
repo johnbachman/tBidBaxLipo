@@ -1,5 +1,7 @@
 .DS_Store
 
+tbidbaxlipo/plots/bid_bim_nbd_release/mcmc/*.ensemble
+
 results
 doc/_build
 doc/_static
