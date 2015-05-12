@@ -572,7 +572,7 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                 nstep += 1
             # If this is our first time checking convergence, set the TI
             # value and continue
-            if last_ti = None:
+            if last_ti is None:
                 (last_ti, last_ti_err) = \
                             sampler.thermodynamic_integration_log_evidence()
                 continue
