@@ -35,7 +35,7 @@ def load_files(files):
         with open(filename) as f:
             (gf, sampler) = pickle.load(f)
         m = re.search(
-                r'^pt_data1_Bid_NBD_([0-9]+)_r([1-3])_([2-5])confs_1.mcmc',
+                r'^pt_data1_Bid_NBD_([0-9]+)_r([1-3])_([2-5])confs.mcmc',
                 filename)
         (mutant, rep, num_confs) = m.groups()
         log_ev = sampler.thermodynamic_integration_log_evidence()
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     #conf_list = ['2', '3']
     key_list = [k for k in product(mut_list, rep_list, conf_list)]
 
-    file_list = ['pt_data1_Bid_NBD_%s_r%s_%sconfs_1.mcmc' % subs
+    file_list = ['pt_data1_Bid_NBD_%s_r%s_%sconfs.mcmc' % subs
                  for subs in key_list]
     er = load_files(file_list)
     (ev, err) = er.get_result_arrays(key_list)
