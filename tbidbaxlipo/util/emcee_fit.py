@@ -575,6 +575,7 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
             if last_ti is None:
                 (last_ti, last_ti_err) = \
                             sampler.thermodynamic_integration_log_evidence()
+                print "Initial TI value: %f, %f" % (last_ti, last_ti_err)
                 continue
             # Have we gone over the maximum number of burn-in steps?
             # If so, we're done
