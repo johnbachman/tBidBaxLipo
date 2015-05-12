@@ -9,19 +9,18 @@ if [ -e $SGE_CLUSTER_NAME ]; then
 fi
 
 if [[ $(hostname) == master ]]; then
-    # Put any temp/downloaded files into /home/sgeadmin
-    cd /home/sgeadmin
+    # Put any temp/downloaded files into /data
+    cd /data
     curl -O -J http://mmbios.org/index.php/bionetgen-2-2-5-stable/bionetgen-2-2-5-stable-zip?format=raw
     unzip bionetgen-2.2.5-stable.zip
     # Get project code
     git clone https://github.com/johnbachman/tBidBaxLipo.git
     # FIXME FIXME
-    cd /home/sgeadmin/tBidBaxLipo
+    cd /data/tBidBaxLipo
     git checkout starcluster
     #pip install -e tBidBaxLipo
     # FIXME FIXME
-    chown -R sgeadmin /home/sgeadmin
-
+    chown -R sgeadmin /data
 fi
 
 cd /tmp
@@ -38,7 +37,7 @@ pip install emcee
 pip install sympy
 pip install git+https://github.com/pysb/pysb.git
 # Put BNG into the right location for this node
-cp -a /home/sgeadmin/BioNetGen-2.2.5-stable/ /usr/local/share/BioNetGen
+cp -a /data/BioNetGen-2.2.5-stable/ /usr/local/share/BioNetGen
 
 # Test PySB
 python -m pysb.examples.run_tutorial_a
