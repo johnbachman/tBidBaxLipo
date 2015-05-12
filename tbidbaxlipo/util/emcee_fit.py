@@ -589,6 +589,9 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                 if np.abs(diff) < last_ti_err:
                     print "Converged!"
                     done = True
+                else:
+                    last_ti = cur_ti
+                    last_ti_err = cur_ti_err
             # Reset the initial position to our last position
             cur_start_position = p
             # Reset the sampler
