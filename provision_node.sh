@@ -11,15 +11,20 @@ fi
 if [[ $(hostname) == master ]]; then
     # Put any temp/downloaded files into /data
     cd /data
-    curl -O -J http://mmbios.org/index.php/bionetgen-2-2-5-stable/bionetgen-2-2-5-stable-zip?format=raw
-    unzip bionetgen-2.2.5-stable.zip
-    # Get project code
-    git clone https://github.com/johnbachman/tBidBaxLipo.git
-    # FIXME FIXME
+    # Download BioNetGen if we need to
+    if [ ! -e /data/BioNetGen-2.2.5-stable ]; then
+        curl -O -J http://mmbios.org/index.php/bionetgen-2-2-5-stable/bionetgen-2-2-5-stable-zip?format=raw
+        unzip bionetgen-2.2.5-stable.zip
+    fi
+    # Get the code if we need to
+    if [ ! -e /data/tBidBaxLipo ]; then
+        git clone https://github.com/johnbachman/tBidBaxLipo.git
+    fi
+    # Make sure the code is up-to-date
     cd /data/tBidBaxLipo
+    git pull
     git checkout starcluster
-    #pip install -e tBidBaxLipo
-    # FIXME FIXME
+    # Make the data dir writeable
     chown -R sgeadmin /data
 fi
 
