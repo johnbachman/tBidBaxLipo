@@ -285,15 +285,6 @@ class GlobalFit(object):
                 plt.plot(self.solver.tspan, self.solver.yobs[obs_name],
                          **plot_args)
 
-            # Iterate over the number of conformations FIXME FIXME
-            #for conf_ix in range(self.builder.num_confs):
-            #    conf_y = self.solver.yobs['Bax_c%d' % conf_ix]
-            #    conf_scaling = \
-            #       self.builder.model.parameters['c%d_scaling' % conf_ix].value
-            #    y = conf_y * conf_scaling
-            #    plt.plot(self.solver.tspan, y, label='c%d' % conf_ix,
-            #             color=obs_colors[conf_ix])
-
     def set_parameters(self, x, obs_ix=0, cond_ix=0, plot_args=None):
         """Sets the parameter values in the model for simulation.
 
