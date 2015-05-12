@@ -267,31 +267,11 @@ class GlobalFit(object):
             parameters first, then a set of local parameters for each of the
             timecourses being fit.
         """
-        x = 10 ** x
-        timeoffset = None
         if plot_args is None:
             plot_args = {}
         # Iterate over each entry in the data array
         for cond_ix in range(self.data.shape[0]):
-            # Set the parameters appropriately for the simulation:
-            # Iterate over the globally fit parameters
-            for g_ix, p in enumerate(self.builder.global_params):
-                p.value = x[g_ix]
-                if p.name == 'timeoffset':
-                    timeoffset = x[g_ix]
-            # Iterate over the locally fit parameters
-            for l_ix, p in enumerate(self.builder.local_params):
-                ix_offset = len(self.builder.global_params) + \
-                            cond_ix * len(self.builder.local_params)
-                p.value = x[l_ix + ix_offset]
-            # Now fill in the initial condition parameters
-            if self.params is not None:
-                for p_name, values in self.params.iteritems():
-                    p = self.builder.model.parameters[p_name]
-                    p.value = values[data_ix]
-            # Fill in the time offset, if there is one
-            if timeoffset:
-                self.solver.tspan = np.insert(self.time, 0, -timeoffset)
+            self.set_parameters(x, obs_ix=obs_ix, cond_ix=cond_ix)
             # Now run the simulation
             self.solver.run()
             # Plot the observable
@@ -314,6 +294,39 @@ class GlobalFit(object):
             #    plt.plot(self.solver.tspan, y, label='c%d' % conf_ix,
             #             color=obs_colors[conf_ix])
 
+    def set_parameters(self, x, obs_ix=0, cond_ix=0, plot_args=None):
+        """Sets the parameter values in the model for simulation.
+
+        Parameters
+        ----------
+        x : np.array or list
+            The parameters to use, in log10 space.These should be
+            in the same order used by the objective function: globally fit
+            parameters first, then a set of local parameters for each of the
+            timecourses being fit.
+        """
+        x = 10 ** x
+        timeoffset = None
+        # Set the parameters appropriately for the simulation:
+        # Iterate over the globally fit parameters
+        for g_ix, p in enumerate(self.builder.global_params):
+            p.value = x[g_ix]
+            if p.name == 'timeoffset':
+                timeoffset = x[g_ix]
+        # Iterate over the locally fit parameters
+        for l_ix, p in enumerate(self.builder.local_params):
+            ix_offset = len(self.builder.global_params) + \
+                        cond_ix * len(self.builder.local_params)
+            p.value = x[l_ix + ix_offset]
+        # Now fill in the initial condition parameters
+        if self.params is not None:
+            for p_name, values in self.params.iteritems():
+                p = self.builder.model.parameters[p_name]
+                p.value = values[data_ix]
+        # Fill in the time offset, if there is one
+        if timeoffset:
+            self.solver.tspan = np.insert(self.time, 0, -timeoffset)
+
     def get_residuals(self, x, obs_ix=0, plot_args=None):
         """Gets the residuals with the parameter values given by x.
 
@@ -325,35 +338,14 @@ class GlobalFit(object):
             globally fit parameters first, then a set of local parameters for
             each of the timecourses being fit.
         """
-        x = 10 ** x
-        timeoffset = None
         if plot_args is None:
             plot_args = {}
         num_conditions = self.data.shape[0]
         num_timepoints = self.data.shape[2]
         residuals = np.zeros((num_conditions, num_timepoints))
-        # Iterate over each entry in the data array
         for cond_ix in range(num_conditions):
-            # Set the parameters appropriately for the simulation:
-            # Iterate over the globally fit parameters
-            for g_ix, p in enumerate(self.builder.global_params):
-                p.value = x[g_ix]
-                if p.name == 'timeoffset':
-                    timeoffset = x[g_ix]
-            # Iterate over the locally fit parameters
-            for l_ix, p in enumerate(self.builder.local_params):
-                ix_offset = len(self.builder.global_params) + \
-                            cond_ix * len(self.builder.local_params)
-                p.value = x[l_ix + ix_offset]
-            # Now fill in the initial condition parameters
-            if self.params is not None:
-                for p_name, values in self.params.iteritems():
-                    p = self.builder.model.parameters[p_name]
-                    p.value = values[data_ix]
-            # Fill in the time offset, if there is one
-            if timeoffset:
-                self.solver.tspan = np.insert(self.time, 0, -timeoffset)
-            # Now run the simulation
+            self.set_parameters(x, obs_ix=obs_ix, cond_ix=cond_ix)
+            # Run the simulation
             self.solver.run()
             # Get the simulated timecourse
             obs_name = self.obs_name[obs_ix]
