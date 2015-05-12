@@ -546,8 +546,9 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
     else:
         print "Burn in sampling..."
         nstep = 0
-        convergence_interval = 50
+        convergence_interval = 20
         done = False
+        last_ti = None
         print_interval = 1
         cur_start_position = p0
         # Run the chain for rounds of convergence_interval steps; at the end
@@ -568,19 +569,26 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                         with open(pos_filename, 'w') as f:
                             rs = np.random.get_state()
                             cPickle.dump((p, rs), f)
-                # Have we gone over the maximum number of burn-in steps?
-                # If so, we're done
-                if nstep >= burn_steps:
-                    done = True
-                    break
                 nstep += 1
-            # Check to see if the posterior of all temperatures has
-            # flattened out/converged
-            converged = check_convergence(sampler, 0, convergence_interval)
-            # If we've converged or reached the limit of our burn steps,
-            # we're done; move on to main sampling
-            if converged or nstep >= burn_steps:
+            # If this is our first time checking convergence, set the TI
+            # value and continue
+            if last_ti = None:
+                (last_ti, last_ti_err) = \
+                            sampler.thermodynamic_integration_log_evidence()
+                continue
+            # Have we gone over the maximum number of burn-in steps?
+            # If so, we're done
+            if nstep >= burn_steps:
                 done = True
+            else:
+                (cur_ti, cur_ti_err) = \
+                            sampler.thermodynamic_integration_log_evidence()
+                diff = last_ti - cur_ti
+                print("Last: %f, %f Current: %f Diff: %f" %
+                      (last_ti, last_ti_err, cur_ti, diff))
+                if np.abs(diff) < last_ti_err:
+                    print "Converged!"
+                    done = True
             # Reset the initial position to our last position
             cur_start_position = p
             # Reset the sampler
