@@ -604,7 +604,74 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
     print "Done sampling."
     return sampler
 
-def check_convergence(sampler, start_step, end_step, pval_threshold=0.2):
+def geweke_convergence(sampler, burn_frac=0.1, sample_frac=0.5,
+                      p_threshold=0.05):
+    # Define a few useful numbers
+    ntemps = sampler.chain.shape[0]
+    num_steps = sampler.chain.shape[2]
+    num_params = sampler.chain.shape[3]
+    burn_ubound = int(burn_frac * num_steps)
+    nburn = burn_ubound - 1
+    sample_lbound = int(sample_frac * num_steps)
+    nsample = num_steps - sample_lbound
+    converged = True # We've converged until we prove otherwise
+    # Calculation of the test statistic
+    def T_func(xm, xvar, nx, ym, yvar, ny):
+        T = (xm - ym) / np.sqrt(xvar / float(nx) + yvar / float(ny))
+        return np.abs(T)
+    # Iterate over all temperatures
+    for temp_ix in range(0, ntemps):
+        print "Temp %d" % temp_ix
+        # Iterate over all parameters
+        for p_ix in range(num_params):
+            # Get burn-in and sample steps
+            burn_steps = sampler.chain[temp_ix, :, 0:burn_ubound, p_ix]
+            sample_steps = sampler.chain[temp_ix, :, sample_lbound:, p_ix]
+            # Calculate means and variances
+            burn_mean = np.mean(burn_steps)
+            sample_mean = np.mean(sample_steps)
+            burn_var = np.var(burn_steps)
+            sample_var = np.var(sample_steps)
+            T = T_func(sample_mean, sample_var, nsample,
+                       burn_mean, burn_var, nburn)
+            if T < p_threshold:
+                plt.ion()
+                plt.figure()
+                plt.plot(sampler.chain[temp_ix, :, :, p_ix].T, alpha=0.1)
+                plt.plot(np.mean(sampler.chain[temp_ix, :, :, p_ix], axis=0))
+                print("T = %f: not converged!" % T)
+                converged = False
+            else:
+                print("T = %f" % T)
+            # Now, check for convergence of product
+            # g = (x_i - X)(y_i - Y)
+            for q_ix in range(p_ix):
+                print "param %d by %d" % (p_ix, q_ix)
+                p_steps = sampler.chain[temp_ix, :, :, p_ix]
+                q_steps = sampler.chain[temp_ix, :, :, q_ix]
+                g_steps = (p_steps - np.mean(p_steps)) * \
+                          (q_steps - np.mean(q_steps))
+                g_burn_steps = g_steps[:, 0:burn_ubound]
+                g_sample_steps = g_steps[:, sample_lbound:]
+                g_burn_mean = np.mean(g_burn_steps)
+                g_sample_mean = np.mean(g_sample_steps)
+                g_burn_var = np.var(g_burn_steps)
+                g_sample_var = np.var(g_sample_steps)
+                T = T_func(g_sample_mean, g_sample_var, nsample,
+                           g_burn_mean, g_burn_var, nburn)
+                if T < p_threshold:
+                    plt.ion()
+                    plt.figure()
+                    plt.plot(sampler.chain[temp_ix, :, :, p_ix].T, alpha=0.1)
+                    plt.plot(np.mean(sampler.chain[temp_ix, :, :, p_ix],
+                             axis=0))
+                    print("T = %f: not converged!" % T)
+                    converged = False
+                else:
+                    print("T = %f" % T)
+    return converged
+
+def check_convergence_corr(sampler, start_step, end_step, pval_threshold=0.2):
     # Only do the check if we've got enough steps
     if sampler.lnprobability is None:
         print "sampler.lnprobability is None."
