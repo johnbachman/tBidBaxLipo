@@ -610,13 +610,9 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                      (nstep, burn_steps, np.max(lnprob[0]), np.mean(lnprob[0]))
                 print sampler.tswap_acceptance_fraction
             nstep += 1
-            print "incremented step"
-        print "about to call TI"
         (final_ti, final_ti_err) = \
                 sampler.thermodynamic_integration_log_evidence()
-        print "about to print TI"
         print("-- Final TI: %f, %f --" % (final_ti, final_ti_err))
-    print "about to close the pool"
     # Close the pool!
     if pool is not None:
         pool.close()
