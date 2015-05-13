@@ -551,6 +551,8 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         last_ti = None
         print_interval = 1
         cur_start_position = p0
+        abs_tol = 5.0 # The maximum allowable difference for convergence
+        rel_tol = 0.1 # The fraction of the err allowable for convergence
         # Run the chain for rounds of convergence_interval steps; at the end
         # of each round, check for convergence. If converged, go on to main
         # sampling. If not, reinitialize sampler and run again. Running the
@@ -575,7 +577,7 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
             if last_ti is None:
                 (last_ti, last_ti_err) = \
                             sampler.thermodynamic_integration_log_evidence()
-                print "Initial TI value: %f, %f" % (last_ti, last_ti_err)
+                print "-- Initial TI value: %f, %f" % (last_ti, last_ti_err)
                 continue
             # Have we gone over the maximum number of burn-in steps?
             # If so, we're done
@@ -584,11 +586,11 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
             else:
                 (cur_ti, cur_ti_err) = \
                             sampler.thermodynamic_integration_log_evidence()
-                diff = last_ti - cur_ti
-                print("Last: %f, %f Current: %f Diff: %f" %
+                diff = np.abs(last_ti - cur_ti)
+                print("-- Last: %f, %f Current: %f Diff: %f" %
                       (last_ti, last_ti_err, cur_ti, diff))
-                if np.abs(diff) < last_ti_err:
-                    print "Converged!"
+                if diff < abs_tol and diff < (last_ti_err * rel_tol):
+                    print "-- Converged!"
                     done = True
                 else:
                     last_ti = cur_ti
@@ -608,7 +610,8 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                      (nstep, burn_steps, np.max(lnprob[0]), np.mean(lnprob[0]))
                 print sampler.tswap_acceptance_fraction
             nstep += 1
-
+        print("-- Final TI: %f --" %
+              sampler.thermodynamic_integration_log_evidence())
     # Close the pool!
     if pool is not None:
         pool.close()
