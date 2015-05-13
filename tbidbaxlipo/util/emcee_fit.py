@@ -551,7 +551,7 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         last_ti = None
         print_interval = 1
         cur_start_position = p0
-        abs_tol = 5.0 # The maximum allowable difference for convergence
+        abs_tol = 3.0 # The maximum allowable difference for convergence
         rel_tol = 0.1 # The fraction of the err allowable for convergence
         # Run the chain for rounds of convergence_interval steps; at the end
         # of each round, check for convergence. If converged, go on to main
@@ -589,7 +589,9 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                 diff = np.abs(last_ti - cur_ti)
                 print("-- Last: %f, %f Current: %f Diff: %f" %
                       (last_ti, last_ti_err, cur_ti, diff))
-                if diff < abs_tol and diff < (last_ti_err * rel_tol):
+                # Check for convergence
+                if diff < abs_tol and cur_ti_err < abs_tol and \
+                   last_ti_err < abs_tol and diff < (last_ti_err * rel_tol):
                     print "-- Converged!"
                     done = True
                 else:
