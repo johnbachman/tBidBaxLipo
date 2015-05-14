@@ -587,7 +587,7 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                 (cur_ti, cur_ti_err) = \
                             sampler.thermodynamic_integration_log_evidence()
                 diff = np.abs(last_ti - cur_ti)
-                rrint("-- Last: %f, %f Current: %f Diff: %f" %
+                print("-- Last: %f, %f Current: %f Diff: %f" %
                       (last_ti, last_ti_err, cur_ti, diff))
                 # Check for convergence
                 if diff < abs_tol and cur_ti_err < abs_tol and \
@@ -614,6 +614,11 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                 print "nstep %d of %d, MAP: %f, mean post %f" % \
                      (nstep, burn_steps, np.max(lnprob[0]), np.mean(lnprob[0]))
                 print sampler.tswap_acceptance_fraction
+            # Save the current position
+            if pos_filename is not None:
+                with open(pos_filename, 'w') as f:
+                    rs = np.random.get_state()
+                    cPickle.dump((p, rs), f)
             nstep += 1
         (final_ti, final_ti_err) = \
                 sampler.thermodynamic_integration_log_evidence()
