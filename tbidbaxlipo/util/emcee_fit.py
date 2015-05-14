@@ -546,7 +546,7 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
     else:
         print "Burn in sampling..."
         nstep = 0
-        convergence_interval = 20
+        convergence_interval = 50
         done = False
         last_ti = None
         print_interval = 1
@@ -587,11 +587,14 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                 (cur_ti, cur_ti_err) = \
                             sampler.thermodynamic_integration_log_evidence()
                 diff = np.abs(last_ti - cur_ti)
-                print("-- Last: %f, %f Current: %f Diff: %f" %
+                rrint("-- Last: %f, %f Current: %f Diff: %f" %
                       (last_ti, last_ti_err, cur_ti, diff))
                 # Check for convergence
                 if diff < abs_tol and cur_ti_err < abs_tol and \
-                   last_ti_err < abs_tol and diff < (last_ti_err * rel_tol):
+                   last_ti_err < abs_tol and \
+                   diff < (last_ti_err * rel_tol) and \
+                   check_convergence_corr(sampler, 0, None,
+                                          pval_threshold=0.001):
                     print "-- Converged!"
                     done = True
                 else:
