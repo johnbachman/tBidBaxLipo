@@ -7,6 +7,8 @@ from emcee.utils import MPIPool
 import mpi4py
 import sys
 from scipy.stats import pearsonr
+import cPickle
+import warnings
 
 def posterior(position, gf):
     """A generic posterior function."""
@@ -455,17 +457,19 @@ def ens_mpi_sample(gf, nwalkers, burn_steps, sample_steps, pos=None,
     return sampler
 
 def pt_mpi_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
-                  pool=None, betas=None, pos=None, random_state=None):
+                  pool=None, betas=None, pos=None, random_state=None,
+                  pos_filename=None):
     pool = MPIPool(loadbalance=True)
     if not pool.is_master():
         pool.wait()
         sys.exit(0)
-
-    return pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=thin,
-                     pool=pool, betas=betas, pos=pos, random_state=random_state)
+    return pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps,
+                     thin=thin, pool=pool, betas=betas, pos=pos,
+                     random_state=random_state, pos_filename=pos_filename)
 
 def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
-              pool=None, betas=None, pos=None, random_state=None):
+              pool=None, betas=None, pos=None, random_state=None,
+              pos_filename=None):
     """Samples from the posterior function.
 
     The emcee sampler containing the chain is stored in gf.sampler.
@@ -501,6 +505,9 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         The random state to use to initialize the sampler's pseudo-random
         number generator. Can be used to continue runs from previous ones.
     """
+    if pos_filename is None:
+        warnings.warn('pos_filename was not specified, will not be able to '
+                      'save intermediate burn-in positions.')
 
     # Initialize the parameter array with initial values (in log10 units)
     # Number of parameters to estimate
@@ -522,8 +529,6 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
     sampler = emcee.PTSampler(ntemps, nwalkers, ndim, likelihood, prior,
                               loglargs=[gf], logpargs=[gf], pool=pool,
                               betas=betas)
-    if random_state is not None:
-        sampler.random_state = random_state
 
     # The PTSampler is implemented as a generator, so it is called in a for
     # loop
@@ -542,22 +547,63 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         print "Burn in sampling..."
         nstep = 0
         convergence_interval = 50
-        for p, lnprob, lnlike in sampler.sample(p0, iterations=burn_steps,
-                                storechain=True):
-            if nstep % 5 == 0:
-                print "nstep %d of %d, MAP: %f, mean post %f" % \
-                     (nstep, burn_steps, np.max(lnprob[0]), np.mean(lnprob[0]))
-                print sampler.tswap_acceptance_fraction
-                # Check to see if the posterior of all temperatures has
-                # flattened out/converged
-                if nstep >= convergence_interval:
-                    converged = check_convergence(sampler, nstep,
-                                                  convergence_interval)
-                    if converged:
-                        break
-            nstep += 1
-
-        sampler.reset()
+        done = False
+        last_ti = None
+        print_interval = 1
+        cur_start_position = p0
+        abs_tol = 3.0 # The maximum allowable difference for convergence
+        rel_tol = 0.1 # The fraction of the err allowable for convergence
+        # Run the chain for rounds of convergence_interval steps; at the end
+        # of each round, check for convergence. If converged, go on to main
+        # sampling. If not, reinitialize sampler and run again. Running the
+        # sampler in small rounds like this reduces the amount of memory
+        # needed to just enough to store the chain for 1 round.
+        while not done:
+            for p, lnprob, lnlike in sampler.sample(cur_start_position,
+                            iterations=convergence_interval, storechain=True):
+                if nstep % print_interval == 0:
+                    print("nstep %d of %d, MAP: %f, mean post %f" %
+                         (nstep, burn_steps, np.max(lnprob[0]),
+                          np.mean(lnprob[0])))
+                    print sampler.tswap_acceptance_fraction
+                    # Save the current position
+                    if pos_filename is not None:
+                        with open(pos_filename, 'w') as f:
+                            rs = np.random.get_state()
+                            cPickle.dump((p, rs), f)
+                nstep += 1
+            # If this is our first time checking convergence, set the TI
+            # value and continue
+            if last_ti is None:
+                (last_ti, last_ti_err) = \
+                            sampler.thermodynamic_integration_log_evidence()
+                print "-- Initial TI value: %f, %f" % (last_ti, last_ti_err)
+                continue
+            # Have we gone over the maximum number of burn-in steps?
+            # If so, we're done
+            if nstep >= burn_steps:
+                done = True
+            else:
+                (cur_ti, cur_ti_err) = \
+                            sampler.thermodynamic_integration_log_evidence()
+                diff = np.abs(last_ti - cur_ti)
+                print("-- Last: %f, %f Current: %f Diff: %f" %
+                      (last_ti, last_ti_err, cur_ti, diff))
+                # Check for convergence
+                if diff < abs_tol and cur_ti_err < abs_tol and \
+                   last_ti_err < abs_tol and \
+                   diff < (last_ti_err * rel_tol) and \
+                   check_convergence_corr(sampler, 0, None,
+                                          pval_threshold=0.001):
+                    print "-- Converged!"
+                    done = True
+                else:
+                    last_ti = cur_ti
+                    last_ti_err = cur_ti_err
+            # Reset the initial position to our last position
+            cur_start_position = p
+            # Reset the sampler
+            sampler.reset()
 
         print "Main sampling..."
         nstep = 0
@@ -568,8 +614,15 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                 print "nstep %d of %d, MAP: %f, mean post %f" % \
                      (nstep, burn_steps, np.max(lnprob[0]), np.mean(lnprob[0]))
                 print sampler.tswap_acceptance_fraction
+            # Save the current position
+            if pos_filename is not None:
+                with open(pos_filename, 'w') as f:
+                    rs = np.random.get_state()
+                    cPickle.dump((p, rs), f)
             nstep += 1
-
+        (final_ti, final_ti_err) = \
+                sampler.thermodynamic_integration_log_evidence()
+        print("-- Final TI: %f, %f --" % (final_ti, final_ti_err))
     # Close the pool!
     if pool is not None:
         pool.close()
@@ -577,14 +630,80 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
     print "Done sampling."
     return sampler
 
-def check_convergence(sampler, cur_step, num_steps, pval_threshold=0.2):
+def geweke_convergence(sampler, burn_frac=0.1, sample_frac=0.5,
+                      p_threshold=0.05):
+    # Define a few useful numbers
+    ntemps = sampler.chain.shape[0]
+    num_steps = sampler.chain.shape[2]
+    num_params = sampler.chain.shape[3]
+    burn_ubound = int(burn_frac * num_steps)
+    nburn = burn_ubound - 1
+    sample_lbound = int(sample_frac * num_steps)
+    nsample = num_steps - sample_lbound
+    converged = True # We've converged until we prove otherwise
+    # Calculation of the test statistic
+    def T_func(xm, xvar, nx, ym, yvar, ny):
+        T = (xm - ym) / np.sqrt(xvar / float(nx) + yvar / float(ny))
+        return np.abs(T)
+    # Iterate over all temperatures
+    for temp_ix in range(0, ntemps):
+        print "Temp %d" % temp_ix
+        # Iterate over all parameters
+        for p_ix in range(num_params):
+            # Get burn-in and sample steps
+            burn_steps = sampler.chain[temp_ix, :, 0:burn_ubound, p_ix]
+            sample_steps = sampler.chain[temp_ix, :, sample_lbound:, p_ix]
+            # Calculate means and variances
+            burn_mean = np.mean(burn_steps)
+            sample_mean = np.mean(sample_steps)
+            burn_var = np.var(burn_steps)
+            sample_var = np.var(sample_steps)
+            T = T_func(sample_mean, sample_var, nsample,
+                       burn_mean, burn_var, nburn)
+            if T < p_threshold:
+                plt.ion()
+                plt.figure()
+                plt.plot(sampler.chain[temp_ix, :, :, p_ix].T, alpha=0.1)
+                plt.plot(np.mean(sampler.chain[temp_ix, :, :, p_ix], axis=0))
+                print("T = %f: not converged!" % T)
+                converged = False
+            else:
+                print("T = %f" % T)
+            # Now, check for convergence of product
+            # g = (x_i - X)(y_i - Y)
+            for q_ix in range(p_ix):
+                print "param %d by %d" % (p_ix, q_ix)
+                p_steps = sampler.chain[temp_ix, :, :, p_ix]
+                q_steps = sampler.chain[temp_ix, :, :, q_ix]
+                g_steps = (p_steps - np.mean(p_steps)) * \
+                          (q_steps - np.mean(q_steps))
+                g_burn_steps = g_steps[:, 0:burn_ubound]
+                g_sample_steps = g_steps[:, sample_lbound:]
+                g_burn_mean = np.mean(g_burn_steps)
+                g_sample_mean = np.mean(g_sample_steps)
+                g_burn_var = np.var(g_burn_steps)
+                g_sample_var = np.var(g_sample_steps)
+                T = T_func(g_sample_mean, g_sample_var, nsample,
+                           g_burn_mean, g_burn_var, nburn)
+                if T < p_threshold:
+                    plt.ion()
+                    plt.figure()
+                    plt.plot(sampler.chain[temp_ix, :, :, p_ix].T, alpha=0.1)
+                    plt.plot(np.mean(sampler.chain[temp_ix, :, :, p_ix],
+                             axis=0))
+                    print("T = %f: not converged!" % T)
+                    converged = False
+                else:
+                    print("T = %f" % T)
+    return converged
+
+def check_convergence_corr(sampler, start_step, end_step, pval_threshold=0.2):
     # Only do the check if we've got enough steps
-    if sampler.lnprobability is None or \
-       cur_step - num_steps < 0:
-        print "Not enough steps to check convergence."
+    if sampler.lnprobability is None:
+        print "sampler.lnprobability is None."
         return
 
-    lnpost = sampler.lnprobability[:, :, cur_step-num_steps:cur_step]
+    lnpost = sampler.lnprobability[:, :, start_step:end_step]
     ntemps = lnpost.shape[0]
     nwalkers = lnpost.shape[1]
     nsteps = lnpost.shape[2]

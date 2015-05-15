@@ -7,6 +7,9 @@ import yaml
 import sys
 from tbidbaxlipo.models import one_cpt
 from tbidbaxlipo.models.nbd import multiconf
+from pysb.integrate import Solver
+
+Solver._use_inline = True
 
 if len(sys.argv) == 1:
     print("Please specify one or model .yaml files with model information "

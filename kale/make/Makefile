@@ -36,7 +36,17 @@ FORCE:
 
 .PHONY: clean clean_pt deploy nbd_release fret_nbd_release
 
-pt_data1: $(NBD_MCMC_DIR)/pt_data1.deps.txt
+pt_data1: pt_data1_deps
+
+# The pt_data1_deps target allows for the dependencies list to be crgated
+# without running all of the jobs that pt_data1 itself depends on. For example,
+# > make pt_data1_deps
+# then
+# > make pt_data1_Bid_NBD_126_r1
+# or
+# > make pt_data1_Bid_NBD_126_r1_2confs.mcmc
+# ...allows selected reps/models to be run explicitly.
+pt_data1_deps: $(NBD_MCMC_DIR)/pt_data1.deps.txt
 -include $(NBD_MCMC_DIR)/pt_data1.deps.txt
 
 $(NBD_MCMC_DIR)/pt_data1.deps.txt: \
@@ -54,6 +64,7 @@ $(NBD_MCMC_DIR)/pt_data1.deps.txt: \
 %.mcmc: $(call to-md5, %.fit)
 	python -m tbidbaxlipo.pt.compile_models $(call from-md5, $<)
 	bsub -q $(PQUEUE) -n 10 -W 100:00 -N -oo $(call from-md5, $<).out -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1
+	qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err -pe orte 32 mpirun python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos
 
 # Don't delete the .md5 files! Without this rule they are treated as
 # intermediates and deleted.

@@ -6,7 +6,7 @@ from tbidbaxlipo.data.parse_bid_bim_nbd_release import nbd_residues
 # Arguments shared across all fits
 args = {
     'model': {
-        'multiconf': [2, 3, 4, 5], # 2, 3, 4
+        'multiconf': [2], # 2, 3, 4
         'normalized_nbd_data': [False]},
     'model_observable': ['NBD'],
     'global_initial_conditions': {},
