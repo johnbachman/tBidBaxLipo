@@ -5,6 +5,7 @@ import re
 from itertools import product
 from matplotlib import pyplot as plt
 import numpy as np
+import csv
 
 # Store the bayes factor results as a dict of dicts
 class EvidenceResults(object):
@@ -82,6 +83,14 @@ class EvidenceResults(object):
                     rows.append(row)
         return rows
 
+    def write_csv(self, filename, conf_list):
+        results = self.get_results_table(conf_list)
+        with open(filename, 'w') as csvfile:
+            cw = csv.writer(csvfile, delimiter=',')
+            for row in results:
+                cw.writerow(row)
+        return
+
 def load_files(files):
     """For a given list of .mcmc files, load and store the evidence results."""
     er = EvidenceResults()
@@ -115,6 +124,7 @@ if __name__ == '__main__':
     file_list = ['pt_data1_Bid_NBD_%s_r%s_%sconfs.mcmc' % subs
                  for subs in key_list]
     ev_results = load_files(file_list)
+    ev_results.write_csv('results.csv', conf_list)
     #(ev, err) = er.get_result_arrays(key_list)
     #print ev
     #print err
