@@ -160,7 +160,8 @@ def plot_emcee_fits(gf, sampler, sample=True, burn=None, nsamples=100,
         if plot_filename:
             save_fig(fig, plot_filename, DISPLAY)
 
-def plot_conformations(gf, sampler, sample=True, burn=None, nsamples=100):
+def plot_conformations(gf, sampler, sample=True, burn=None, nsamples=100,
+                       plot_filename=None):
     """Plot fluorescence conformations from the MCMC chain vs. the data."""
     if not DISPLAY and plot_filename is None:
         raise ValueError("DISPLAY is set to False but plot_filename is None, "
@@ -256,7 +257,7 @@ if __name__ == '__main__':
     # Show plots
     #plt.ion()
     print("Plotting triangle plots")
-    triangle_plots(gf, sampler)
+    triangle_plots(gf, sampler, plot_filename=chain_filename + '.tri')
     print("Plotting convergence")
     plot_chain_convergence(sampler, chain_filename + '.conv')
     print("Plotting sample fits")
