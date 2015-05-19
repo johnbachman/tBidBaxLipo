@@ -61,10 +61,13 @@ def plot_emcee_fits_subplots(gf, sampler):
         plt.plot(gf.time, data)
         gf.plot_func_single(sampler.flatchain[0,-1,:], data_ix)
 
-def plot_emcee_fits(gf, sampler, sample=True, burn=None, nsamples=100):
+def plot_emcee_fits(gf, sampler, sample=True, burn=None, nsamples=100,
+                    plot_filename=None):
     """Plot fits from the MCMC chain vs. the data."""
+    if not display and plot_filename is None:
+        raise ValueError("display is set to False but plot_filename is None, "
+                         "so there will be no output.")
     set_fig_params_for_publication()
-
     # If we're plotting samples, get the indices now and use them for
     # all observables
     if sample:
@@ -112,6 +115,12 @@ def plot_emcee_fits(gf, sampler, sample=True, burn=None, nsamples=100):
                      obs_ix=obs_ix, plot_args=plot_args)
 
         format_axis(ax)
+        if plot_filename and not display:
+            canvas = FigureCanvasAgg(fig)
+            fig.set_canvas(canvas)
+            fig.savefig(plot_filename)
+        elif plot_filename:
+            plt.savefig(plot_filename)
 
 def plot_conformations(gf, sampler, sample=True, burn=None, nsamples=100):
     """Plot fluorescence conformations from the MCMC chain vs. the data."""
