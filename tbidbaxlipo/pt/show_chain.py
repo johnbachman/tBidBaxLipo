@@ -108,8 +108,8 @@ def plot_emcee_fits(gf, sampler, sample=True, burn=None, nsamples=100):
                                    sampler.lnprobability[0].shape)
         maxp = sampler.lnprobability[0][maxp_ix]
         plot_args = {'color': 'm', 'alpha': 1}
-        gf.plot_func(sampler.chain[0, maxp_ix[0], maxp_ix[1]], obs_ix=obs_ix,
-                     plot_args=plot_args)
+        gf.plot_func(sampler.chain[0, maxp_ix[0], maxp_ix[1]], ax=ax,
+                     obs_ix=obs_ix, plot_args=plot_args)
 
         format_axis(ax)
 
@@ -195,11 +195,13 @@ if __name__ == '__main__':
     with open(chain_filename) as f:
         (gf, sampler) = pickle.load(f)
 
+    display = False
+
     # Show plots
-    plt.ion()
+    #plt.ion()
     #triangle_plots(gf, sampler)
     #plot_chain_convergence(sampler)
     plot_emcee_fits(gf, sampler, burn=None, sample=True)
-    plot_conformations(gf, sampler, burn=None, sample=True)
+    #plot_conformations(gf, sampler, burn=None, sample=True)
     #plot_emcee_fits_subplots(gf, sampler)
 
