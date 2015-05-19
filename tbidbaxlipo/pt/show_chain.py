@@ -25,23 +25,44 @@ def save_fig(fig, plot_filename, display):
 def triangle_plots(gf, sampler, plot_filename=None):
     """Triangle plots of lowest and highest temperature chains."""
     chain = sampler.flatchain
+    num_params = chain.shape[2]
     # Lowest temp
-    fig = triangle.corner(chain[0],
-                          labels=[p.name for p in gf.builder.global_params])
-    fig.suptitle('Triangle plot, lowest temp')
-    #fig.savefig('triangle_low.png')
+    if DISPLAY:
+        low_fig = plt.figure(figsize=(5, 5))
+        low_fig.subplots(num_params, num_params)
+        med_fig = plt.figure(figsize=(5, 5))
+        med_fig.subplots(num_params, num_params)
+        hi_fig = plt.figure(figsize=(5, 5))
+        hi_fig.subplots(num_params, num_params)
+    else:
+        low_fig = Figure(figsize=(5, 5))
+        med_fig = Figure(figsize=(5, 5))
+        hi_fig = Figure(figsize=(5, 5))
+        ix = 1
+        for i in range(num_params):
+            for j in range(num_params):
+                low_fig.add_subplot(num_params, num_params, ix)
+                med_fig.add_subplot(num_params, num_params, ix)
+                hi_fig.add_subplot(num_params, num_params, ix)
+                ix += 1
 
+    triangle.corner(chain[0], fig=low_fig,
+                    labels=[p.name for p in gf.builder.global_params])
+    low_fig.suptitle('Triangle plot, lowest temp')
     # Intermediate temp
     temp_ix = 4
-    fig = triangle.corner(chain[temp_ix],
-                          labels=[p.name for p in gf.builder.global_params])
-    fig.suptitle('Triangle plot, temp %s' % temp_ix)
-
+    triangle.corner(chain[temp_ix], fig=med_fig,
+                    labels=[p.name for p in gf.builder.global_params])
+    med_fig.suptitle('Triangle plot, temp %s' % temp_ix)
     # Highest temp
-    fig = triangle.corner(chain[-1],
-                          labels=[p.name for p in gf.builder.global_params])
-    fig.suptitle('Triangle plot, highest temp')
-    #fig.savefig('triangle_high.png')
+    triangle.corner(chain[-1], fig=hi_fig,
+                    labels=[p.name for p in gf.builder.global_params])
+    hi_fig.suptitle('Triangle plot, highest temp')
+
+    if plot_filename:
+        save_fig(low_fig, '%s.low' % plot_filename, DISPLAY)
+        save_fig(med_fig, '%s.med' % plot_filename, DISPLAY)
+        save_fig(hi_fig, '%s.hi' % plot_filename, DISPLAY)
 
 def plot_chain_convergence(sampler, plot_filename):
     """Four-panel plot showing convergence of four lowest-temperature chains.
@@ -226,6 +247,7 @@ if __name__ == '__main__':
     chain_filename = sys.argv[1]
 
     # Unpickle the chain
+    print("Loading %s" % chain_filename)
     with open(chain_filename) as f:
         (gf, sampler) = pickle.load(f)
 
@@ -233,10 +255,15 @@ if __name__ == '__main__':
 
     # Show plots
     #plt.ion()
-    #triangle_plots(gf, sampler)
+    print("Plotting triangle plots")
+    triangle_plots(gf, sampler)
+    print("Plotting convergence")
     plot_chain_convergence(sampler, chain_filename + '.conv')
+    print("Plotting sample fits")
     plot_emcee_fits(gf, sampler, burn=None, sample=True,
                     plot_filename=chain_filename + '.fits')
-    #plot_conformations(gf, sampler, burn=None, sample=True)
+    print("Plotting conformation timecourses")
+    plot_conformations(gf, sampler, burn=None, sample=True,
+                       plot_filename=chain_filename + '.confs')
     #plot_emcee_fits_subplots(gf, sampler)
 
