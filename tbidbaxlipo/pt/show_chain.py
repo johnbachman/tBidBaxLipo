@@ -7,6 +7,8 @@ import triangle
 import numpy as np
 from matplotlib import pyplot as plt
 from tbidbaxlipo.util import set_fig_params_for_publication, format_axis
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.figure import Figure
 
 def triangle_plots(gf, sampler):
     """Triangle plots of lowest and highest temperature chains."""
@@ -74,19 +76,23 @@ def plot_emcee_fits(gf, sampler, sample=True, burn=None, nsamples=100):
         step_indices = np.random.randint(burn, nsteps, size=nsamples)
 
     for obs_ix in range(gf.data.shape[1]):
-        fig = plt.figure(figsize=(3, 3), dpi=300)
-        plt.ylabel('$F/F_0$')
-        plt.xlabel(r'Time (sec $\times 10^3$)')
+        if display:
+            fig = plt.figure(figsize=(3, 3), dpi=300)
+        else:
+            fig = Figure()
+
+        ax = fig.gca()
+        ax.set_ylabel('$F/F_0$')
+        ax.set_xlabel(r'Time (sec $\times 10^3$)')
         #plt.ylim([0.7, 5.2])
-        plt.xlim([0, gf.time[-1] + 500])
-        ax = plt.gca()
+        ax.set_xlim([0, gf.time[-1] + 500])
         #ax.set_xticks(np.linspace(0, 1e4, 6))
         #ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
-        plt.subplots_adjust(bottom=0.24, left=0.21)
+        #plt.subplots_adjust(bottom=0.24, left=0.21)
         # Plot the different observables
         for cond_ix in range(gf.data.shape[0]):
             data = gf.data[cond_ix, obs_ix, :]
-            plt.plot(gf.time, data, 'k', linewidth=1)
+            ax.plot(gf.time, data, 'k', linewidth=1)
         # Colors for different observables
         obs_colors = ['r', 'g', 'b', 'k']
         # If we're plotting samples:
@@ -94,7 +100,7 @@ def plot_emcee_fits(gf, sampler, sample=True, burn=None, nsamples=100):
             for i in xrange(nsamples):
                 p = sampler.chain[0, walker_indices[i], step_indices[i], :]
                 plot_args = {'color': obs_colors[obs_ix], 'alpha': 0.1}
-                gf.plot_func(p, obs_ix=obs_ix, plot_args=plot_args)
+                #gf.plot_func(p, obs_ix=obs_ix, plot_args=plot_args)
 
         # Plot the maximum a posteriori fit
         maxp_flat_ix = np.argmax(sampler.lnprobability[0])

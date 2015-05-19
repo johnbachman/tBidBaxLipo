@@ -231,7 +231,7 @@ class GlobalFit(object):
             tspan = self.time
         self.solver = Solver(self.builder.model, tspan)
 
-    def plot_func_single(self, x, data_ix, alpha=1.0):
+    def plot_func_single(self, x, data_ix, ax=None, alpha=1.0):
         x = 10 ** x
 
         s = Solver(self.builder.model, self.time)
@@ -251,14 +251,16 @@ class GlobalFit(object):
         # Now run the simulation
         s.run()
         # Plot the observable
+        if ax is None:
+            ax = plt.gca()
         if self.use_expr:
-            plt.plot(self.time, s.yexpr[self.obs_name], color='r',
+            ax.plot(self.time, s.yexpr[self.obs_name], color='r',
                      alpha=alpha)
         else:
-            plt.plot(self.time, s.yobs[self.obs_name], color='r',
+            ax.plot(self.time, s.yobs[self.obs_name], color='r',
                      alpha=alpha)
 
-    def plot_func(self, x, obs_ix=0, plot_args=None):
+    def plot_func(self, x, ax=None, obs_ix=0, plot_args=None):
         """Plots the timecourses with the parameter values given by x.
 
         Parameters
@@ -271,6 +273,8 @@ class GlobalFit(object):
         """
         if plot_args is None:
             plot_args = {}
+        if ax is None:
+            ax = plt.gca()
         # Iterate over each entry in the data array
         for cond_ix in range(self.data.shape[0]):
             self.set_parameters(x, obs_ix=obs_ix, cond_ix=cond_ix)
@@ -281,10 +285,10 @@ class GlobalFit(object):
             obs_name = self.obs_name[obs_ix]
 
             if self.use_expr:
-                plt.plot(self.solver.tspan, self.solver.yexpr[obs_name],
+                ax.plot(self.solver.tspan, self.solver.yexpr[obs_name],
                          **plot_args)
             else:
-                plt.plot(self.solver.tspan, self.solver.yobs[obs_name],
+                ax.plot(self.solver.tspan, self.solver.yobs[obs_name],
                          **plot_args)
 
     def set_parameters(self, x, obs_ix=0, cond_ix=0, plot_args=None):
