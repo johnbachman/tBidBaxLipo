@@ -82,7 +82,7 @@ def plot_emcee_fits(gf, sampler, sample=True, burn=None, nsamples=100,
         if display:
             fig = plt.figure(figsize=(3, 3), dpi=300)
         else:
-            fig = Figure()
+            fig = Figure(figsize=(3, 3), dpi=300)
 
         ax = fig.gca()
         ax.set_ylabel('$F/F_0$')
@@ -91,7 +91,7 @@ def plot_emcee_fits(gf, sampler, sample=True, burn=None, nsamples=100,
         ax.set_xlim([0, gf.time[-1] + 500])
         #ax.set_xticks(np.linspace(0, 1e4, 6))
         #ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
-        #plt.subplots_adjust(bottom=0.24, left=0.21)
+        fig.subplots_adjust(bottom=0.21, left=0.20)
         # Plot the different observables
         for cond_ix in range(gf.data.shape[0]):
             data = gf.data[cond_ix, obs_ix, :]
@@ -103,7 +103,7 @@ def plot_emcee_fits(gf, sampler, sample=True, burn=None, nsamples=100,
             for i in xrange(nsamples):
                 p = sampler.chain[0, walker_indices[i], step_indices[i], :]
                 plot_args = {'color': obs_colors[obs_ix], 'alpha': 0.1}
-                #gf.plot_func(p, obs_ix=obs_ix, plot_args=plot_args)
+                gf.plot_func(p, obs_ix=obs_ix, ax=ax, plot_args=plot_args)
 
         # Plot the maximum a posteriori fit
         maxp_flat_ix = np.argmax(sampler.lnprobability[0])
@@ -118,9 +118,11 @@ def plot_emcee_fits(gf, sampler, sample=True, burn=None, nsamples=100,
         if plot_filename and not display:
             canvas = FigureCanvasAgg(fig)
             fig.set_canvas(canvas)
-            fig.savefig(plot_filename)
+            fig.savefig('%s.pdf' % plot_filename)
+            fig.savefig('%s.png' % plot_filename)
         elif plot_filename:
-            plt.savefig(plot_filename)
+            plt.savefig('%s.pdf' % plot_filename)
+            plt.savefig('%s.png' % plot_filename)
 
 def plot_conformations(gf, sampler, sample=True, burn=None, nsamples=100):
     """Plot fluorescence conformations from the MCMC chain vs. the data."""
@@ -210,7 +212,8 @@ if __name__ == '__main__':
     #plt.ion()
     #triangle_plots(gf, sampler)
     #plot_chain_convergence(sampler)
-    plot_emcee_fits(gf, sampler, burn=None, sample=True)
+    plot_emcee_fits(gf, sampler, burn=None, sample=True,
+                    plot_filename='test.pdf')
     #plot_conformations(gf, sampler, burn=None, sample=True)
     #plot_emcee_fits_subplots(gf, sampler)
 
