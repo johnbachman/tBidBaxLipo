@@ -5,6 +5,7 @@ import socket
 from emcee.mpi_pool import MPIPool
 import numpy as np
 import timeit
+import time
 
 # Get the memory usage as a string, works on Linux machines (but not MacOS)
 def get_memory(pid):
@@ -54,6 +55,9 @@ if not pool.is_master():
 # Run the expt three times (helps to see if memory grows with repeated runs)
 times = []
 for i in range(3):
+    log("Waiting to start", procinfo)
+    time.sleep(5)
+
     # Create the sampler
     log("Creating the sampler", procinfo)
     sampler = PTSampler(ntemps, nwalkers, ndim, lkl, pr, pool=pool)
@@ -79,7 +83,8 @@ for i in range(3):
 
 # Write the results to a file
 with open('%d.txt' % poolsize, 'w') as f:
-    f.write('\n'.join([str(t) for t in times]))
+    for t in times:
+        f.write('%s\n' % t)
 
 # Close the pool so that the process doesn't hang
 pool.close()
