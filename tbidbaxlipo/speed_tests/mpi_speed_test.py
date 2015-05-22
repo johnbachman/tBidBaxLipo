@@ -24,6 +24,7 @@ def log(msg, procinfo):
 
 # Dummy likelihood and prior functions
 def lkl(p):
+    time.sleep(0.001)
     return 0
 
 def pr(p):
