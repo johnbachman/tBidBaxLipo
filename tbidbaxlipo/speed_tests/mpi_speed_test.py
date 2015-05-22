@@ -55,7 +55,7 @@ if not pool.is_master():
 
 # Run the expt three times (helps to see if memory grows with repeated runs)
 times = []
-for i in range(3):
+for i in range(1):
     log("Waiting to start", procinfo)
     time.sleep(5)
 
@@ -65,7 +65,7 @@ for i in range(3):
 
     # Run the sampler
     cur_start_position = p0
-    num_steps = 50
+    num_steps = 10
     nstep = 0
     log("Starting timer", procinfo)
     start_time = timeit.default_timer()
