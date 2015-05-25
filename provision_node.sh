@@ -23,7 +23,17 @@ if [[ $(hostname) == master ]]; then
     # Make sure the code is up-to-date
     cd /data/tBidBaxLipo
     git pull
-    git checkout starcluster
+    git checkout master
+
+    # Get the latest emcee from my remote
+    if [ ! -e /data/emcee]; then
+        git clone https://github.com/johnbachman/emcee.git
+    fi
+    # Make sure the code is up-to-date
+    cd /data/emcee
+    git pull
+    git checkout master
+
     # Make the data dir writeable
     chown -R sgeadmin /data
 fi
@@ -36,7 +46,8 @@ update-alternatives --set mpi /usr/lib/openmpi/include
 pip install mpi4py
 
 # Install additional software
-pip install emcee
+pip install triangle_plot
+pip install ipdb
 
 # Install packages for PySB
 pip install sympy
@@ -47,4 +58,22 @@ cp -a /data/BioNetGen-2.2.5-stable/ /usr/local/share/BioNetGen
 # Test PySB
 python -m pysb.examples.run_tutorial_a
 
+# Append the following to /etc/apt/sources.list
+echo 'deb http://old-releases.ubuntu.com/ubuntu/ raring main' >> /etc/apt/sources.list
+echo 'deb-src http://old-releases.ubuntu.com/ubuntu/ raring main' >> /etc/apt/sources.list
+echo 'deb http://old-releases.ubuntu.com/ubuntu/ raring-updates main' >> /etc/apt/sources.list
+echo 'deb-src http://old-releases.ubuntu.com/ubuntu/ raring-updates main' >> /etc/apt/sources.list
+echo 'deb http://old-releases.ubuntu.com/ubuntu/ raring universe' >> /etc/apt/sources.list
+echo 'deb-src http://old-releases.ubuntu.com/ubuntu/ raring universe' >> /etc/apt/sources.list
+echo 'deb http://old-releases.ubuntu.com/ubuntu/ raring-updates universe' >> /etc/apt/sources.list
+echo 'deb-src http://old-releases.ubuntu.com/ubuntu/ raring-updates universe' >> /etc/apt/sources.list
+
+# Update apt
+apt-get update
+# Install ack
+apt-get install ack-grep
+# Install texlive (ghostscript installed with texlive)
+apt-get install -y texlive
+apt-get install -y texlive-latex-extra
+apt-get install -y dvipng
 
