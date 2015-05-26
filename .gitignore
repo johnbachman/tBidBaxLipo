@@ -14,6 +14,8 @@ thesis/sphinxreport.log
 
 *.pdf
 *.mcmc
+*.pos
+*.posx
 kale/doc/_build
 kale/doc/_static
 kale/doc/sphinxreport.log
