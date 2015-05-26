@@ -41,6 +41,7 @@ anneal_output.txt
 *.gv
 *.dot
 *.out
+*.err
 *.ka
 fits/
 imstor
