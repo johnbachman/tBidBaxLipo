@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 from tbidbaxlipo.util import set_fig_params_for_publication, format_axis
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.figure import Figure
+import os
 
 def save_fig(fig, plot_filename, display):
     if plot_filename and not display:
@@ -241,13 +242,14 @@ def plot_conformations(gf, sampler, sample=True, burn=None, nsamples=100,
 if __name__ == '__main__':
 
     usage_msg =  "Usage:\n"
-    usage_msg += " python show_chain.py chain_filename.mcmc\n"
+    usage_msg += " python show_chain.py chain_filename.mcmc output_dir\n"
 
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 3:
         print usage_msg
         sys.exit()
 
     chain_filename = sys.argv[1]
+    output_dir = sys.argv[2]
 
     # Unpickle the chain
     print("Loading %s" % chain_filename)
@@ -258,15 +260,16 @@ if __name__ == '__main__':
 
     # Show plots
     #plt.ion()
-    print("Plotting triangle plots")
-    triangle_plots(gf, sampler, plot_filename=chain_filename + '.tri')
+    #print("Plotting triangle plots")
+    output_base = os.path.join(output_dir, chain_filename)
+    #triangle_plots(gf, sampler, plot_filename=chain_filename + '.tri')
     print("Plotting convergence")
-    plot_chain_convergence(sampler, chain_filename + '.conv')
+    plot_chain_convergence(sampler, output_base + '.conv')
     print("Plotting sample fits")
     plot_emcee_fits(gf, sampler, burn=None, sample=True,
-                    plot_filename=chain_filename + '.fits')
+                    plot_filename=output_base + '.fits')
     print("Plotting conformation timecourses")
     plot_conformations(gf, sampler, burn=None, sample=True,
-                       plot_filename=chain_filename + '.confs')
+                       plot_filename=output_base + '.confs')
     #plot_emcee_fits_subplots(gf, sampler)
 
