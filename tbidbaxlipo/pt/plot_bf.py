@@ -117,11 +117,12 @@ if __name__ == '__main__':
     #]
     from tbidbaxlipo.data.parse_bid_bim_nbd_release import nbd_residues
     # Filter out the WT residue
+    act_list = ['Bid', 'Bim']
     mut_list = [res for res in nbd_residues if res != 'WT']
     rep_list = [str(n) for n in range(1, 4)]
     conf_list = [str(n) for n in range(2, 6)]
-    key_list = [k for k in product(mut_list, rep_list, conf_list)]
-    file_list = ['pt_data1_Bid_NBD_%s_r%s_%sconfs.mcmc' % subs
+    key_list = [k for k in product(act_list, mut_list, rep_list, conf_list)]
+    file_list = ['pt_data1_%s_NBD_%s_r%s_%sconfs.mcmc' % subs
                  for subs in key_list]
     ev_results = load_files(file_list)
     ev_results.write_csv('results.csv', conf_list)
