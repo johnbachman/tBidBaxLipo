@@ -46,7 +46,6 @@ anneal_output.txt
 *.out
 *.err
 *.ka
-fits/
 imstor
 matlab/
 trash/
