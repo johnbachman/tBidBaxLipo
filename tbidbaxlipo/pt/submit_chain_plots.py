@@ -33,7 +33,7 @@ for activator in ['Bid', 'Bim']:
                 if job_scheduler == 'qsub':
                     cmd_list = ['qsub', '-b', 'y', '-cwd', '-V', '-o',
                                 out_filename, '-e', err_filename,
-                                'python', '../../../pt/show_chain.py',
+                                'python', '-m', 'tbidbaxlipo.pt.show_chain',
                                 mcmc_filename, output_dir]
                     print ' '.join(cmd_list)
                     subprocess.call(cmd_list)
