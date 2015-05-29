@@ -70,10 +70,6 @@ $(NBD_MCMC_DIR)/pt_data1.deps.txt: \
 # intermediates and deleted.
 .PRECIOUS: %.md5
 
-# Temporary target for testing of MCMC fitting of NBD data
-test.mcmc:
-	bsub -q $(PQUEUE) -n 100 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.plots.test_mcmc_script
-
 nbd_release: nbd_release_endpts nbd_release_initial_rates
 nbd_release_endpts: \
     data1_release_endpt_norm.pdf data1_release_endpt_no_norm.pdf \
