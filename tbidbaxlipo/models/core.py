@@ -246,7 +246,7 @@ __author__ = 'johnbachman'
 from pysb import *
 import numpy as np
 import pysb.builder
-from tbidbaxlipo.priors import Normal, Uniform
+from tbidbaxlipo.priors import Normal, Uniform, UniformLinear
 import sympy
 import math
 import itertools
@@ -303,6 +303,7 @@ class Builder(pysb.builder.Builder):
         self.observable('cBax_NBD', Bax(cpt='sol', conf='aq', dye='nbd'))
         self.observable('mBax', Bax(conf='mem'))
         self.observable('mBax_NBD', Bax(conf='mem', dye='nbd'))
+        self.observable('mBax_NBD_mono', Bax(conf='mem', dye='nbd', bh3=None))
         self.observable('mBax_mono', Bax(conf='mem', bh3=None))
         self.observable('iBax', Bax(conf='ins'))
         self.observable('iBax_NBD', Bax(conf='ins', dye='nbd'))
@@ -1043,9 +1044,10 @@ class Builder(pysb.builder.Builder):
             'autoactivation': 4,
             'dimerization': 5,
             'nbd': 6,
-            'baxfret': 7,
-            'bleach': 8,
-            'timeoffset': 9,
+            'bidfret': 7,
+            'baxfret': 8,
+            'bleach': 9,
+            'timeoffset': 10,
         }
         model_string = ''
 
@@ -1066,16 +1068,19 @@ class Builder(pysb.builder.Builder):
             model_string += feature[0].upper() + feature[1:5] + \
                             str(implementation)
             # Call the appropriate model macros based on the dict entries
+            # Bax translocation
             if feature == 'baxtranslocation':
                 if implementation == 1:
                     self.translocate_Bax()
                 else:
                     unrecognized_implementation(feature, implementation)
+            # Bid translocation
             elif feature == 'bidtranslocation':
                 if implementation == 1:
                     self.translocate_tBid()
                 else:
                     unrecognized_implementation(feature, implementation)
+            # Bax activation
             elif feature == 'activation':
                 if implementation == 1:
                     self.basal_Bax_activation()
@@ -1084,11 +1089,13 @@ class Builder(pysb.builder.Builder):
                                             bax_active_conf='ins')
                 else:
                     unrecognized_implementation(feature, implementation)
+            # Bax activation reversal
             elif feature == 'reversal':
                 if implementation == 1:
                     self.Bax_reverses()
                 else:
                     unrecognized_implementation(feature, implementation)
+            # Bax autoactivation
             elif feature == 'autoactivation':
                 if implementation == 1:
                     self.Bax_auto_activates_one_step()
@@ -1096,6 +1103,7 @@ class Builder(pysb.builder.Builder):
                     self.Bax_auto_activates()
                 else:
                     unrecognized_implementation(feature, implementation)
+            # Bax dimerization
             elif feature == 'dimerization':
                 if implementation == 1:
                     self.Bax_dimerizes(bax_conf='ins', reversible=False)
@@ -1103,15 +1111,19 @@ class Builder(pysb.builder.Builder):
                     self.Bax_dimerizes(bax_conf='ins', reversible=True)
                 else:
                     unrecognized_implementation(feature, implementation)
+            # NBD fluorescence
             elif feature == 'nbd':
                 c0 = self.parameter('c0_scaling', 1., prior=None)
-                c1 = self.parameter('c1_scaling', 5., prior=Uniform(0, 1))
-                if implementation == 1: # two confs: all iBax
+                c1 = self.parameter('c1_scaling', 5.,
+                                    prior=UniformLinear(0, 1))
+                # two confs: all iBax
+                if implementation == 1:
                     self.expression('NBD',
                             (c0 * self['cBax_NBD'] +
                             c0 * self['mBax_NBD'] +
                             c1 * self['iBax_nopore_NBD']) / self['Bax_NBD_0'])
-                elif implementation == 2: # two confs: dimer only
+                # two confs: dimer only
+                elif implementation == 2:
                     self.expression('NBD',
                             (c0 * self['cBax_NBD'] +
                              c0 * self['mBax_NBD'] +
@@ -1119,7 +1131,8 @@ class Builder(pysb.builder.Builder):
                              c1 * self['Bax2_NBD'])  / self['Bax_NBD_0'])
                 # three confs: 1st iBax_mono, 2nd dimer
                 elif implementation == 3:
-                    c2 = self.parameter('c2_scaling', 5., prior=Uniform(0, 1))
+                    c2 = self.parameter('c2_scaling', 5.,
+                                        prior=UniformLinear(0, 1))
                     self.expression('NBD',
                             (c0 * self['cBax_NBD'] +
                              c0 * self['mBax_NBD'] +
@@ -1127,19 +1140,41 @@ class Builder(pysb.builder.Builder):
                              c2 * self['Bax2_NBD']) / self['Bax_NBD_0'])
                 # four confs: tBid/Bax, iBax_mono, and dimer
                 elif implementation == 4:
-                    c2 = self.parameter('c2_scaling', 5., prior=Uniform(0, 1))
-                    c3 = self.parameter('c3_scaling', 5., prior=Uniform(0, 1))
+                    c2 = self.parameter('c2_scaling', 5.,
+                                        prior=UniformLinear(0, 1))
+                    c3 = self.parameter('c3_scaling', 5.,
+                                        prior=UniformLinear(0, 1))
                     self.expression('NBD',
                             (c0 * self['cBax_NBD'] +
                              c0 * self['mBax_NBD'] +
                              c1 * self['tBidBax_NBD'] +
                              c2 * self['iBax_mono_NBD'] +
                              c3 * self['Bax2_NBD']) / self['Bax_NBD_0'])
+                # three confs: c/mBax -> tBid:Bax -> Bax*
+                elif implementation == 5:
+                    c2 = self.parameter('c2_scaling', 5.,
+                                        prior=UniformLinear(0, 1))
+                    self.expression('NBD',
+                            (c0 * self['cBax_NBD'] +
+                             c0 * self['mBax_NBD_mono'] +
+                             c1 * self['tBidBax_NBD'] +
+                             c2 * self['iBax_NBD']) / self['Bax_NBD_0'])
                 else:
                     unrecognized_implementation(feature, implementation)
+            # Bid/Bax FRET
+            elif feature == 'bidfret':
+                bid_fret1 = self.parameter('bid_fret1', 30.,
+                                           prior=UniformLinear(0, 2))
+                # two states: unbound and bound during activation
+                if implementation == 1:
+                    self.expression('BidFRET',
+                            (self['tBidBax_NBD'] / self['tBid_0']))
+                else:
+                    unrecognized_implementation(feature, implementation)
+            # Bax/Bax FRET
             elif feature == 'baxfret':
                 bax_fret_scaling = self.parameter('bax_fret_scaling', 50.,
-                                                  prior=Uniform(0, 2))
+                                                  prior=UniformLinear(0, 2))
                 if implementation == 1: # all Bax dimers
                     self.expression('BaxFRET',
                             (self['Bax2FRET'] / self['Bax_DAC_0']) *
