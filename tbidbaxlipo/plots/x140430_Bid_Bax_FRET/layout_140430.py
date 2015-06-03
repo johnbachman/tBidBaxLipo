@@ -1,31 +1,8 @@
-import sys
-import os
-import tbidbaxlipo.data
 import numpy as np
 from matplotlib import pyplot as plt
 from tbidbaxlipo.models.nbd.multiconf import Builder
 from tbidbaxlipo.util import fitting
-
-data_path = os.path.dirname(sys.modules['tbidbaxlipo.data'].__file__)
-timecourse_file = os.path.abspath(os.path.join(data_path,
-                                        '140430_cBid85CDAC_BaxNBD_FRET.csv'))
-
-data_arr = np.loadtxt(timecourse_file, delimiter=',')
-
-
-data = {
-        'c36_nbd_time': data_arr[:,0],
-        'c36_nbd': data_arr[:,1],
-        'c36_fret_time': data_arr[:,2],
-        'c36_fret': data_arr[:,3],
-        'c68_nbd_time': data_arr[:,4],
-        'c68_nbd': data_arr[:,5],
-        'c68_fret_time': data_arr[:,6],
-        'c68_fret': data_arr[:,7],
-        'c126_nbd_time': data_arr[:,8],
-        'c126_nbd': data_arr[:,9],
-        'c126_fret_time': data_arr[:,10],
-        'c126_fret': data_arr[:,11]}
+from preprocess_data import data_dict as data
 
 def plot_fret():
     plt.figure('FRET')
