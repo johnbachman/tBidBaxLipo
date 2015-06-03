@@ -28,13 +28,22 @@ data_dict = {
 # Second axis: observables
 # Third axis: time
 
-def nbd_fret_err(nbd_data, fret_data, plot=False):
+def nbd_fret_err(nbd_data, fret_data, plot=False, plot_title=None):
     """Utility function for calculating NBD and FRET data error."""
+    # Plot titles
+    if plot_title:
+        nbd_plot_title = plot_title + ' NBD'
+        fret_plot_title = plot_title + ' Bid/Bax FRET'
+    else:
+        nbd_plot_title = None
+        fret_plot_title = None
     # Calculate NBD err
-    nbd_residuals, _ = calc_err_var(nbd_data, last_n_pts=80, plot=plot)
+    nbd_residuals, _ = calc_err_var(nbd_data, last_n_pts=80, plot=plot,
+                                    plot_title=nbd_plot_title)
     nbd_err = np.std(nbd_residuals, ddof=1)
     # Calculate FRET err
-    fret_residuals, _ = calc_err_var(fret_data, last_n_pts=80, plot=plot)
+    fret_residuals, _ = calc_err_var(fret_data, last_n_pts=80, plot=plot,
+                                     plot_title=fret_plot_title)
     fret_err = np.std(fret_residuals, ddof=1)
     return (nbd_err, fret_err)
 

@@ -11,3 +11,4 @@ various positions.
     :maxdepth: 3
 
     raw_data
+    error_estimates
