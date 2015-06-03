@@ -269,7 +269,7 @@ if __name__ == '__main__':
     plot_emcee_fits(gf, sampler, burn=None, sample=True,
                     plot_filename=output_base + '.fits')
     print("Plotting conformation timecourses")
-    plot_conformations(gf, sampler, burn=None, sample=True,
-                       plot_filename=output_base + '.confs')
+    #plot_conformations(gf, sampler, burn=None, sample=True,
+    #                   plot_filename=output_base + '.confs')
     #plot_emcee_fits_subplots(gf, sampler)
 
