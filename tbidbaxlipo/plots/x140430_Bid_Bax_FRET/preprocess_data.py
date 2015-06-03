@@ -29,11 +29,14 @@ data_dict = {
 
 time_36 = data_dict['c36_fret_time'] # Same as NBD time
 data_36 = np.array([[data_dict['c36_nbd'], data_dict['c36_fret']]])
+data_sigma_36 = np.array([[0.1, 3.]])
 
 time_68 = data_dict['c68_fret_time'] # Same as NBD time
 data_68 = np.array([[data_dict['c68_nbd'], data_dict['c68_fret']]])
+data_sigma_68 = np.array([[0.1, 3.]])
 
 time_126 = data_dict['c126_fret_time'] # Same as NBD time
 data_126 = np.array([[data_dict['c126_nbd'], data_dict['c126_fret']]])
+data_sigma_126 = np.array([[0.1, 3.]])
 
 
