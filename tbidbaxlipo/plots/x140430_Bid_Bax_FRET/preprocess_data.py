@@ -2,6 +2,7 @@ import os
 import sys
 import numpy as np
 import tbidbaxlipo.data
+from tbidbaxlipo.util.calculate_error_variance import calc_err_var
 
 data_path = os.path.dirname(sys.modules['tbidbaxlipo.data'].__file__)
 timecourse_file = os.path.abspath(os.path.join(data_path,
@@ -27,16 +28,29 @@ data_dict = {
 # Second axis: observables
 # Third axis: time
 
+def nbd_fret_err(nbd_data, fret_data, plot=False):
+    """Utility function for calculating NBD and FRET data error."""
+    # Calculate NBD err
+    nbd_residuals, _ = calc_err_var(nbd_data, last_n_pts=80, plot=plot)
+    nbd_err = np.std(nbd_residuals, ddof=1)
+    # Calculate FRET err
+    fret_residuals, _ = calc_err_var(fret_data, last_n_pts=80, plot=plot)
+    fret_err = np.std(fret_residuals, ddof=1)
+    return (nbd_err, fret_err)
+
 time_36 = data_dict['c36_fret_time'] # Same as NBD time
 data_36 = np.array([[data_dict['c36_nbd'], data_dict['c36_fret']]])
-data_sigma_36 = np.array([[0.1, 3.]])
+c36_err = nbd_fret_err(data_dict['c36_nbd'], data_dict['c36_fret'])
+data_sigma_36 = np.array([c36_err])
 
 time_68 = data_dict['c68_fret_time'] # Same as NBD time
 data_68 = np.array([[data_dict['c68_nbd'], data_dict['c68_fret']]])
-data_sigma_68 = np.array([[0.1, 3.]])
+c68_err = nbd_fret_err(data_dict['c68_nbd'], data_dict['c68_fret'])
+data_sigma_68 = np.array([c68_err])
 
 time_126 = data_dict['c126_fret_time'] # Same as NBD time
 data_126 = np.array([[data_dict['c126_nbd'], data_dict['c126_fret']]])
-data_sigma_126 = np.array([[0.1, 3.]])
+c126_err = nbd_fret_err(data_dict['c126_nbd'], data_dict['c126_fret'])
+data_sigma_126 = np.array([c126_err])
 
 
