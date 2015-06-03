@@ -1115,7 +1115,7 @@ class Builder(pysb.builder.Builder):
             elif feature == 'nbd':
                 c0 = self.parameter('c0_scaling', 1., prior=None)
                 c1 = self.parameter('c1_scaling', 5.,
-                                    prior=UniformLinear(0, 1))
+                                    prior=UniformLinear(-1, 1))
                 # two confs: all iBax
                 if implementation == 1:
                     self.expression('NBD',
@@ -1132,7 +1132,7 @@ class Builder(pysb.builder.Builder):
                 # three confs: 1st iBax_mono, 2nd dimer
                 elif implementation == 3:
                     c2 = self.parameter('c2_scaling', 5.,
-                                        prior=UniformLinear(0, 1))
+                                        prior=UniformLinear(-1, 1))
                     self.expression('NBD',
                             (c0 * self['cBax_NBD'] +
                              c0 * self['mBax_NBD'] +
@@ -1141,9 +1141,9 @@ class Builder(pysb.builder.Builder):
                 # four confs: tBid/Bax, iBax_mono, and dimer
                 elif implementation == 4:
                     c2 = self.parameter('c2_scaling', 5.,
-                                        prior=UniformLinear(0, 1))
+                                        prior=UniformLinear(-1, 1))
                     c3 = self.parameter('c3_scaling', 5.,
-                                        prior=UniformLinear(0, 1))
+                                        prior=UniformLinear(-1, 1))
                     self.expression('NBD',
                             (c0 * self['cBax_NBD'] +
                              c0 * self['mBax_NBD'] +
@@ -1153,7 +1153,7 @@ class Builder(pysb.builder.Builder):
                 # three confs: c/mBax -> tBid:Bax -> Bax*
                 elif implementation == 5:
                     c2 = self.parameter('c2_scaling', 5.,
-                                        prior=UniformLinear(0, 1))
+                                        prior=UniformLinear(-1, 1))
                     self.expression('NBD',
                             (c0 * self['cBax_NBD'] +
                              c0 * self['mBax_NBD_mono'] +
@@ -1168,7 +1168,7 @@ class Builder(pysb.builder.Builder):
                 # two states: unbound and bound during activation
                 if implementation == 1:
                     self.expression('BidFRET',
-                            (self['tBidBax_NBD'] / self['tBid_0']))
+                            (bid_fret1 * self['tBidBax_NBD']) / self['tBid_0'])
                 else:
                     unrecognized_implementation(feature, implementation)
             # Bax/Bax FRET
