@@ -63,6 +63,12 @@ for m in m_ensemble:
         if 'nbd' in m and 'activation' in m and \
             m['nbd'] == 4 and m['activation'] == 1:
             continue
+        # If Bid FRET involves a complex of tBid with both mBax and iBax
+        # (implementation 2) then make sure we have three-step activation, which
+        # allows tBid to bind to iBax
+        if 'bidfret' in m and 'activation' in m and \
+           m['bidfret'] == 2 and not m['activation'] == 3:
+            continue
         bd = one_cpt.Builder()
         bd.build_model_from_dict(m)
         model_name = bd.model.name

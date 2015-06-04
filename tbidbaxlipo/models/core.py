@@ -313,6 +313,10 @@ class Builder(pysb.builder.Builder):
         self.observable('iBax_mono_NBD', Bax(conf='ins', bh3=None, dye='nbd'))
         self.observable('tBidBax', tBid(bh3=1) % Bax(bh3=1))
         self.observable('tBidBax_NBD', tBid(bh3=1) % Bax(bh3=1, dye='nbd'))
+        self.observable('tBidmBax_NBD', tBid(bh3=1) %
+                                        Bax(bh3=1, conf='mem', dye='nbd'))
+        self.observable('tBidiBax_NBD', tBid(bh3=1) %
+                                        Bax(bh3=1, conf='ins', dye='nbd'))
         self.observable('Bax2', Bax(bh3=1) % Bax(bh3=1))
         self.observable('Bax2_NBD', Bax(bh3=1, dye='nbd') % Bax(bh3=1))
         self.observable('Bax4',
@@ -669,6 +673,34 @@ class Builder(pysb.builder.Builder):
         self.rule('tBid_unbinds_Bax_%s_%s' % (bax_active_conf, bax_site),
              tBid(bh3=1) % Bax(conf=bax_bind_conf, **bax_site_bound) >>
              tBid(bh3=None) + Bax(conf=bax_active_conf, **bax_site_unbound),
+             kc)
+
+    def tBid_activates_Bax_3step(self, bax_site='bh3', bax_bind_conf='mem',
+                                 bax_active_conf='ins'):
+        """tBid + Bax <-> tBid:Bax -> tBid:Bax* <-> Bax* + tBid"""
+
+        print('core: tBid_activates_Bax_3step(bax_site=%s, bax_bind_conf=%s, '
+              'bax_active_conf=%s)' %
+              (bax_site, bax_bind_conf, bax_active_conf))
+
+        self.tBid_binds_Bax(bax_site, bax_bind_conf)
+        self.tBid_binds_Bax(bax_site, bax_active_conf)
+
+        # Dissociation of tBid from iBax (EP -> E + P)
+        kc = self.parameter('tBid_Bax_%s_%s_kc' % (bax_active_conf, bax_site),
+                            1e-1, prior=Normal(-1, 2))
+
+        # Create the dicts to parameterize the site that tBid binds to
+        bax_site_bound = {bax_site:1}
+        bax_site_unbound = {bax_site:None}
+
+        tBid = self['tBid']
+        Bax = self['Bax']
+
+        # tBid:Bax undergoes Bax conformational change
+        self.rule('tBid_unbinds_Bax_%s_%s' % (bax_active_conf, bax_site),
+             tBid(bh3=1) % Bax(conf=bax_bind_conf, **bax_site_bound) >>
+             tBid(bh3=1) % Bax(conf=bax_active_conf, **bax_site_bound),
              kc)
 
     def basal_Bax_activation(self):
@@ -1087,6 +1119,9 @@ class Builder(pysb.builder.Builder):
                 elif implementation == 2:
                     self.tBid_activates_Bax(bax_site='bh3', bax_bind_conf='mem',
                                             bax_active_conf='ins')
+                elif implementation == 3:
+                    self.tBid_activates_Bax_3step(bax_site='bh3',
+                            bax_bind_conf='mem', bax_active_conf='ins')
                 else:
                     unrecognized_implementation(feature, implementation)
             # Bax activation reversal
@@ -1169,6 +1204,14 @@ class Builder(pysb.builder.Builder):
                 if implementation == 1:
                     self.expression('BidFRET',
                             (bid_fret1 * self['tBidBax_NBD']) / self['tBid_0'])
+                # three states: free, tBid:mBax, and tBid:iBax
+                elif implementation == 2:
+                    bid_fret2 = self.parameter('bid_fret2', 30.,
+                                               prior=UniformLinear(0, 2))
+                    self.expression('BidFRET',
+                            (bid_fret1 * self['tBidmBax_NBD'] +
+                             bid_fret2 * self['tBidiBax_NBD']) /
+                            self['tBid_0'])
                 else:
                     unrecognized_implementation(feature, implementation)
             # Bax/Bax FRET
