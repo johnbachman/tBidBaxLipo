@@ -160,7 +160,8 @@ def plot_emcee_fits(gf, sampler, sample=True, burn=None, nsamples=100,
 
         format_axis(ax)
         if plot_filename:
-            save_fig(fig, plot_filename, DISPLAY)
+            obs_plot_filename = '%s.obs%d' % (plot_filename, obs_ix)
+            save_fig(fig, obs_plot_filename, DISPLAY)
 
 def plot_conformations(gf, sampler, sample=True, burn=None, nsamples=100,
                        plot_filename=None):
