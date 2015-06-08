@@ -58,6 +58,12 @@ FORCE:
 pt_140430_36C: $(x140430)/pt_140430_36C.deps.txt
 -include $(x140430)/pt_140430_36C.deps.txt
 
+pt_140430_68C: $(x140430)/pt_140430_68C.deps.txt
+-include $(x140430)/pt_140430_68C.deps.txt
+
+pt_140430_126C: $(x140430)/pt_140430_126C.deps.txt
+-include $(x140430)/pt_140430_126C.deps.txt
+
 # -- MCMC Fitting for Dataset 1, complete set of NBD-Bax trajectories --
 pt_data1: pt_data1_deps
 
