@@ -1151,29 +1151,30 @@ class Builder(pysb.builder.Builder):
                 c0 = self.parameter('c0_scaling', 1., prior=None)
                 c1 = self.parameter('c1_scaling', 5.,
                                     prior=UniformLinear(-1, 1))
-                # two confs: all iBax
+                # 1: two confs: all iBax
                 if implementation == 1:
                     self.expression('NBD',
                             (c0 * self['cBax_NBD'] +
                             c0 * self['mBax_NBD'] +
                             c1 * self['iBax_nopore_NBD']) / self['Bax_NBD_0'])
-                # two confs: dimer only
+                # 2: two confs: dimer only
                 elif implementation == 2:
                     self.expression('NBD',
                             (c0 * self['cBax_NBD'] +
                              c0 * self['mBax_NBD'] +
                              c0 * self['iBax_mono_NBD'] +
                              c1 * self['Bax2_NBD'])  / self['Bax_NBD_0'])
-                # three confs: 1st iBax_mono, 2nd dimer
+                # 3: three confs: 1st iBax (free or tBid bound), 2nd iBax dimer
                 elif implementation == 3:
                     c2 = self.parameter('c2_scaling', 5.,
                                         prior=UniformLinear(-1, 1))
                     self.expression('NBD',
                             (c0 * self['cBax_NBD'] +
                              c0 * self['mBax_NBD'] +
+                             c1 * self['tBidiBax_NBD'] +
                              c1 * self['iBax_mono_NBD'] +
                              c2 * self['Bax2_NBD']) / self['Bax_NBD_0'])
-                # four confs: tBid/Bax, iBax_mono, and dimer
+                # 4: four confs: tBid/Bax, iBax_mono, and dimer
                 elif implementation == 4:
                     c2 = self.parameter('c2_scaling', 5.,
                                         prior=UniformLinear(-1, 1))
@@ -1185,7 +1186,7 @@ class Builder(pysb.builder.Builder):
                              c1 * self['tBidBax_NBD'] +
                              c2 * self['iBax_mono_NBD'] +
                              c3 * self['Bax2_NBD']) / self['Bax_NBD_0'])
-                # three confs: c/mBax -> tBid:Bax -> Bax*
+                # 5: three confs: c/mBax -> tBid:Bax -> Bax*
                 elif implementation == 5:
                     c2 = self.parameter('c2_scaling', 5.,
                                         prior=UniformLinear(-1, 1))
