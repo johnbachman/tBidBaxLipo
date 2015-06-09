@@ -110,7 +110,6 @@ class Normal():
     def __init__(self, mean, stdev):
         self.mean = float(mean)
         self.stdev = float(stdev)
-        self.num_std_limit = 6.
 
     def pdf(self, num):
         """Returns the negative log probability of the given number.
@@ -119,11 +118,7 @@ class Normal():
 
         (num - mean)^2 / (2 * stdev ** 2)
         """
-        if num < self.mean - (self.stdev * self.num_std_limit) or \
-           num > self.mean + (self.stdev * self.num_std_limit):
-            return np.inf
-        else:
-            return ((num - self.mean)**2) / (2. * self.stdev ** 2)
+        return ((num - self.mean)**2) / (2. * self.stdev ** 2)
 
     def random(self):
         """Get a random sample from the normal distribution."""
