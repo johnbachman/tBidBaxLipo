@@ -14,6 +14,7 @@ faster using this approach rather than the classes in scipy.stats.
 """
 
 import numpy as np
+import scipy.stats
 
 class Uniform():
     """A uniform prior distribution.
@@ -47,6 +48,16 @@ class Uniform():
         """Get a random sample from the uniform distribution."""
         return np.random.uniform(low=self.lower_bound, high=self.upper_bound)
 
+    def inverse_cdf(self, percentile):
+        """Get the value associated with the percentile probability.
+
+        Also known as the percent point function. A wrapper around
+        scipy.stats.uniform.ppf().
+        """
+        scale = self.upper_bound - self.lower_bound
+        return scipy.stats.uniform.ppf(percentile, loc=self.lower_bound,
+                                       scale=scale)
+
 class UniformLinear(Uniform):
     """A uniform prior distribution that inverts a log10-transformation.
 
@@ -77,9 +88,21 @@ class UniformLinear(Uniform):
             return -np.log(self.p)
 
     def random(self):
+        """Get a random sample from the (non-log) uniform distribution."""
         rand_sample = np.random.uniform(low=self.lower_bound,
                                         high=self.upper_bound)
         return np.log10(rand_sample)
+
+    def inverse_cdf(self, percentile):
+        """Get the value associated with the percentile probability.
+
+        Also known as the percent point function. A wrapper around
+        scipy.stats.uniform.ppf().
+        """
+        scale = self.upper_bound - self.lower_bound
+        value = scipy.stats.uniform.ppf(percentile, loc=self.lower_bound,
+                                        scale=scale)
+        return np.log10(value)
 
 class Normal():
     def __init__(self, mean, stdev):
@@ -98,3 +121,15 @@ class Normal():
     def random(self):
         """Get a random sample from the normal distribution."""
         return (self.stdev * np.random.randn()) + self.mean
+
+    def inverse_cdf(self, percentile):
+        """Get the value associated with the percentile probability.
+
+        Also known as the percent point function. A wrapper around
+        scipy.stats.norm.ppf().
+        """
+        print self.mean
+        print self.stdev
+        return scipy.stats.norm.ppf(percentile, loc=self.mean,
+                                    scale=self.stdev)
+
