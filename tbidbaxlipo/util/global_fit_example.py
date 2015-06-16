@@ -59,8 +59,8 @@ for i in range(num_timecourses):
 
 params = {'B_0': B_initial_vect}
 
-gf = fitting.GlobalFit(bd, t, data, params, 'AB')
-result = gf.fit()
+gf = fitting.GlobalFit(bd, t, data, params, 'AB', obs_type='Observable')
+result = gf.fit(method='Nelder-Mead')
 
 gf.plot_func(result.x)
 
