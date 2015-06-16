@@ -13,8 +13,18 @@ from tbidbaxlipo.models import one_cpt
 from tbidbaxlipo.models.nbd import multiconf
 
 def posterior(position, gf):
-    """A generic posterior function."""
-    return prior(position, gf) + likelihood(position, gf)
+    """A generic log posterior function."""
+    post_val = prior(position, gf) + likelihood(position, gf)
+
+def negative_posterior(position, gf):
+    """A generic negative log posterior function.
+
+    Use the negative log posterior when using a minimization (rather than
+    probability maximization) algorithm.
+    """
+    post_val = prior(position, gf) + likelihood(position, gf)
+    print "posterior: %s, %s" % (gf, position, post_val)
+    return -post_val
 
 def prior(position, gf):
     """A generic prior function."""
