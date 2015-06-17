@@ -5,6 +5,7 @@ import numpy as np
 from scipy import optimize
 from pyDOE import lhs # Latin hypercube sampling
 import cPickle
+import glob
 
 def deterministic_fit(gf, p0, posterior, method='Nelder-Mead', bounds=None):
     res = None
@@ -46,14 +47,17 @@ def generate_latin_hypercube(gf, num_samples, basename):
             cPickle.dump(p0, f)
     return
 
-def fit(gf, p0):
+def fit(gf, p0_filename):
+    # Load the initial position from the pickle file
+    with open(p0_filename) as p0_file:
+        print("Loading initial position file %s" % p0_filename)
+        p0 = cPickle.load(p0_file)
     # The size of our initial position vector should always match the number
     # of parameters we're fitting!
     assert len(gf.priors) == p0.shape[0]
     # Specify the amount by which we tweak the lower and upper bounds to prevent
     # log probabilities of -inf (for use by L-BFGS-B algorithm)
     epsilon = 0.001
-
     # Before fitting, get the list of bounds for constrained optimization
     bounds = []
     # For each parameter...
@@ -67,10 +71,23 @@ def fit(gf, p0):
         else:
             bounds.append((None, None))
             print bounds
-
     # Run the fit!
     res = deterministic_fit(gf, p0, emcee_fit.negative_posterior,
                             method='Nelder-Mead', bounds=bounds)
+    # Save the results
+    result_filename = '%s.detfit' % os.path.splitext(p0_filename)[0]
+    with open(result_filename, 'w') as result_file:
+        cPickle.dump((gf, res), result_file)
+    # Return the results for interactive
+    return res
+
+def load_globalfit_from_file(yaml_filename):
+    with open(yaml_filename) as yaml_file:
+        print("Loading YAML file %s" % yaml_filename)
+        args = yaml.load(yaml_file)
+    # Get the GlobalFit object from the args
+    gf = emcee_fit.global_fit_from_args(args)
+    return gf
 
 if __name__ == '__main__':
     import os.path
@@ -80,6 +97,8 @@ if __name__ == '__main__':
     usage_msg += "%s hypercube num_samples yaml_file\n" % \
                   os.path.basename(__file__)
     usage_msg += "%s fit yaml_file lhs_file\n" % \
+                  os.path.basename(__file__)
+    usage_msg += "%s submit [none|bsub|qsub] yaml_file\n" % \
                   os.path.basename(__file__)
 
     if len(sys.argv) < 4:
@@ -100,36 +119,38 @@ if __name__ == '__main__':
 
     # HYPERCUBE ------------------------------------------------
     if sys.argv[1] == 'hypercube':
-        # ...load the args for the data/model from the YAML file
-        with open(sys.argv[3]) as yaml_file:
-            print("Loading YAML file %s" % sys.argv[3])
-            args = yaml.load(yaml_file)
-        # Get the GlobalFit object from the args
-        gf = emcee_fit.global_fit_from_args(args)
+        # Load the args for the data/model from the YAML file
+        gf = load_globalfit_from_file(sys.argv[3])
         # Generate the hypercube
         num_samples = int(sys.argv[2])
         basename = sys.argv[3]
         generate_latin_hypercube(gf, num_samples, basename)
     # FIT ------------------------------------------------------
     elif sys.argv[1] == 'fit':
-        # ...load the args for the data/model from the YAML file
-        with open(sys.argv[2]) as yaml_file:
-            print("Loading YAML file %s" % sys.argv[2])
-            args = yaml.load(yaml_file)
-        # Get the GlobalFit object from the args
-        gf = emcee_fit.global_fit_from_args(args)
+        # Load the args for the data/model from the YAML file
+        gf = load_globalfit_from_file(sys.argv[2])
         # Load the initial position
         p0_filename = sys.argv[3]
-        with open(p0_filename) as p0_file:
-            print("Loading initial position file %s" % sys.argv[2])
-            p0 = cPickle.load(p0_file)
         # Run the fit
-        res = fit(gf, p0)
-        # Save the results
-        result_filename = '%s.detfit' % os.path.splitext(p0_filename)[0]
-        with open(result_filename, 'w') as result_file:
-            cPickle.dump((gf, res), result_file)
-    # (error)
+        res = fit(gf, p0_filename)
+    # SUBMIT ---------------------------------------------------
+    # det_fit.py submit none yaml_filename
+    elif sys.argv[1] == 'submit':
+        scheduler = sys.argv[2]
+        # No job scheduler--just run each of the files in a loop
+        if scheduler == 'none':
+            # Load the args for the data/model from the YAML file
+            yaml_filename = sys.argv[3]
+            gf = load_globalfit_from_file(yaml_filename)
+            # Get the list of position files
+            p0_files = glob.glob(r'%s.*of*.lhs' % yaml_filename)
+            if not p0_files:
+                raise Exception("No p0 files found!")
+            # Iterate over the position files, loading and running each
+            for p0_filename in p0_files:
+                fit(gf, p0_filename)
+        else:
+            raise ValueError()
     else:
         print(usage_msg)
         sys.exit(1)
