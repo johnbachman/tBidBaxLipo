@@ -41,7 +41,7 @@ def generate_latin_hypercube(gf, num_samples, basename):
             percentile = lh[samp_ix, p_ix]
             p0[p_ix] = pr.inverse_cdf(percentile)
         print("Saving position: %s" % p0)
-        filename = '%s.%d.lhs' % (basename, samp_ix)
+        filename = '%s.%dof%d.lhs' % (basename, samp_ix+1, num_samples)
         with open(filename, 'w') as f:
             cPickle.dump(p0, f)
     return
@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
     # Get the command type
 
-    # HYPERCUBE
+    # HYPERCUBE ------------------------------------------------
     if sys.argv[1] == 'hypercube':
         # ...load the args for the data/model from the YAML file
         with open(sys.argv[3]) as yaml_file:
@@ -110,7 +110,7 @@ if __name__ == '__main__':
         num_samples = int(sys.argv[2])
         basename = sys.argv[3]
         generate_latin_hypercube(gf, num_samples, basename)
-    # FIT
+    # FIT ------------------------------------------------------
     elif sys.argv[1] == 'fit':
         # ...load the args for the data/model from the YAML file
         with open(sys.argv[2]) as yaml_file:
