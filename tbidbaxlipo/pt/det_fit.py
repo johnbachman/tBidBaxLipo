@@ -91,15 +91,13 @@ def load_globalfit_from_file(yaml_filename):
 
 if __name__ == '__main__':
     import os.path
+    this_file = os.path.basename(__file__)
 
     # Check arguments
     usage_msg = "Usage:\n"
-    usage_msg += "%s hypercube num_samples yaml_file\n" % \
-                  os.path.basename(__file__)
-    usage_msg += "%s fit yaml_file lhs_file\n" % \
-                  os.path.basename(__file__)
-    usage_msg += "%s submit [none|bsub|qsub] yaml_file\n" % \
-                  os.path.basename(__file__)
+    usage_msg += "%s hypercube num_samples yaml_file\n" % this_file
+    usage_msg += "%s fit yaml_file lhs_file\n" % this_file
+    usage_msg += "%s submit [none|bsub|qsub] yaml_file\n" % this_file
 
     if len(sys.argv) < 4:
         print usage_msg
@@ -149,6 +147,24 @@ if __name__ == '__main__':
             # Iterate over the position files, loading and running each
             for p0_filename in p0_files:
                 fit(gf, p0_filename)
+        elif scheduler == 'qsub':
+            # Load the args for the data/model from the YAML file
+            yaml_filename = sys.argv[3]
+            gf = load_globalfit_from_file(yaml_filename)
+            # Get the list of position files
+            p0_files = glob.glob(r'%s.*of*.lhs' % yaml_filename)
+            if not p0_files:
+                raise Exception("No p0 files found!")
+            # Iterate over the position files, loading and running each
+            for p0_filename in p0_files:
+                p0_basename = os.path.splitext(p0_filename)[0]
+                err_filename = '%s.err' % p0_basename
+                out_filename = '%s.out' % p0_basename
+                qsub_args = ['qsub', '-b', 'y', '-cwd', '-V', '-o',
+                             out_filename, '-e', err_filename,
+                             'python', '-m', 'tbidbaxlipo.pt.det_fit', 'fit',
+                             yaml_filename, p0_filename]
+                print ' '.join(qsub_args)
         else:
             raise ValueError()
     else:
