@@ -15,6 +15,7 @@ from tbidbaxlipo.models.nbd import multiconf
 def posterior(position, gf):
     """A generic log posterior function."""
     post_val = prior(position, gf) + likelihood(position, gf)
+    return post_val
 
 def negative_posterior(position, gf):
     """A generic negative log posterior function.
