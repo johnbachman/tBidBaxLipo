@@ -23,7 +23,6 @@ def negative_posterior(position, gf):
     probability maximization) algorithm.
     """
     post_val = prior(position, gf) + likelihood(position, gf)
-    print "posterior: %s, %s" % (gf, position, post_val)
     return -post_val
 
 def prior(position, gf):
