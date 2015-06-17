@@ -6,6 +6,7 @@ from scipy import optimize
 from pyDOE import lhs # Latin hypercube sampling
 import cPickle
 import glob
+import subprocess
 
 def deterministic_fit(gf, p0, posterior, method='Nelder-Mead', bounds=None):
     res = None
@@ -58,7 +59,7 @@ def fit(gf, p0_filename):
     assert len(gf.priors) == p0.shape[0]
     # Specify the amount by which we tweak the lower and upper bounds to prevent
     # log probabilities of -inf (for use by L-BFGS-B algorithm)
-    epsilon = 0.001
+    epsilon = 0.1
     # Before fitting, get the list of bounds for constrained optimization
     bounds = []
     # For each parameter...
@@ -168,6 +169,7 @@ if __name__ == '__main__':
                              'python', '-m', 'tbidbaxlipo.pt.det_fit', 'fit',
                              yaml_filename, p0_filename]
                 print ' '.join(qsub_args)
+                subprocess.call(qsub_args)
         else:
             raise ValueError()
     else:
