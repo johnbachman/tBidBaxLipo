@@ -74,14 +74,18 @@ def fit(gf, p0_filename):
             bounds.append((None, None))
     # Run the fit!
     #res = deterministic_fit(gf, p0, emcee_fit.negative_posterior,
-    #                        method='Nelder-Mead', bounds=bounds)
+    #                        method='Nelder-Mead')
     res = deterministic_fit(gf, p0, emcee_fit.negative_posterior,
                             method='BFGS', bounds=bounds)
     # Save the results
     result_filename = '%s.detfit' % os.path.splitext(p0_filename)[0]
     with open(result_filename, 'w') as result_file:
         cPickle.dump((gf, res), result_file)
-    # Return the results for interactive
+    # Display the results
+    print(res)
+    min_post = res[1]
+    print("Minimum posterior: %s" % min_post)
+    # Return the results
     return res
 
 def load_globalfit_from_file(yaml_filename):
