@@ -14,6 +14,7 @@ faster using this approach rather than the classes in scipy.stats.
 """
 
 import numpy as np
+import scipy.stats
 
 class Uniform():
     """A uniform prior distribution.
@@ -47,6 +48,16 @@ class Uniform():
         """Get a random sample from the uniform distribution."""
         return np.random.uniform(low=self.lower_bound, high=self.upper_bound)
 
+    def inverse_cdf(self, percentile):
+        """Get the value associated with the percentile probability.
+
+        Also known as the percent point function. A wrapper around
+        scipy.stats.uniform.ppf().
+        """
+        scale = self.upper_bound - self.lower_bound
+        return scipy.stats.uniform.ppf(percentile, loc=self.lower_bound,
+                                       scale=scale)
+
 class UniformLinear(Uniform):
     """A uniform prior distribution that inverts a log10-transformation.
 
@@ -58,9 +69,11 @@ class UniformLinear(Uniform):
         The upper bound of the interval.
     """
     def __init__(self, lower_bound, upper_bound):
-        self.lower_bound = 10 ** float(lower_bound)
-        self.upper_bound = 10 ** float(upper_bound)
-        self.p = 1. / (self.upper_bound - self.lower_bound)
+        self.linear_lower_bound = 10 ** float(lower_bound)
+        self.linear_upper_bound = 10 ** float(upper_bound)
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
+        self.p = 1. / (self.linear_upper_bound - self.linear_lower_bound)
 
     def pdf(self, num):
         """Returns the negative log probability of the given number.
@@ -71,15 +84,27 @@ class UniformLinear(Uniform):
         -log(1 / (upper - lower)), otherwise.
         """
         num = 10 ** num
-        if num < self.lower_bound or num > self.upper_bound:
+        if num < self.linear_lower_bound or num > self.linear_upper_bound:
             return np.inf
         else:
             return -np.log(self.p)
 
     def random(self):
-        rand_sample = np.random.uniform(low=self.lower_bound,
-                                        high=self.upper_bound)
+        """Get a random sample from the (non-log) uniform distribution."""
+        rand_sample = np.random.uniform(low=self.linear_lower_bound,
+                                        high=self.linear_upper_bound)
         return np.log10(rand_sample)
+
+    def inverse_cdf(self, percentile):
+        """Get the value associated with the percentile probability.
+
+        Also known as the percent point function. A wrapper around
+        scipy.stats.uniform.ppf().
+        """
+        scale = self.linear_upper_bound - self.linear_lower_bound
+        value = scipy.stats.uniform.ppf(percentile, loc=self.linear_lower_bound,
+                                        scale=scale)
+        return np.log10(value)
 
 class Normal():
     def __init__(self, mean, stdev):
@@ -98,3 +123,15 @@ class Normal():
     def random(self):
         """Get a random sample from the normal distribution."""
         return (self.stdev * np.random.randn()) + self.mean
+
+    def inverse_cdf(self, percentile):
+        """Get the value associated with the percentile probability.
+
+        Also known as the percent point function. A wrapper around
+        scipy.stats.norm.ppf().
+        """
+        print self.mean
+        print self.stdev
+        return scipy.stats.norm.ppf(percentile, loc=self.mean,
+                                    scale=self.stdev)
+

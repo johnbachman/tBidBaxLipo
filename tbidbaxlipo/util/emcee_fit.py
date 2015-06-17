@@ -9,10 +9,21 @@ import sys
 from scipy.stats import pearsonr
 import cPickle
 import warnings
+from tbidbaxlipo.models import one_cpt
+from tbidbaxlipo.models.nbd import multiconf
 
 def posterior(position, gf):
-    """A generic posterior function."""
-    return prior(position, gf) + likelihood(position, gf)
+    """A generic log posterior function."""
+    post_val = prior(position, gf) + likelihood(position, gf)
+
+def negative_posterior(position, gf):
+    """A generic negative log posterior function.
+
+    Use the negative log posterior when using a minimization (rather than
+    probability maximization) algorithm.
+    """
+    post_val = prior(position, gf) + likelihood(position, gf)
+    return -post_val
 
 def prior(position, gf):
     """A generic prior function."""
@@ -723,3 +734,64 @@ def check_convergence_corr(sampler, start_step, end_step, pval_threshold=0.2):
     passes = np.all(pass_arr)
     print "Passes: ", passes
     return np.all(pass_arr)
+
+
+def global_fit_from_args(args):
+    ### DATA
+    # Import the module containing the data
+    data_args = args['data']
+    __import__(data_args['module'])
+    data_module = sys.modules[data_args['module']]
+    # Get the relevant variables from the module containing the data
+    data_var = data_module.__dict__[data_args['data_var']]
+    data_sigma_var = data_module.__dict__[data_args['data_sigma_var']]
+    time_var = data_module.__dict__[data_args['time_var']]
+    # Get the name of the variable containing the initial conditions vector,
+    # which may not exist
+    ic_var_name = data_args['initial_condition_var']
+    if ic_var_name is None:
+        ic_var = None
+    else:
+        ic_var = data_module.__dict__[ic_var_name]
+
+    ### MODEL
+    # Call the appropriate model-building macro
+    # If there is a multiconf attribute, that trumps any other attribute
+    # and determines that this is a multiconf model
+    if 'multiconf' in args['model']:
+        bd = multiconf.Builder()
+        num_confs = args['model']['multiconf']
+        norm_data = args['model']['normalized_nbd_data']
+        nbd_ubound = data_module.__dict__[data_args['nbd_ubound']]
+        nbd_lbound = data_module.__dict__[data_args['nbd_lbound']]
+        nbd_f0 = data_module.__dict__[data_args['nbd_f0']]
+        bd.build_model_multiconf(num_confs, nbd_f0, nbd_lbound, nbd_ubound,
+                                 normalized_data=norm_data, reversible=False)
+    else:
+        bd = one_cpt.Builder()
+        bd.build_model_from_dict(args['model'])
+
+    # Set the initial conditions
+    for ic_name, ic_value in args['global_initial_conditions'].iteritems():
+        bd.model.parameters[ic_name].value = ic_value
+
+    ### PARAMETERS TO FIT
+    if args['global_params'] == 'all':
+        bd.global_params = bd.estimate_params
+        bd.local_params = []
+    else:
+        bd.global_params = [bd.model.parameters[p_name]
+                            for p_name in args['global_params']]
+        bd.local_params = [bd.model.parameters[p_name]
+                           for p_name in args['local_params']]
+
+    local_ic_name = args['local_initial_condition']
+    if ic_var is None or local_ic_name is None:
+        params = None
+    else:
+        params = {local_ic_name: ic_var}
+
+    # Create the global fit instance
+    gf = GlobalFit(bd, time_var, data_var, data_sigma_var, params,
+                   args['model_observable'])
+    return gf

@@ -13,6 +13,8 @@ thesis/_build
 thesis/_static
 thesis/sphinxreport.log
 
+*.lhs
+*.detfit
 *.pdf
 *.mcmc
 *.pos
