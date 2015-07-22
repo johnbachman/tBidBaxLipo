@@ -15,4 +15,6 @@ install:
   - pip install matplotlib
   # Install the nose-exclude plugin allowing us to ignore dirs
   - pip install nose-exclude
+  # Patched branch of emcee
+  - pip install git+https://github.com/johnbachman/emcee.git
 script: nosetests --exclude-dir-file=nose_exclude_dirs.txt
