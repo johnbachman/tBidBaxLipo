@@ -1,0 +1,20 @@
+language: python
+python:
+  - "2.7"
+virtualenv:
+  system_site_packages: true
+before_install:
+  - sudo apt-get install python-scipy
+install:
+  - pip install sympy
+  - wget http://bionetgen.googlecode.com/files/BioNetGen-2.2.5-stable.zip
+  - unzip BioNetGen-2.2.5-stable.zip
+  - sudo ln -s `pwd`/BioNetGen-2.2.5-stable /usr/local/share/BioNetGen
+  - pip install git+https://github.com/pysb/pysb.git
+  # Install matplotlib
+  - pip install matplotlib
+  # Install the nose-exclude plugin allowing us to ignore dirs
+  - pip install nose-exclude
+  # Patched branch of emcee
+  - pip install git+https://github.com/johnbachman/emcee.git
+script: nosetests --exclude-dir-file=nose_exclude_dirs.txt --match='^test_*'
