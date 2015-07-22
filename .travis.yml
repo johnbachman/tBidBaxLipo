@@ -17,4 +17,4 @@ install:
   - pip install nose-exclude
   # Patched branch of emcee
   - pip install git+https://github.com/johnbachman/emcee.git
-script: nosetests --exclude-dir-file=nose_exclude_dirs.txt
+script: nosetests --exclude-dir-file=nose_exclude_dirs.txt --match='^test_*'
