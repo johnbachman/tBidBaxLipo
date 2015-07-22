@@ -11,6 +11,8 @@ install:
   - unzip BioNetGen-2.2.5-stable.zip
   - sudo ln -s `pwd`/BioNetGen-2.2.5-stable /usr/local/share/BioNetGen
   - pip install git+https://github.com/pysb/pysb.git
+  # Install matplotlib
+  - pip install matplotlib
   # Install the nose-exclude plugin allowing us to ignore dirs
   - pip install nose-exclude
 script: nosetests --exclude-dir-file=nose_exclude_dirs.txt
