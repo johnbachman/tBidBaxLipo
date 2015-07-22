@@ -34,6 +34,10 @@ if [[ $(hostname) == master ]]; then
     git pull
     git checkout master
 
+    if [ ! -e /data/pysb]; then
+        git clone https://github.com/johnbachman/pysb.git
+    fi
+
     # Make the data dir writeable
     chown -R sgeadmin /data
 fi
@@ -48,10 +52,12 @@ pip install mpi4py
 # Install additional software
 pip install triangle_plot
 pip install ipdb
+pip install pydoe
+pip install pymc
 
 # Install packages for PySB
 pip install sympy
-pip install git+https://github.com/pysb/pysb.git
+#pip install git+https://github.com/pysb/pysb.git
 # Put BNG into the right location for this node
 cp -a /data/BioNetGen-2.2.5-stable/ /usr/local/share/BioNetGen
 
@@ -76,4 +82,7 @@ apt-get install ack-grep
 apt-get install -y texlive
 apt-get install -y texlive-latex-extra
 apt-get install -y dvipng
+apt-get install -y vim-gnome
+apt-get install -y gitk
+apt-get install -y imagemagick
 

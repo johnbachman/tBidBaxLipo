@@ -130,8 +130,6 @@ class Normal():
         Also known as the percent point function. A wrapper around
         scipy.stats.norm.ppf().
         """
-        print self.mean
-        print self.stdev
         return scipy.stats.norm.ppf(percentile, loc=self.mean,
                                     scale=self.stdev)
 

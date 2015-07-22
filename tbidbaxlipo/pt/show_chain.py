@@ -160,7 +160,8 @@ def plot_emcee_fits(gf, sampler, sample=True, burn=None, nsamples=100,
 
         format_axis(ax)
         if plot_filename:
-            save_fig(fig, plot_filename, DISPLAY)
+            obs_plot_filename = '%s.obs%d' % (plot_filename, obs_ix)
+            save_fig(fig, obs_plot_filename, DISPLAY)
 
 def plot_conformations(gf, sampler, sample=True, burn=None, nsamples=100,
                        plot_filename=None):
@@ -269,7 +270,7 @@ if __name__ == '__main__':
     plot_emcee_fits(gf, sampler, burn=None, sample=True,
                     plot_filename=output_base + '.fits')
     print("Plotting conformation timecourses")
-    plot_conformations(gf, sampler, burn=None, sample=True,
-                       plot_filename=output_base + '.confs')
+    #plot_conformations(gf, sampler, burn=None, sample=True,
+    #                   plot_filename=output_base + '.confs')
     #plot_emcee_fits_subplots(gf, sampler)
 

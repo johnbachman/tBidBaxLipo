@@ -4,7 +4,8 @@ from tbidbaxlipo.util import fitting
 import scipy.stats
 import tbidbaxlipo.plots.titration_fits as tf
 
-def calc_err_var(data, last_n_pts=50, fit_type='cubic', plot=False):
+def calc_err_var(data, last_n_pts=50, fit_type='cubic', plot=False,
+                 plot_title=None):
     # Prune the data
     t = np.arange(len(data))
     data_subset = data[-last_n_pts:]
@@ -41,5 +42,9 @@ def calc_err_var(data, last_n_pts=50, fit_type='cubic', plot=False):
         scipy.stats.probplot(residuals, dist='norm', plot=plt)
         plt.title('Quantile-quantile plot vs. normal')
         plt.tight_layout()
+        if plot_title:
+            fig.subplots_adjust(top=0.86)
+            fig.text(0.5, 0.95, plot_title, verticalalignment='top',
+                     horizontalalignment='center')
     return (residuals, fig)
 

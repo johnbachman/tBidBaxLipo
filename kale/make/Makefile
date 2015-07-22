@@ -7,6 +7,7 @@ NBD_DATA := $(DATADIR)/Compiled\ Release\ percentages\ and\ NBD\ F-F0.xlsx \
             $(DATADIR)/parse_bid_bim_nbd_release.py
 NBD_FRET_DATA := $(DATADIR)/2015-02-27\ -\ Bid-Bim\ FRET\ with\ Bax\ NBD\ mutants\ in\ Tb-DPA\ Liposomes\ compiled\ reps+WT\ Bax.xlsx \
                  $(DATADIR)/parse_bid_bim_fret_nbd_release.py
+x140430 := $(CODEDIR)/plots/x140430_Bid_Bax_FRET/mcmc
 #PQUEUE := sorger_par_unlimited
 PQUEUE := parallel
 
@@ -15,7 +16,7 @@ all: nbd_release fret_nbd_release
 clean:
 	rm -f ./*.pdf ./*.png
 
-clean_pt:
+clean_pt_data1:
 	cd $(NBD_MCMC_DIR); rm -f *.md5 *.fit *.deps.txt *.ensemble
 
 deploy:
@@ -36,9 +37,37 @@ FORCE:
 
 .PHONY: clean clean_pt deploy nbd_release fret_nbd_release
 
+# Running this script generates both the dependency list and the .yaml files
+# specifying the fit parameters for each individual model
+%.deps.txt: $(call to-md5, %.fit.ensemble)
+	python -m tbidbaxlipo.pt.generate_model_ensemble_fit_files $(call from-md5, $<)
+
+# In this case, we know that the .fit file exists, since it has been
+# regenerated in the step that regenerated the dependency file. What
+# we care about is whether the hash is any different.
+%.mcmc: $(call to-md5, %.fit)
+	#python -m tbidbaxlipo.pt.compile_models $(call from-md5, $<)
+	#bsub -q $(PQUEUE) -n 10 -W 100:00 -N -o $(call from-md5, $<).out -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1 $(call from-md5, $<).pos
+	#qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err -pe orte 32 mpirun python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos
+
+# Don't delete the .md5 files! Without this rule they are treated as
+# intermediates and deleted.
+.PRECIOUS: %.md5
+
+# -- MCMC Fitting for 140430 Bid/Bax FRET pilot data -------------------
+pt_140430_36C: $(x140430)/pt_140430_36C.deps.txt
+-include $(x140430)/pt_140430_36C.deps.txt
+
+pt_140430_68C: $(x140430)/pt_140430_68C.deps.txt
+-include $(x140430)/pt_140430_68C.deps.txt
+
+pt_140430_126C: $(x140430)/pt_140430_126C.deps.txt
+-include $(x140430)/pt_140430_126C.deps.txt
+
+# -- MCMC Fitting for Dataset 1, complete set of NBD-Bax trajectories --
 pt_data1: pt_data1_deps
 
-# The pt_data1_deps target allows for the dependencies list to be crgated
+# The pt_data1_deps target allows for the dependencies list to be created
 # without running all of the jobs that pt_data1 itself depends on. For example,
 # > make pt_data1_deps
 # then
@@ -53,29 +82,16 @@ $(NBD_MCMC_DIR)/pt_data1.deps.txt: \
     $(NBD_MCMC_DIR)/generate_fit_files_for_nbd_curves.py
 	python $(NBD_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_MCMC_DIR)
 
-# Running this script generates both the dependency list and the .yaml files
-# specifying the fit parameters for each individual model
-%.deps.txt: $(call to-md5, %.fit.ensemble)
-	python -m tbidbaxlipo.pt.generate_model_ensemble_fit_files $(call from-md5, $<)
 
-# In this case, we know that the .fit file exists, since it has been
-# regenerated in the step that regenerated the dependency file. What
-# we care about is whether the hash is any different.
-%.mcmc: $(call to-md5, %.fit)
-	#python -m tbidbaxlipo.pt.compile_models $(call from-md5, $<)
-	bsub -q $(PQUEUE) -n 10 -W 100:00 -N -o $(call from-md5, $<).out -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1 $(call from-md5, $<).pos
-	#qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err -pe orte 32 mpirun python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos
-
-# Don't delete the .md5 files! Without this rule they are treated as
-# intermediates and deleted.
-.PRECIOUS: %.md5
-
+# -- Dataset 1, NBD + Tb release, summary plots ------------------------
 nbd_release: nbd_release_endpts nbd_release_initial_rates
 nbd_release_endpts: \
     data1_release_endpt_norm.pdf data1_release_endpt_no_norm.pdf \
     data1_nbd_endpt_norm.pdf data1_nbd_endpt_no_norm.pdf
 nbd_release_initial_rates: data1_init_nbd_bar.pdf
 
+
+# -- Dataset 2, Bid FRET + NBD + Tb release, summary plots -------------
 fret_nbd_release: fret_nbd_release_endpts fret_nbd_release_initial_rates
 fret_nbd_release_endpts: \
     data2_release_endpt_norm.pdf data2_release_endpt_no_norm.pdf \
@@ -162,6 +178,4 @@ data2_init_nbd_bar.pdf: \
         $(PLOTSDIR)/bid_bim_fret_nbd_release/plots.py \
         $(NBD_FRET_DATA)
 	python -m tbidbaxlipo.plots.bid_bim_fret_nbd_release.plots initial_rate_samples data2
-
-
 

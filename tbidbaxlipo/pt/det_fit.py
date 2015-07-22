@@ -6,14 +6,15 @@ from scipy import optimize
 from pyDOE import lhs # Latin hypercube sampling
 import cPickle
 import glob
+import subprocess
 
 def deterministic_fit(gf, p0, posterior, method='Nelder-Mead', bounds=None):
     res = None
     if method == 'Nelder-Mead':
         # Downhill Simplex or "Nelder-Mead" algorithm
         print("Method: Nelder-Mead/Simplex (default)")
-        res = optimize.fmin(posterior, p0, args=(gf,), maxiter=10000,
-                            maxfun=10000, full_output=True)
+        res = optimize.fmin(posterior, p0, args=(gf,), maxiter=100000,
+                            maxfun=100000, full_output=True)
     elif method == 'BFGS':
         print("Method: BFGS")
         res = optimize.fmin_l_bfgs_b(posterior, p0, args=(gf,), fprime=None,
@@ -41,7 +42,8 @@ def generate_latin_hypercube(gf, num_samples, basename):
             # the percentile value on [0, 1] to an initial value
             percentile = lh[samp_ix, p_ix]
             p0[p_ix] = pr.inverse_cdf(percentile)
-        print("Saving position: %s" % p0)
+        print("Saving position:")
+        print(p0)
         filename = '%s.%dof%d.lhs' % (basename, samp_ix+1, num_samples)
         with open(filename, 'w') as f:
             cPickle.dump(p0, f)
@@ -57,7 +59,7 @@ def fit(gf, p0_filename):
     assert len(gf.priors) == p0.shape[0]
     # Specify the amount by which we tweak the lower and upper bounds to prevent
     # log probabilities of -inf (for use by L-BFGS-B algorithm)
-    epsilon = 0.001
+    epsilon = 0.1
     # Before fitting, get the list of bounds for constrained optimization
     bounds = []
     # For each parameter...
@@ -70,15 +72,20 @@ def fit(gf, p0_filename):
             bounds.append(bounds_tup)
         else:
             bounds.append((None, None))
-            print bounds
     # Run the fit!
+    #res = deterministic_fit(gf, p0, emcee_fit.negative_posterior,
+    #                        method='Nelder-Mead')
     res = deterministic_fit(gf, p0, emcee_fit.negative_posterior,
-                            method='Nelder-Mead', bounds=bounds)
+                            method='BFGS', bounds=bounds)
     # Save the results
     result_filename = '%s.detfit' % os.path.splitext(p0_filename)[0]
     with open(result_filename, 'w') as result_file:
         cPickle.dump((gf, res), result_file)
-    # Return the results for interactive
+    # Display the results
+    print(res)
+    min_post = res[1]
+    print("Minimum posterior: %s" % min_post)
+    # Return the results
     return res
 
 def load_globalfit_from_file(yaml_filename):
@@ -146,7 +153,8 @@ if __name__ == '__main__':
                 raise Exception("No p0 files found!")
             # Iterate over the position files, loading and running each
             for p0_filename in p0_files:
-                fit(gf, p0_filename)
+                res = fit(gf, p0_filename)
+                print res
         elif scheduler == 'qsub':
             # Load the args for the data/model from the YAML file
             yaml_filename = sys.argv[3]
@@ -165,6 +173,7 @@ if __name__ == '__main__':
                              'python', '-m', 'tbidbaxlipo.pt.det_fit', 'fit',
                              yaml_filename, p0_filename]
                 print ' '.join(qsub_args)
+                subprocess.call(qsub_args)
         else:
             raise ValueError()
     else:

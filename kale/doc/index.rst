@@ -13,6 +13,7 @@ Contents:
 
    figures
    bid_bim_nbd_release/index
+   140430_Bid_Bax_FRET/index
    bid_bim_fret_nbd_release/index
 
 Indices and tables
