@@ -7,6 +7,7 @@ import sys
 from os.path import dirname, abspath, join
 import itertools
 import numpy as np
+from tbidbaxlipo.util.calculate_error_variance import calc_err_var
 
 layout = collections.OrderedDict([
         ('Bax 185 nM, Lipos 1 mg/ml',  ['A1']),
@@ -97,10 +98,13 @@ lipo_conc_conv_factor = 15.502 # 1 mg/ml ~= 15.502 nM liposomes
 bg_tc = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][VALUE]
 bg_time = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][TIME]
 lipo_concs_to_fit = []
-lipo_mgs_to_fit = [1., 0.5, 0.25, 0.125, 0.063, 0.031, 0.016, 0.008, 0]
+lipo_mgs_to_fit = [1., 0.5, 0.25, 0.125, 0.063, 0.031, 0.016, 0.008]
 # Initialize numpy data matrix
 data_to_fit = np.zeros((len(lipo_mgs_to_fit), 1, len(bg_time)))
+# Initialize matrix of experimental error values
 conc_index = 0
+data_sigma = np.zeros((len(lipo_mgs_to_fit), 1))
+plt.ion()
 for conc_name in bgsub_averages.keys():
     lipo_mg = float(conc_name.split()[4])
     if not lipo_mg in lipo_mgs_to_fit:
@@ -110,8 +114,9 @@ for conc_name in bgsub_averages.keys():
     v = bgsub_averages[conc_name][VALUE]
     v_bg = v / bg_tc
     data_to_fit[conc_index, 0, :] = v_bg
+    (residuals, fig) = calc_err_var(v_bg, last_n_pts=200, fit_type='quadratic',
+                                    plot=False)
+    data_sigma[conc_index, 0] = np.std(residuals, ddof=1)
     conc_index += 1
 lipo_concs_to_fit = np.array(lipo_concs_to_fit)
 
-# Variable containing estimate of experimental error
-data_sigma = np.array([[0.1]] * len(lipo_mgs_to_fit))
