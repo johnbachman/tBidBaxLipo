@@ -104,8 +104,11 @@ class GlobalFit(object):
         builder.global_params for the parameters that are to be fit globally.
     time : np.array
         The time vector.
-    data : list of np.array
-        The experimental timecourses to fit.
+    data : Three-dimensional np.array
+        The experimental timecourses to fit.  The first dimension corresponds
+        to the number of experimental conditions; the second dimension
+        corresponds to the number of observables (in a given timecourse set);
+        the third dimension corresponds to the timepoints.
     data_sigma : np.array
         Array of values with dimension corresponding to data indicating the
         standard deviation of the data.
@@ -475,18 +478,19 @@ def ens_mpi_sample(gf, nwalkers, burn_steps, sample_steps, pos=None,
 
 def pt_mpi_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                   pool=None, betas=None, pos=None, random_state=None,
-                  pos_filename=None):
+                  pos_filename=None, convergence_interval=50):
     pool = MPIPool(loadbalance=True)
     if not pool.is_master():
         pool.wait()
         sys.exit(0)
     return pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps,
                      thin=thin, pool=pool, betas=betas, pos=pos,
-                     random_state=random_state, pos_filename=pos_filename)
+                     random_state=random_state, pos_filename=pos_filename,
+                     convergence_interval=convergence_interval)
 
 def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
               pool=None, betas=None, pos=None, random_state=None,
-              pos_filename=None):
+              pos_filename=None, convergence_interval=50):
     """Samples from the posterior function.
 
     The emcee sampler containing the chain is stored in gf.sampler.
@@ -563,7 +567,6 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
     else:
         print "Burn in sampling..."
         nstep = 0
-        convergence_interval = 50
         done = False
         last_ti = None
         print_interval = 1
@@ -576,8 +579,19 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         # sampler in small rounds like this reduces the amount of memory
         # needed to just enough to store the chain for 1 round.
         while not done:
+            if (burn_steps - nstep) < convergence_interval:
+                num_iterations = burn_steps - nstep
+            else:
+                num_iterations = convergence_interval
+            # Don't run again if we've already run more than the prescribed number of
+            # burn in steps
+            if num_iterations <= 0:
+                break;
             for p, lnprob, lnlike in sampler.sample(cur_start_position,
-                            iterations=convergence_interval, storechain=True):
+                            iterations=num_iterations, storechain=True):
+                # Increase the step counter by 1 since by the time we've gotten here
+                # we've run an iteration of the sampler
+                nstep += 1
                 if nstep % print_interval == 0:
                     print("nstep %d of %d, MAP: %f, mean post %f" %
                          (nstep, burn_steps, np.max(lnprob[0]),
@@ -595,11 +609,6 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                 (last_ti, last_ti_err) = \
                             sampler.thermodynamic_integration_log_evidence()
                 print "-- Initial TI value: %f, %f" % (last_ti, last_ti_err)
-                continue
-            # Have we gone over the maximum number of burn-in steps?
-            # If so, we're done
-            if nstep >= burn_steps:
-                done = True
             else:
                 (cur_ti, cur_ti_err) = \
                             sampler.thermodynamic_integration_log_evidence()
@@ -627,6 +636,9 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         for p, lnprob, lnlike in sampler.sample(p, lnprob0=lnprob,
                                      lnlike0=lnlike,
                                      iterations=sample_steps, thin=thin):
+            # Increase the step counter by 1 since by the time we've gotten here
+            # we've run an iteration of the sampler
+            nstep += 1
             if nstep % 5 == 0:
                 print "nstep %d of %d, MAP: %f, mean post %f" % \
                      (nstep, burn_steps, np.max(lnprob[0]), np.mean(lnprob[0]))
@@ -636,7 +648,6 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                 with open(pos_filename, 'w') as f:
                     rs = np.random.get_state()
                     cPickle.dump((p, rs), f)
-            nstep += 1
         (final_ti, final_ti_err) = \
                 sampler.thermodynamic_integration_log_evidence()
         print("-- Final TI: %f, %f --" % (final_ti, final_ti_err))

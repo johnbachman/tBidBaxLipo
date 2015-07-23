@@ -5,16 +5,23 @@ virtualenv:
   system_site_packages: true
 before_install:
   - sudo apt-get install python-scipy
+  #- sudo apt-get install libhdf5-serial-dev # headers for h5py
+  - sudo apt-get install openmpi-bin openmpi-dev
 install:
   - pip install sympy
   - wget http://bionetgen.googlecode.com/files/BioNetGen-2.2.5-stable.zip
   - unzip BioNetGen-2.2.5-stable.zip
   - sudo ln -s `pwd`/BioNetGen-2.2.5-stable /usr/local/share/BioNetGen
   - pip install git+https://github.com/pysb/pysb.git
-  # Install matplotlib
+  # Misc dependencies
   - pip install matplotlib
+  - pip install pyyaml
+  - pip install mpi4py
+  - pip install pandas
+  #- pip install cython # needed by h5py
+  #- pip install h5py
   # Install the nose-exclude plugin allowing us to ignore dirs
-  - pip install nose-exclude
+  #- pip install nose-exclude
   # Patched branch of emcee
   - pip install git+https://github.com/johnbachman/emcee.git
-script: nosetests --exclude-dir-file=nose_exclude_dirs.txt --match='^test_*'
+script: ./run_tests.sh

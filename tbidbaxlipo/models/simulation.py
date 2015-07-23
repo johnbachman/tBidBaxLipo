@@ -2,7 +2,7 @@ from pysb import bng, kappa
 import sys
 import numpy as np
 import pickle
-from tbidbaxlipo.models import one_cpt, n_cpt, site_cpt
+from tbidbaxlipo.models import one_cpt, n_cpt
 from pysb.integrate import Solver
 import collections
 import subprocess
