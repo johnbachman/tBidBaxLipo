@@ -15,17 +15,15 @@ complexity, macros implementing tBid/Bax interactions are implemented here in a
 generic way (e.g.,
 :py:meth:`tbidbaxlipo.models.core.Builder.tBid_activates_Bax`); if
 compartment-specific modifications are necessary, these functions are overriden
-in child classes (e.g.,
-:py:meth:`tbidbaxlipo.models.site_cpt.Builder.tBid_activates_Bax`).
+in child classes.
 
 The model builder classes contained in this file and also in
-:py:mod:`tbidbaxlipo.models.one_cpt`, :py:mod:`tbidbaxlipo.models.n_cpt`, and
-:py:mod:`tbidbaxlipo.models.site_cpt`, are used to manage the process of
-building up alternative models. Each of these modules contains a class
-`Builder` that contains an instance of a PySB model. The classes also contain a
-series of methods implementing small sub-pieces of mechanism that can be termed
-"motifs". These motifs can be recombined in different ways to create different
-models.
+:py:mod:`tbidbaxlipo.models.one_cpt` and :py:mod:`tbidbaxlipo.models.n_cpt` are
+used to manage the process of building up alternative models. Each of these
+modules contains a class `Builder` that contains an instance of a PySB model.
+The classes also contain a series of methods implementing small sub-pieces of
+mechanism that can be termed "motifs". These motifs can be recombined in
+different ways to create different models.
 
 Individual mechanisms implemented
 =================================
