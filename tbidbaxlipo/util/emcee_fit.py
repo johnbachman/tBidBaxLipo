@@ -583,8 +583,15 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                 num_iterations = burn_steps - nstep
             else:
                 num_iterations = convergence_interval
+            # Don't run again if we've already run more than the prescribed number of
+            # burn in steps
+            if num_iterations <= 0:
+                break;
             for p, lnprob, lnlike in sampler.sample(cur_start_position,
                             iterations=num_iterations, storechain=True):
+                # Increase the step counter by 1 since by the time we've gotten here
+                # we've run an iteration of the sampler
+                nstep += 1
                 if nstep % print_interval == 0:
                     print("nstep %d of %d, MAP: %f, mean post %f" %
                          (nstep, burn_steps, np.max(lnprob[0]),
@@ -602,11 +609,6 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                 (last_ti, last_ti_err) = \
                             sampler.thermodynamic_integration_log_evidence()
                 print "-- Initial TI value: %f, %f" % (last_ti, last_ti_err)
-                continue
-            # Have we gone over the maximum number of burn-in steps?
-            # If so, we're done
-            if nstep >= burn_steps:
-                done = True
             else:
                 (cur_ti, cur_ti_err) = \
                             sampler.thermodynamic_integration_log_evidence()
@@ -634,6 +636,9 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
         for p, lnprob, lnlike in sampler.sample(p, lnprob0=lnprob,
                                      lnlike0=lnlike,
                                      iterations=sample_steps, thin=thin):
+            # Increase the step counter by 1 since by the time we've gotten here
+            # we've run an iteration of the sampler
+            nstep += 1
             if nstep % 5 == 0:
                 print "nstep %d of %d, MAP: %f, mean post %f" % \
                      (nstep, burn_steps, np.max(lnprob[0]), np.mean(lnprob[0]))
@@ -643,7 +648,6 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                 with open(pos_filename, 'w') as f:
                     rs = np.random.get_state()
                     cPickle.dump((p, rs), f)
-            nstep += 1
         (final_ti, final_ti_err) = \
                 sampler.thermodynamic_integration_log_evidence()
         print("-- Final TI: %f, %f --" % (final_ti, final_ti_err))
