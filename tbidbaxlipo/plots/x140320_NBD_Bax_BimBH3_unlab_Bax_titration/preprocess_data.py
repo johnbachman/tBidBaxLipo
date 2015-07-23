@@ -7,6 +7,7 @@ import tbidbaxlipo.data
 from tbidbaxlipo.util.plate_assay import read_flexstation_kinetics, averages, \
                                          extract, subtract_background_set, \
                                          TIME, VALUE
+from tbidbaxlipo.util.calculate_error_variance import calc_err_var
 
 layout = collections.OrderedDict([
         ('Bax 590 nM, NBD-Bax 96 nM',  ['A1', 'B1']),
@@ -101,14 +102,22 @@ bgsub_wells = subtract_background_set(nbd_wells, bax_bg_wells)
 #shifted to t = 0.
 #reset_bgsub_sds = reset_first_timepoint_to_zero(bgsub_norm_stds)
 
+# Get the time vector
+time = bgsub_wells['Bax 0 nM, NBD-Bax 96 nM'][TIME]
+# Initialize numpy data matrix
+data_to_fit = np.zeros((len(bgsub_wells.keys()), 1, len(time)))
+# Initialize matrix of experimental error values
+data_sigma = np.zeros((len(bgsub_wells.keys()), 1))
+conc_index = 0
 # Normalize data by the initial values
 bax_concs_to_fit = []
-data_to_fit = []
-nbd_bax_conc = 96.
 for conc_name in bgsub_wells.keys():
     bax_concs_to_fit.append(float(conc_name.split(' ')[1]))
-    time = bgsub_wells[conc_name][TIME]
     y = bgsub_wells[conc_name][VALUE]
     y = y / np.mean(y[0:2])
-    data_to_fit.append(y)
-bax_concs_to_fit = np.array(bax_concs_to_fit) + nbd_bax_conc
+    data_to_fit[conc_index, 0, :] = y
+    (residuals, fig) = calc_err_var(y, last_n_pts=200, fit_type='quadratic',
+                                    plot=False)
+    data_sigma[conc_index, 0] = np.std(residuals, ddof=1)
+    conc_index += 1
+nbd_bax_conc = 96.
