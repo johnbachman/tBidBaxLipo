@@ -1,6 +1,7 @@
+import os
 from tbidbaxlipo.pt import run_pt
 
-fit_dict = {
+pt_args = {
     'data': {
         'module': 'tbidbaxlipo.plots.x140318_Bax_liposome_titration.preprocess_data',
         'data_var': 'data_to_fit',
@@ -13,7 +14,7 @@ fit_dict = {
         'activation': 1,
         'nbd': 1,
     },
-    'model_observable': 'NBD',
+    'model_observable': ['NBD'],
     'global_initial_conditions': {
         'tBid_0': 0,
         'c0_scaling': 1.0,
@@ -22,13 +23,18 @@ fit_dict = {
     'local_initial_condition': 'Vesicles_0',
     'global_params': 'all',
     'local_params': [],
-    'ntemps': 3,
+    'ntemps': 2,
     'highest_temp': -2,
-    'nwalkers': 50,
+    'nwalkers': 10,
     'nburnin': 1,
     'nsample': 1,
     'thin': 1,
 }
 
 def test_run_pt():
-    run_pt.run(fit_dict)
+    run_pt.run(pt_args, 'test.mcmc', 1, 'test.pos', mpi=False)
+    # Clean up
+    if os.path.isfile('test.mcmc'):
+        os.unlink('test.mcmc')
+    if os.path.isfile('test.pos'):
+        os.unlink('test.pos')
