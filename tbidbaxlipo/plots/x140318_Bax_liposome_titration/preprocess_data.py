@@ -104,7 +104,6 @@ data_to_fit = np.zeros((len(lipo_mgs_to_fit), 1, len(bg_time)))
 # Initialize matrix of experimental error values
 conc_index = 0
 data_sigma = np.zeros((len(lipo_mgs_to_fit), 1))
-plt.ion()
 for conc_name in bgsub_averages.keys():
     lipo_mg = float(conc_name.split()[4])
     if not lipo_mg in lipo_mgs_to_fit:
