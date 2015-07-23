@@ -109,3 +109,6 @@ for conc_name in bgsub_averages.keys():
     v_bg = v / bg_tc
     data_to_fit.append(v_bg)
 lipo_concs_to_fit = np.array(lipo_concs_to_fit)
+
+# Variable containing estimate of experimental error
+data_sigma = [0.1]

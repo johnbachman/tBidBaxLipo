@@ -1,14 +1,15 @@
-from tbidbaxlipo.pt.run_pt import run
+from tbidbaxlipo.pt import run_pt
 
 fit_dict = {
     'data': {
         'module': 'tbidbaxlipo.plots.x140318_Bax_liposome_titration.preprocess_data',
         'data_var': 'data_to_fit',
+        'data_sigma_var': 'data_sigma',
         'initial_condition_var': 'lipo_concs_to_fit',
         'time_var': 'bg_time',
     },
     'model': {
-        'translocation': 1,
+        'baxtranslocation': 1,
         'activation': 1,
         'nbd': 1,
     },
@@ -29,4 +30,5 @@ fit_dict = {
     'thin': 1,
 }
 
-run(fit_dict)
+def test_run_pt():
+    run_pt.run(fit_dict)
