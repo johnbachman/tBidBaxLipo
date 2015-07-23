@@ -42,7 +42,6 @@ def test_run_pt():
         os.unlink('test.mcmc')
     if os.path.isfile('test.pos'):
         os.unlink('test.pos')
-    globals().update(locals())
 
 def test_ysim_nans():
     """This test is here because I accidentally set Bax_0, rather than
