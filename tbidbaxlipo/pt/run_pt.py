@@ -5,7 +5,7 @@ import os
 from tbidbaxlipo.util import emcee_fit
 import numpy as np
 
-def run(args):
+def run(args, mpi=True):
     """Takes dict of args and initializes PT run.
 
     The args can come from a YAML file or be passed in by a script.
@@ -38,15 +38,16 @@ def run(args):
               pos_filename)
         pos = None
 
-    sampler = emcee_fit.pt_mpi_sample(gf,
-                                      ntemps,
-                                      args['nwalkers'],
-                                      args['nburnin'],
-                                      args['nsample'],
-                                      thin=args['thin'],
-                                      betas=betas,
-                                      pos_filename=pos_filename,
-                                      pos=pos)
+    # Call the appropriate sampling func depending on whether we're using
+    # MPI
+    if mpi:
+        sample_func = emcee_fit.pt_mpi_sample
+    else:
+        sample_func = emcee_fit.pt_sample
+    sampler = sample_func(gf, ntemps, args['nwalkers'], args['nburnin'],
+                          args['nsample'], thin=args['thin'], betas=betas,
+                          pos_filename=pos_filename, pos=pos)
+
     # After sampling, get rid of the pool so we can pickle the sampler
     sampler.pool = None
 
@@ -73,4 +74,4 @@ if __name__ == '__main__':
     with open(sys.argv[1]) as yaml_file:
         args = yaml.load(yaml_file)
 
-    run(args)
+    run(args, mpi=True)
