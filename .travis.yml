@@ -5,15 +5,17 @@ virtualenv:
   system_site_packages: true
 before_install:
   - sudo apt-get install python-scipy
+  - sudo apt-get install libhdf5-dev # headers for h5py
 install:
   - pip install sympy
   - wget http://bionetgen.googlecode.com/files/BioNetGen-2.2.5-stable.zip
   - unzip BioNetGen-2.2.5-stable.zip
   - sudo ln -s `pwd`/BioNetGen-2.2.5-stable /usr/local/share/BioNetGen
   - pip install git+https://github.com/pysb/pysb.git
-  # Install matplotlib
+  # Misc dependencies
   - pip install matplotlib
   - pip install pyyaml
+  - pip install cython # needed by h5py
   - pip install h5py
   # Install the nose-exclude plugin allowing us to ignore dirs
   - pip install nose-exclude
