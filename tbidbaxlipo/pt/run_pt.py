@@ -5,17 +5,11 @@ import os
 from tbidbaxlipo.util import emcee_fit
 import numpy as np
 
-if __name__ == '__main__':
-    # Parameters for the job are specified in a YAML file, which should be
-    # provided as an argument.
-    # Check that a path to a YAML file was provided
-    if len(sys.argv) < 4:
-        print("Usage: %s yaml_file random_seed pos_filename" % __file__)
-        sys.exit()
+def run(args):
+    """Takes dict of args and initializes PT run.
 
-    # Load the args from the YAML file
-    with open(sys.argv[1]) as yaml_file:
-        args = yaml.load(yaml_file)
+    The args can come from a YAML file or be passed in by a script.
+    """
 
     gf = emcee_fit.global_fit_from_args(args)
 
@@ -67,3 +61,16 @@ if __name__ == '__main__':
     # Done
     sys.exit()
 
+if __name__ == '__main__':
+    # Parameters for the job are specified in a YAML file, which should be
+    # provided as an argument.
+    # Check that a path to a YAML file was provided
+    if len(sys.argv) < 4:
+        print("Usage: %s yaml_file random_seed pos_filename" % __file__)
+        sys.exit()
+
+    # Load the args from the YAML file
+    with open(sys.argv[1]) as yaml_file:
+        args = yaml.load(yaml_file)
+
+    run(args)
