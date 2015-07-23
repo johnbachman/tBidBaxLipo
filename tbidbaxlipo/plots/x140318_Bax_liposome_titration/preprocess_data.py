@@ -96,9 +96,11 @@ shifted to t = 0."""
 lipo_conc_conv_factor = 15.502 # 1 mg/ml ~= 15.502 nM liposomes
 bg_tc = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][VALUE]
 bg_time = bgsub_averages['Bax 185 nM, Lipos 0 mg/ml'][TIME]
-data_to_fit = []
 lipo_concs_to_fit = []
 lipo_mgs_to_fit = [1., 0.5, 0.25, 0.125, 0.063, 0.031, 0.016, 0.008, 0]
+# Initialize numpy data matrix
+data_to_fit = np.zeros((len(lipo_mgs_to_fit), 1, len(bg_time)))
+conc_index = 0
 for conc_name in bgsub_averages.keys():
     lipo_mg = float(conc_name.split()[4])
     if not lipo_mg in lipo_mgs_to_fit:
@@ -107,8 +109,9 @@ for conc_name in bgsub_averages.keys():
     t = bgsub_averages[conc_name][TIME]
     v = bgsub_averages[conc_name][VALUE]
     v_bg = v / bg_tc
-    data_to_fit.append(v_bg)
+    data_to_fit[conc_index, 0, :] = v_bg
+    conc_index += 1
 lipo_concs_to_fit = np.array(lipo_concs_to_fit)
 
 # Variable containing estimate of experimental error
-data_sigma = [0.1]
+data_sigma = np.array([[0.1]] * len(lipo_mgs_to_fit))
