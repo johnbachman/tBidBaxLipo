@@ -14,6 +14,7 @@ install:
   # Install matplotlib
   - pip install matplotlib
   - pip install pyyaml
+  - pip install h5py
   # Install the nose-exclude plugin allowing us to ignore dirs
   - pip install nose-exclude
   # Patched branch of emcee
