@@ -13,6 +13,7 @@ install:
   - pip install git+https://github.com/pysb/pysb.git
   # Install matplotlib
   - pip install matplotlib
+  - pip install yaml
   # Install the nose-exclude plugin allowing us to ignore dirs
   - pip install nose-exclude
   # Patched branch of emcee
