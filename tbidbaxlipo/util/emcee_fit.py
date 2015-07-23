@@ -104,8 +104,11 @@ class GlobalFit(object):
         builder.global_params for the parameters that are to be fit globally.
     time : np.array
         The time vector.
-    data : list of np.array
-        The experimental timecourses to fit.
+    data : Three-dimensional np.array
+        The experimental timecourses to fit.  The first dimension corresponds
+        to the number of experimental conditions; the second dimension
+        corresponds to the number of observables (in a given timecourse set);
+        the third dimension corresponds to the timepoints.
     data_sigma : np.array
         Array of values with dimension corresponding to data indicating the
         standard deviation of the data.
