@@ -62,7 +62,8 @@ class Builder(core.Builder):
     def translocate_Bax(self):
         print("lipo_sites: translocate_Bax()")
 
-        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
+        Bax_transloc_kf = self.parameter('Bax_transloc_kf',
+                            1e-2 / float(self['sites_per_liposome'].value),
                             prior=Normal(-3, 1))
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1,
                             prior=Normal(-3, 1))
