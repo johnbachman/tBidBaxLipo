@@ -263,7 +263,7 @@ class Builder(pysb.builder.Builder):
         Must be called after the child class constructor has initialized the
         list of compartments.
         """
-        tBid = self.monomer('tBid', ['bh3', 'conf', 'cpt'],
+        tBid = self.monomer('tBid', ['bh3', 'conf', 'cpt', 'lipo'],
                      {'conf': ['aq', 'mem'],
                       'cpt':  ['sol'] + self.cpt_list})
         Bax = self.monomer('Bax',
@@ -272,11 +272,12 @@ class Builder(pysb.builder.Builder):
                       'cpt': ['sol'] + self.cpt_list,
                       'pore': ['y', 'n'],
                       'dye': ['none', 'nbd', 'dac']})
-        Vesicles = self.monomer('Vesicles', ['bax'])
+        Vesicles = self.monomer('Vesicles', ['bax', 'bid'])
         Pores = self.monomer('Pores', ['cpt'], {'cpt':self.cpt_list})
 
-        self.initial(tBid(cpt='sol', conf='aq', bh3=None), self['tBid_0'])
-        self.initial(Vesicles(bax=None), self['Vesicles_0'])
+        self.initial(tBid(cpt='sol', conf='aq', bh3=None, lipo=None),
+                     self['tBid_0'])
+        self.initial(Vesicles(bax=None, bid=None), self['Vesicles_0'])
 
         # Initial condition for WT-Bax
         self.initial(Bax(cpt='sol', conf='aq', bh3=None, a6=None,
@@ -497,7 +498,7 @@ class Builder(pysb.builder.Builder):
 
         assert len(self.cpt_list) != 0
         if len(self.cpt_list) > 1:
-            # In a multi-compartment situation, we to rescale the forward
+            # In a multi-compartment situation, we need to rescale the forward
             # translocation rate by the stochastic scaling factor
             Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
                                           prior=Normal(-3, 1),

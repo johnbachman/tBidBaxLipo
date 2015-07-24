@@ -6,32 +6,32 @@ from tbidbaxlipo.util import color_iter
 from tbidbaxlipo.models import one_cpt, core
 from matplotlib.font_manager import FontProperties
 from pysb.integrate import odesolve, Solver
-from tbidbaxlipo.priors import Normal
+from tbidbaxlipo.priors import Normal, UniformLinear
 
 Solver._use_inline = True
 
-class Builder(one_cpt.Builder):
+class Builder(core.Builder):
 
     def __init__(self, params_dict=None, nbd_sites=None):
         """Differs from one_cpt.__init__ only in that it allows the
         concentration of vesicles, Vesicles_0, to be estimated."""
         # Sets self.model = Model(), and self.param_dict
-        core.Builder.__init__(self, params_dict=params_dict)
-
-        self.declare_monomers()
+        super(Builder, self).__init__(params_dict=params_dict)
 
         # COMPARTMENTS
-        solution = self.compartment('solution', dimension=3, parent=None)
-        self.compartment('ves', dimension=2, parent=solution)
+        self.cpt_list = ['ves']
 
-        # INITIAL CONDITIONS
-        self.parameter('Vesicles_0', 20, prior=Normal(1., 2.))
+        # By default, these parameters are not estimated
+        self.parameter('lipo_concentration', 5)
         self.parameter('tBid_0', 20, prior=None)
         self.parameter('Bax_0', 100, prior=None)
+        self.parameter('sites_per_liposome', 10., prior=UniformLinear(0, 3))
+        self.expression('Vesicles_0',
+                        self['lipo_concentration'] * self['sites_per_liposome'])
 
-        tBid = self['tBid']
-        Bax = self['Bax']
-        Vesicles = self['Vesicles']
+    def temp(self):
+        # Call the lipo-sites-specific implementation of declare_components
+        self.declare_components()
 
         self.initial(tBid(loc='c', bh3=None) ** solution, self['tBid_0'])
         self.initial(Bax(loc='c', bh3=None, a6=None, lipo=None,
