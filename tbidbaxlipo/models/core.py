@@ -1097,8 +1097,14 @@ class Builder(pysb.builder.Builder):
             if implementation == 0:
                 continue
             # Build up a useful string notation for the model features
-            model_string += feature[0].upper() + feature[1:5] + \
-                            str(implementation)
+            if feature == 'builder':
+                if implementation == 'one_cpt':
+                    model_string += '1c_'
+                elif implementation == 'lipo_sites':
+                    model_string += 'ls_'
+            else:
+                model_string += feature[0].upper() + feature[1:5] + \
+                                str(implementation)
             # Call the appropriate model macros based on the dict entries
             # Builder feature
             if feature == 'builder':

@@ -39,8 +39,8 @@ def generate_files(args, basename):
             if 'bidtranslocation' in m and 'activation' in m and \
                m['activation'] == 1 and m['bidtranslocation'] != 0:
                 continue
-            # If we're monitoring NBD as resulting from a dimer, but dimerization
-            # doesn't happen, then we'll get nothing
+            # If we're monitoring NBD as resulting from a dimer, but
+            # dimerization doesn't happen, then we'll get nothing
             if 'nbd' in m and 'dimerization' in m and \
                (m['nbd'] == 2 or m['nbd'] == 3 or m['nbd'] == 4) and \
                m['dimerization'] == 0:
@@ -51,11 +51,13 @@ def generate_files(args, basename):
                 m['nbd'] == 4 and m['activation'] == 1:
                 continue
             # If Bid FRET involves a complex of tBid with both mBax and iBax
-            # (implementation 2) then make sure we have three-step activation, which
-            # allows tBid to bind to iBax
+            # (implementation 2) then make sure we have three-step activation,
+            # which allows tBid to bind to iBax
             if 'bidfret' in m and 'activation' in m and \
                m['bidfret'] == 2 and not m['activation'] == 3:
                 continue
+            # It doesn't matter which builder is instantiated here because
+            # the build_model_from_dict function is in the superclass, core.
             bd = one_cpt.Builder()
             bd.build_model_from_dict(m)
             model_name = bd.model.name
