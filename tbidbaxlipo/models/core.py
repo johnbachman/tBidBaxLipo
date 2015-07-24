@@ -1068,17 +1068,18 @@ class Builder(pysb.builder.Builder):
 
     def build_model_from_dict(self, model_dict):
         model_attribute_sort_order = {
-            'bidtranslocation': 0,
-            'baxtranslocation': 1,
-            'activation': 2,
-            'reversal': 3,
-            'autoactivation': 4,
-            'dimerization': 5,
-            'nbd': 6,
-            'bidfret': 7,
-            'baxfret': 8,
-            'bleach': 9,
-            'timeoffset': 10,
+            'builder': 0,
+            'bidtranslocation': 1,
+            'baxtranslocation': 2,
+            'activation': 3,
+            'reversal': 4,
+            'autoactivation': 5,
+            'dimerization': 6,
+            'nbd': 7,
+            'bidfret': 8,
+            'baxfret': 9,
+            'bleach': 10,
+            'timeoffset': 11,
         }
         model_string = ''
 
@@ -1099,8 +1100,15 @@ class Builder(pysb.builder.Builder):
             model_string += feature[0].upper() + feature[1:5] + \
                             str(implementation)
             # Call the appropriate model macros based on the dict entries
+            # Builder feature
+            if feature == 'builder':
+                # We don't have to do anything here because this builder to
+                # use should have already been figured out earlier. However,
+                # here we can make sure that the builder used goes into the
+                # model name
+                pass
             # Bax translocation
-            if feature == 'baxtranslocation':
+            elif feature == 'baxtranslocation':
                 if implementation == 1:
                     self.translocate_Bax()
                 else:
