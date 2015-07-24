@@ -6,25 +6,27 @@ import numpy as np
 
 pt_args = {
     'data': {
-        'module': 'tbidbaxlipo.plots.x140318_Bax_liposome_titration.' \
+        'module': 'tbidbaxlipo.plots.x140320_NBD_Bax_BimBH3_unlab_Bax_titration.' \
                   'preprocess_data',
         'data_var': 'data_to_fit',
         'data_sigma_var': 'data_sigma',
-        'initial_condition_var': 'lipo_concs_to_fit',
-        'time_var': 'bg_time',
+        'initial_condition_var': 'bax_concs_to_fit',
+        'time_var': 'time',
     },
     'model': {
         'baxtranslocation': 1,
         'activation': 1,
         'nbd': 1,
+        'bleach': 1,
     },
-    'model_observable': ['NBD'],
+    'model_observable': ['NBD_bleach'],
     'global_initial_conditions': {
-        'tBid_0': 0,
-        'c0_scaling': 1.0,
-        'Bax_NBD_0': 185.0,
+        'tBid_0': 0.,
+        'c0_scaling': 1.,
+        'Bax_NBD_0': 96.,
+        'Vesicles_0': 1.9,
     },
-    'local_initial_condition': 'Vesicles_0',
+    'local_initial_condition': 'Bax_0',
     'global_params': 'all',
     'local_params': [],
     'ntemps': 2,
@@ -43,16 +45,6 @@ def test_run_pt():
     if os.path.isfile('test.pos'):
         os.unlink('test.pos')
 
-def test_ysim_nans():
-    """This test is here because I accidentally set Bax_0, rather than
-    Bax_NBD_0, as my initial condition. This led to division by 0, and caused
-    the solver results to be filled with NaNs. This checks to make sure that
-    the model can be run with these arguments without yielding NaNs."""
-    gf = global_fit_from_args(pt_args)
-    gf.solver.run()
-    ok_(not np.any(np.isnan(gf.solver.yexpr['NBD'])))
-
 if __name__ == '__main__':
-    test_ysim_nans()
     test_run_pt()
 
