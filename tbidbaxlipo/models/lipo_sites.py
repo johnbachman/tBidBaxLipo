@@ -29,6 +29,8 @@ class Builder(core.Builder):
         self.expression('Vesicles_0',
                         self['lipo_concentration'] * self['sites_per_liposome'])
 
+        self.declare_components()
+
     def temp(self):
         # Call the lipo-sites-specific implementation of declare_components
         self.declare_components()
@@ -61,20 +63,24 @@ class Builder(core.Builder):
         print("lipo_sites: translocate_Bax()")
 
         Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
-                            prior=Normal(-2, 2))
+                            prior=Normal(-3, 1))
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1,
-                            prior=Normal(-1, 2))
+                            prior=Normal(-3, 1))
 
-        Bax = self['Bax']
+        Bax_mono = self['Bax'](bh3=None, a6=None)
         Vesicles = self['Vesicles']
-        solution = self['solution']
-        ves = self['ves']
 
-        self.rule('Bax_translocates_sol_to_ves',
-             Bax(loc='c', lipo=None) ** solution +
-             Vesicles(bax=None) ** solution <>
-             Bax(loc='m', lipo=1) ** ves % Vesicles(bax=1) ** solution,
-             Bax_transloc_kf, Bax_transloc_kr)
+        cpt_name = self.cpt_list[0]
+        self.rule('Bax_mono_translocates_sol_to_%s' % cpt_name,
+             Bax_mono(cpt='sol', conf='aq', lipo=None) + Vesicles(bax=None) >>
+             Bax_mono(cpt=cpt_name, conf='mem', lipo=1) % Vesicles(bax=1),
+             Bax_transloc_kf)
+        self.rule('Bax_mono_translocates_%s_to_sol' % cpt_name,
+             Bax_mono(cpt=cpt_name, conf='mem', pore='n', lipo=1) %
+             Vesicles(bax=1) >>
+             Bax_mono(cpt='sol', conf='aq', pore='n', lipo=None) +
+             Vesicles(bax=None),
+             Bax_transloc_kr)
 
     def basal_Bax_activation_nonsat(self, reversible=False):
         print "lipo_sites: basal_Bax_activation=%s" % reversible
