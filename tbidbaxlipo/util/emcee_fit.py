@@ -9,7 +9,7 @@ import sys
 from scipy.stats import pearsonr
 import cPickle
 import warnings
-from tbidbaxlipo.models import one_cpt
+from tbidbaxlipo.models import one_cpt, lipo_sites
 from tbidbaxlipo.models.nbd import multiconf
 
 def posterior(position, gf):
@@ -780,6 +780,12 @@ def global_fit_from_args(args):
         nbd_f0 = data_module.__dict__[data_args['nbd_f0']]
         bd.build_model_multiconf(num_confs, nbd_f0, nbd_lbound, nbd_ubound,
                                  normalized_data=norm_data, reversible=False)
+    # Check the builder: one_cpt or lipo_sites
+    elif 'builder' in args['model'] and \
+         args['model']['builder'] == 'lipo_sites':
+        bd = lipo_sites.Builder()
+        bd.build_model_from_dict(args['model'])
+    # If the builder is one_cpt or is not specified
     else:
         bd = one_cpt.Builder()
         bd.build_model_from_dict(args['model'])
