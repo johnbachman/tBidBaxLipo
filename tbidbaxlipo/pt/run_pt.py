@@ -57,7 +57,8 @@ if __name__ == '__main__':
     # provided as an argument.
     # Check that a path to a YAML file was provided
     if len(sys.argv) < 4:
-        print("Usage: %s yaml_file random_seed pos_filename" % __file__)
+        print("Usage: %s yaml_file random_seed pos_filename [opt: nompi]" % \
+               __file__)
         sys.exit()
 
     # Load the args from the YAML file
@@ -72,5 +73,5 @@ if __name__ == '__main__':
     # Get the random seed and the filename to pickle the current position to
     random_seed = int(sys.argv[2])
     pos_filename = sys.argv[3]
-
-    run(args, mcmc_filename, random_seed, pos_filename, mpi=True)
+    use_mpi = False if 'nompi' in sys.argv else True
+    run(args, mcmc_filename, random_seed, pos_filename, mpi=use_mpi)
