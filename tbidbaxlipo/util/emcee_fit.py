@@ -335,7 +335,7 @@ class GlobalFit(object):
         if self.params is not None:
             for p_name, values in self.params.iteritems():
                 p = self.builder.model.parameters[p_name]
-                p.value = values[data_ix]
+                p.value = values[cond_ix]
         # Fill in the time offset, if there is one
         if timeoffset:
             self.solver.tspan = np.insert(self.time, 0, -timeoffset)
