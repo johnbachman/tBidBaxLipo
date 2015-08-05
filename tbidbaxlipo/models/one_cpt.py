@@ -95,6 +95,7 @@ class Builder(core.Builder):
         self.parameter('Vesicles_0', 5)
         self.parameter('tBid_0', 20)
         self.parameter('Bax_0', 100)
+        self.expression('Vesicles_norm_0', self['Vesicles_0'])
 
         self.declare_components()
 

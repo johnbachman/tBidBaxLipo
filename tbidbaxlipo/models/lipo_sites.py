@@ -22,12 +22,12 @@ class Builder(core.Builder):
         self.cpt_list = ['ves']
 
         # By default, these parameters are not estimated
-        self.parameter('lipo_concentration', 5)
+        self.parameter('Vesicles_0', 5)
         self.parameter('tBid_0', 20, prior=None)
         self.parameter('Bax_0', 100, prior=None)
         self.parameter('sites_per_liposome', 10., prior=UniformLinear(0, 3))
-        self.expression('Vesicles_0',
-                        self['lipo_concentration'] * self['sites_per_liposome'])
+        self.expression('Vesicles_norm_0',
+                        self['Vesicles_0'] * self['sites_per_liposome'])
 
         self.declare_components()
 
@@ -39,7 +39,7 @@ class Builder(core.Builder):
         self.initial(Bax(loc='c', bh3=None, a6=None, lipo=None,
                      c3='s', c62='s', c120='s', c122='s', c126='s', c184='s')
                      ** solution, self['Bax_0'])
-        self.initial(Vesicles(bax=None) ** solution, self['Vesicles_0'])
+        self.initial(Vesicles(bax=None) ** solution, self['Vesicles_norm_0'])
 
         # OBSERVABLES
         self.observable('ctBid', tBid(loc='c'))
@@ -62,8 +62,8 @@ class Builder(core.Builder):
     def translocate_Bax(self):
         print("lipo_sites: translocate_Bax()")
 
-        Bax_transloc_kf = self.parameter('Bax_transloc_kf',
-                            1e-2 / float(self['sites_per_liposome'].value),
+        Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
+                            factor=(1/float(self['sites_per_liposome'].value)),
                             prior=Normal(-3, 1))
         Bax_transloc_kr = self.parameter('Bax_transloc_kr', 1e-1,
                             prior=Normal(-3, 1))
@@ -82,6 +82,28 @@ class Builder(core.Builder):
              Bax_mono(cpt='sol', conf='aq', pore='n', lipo=None) +
              Vesicles(bax=None),
              Bax_transloc_kr)
+
+    def translocate_tBid(self):
+        print("lipo_sites: translocate_tBid()")
+
+        tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-2,
+                            factor=(1/float(self['sites_per_liposome'].value)),
+                            prior=Normal(-3, 1))
+        tBid_transloc_kr = self.parameter('tBid_transloc_kr', 1e-1,
+                            prior=Normal(-1, 2))
+
+        tBid = self['tBid']
+        Vesicles = self['Vesicles']
+
+        cpt_name = self.cpt_list[0]
+        self.rule('tBid_translocates_sol_to_%s' % cpt_name,
+             tBid(cpt='sol', conf='aq', lipo=None) + Vesicles(tbid=None) >>
+             tBid(cpt=cpt_name, conf='mem', lipo=1) % Vesicles(tbid=1),
+             tBid_transloc_kf)
+        self.rule('tBid_translocates_%s_to_sol' % cpt_name,
+             tBid(cpt=cpt_name, conf='mem', lipo=1) % Vesicles(tbid=1) >>
+             tBid(cpt='sol', conf='aq', lipo=None) + Vesicles(tbid=None),
+             tBid_transloc_kr)
 
     def basal_Bax_activation_nonsat(self, reversible=False):
         print "lipo_sites: basal_Bax_activation=%s" % reversible
