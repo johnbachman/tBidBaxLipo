@@ -37,7 +37,6 @@ def prior(position, gf):
 def likelihood(position, gf):
     # A generic objective function
     # The cumulative error over all timecourses
-    tc_length = len(gf.data[0])
     err = 0
 
     # Iterate over each condition (1st dimension of the data matrix)
@@ -66,7 +65,6 @@ def likelihood(position, gf):
         # Now run the simulation
         gf.solver.run()
         # Calculate the squared error over all the observables
-        err = 0
         for obs_ix, obs_name in enumerate(gf.obs_name):
             if gf.use_expr:
                 ysim = gf.solver.yexpr[obs_name]
@@ -583,14 +581,14 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                 num_iterations = burn_steps - nstep
             else:
                 num_iterations = convergence_interval
-            # Don't run again if we've already run more than the prescribed number of
-            # burn in steps
+            # Don't run again if we've already run more than the prescribed
+            # number of burn in steps
             if num_iterations <= 0:
                 break;
             for p, lnprob, lnlike in sampler.sample(cur_start_position,
                             iterations=num_iterations, storechain=True):
-                # Increase the step counter by 1 since by the time we've gotten here
-                # we've run an iteration of the sampler
+                # Increase the step counter by 1 since by the time we've gotten
+                # here we've run an iteration of the sampler
                 nstep += 1
                 if nstep % print_interval == 0:
                     print("nstep %d of %d, MAP: %f, mean post %f" %
