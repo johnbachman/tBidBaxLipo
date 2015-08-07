@@ -263,7 +263,7 @@ class Builder(pysb.builder.Builder):
         Must be called after the child class constructor has initialized the
         list of compartments.
         """
-        tBid = self.monomer('tBid', ['bh3', 'conf', 'cpt'],
+        tBid = self.monomer('tBid', ['bh3', 'conf', 'cpt', 'lipo'],
                      {'conf': ['aq', 'mem'],
                       'cpt':  ['sol'] + self.cpt_list})
         Bax = self.monomer('Bax',
@@ -272,11 +272,12 @@ class Builder(pysb.builder.Builder):
                       'cpt': ['sol'] + self.cpt_list,
                       'pore': ['y', 'n'],
                       'dye': ['none', 'nbd', 'dac']})
-        Vesicles = self.monomer('Vesicles', ['bax'])
+        Vesicles = self.monomer('Vesicles', ['bax', 'tbid'])
         Pores = self.monomer('Pores', ['cpt'], {'cpt':self.cpt_list})
 
-        self.initial(tBid(cpt='sol', conf='aq', bh3=None), self['tBid_0'])
-        self.initial(Vesicles(bax=None), self['Vesicles_0'])
+        self.initial(tBid(cpt='sol', conf='aq', bh3=None, lipo=None),
+                     self['tBid_0'])
+        self.initial(Vesicles(bax=None, tbid=None), self['Vesicles_norm_0'])
 
         # Initial condition for WT-Bax
         self.initial(Bax(cpt='sol', conf='aq', bh3=None, a6=None,
@@ -464,15 +465,14 @@ class Builder(pysb.builder.Builder):
         if len(self.cpt_list) > 1:
             # In a multi-compartment situation, we to rescale the forward
             # translocation rate by the stochastic scaling factor
-            tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
-                                          prior=None,
+            tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-2,
+                                          prior=Normal(-3, 1),
                                           factor=(1/float(self.scaling_factor)))
         else:
             # In a single-compartment situation, we need to multiply the
             # forward translocation rate by the concentration of Vesicles
-            tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-1,
-                                          prior=Normal(-3, 1),
-                                          factor=self['Vesicles_0'].value)
+            tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-2,
+                                              prior=Normal(-3, 1))
 
         tBid_transloc_kr = self.parameter('tBid_transloc_kr', 1e-1,
                                           prior=Normal(-1, 2))
@@ -480,24 +480,33 @@ class Builder(pysb.builder.Builder):
         Vesicles = self['Vesicles']
         tBid = self['tBid']
 
-        for cpt_name in self.cpt_list:
-            self.rule(
-                 'tBid_translocates_sol_to_%s' % cpt_name,
-                 tBid(cpt='sol', conf='aq') >>
-                 tBid(cpt=cpt_name, conf='mem'),
+        if len(self.cpt_list) == 1:
+            cpt_name = self.cpt_list[0]
+            self.rule('tBid_translocates_sol_to_%s' % cpt_name,
+                 tBid(cpt='sol', conf='aq') + Vesicles() >>
+                 tBid(cpt=cpt_name, conf='mem') + Vesicles(),
                  tBid_transloc_kf)
-            self.rule(
-                 'tBid_translocates_%s_to_sol' % cpt_name,
-                 tBid(cpt=cpt_name, conf='mem', bh3=None) >>
-                 tBid(cpt='sol', conf='aq', bh3=None),
+            self.rule('tBid_translocates_%s_to_sol' % cpt_name,
+                 tBid(cpt=cpt_name, conf='mem') >> tBid(cpt='sol', conf='aq'),
                  tBid_transloc_kr)
+        else:
+            for cpt_name in self.cpt_list:
+                self.rule('tBid_translocates_sol_to_%s' % cpt_name,
+                     tBid(cpt='sol', conf='aq') >>
+                     tBid(cpt=cpt_name, conf='mem'),
+                     tBid_transloc_kf)
+                self.rule('tBid_translocates_%s_to_sol' % cpt_name,
+                     tBid(cpt=cpt_name, conf='mem') >>
+                     tBid(cpt='sol', conf='aq'),
+                     tBid_transloc_kr)
+
 
     def translocate_Bax(self):
         print("core: translocate_Bax()")
 
         assert len(self.cpt_list) != 0
         if len(self.cpt_list) > 1:
-            # In a multi-compartment situation, we to rescale the forward
+            # In a multi-compartment situation, we need to rescale the forward
             # translocation rate by the stochastic scaling factor
             Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
                                           prior=Normal(-3, 1),
@@ -1067,17 +1076,18 @@ class Builder(pysb.builder.Builder):
 
     def build_model_from_dict(self, model_dict):
         model_attribute_sort_order = {
-            'bidtranslocation': 0,
-            'baxtranslocation': 1,
-            'activation': 2,
-            'reversal': 3,
-            'autoactivation': 4,
-            'dimerization': 5,
-            'nbd': 6,
-            'bidfret': 7,
-            'baxfret': 8,
-            'bleach': 9,
-            'timeoffset': 10,
+            'builder': 0,
+            'bidtranslocation': 1,
+            'baxtranslocation': 2,
+            'activation': 3,
+            'reversal': 4,
+            'autoactivation': 5,
+            'dimerization': 6,
+            'nbd': 7,
+            'bidfret': 8,
+            'baxfret': 9,
+            'bleach': 10,
+            'timeoffset': 11,
         }
         model_string = ''
 
@@ -1095,11 +1105,24 @@ class Builder(pysb.builder.Builder):
             if implementation == 0:
                 continue
             # Build up a useful string notation for the model features
-            model_string += feature[0].upper() + feature[1:5] + \
-                            str(implementation)
+            if feature == 'builder':
+                if implementation == 'one_cpt':
+                    model_string += '1c_'
+                elif implementation == 'lipo_sites':
+                    model_string += 'ls_'
+            else:
+                model_string += feature[0].upper() + feature[1:5] + \
+                                str(implementation)
             # Call the appropriate model macros based on the dict entries
+            # Builder feature
+            if feature == 'builder':
+                # We don't have to do anything here because this builder to
+                # use should have already been figured out earlier. However,
+                # here we can make sure that the builder used goes into the
+                # model name
+                pass
             # Bax translocation
-            if feature == 'baxtranslocation':
+            elif feature == 'baxtranslocation':
                 if implementation == 1:
                     self.translocate_Bax()
                 else:
@@ -1684,7 +1707,8 @@ class Builder(pysb.builder.Builder):
         self.initial(Bax(bh3=1, loc='c', **bax_args) %
                   Bax(bh3=1, loc='c', **bax_args), Bax2_0)
         self.initial(Bax(bh3=None, loc='c', **bax_args)**solution, Bax1_0)
-        self.initial(self['Vesicles'](bax=None) **solution, self['Vesicles_0'])
+        self.initial(self['Vesicles'](bax=None, tbid=None) **solution,
+                     self['Vesicles_norm_0'])
 
 
 

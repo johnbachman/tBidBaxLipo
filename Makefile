@@ -74,7 +74,8 @@ pt_141203_126C: $(x141203)/pt_141203_126C.deps.txt
 # we care about is whether the hash is any different.
 %.mcmc: $(call to-md5, %.fit)
 	python -m tbidbaxlipo.pt.compile_models $(call from-md5, $<)
-	bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1
+	#bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1
+	qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err -pe orte 64 mpirun python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos
 
 # Don't delete the .md5 files! Without this rule they are treated as
 # intermediates and deleted.

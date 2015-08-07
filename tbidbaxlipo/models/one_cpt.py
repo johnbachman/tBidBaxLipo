@@ -91,9 +91,11 @@ class Builder(core.Builder):
         self.scaling_factor = 1.0
         self.cpt_list = ['ves']
 
+        # By default, these parameters are not estimated
         self.parameter('Vesicles_0', 5)
         self.parameter('tBid_0', 20)
         self.parameter('Bax_0', 100)
+        self.expression('Vesicles_norm_0', self['Vesicles_0'])
 
         self.declare_components()
 

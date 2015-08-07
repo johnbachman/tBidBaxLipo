@@ -15,6 +15,22 @@ def test_model_name_sort_order():
     bd.build_model_from_dict(model_dict)
     eq_(bd.model.name, 'Baxtr1Activ1')
 
+def test_one_cpt_builder_abbrev():
+    model_dict = {'builder': 'one_cpt',
+                  'activation': 1,
+                  'baxtranslocation': 1}
+    bd = Builder()
+    bd.build_model_from_dict(model_dict)
+    eq_(bd.model.name, '1c_Baxtr1Activ1')
+
+def test_lipo_sites_builder_abbrev():
+    model_dict = {'builder': 'lipo_sites',
+                  'activation': 1,
+                  'baxtranslocation': 1}
+    bd = Builder()
+    bd.build_model_from_dict(model_dict)
+    eq_(bd.model.name, 'ls_Baxtr1Activ1')
+
 @raises(ValueError)
 def test_error_on_unknown_implementation():
     model_dict = {'baxtranslocation': 9}
