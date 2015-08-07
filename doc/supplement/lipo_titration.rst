@@ -1,8 +1,8 @@
-Liposome titration and Bax insertion
-====================================
+Bax/Liposome titration and Bax insertion
+========================================
 
-Here we examine the predictions of different models on the relationship
-between Bax and liposome concentration and Bax insertion kinetics.
+In this section we examine the predictions of several simple models on the
+effect of Bax and liposome concentration on and Bax insertion kinetics.
 
 The c126 insertion titration experiment that Justin performed seems to indicate
 that increasing liposome concentrations invariably increases insertion rates,
@@ -12,10 +12,8 @@ interactions.
 
 .. _bax-insertion-partitioning-model:
 
-Partitioning model
-------------------
-
-**Conclusion**: TOO SIMPLISTIC
+Simple partitioning model
+-------------------------
 
 First, we examine the partitioning model, in which the fraction of Bax at
 liposomes is determined by the amount of liposomes present, and there is no
@@ -153,4 +151,28 @@ should be a testable prediction.
     b.tBid_activates_Bax()
     b.iBax_binds_tBid_at_bh3()
     plot_bax_titration_insertion_kinetics(b.model)
+
+Bax auto-activates
+------------------
+
+.. plot::
+
+    from tbidbaxlipo.plots.pore_plots import *
+    from tbidbaxlipo.models import one_cpt
+    b = one_cpt.Builder()
+    b.translocate_Bax()
+    b.basal_Bax_activation()
+    b.Bax_auto_activates()
+    plot_liposome_titration_insertion_kinetics(b.model)
+
+.. plot::
+
+    from tbidbaxlipo.plots.pore_plots import *
+    from tbidbaxlipo.models import one_cpt
+    b = one_cpt.Builder()
+    b.translocate_tBid_Bax()
+    b.tBid_activates_Bax()
+    b.iBax_binds_tBid_at_bh3()
+    plot_bax_titration_insertion_kinetics(b.model)
+
 

@@ -9,6 +9,5 @@ Contents:
    :maxdepth: 2
 
    conclusions
-   lipo_titration
    nbd_notes
 
