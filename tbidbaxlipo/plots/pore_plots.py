@@ -253,6 +253,7 @@ def plot_liposome_titration_insertion_kinetics(model):
     plt.xlabel('Liposomes (nM)')
     plt.ylabel('$k$')
     plt.title("$k$ vs. Liposome conc")
+    plt.ylim([0, 0.0020])
     plt.show()
 
     # Fmax 

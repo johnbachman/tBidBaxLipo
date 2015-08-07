@@ -17,6 +17,7 @@ Contents:
 
    intro
    datasets/index
+   supplement/index
    notes/index
    technotes/index
    modules/index
