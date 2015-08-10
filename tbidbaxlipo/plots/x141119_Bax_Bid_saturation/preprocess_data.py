@@ -78,7 +78,7 @@ no_lipo_well_names = ['A12', 'C12', 'E12', 'G12']
 no_lipo_wells = extract(no_lipo_well_names, timecourse_wells)
 
 bg_layout = collections.OrderedDict([
-         ('No lipos', ['A12', 'C12', 'E12', 'G12']),
+         ('NBD, No lipos', ['A12', 'C12', 'E12', 'G12']),
          ('No NBD or lipos', ['B12', 'D12', 'F12']),
          ('NBD and lipos', ['G9', 'G10', 'G11']),
         ])
@@ -107,15 +107,15 @@ bg_layout = collections.OrderedDict([
 # be inspected for reference).
 bg_diff = {}
 bg_diff['NBD-Bax only'] = []
-bg_diff['NBD-Bax only'].append(bg_averages['No lipos'][TIME])
-bg_diff['NBD-Bax only'].append(bg_averages['No lipos'][VALUE] -
+bg_diff['NBD-Bax only'].append(bg_averages['NBD, No lipos'][TIME])
+bg_diff['NBD-Bax only'].append(bg_averages['NBD, No lipos'][VALUE] -
                           bg_averages['No NBD or lipos'][VALUE])
 # Calculate the average fluorescence timecourse of
 # (NBD-Bax + lipos + buffer) - (NBD-Bax + buffer) = lipos
 bg_diff['Liposomes only'] = []
 bg_diff['Liposomes only'].append(bg_averages['NBD and lipos'][TIME])
 bg_diff['Liposomes only'].append(bg_averages['NBD and lipos'][VALUE] -
-                           bg_averages['No lipos'][VALUE])
+                           bg_averages['NBD, No lipos'][VALUE])
 
 # Calculate the average initial liposome-only fluorescence (before NBD-Bax
 # starts to increase due to spontaneous insertion).

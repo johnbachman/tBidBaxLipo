@@ -7,8 +7,18 @@ from tbidbaxlipo.util.plate_assay import plot_all, TIME, VALUE
 from tbidbaxlipo.util import fitting, colors, set_fig_params_for_publication, \
                              format_axis
 from preprocess_data import bim_bh3, bid_80, bid_40, bid_20, bid_10, \
-                            bid_5, bid_2, bid_0, bax_concs
+                            bid_5, bid_2, bid_0, bax_concs, bid_concs, \
+                            bg_averages, bg_diff
 from tbidbaxlipo.plots import titration_fits as tf
+
+def plot_bg():
+    plt.figure()
+    plot_all(bg_averages)
+    plt.title('Measured background conditions')
+
+    plt.figure()
+    plot_all(bg_diff)
+    plt.title('Calculated background conditions')
 
 def plot_data():
     """Plots the data and various transformations of it."""
@@ -102,9 +112,58 @@ def plot_mm(k_data, bax_concs, bid_concs):
     #plt.text(2.5, 0.00027, '$V_0 = %f\ sec^{-1}$' % v0())
     #plt.text(2.5, 0.00024, '$Bid/Lipo\ K_D = %.2f\ nM$' % ekd())
 
+def exp_fits(bid_data, bid_concs, bax_concs):
+
+    fmax_data = np.zeros((len(bid_concs), len(bax_concs)))
+    k_data = np.zeros((len(bid_concs), len(bax_concs)))
+
+    for bid_conc, bid_wells in bid_data_dict.iteritems():
+        fmax_list = []
+        k_list = []
+
+        for well_name in bid_wells.keys():
+            well = bid_wells[well_name]
+            t = well[TIME]
+            v = well[VALUE]
+            #figure()
+            # Do linear regression on the first 20 points, normalize to intcpt
+            numpts = 20
+            lin_fit = linregress(t[:numpts], v[:numpts])
+            intercept = lin_fit[1]
+            #plot(t, v, 'k')
+            #plot(t[:numpts], intercept + lin_fit[0] * t[:numpts], 'r')
+            fit = tf.OneExpFmax()
+            (k, fmax) = fit.fit_timecourse(t, v / intercept - 1)
+            k_list.append(k)
+            fmax_list.append(fmax)
+            #figure()
+            #plot(t, v / intercept - 1)
+            #plot(t, fit.fit_func(t, [k, fmax]))
+
+        k_data.append(k_list)
+
+        #figure('k')
+        #plot(bax_concs, k_list, marker='o')
+        #title('k')
+        #plt.figure('k')
+        #plt.plot(bax_concs, k_list, marker='o', markersize=3)
+
+        #plt.figure('fmax')
+        #plt.plot(bax_concs, fmax_list, marker='o', markersize=3)
+    #ax = plt.gca()
+    #format_axis(ax)
+
+    #plot_mm(k_data, bax_concs, bid_concs)
+    return
+
 if __name__ == '__main__':
     plt.ion()
     #plot_data()
+
+    # Fit the data with exponential functions
+    exp_fits(data_matrix)
+
+    sys.exit()
 
     set_fig_params_for_publication()
 
@@ -133,43 +192,4 @@ if __name__ == '__main__':
     #ax.set_yticklabels([int(f) for f in np.linspace(5, 35, 7)])
     ax.set_xscale('log')
     format_axis(ax)
-
-    for bid in [bid_2, bid_5, bid_10, bid_20, bid_40, bid_80]:
-        fmax_list = []
-        k_list = []
-
-        for well_name in bid.keys():
-            well = bid[well_name]
-            t = well[TIME]
-            v = well[VALUE]
-            #figure()
-            # Do linear regression on the first 20 points, normalize to intcpt
-            numpts = 20
-            lin_fit = linregress(t[:numpts], v[:numpts])
-            intercept = lin_fit[1]
-            #plot(t, v, 'k')
-            #plot(t[:numpts], intercept + lin_fit[0] * t[:numpts], 'r')
-            fit = tf.OneExpFmax()
-            (k, fmax) = fit.fit_timecourse(t, v / intercept - 1)
-            k_list.append(k)
-            fmax_list.append(fmax)
-            #figure()
-            #plot(t, v / intercept - 1)
-            #plot(t, fit.fit_func(t, [k, fmax]))
-
-        k_data.append(k_list)
-
-        #figure('k')
-        #plot(bax_concs, k_list, marker='o')
-        #title('k')
-        plt.figure('k')
-        plt.plot(bax_concs, k_list, marker='o', markersize=3)
-
-        plt.figure('fmax')
-        plt.plot(bax_concs, fmax_list, marker='o', markersize=3)
-    ax = plt.gca()
-    format_axis(ax)
-
-    bid_concs = np.array([2.5, 5., 10., 20., 40., 80.])
-    plot_mm(k_data, bax_concs, bid_concs)
 
