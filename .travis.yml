@@ -24,4 +24,7 @@ install:
   #- pip install nose-exclude
   # Patched branch of emcee
   - pip install git+https://github.com/johnbachman/emcee.git
+  # Make the results directory
+  - mkdir -p results/figures/panels
+
 script: ./run_tests.sh
