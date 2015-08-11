@@ -14,12 +14,13 @@ figures: \
 		$(FIGDIR)/fig_141016_1.pdf \
 		$(FIGDIR)/fig_fmax_fit_comparison.pdf \
 		$(FIGDIR)/poisson_bax_fmax.pdf \
-		$(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf \
 		$(FIGDIR)/slice_bax_fixed.pdf \
 		$(FIGDIR)/140320_exp_fits.pdf \
 		$(FIGDIR)/140318_exp_fits_lstsq_fmax_var.pdf \
 		$(FIGDIR)/140429_exact_comp_bind_fit.pdf \
 		$(FIGDIR)/140429_gouy_chap_fit.pdf
+
+mcmc_figures: $(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf
 
 clean:
 	cd $(FIGDIR); rm -f *.pdf
@@ -87,6 +88,7 @@ pt_141203_126C: $(x141203)/pt_141203_126C.deps.txt
 $(FIGDIR)/fig_141119_timecourses_Bid_20nm.pdf:
 	python $(CODEDIR)/plots/x141119_Bax_Bid_saturation/plot_exp_fits.py
 	mv *.pdf $(FIGDIR)
+	mv *.png $(FIGDIR)
 
 
 # --- Bax depletion figures ----
