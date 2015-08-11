@@ -146,7 +146,21 @@ bid_2 = extract(row_wells('F', 11), bg_sub_wells)
 bid_0 = extract(row_wells('G', 11), bg_sub_wells)
 bim_bh3 = extract(row_wells('H', 11), bg_sub_wells)
 
-#data_matrix = np.zeros((len(bid_concs), len(bax_concs), len(bg_averages))
+# The number of timepoints in all the vectors will be given by the length
+# of the background vector
+num_timepts = len(bg_to_subtract)
+
+# Create a 4-dimensional data matrix. Dimensions are:
+# [Bid conc, Bax conc, datatype (time or value), timepoints]
+# ...with Bid and Bax concs going from 0 to the max concentration, and
+# corresponding to the entries in the bid_concs and bax_concs arrays.
+data_matrix = np.zeros((len(bid_concs), len(bax_concs), 2, num_timepts))
+for bid_ix, bid_dict in enumerate([bid_0, bid_2, bid_5, bid_10, bid_20,
+                              bid_40, bid_80]):
+    for bax_ix, well_name in enumerate(reversed(bid_dict.keys())):
+        (time, value) = bid_dict[well_name]
+        data_matrix[bid_ix, bax_ix, TIME, :] = time
+        data_matrix[bid_ix, bax_ix, VALUE, :] = value
 
 # Fit the  20 nM Bid condition
 data_to_fit = []
