@@ -112,7 +112,7 @@ def plot_mm(k_data, bax_concs, bid_concs):
     #plt.text(2.5, 0.00027, '$V_0 = %f\ sec^{-1}$' % v0())
     #plt.text(2.5, 0.00024, '$Bid/Lipo\ K_D = %.2f\ nM$' % ekd())
 
-def curve_features(data_norm, endpt_ix=-1, num_avg_pts=5):
+def calc_exp_fits(data_norm):
     """Fit each of the timecourses in the data matrix to an exponential func.
 
     Parameters
@@ -120,24 +120,16 @@ def curve_features(data_norm, endpt_ix=-1, num_avg_pts=5):
     data_norm : np.array
         Four-dimensional numpy array, with dimensions
         [bid, bax, datatype (time or value), timepoints]
-    endpt_ix : int
-        Index of the timepoint to calculate the endpoint fluorescence.
-    avg_pts : int
-        Number of points (prior to point at the endpt_ix) to average to
-        calculate the endpoint fluorescence.
 
     Returns
     -------
-    tuple of three np.arrays
+    tuple of two np.arrays
         The first array contains the fitted k values, the second the fitted
-        fmax values, the third the endpoint at the given timepoint.
-        All are of dimension [bid concs, bax_concs].
+        fmax values. Both are of dimension [bid concs, bax_concs].
     """
 
     fmax_data = np.zeros((len(bid_concs), len(bax_concs)))
     k_data = np.zeros((len(bid_concs), len(bax_concs)))
-    endpt_data = np.zeros((len(bid_concs), len(bax_concs)))
-    endpt_sd_data = np.zeros((len(bid_concs), len(bax_concs)))
 
     for bid_ix in range(data_norm.shape[0]):
         for bax_ix in range(data_norm.shape[1]):
@@ -152,11 +144,6 @@ def curve_features(data_norm, endpt_ix=-1, num_avg_pts=5):
             k_data[bid_ix, bax_ix] = k
             fmax_data[bid_ix, bax_ix] = fmax
 
-            # Calculate the endpoint
-            start_ix = endpt_ix - num_avg_pts
-            endpt_data[bid_ix, bax_ix] = np.mean(v[start_ix:endpt_ix])
-            endpt_sd_data[bid_ix, bax_ix] = np.std(v[start_ix:endpt_ix],
-                                                   ddof=1)
             # Some diagnostic plots (commented out)
             #plt.figure()
             #plt.plot(t, v, 'k')
@@ -166,7 +153,7 @@ def curve_features(data_norm, endpt_ix=-1, num_avg_pts=5):
             #plt.plot(t, v / intercept - 1)
             #plt.plot(t, fit.fit_func(t, [k, fmax]))
 
-    return (k_data, fmax_data, endpt_data, endpt_sd_data)
+    return (k_data, fmax_data)
 
 def plot_bax_titration_timecourses(data_matrix, bid_ix, k_data, fmax_data,
                                    plot_filename=None):
@@ -195,7 +182,6 @@ def plot_bax_titration_timecourses(data_matrix, bid_ix, k_data, fmax_data,
     if plot_filename:
         fig.savefig('%s.pdf' % plot_filename)
         fig.savefig('%s.png' % plot_filename, dpi=300)
-
 
 def plot_k_fmax_scaling(k_data, fmax_data, bid_ix, bax_concs,
                         plot_filename=None):
@@ -235,21 +221,50 @@ def plot_k_fmax_scaling(k_data, fmax_data, bid_ix, bax_concs,
         fig.savefig('%s.pdf' % plot_filename)
         fig.savefig('%s.png' % plot_filename, dpi=300)
 
+def plot_endpoints_vs_bax(data_norm, time_pts, bid_ix, bax_concs,
+                          plot_filename=None, avg_pts=10):
+    # Plot endpoints at 2, 3, and 5 hours
+    fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
+    ax = fig.gca()
+
+    for time_ix in time_pts:
+        # Get endpoint vector
+        start_ix = time_ix - avg_pts
+        f_avg = np.mean(data_norm[bid_ix, :, VALUE, start_ix:time_ix], axis=1)
+        f_sd = np.std(data_norm[bid_ix, :, VALUE, start_ix:time_ix], axis=1,
+                      ddof=1)
+        ax.errorbar(bax_concs, f_avg, yerr=f_sd)
+
+    ax.set_ylabel('NBD $F/F_0$')
+    ax.set_xlabel('[Bax] (nM)')
+    format_axis(ax)
+    plt.subplots_adjust(left=0.24, bottom=0.21)
+    ax.set_xlim([10, 1500])
+    ax.set_xscale('log')
+
+    if plot_filename:
+        fig.savefig('%s.pdf' % plot_filename)
+        fig.savefig('%s.png' % plot_filename, dpi=300)
+
 if __name__ == '__main__':
     #plot_data()
     set_fig_params_for_publication()
 
     # Fit the data with exponential nctions
-    (k_data, fmax_data, endpt_data, endpt_sd_data) = \
-               curve_features(data_norm, endpt_ix=165, num_avg_pts=10)
+    (k_data, fmax_data) = calc_exp_fits(data_norm)
 
     # Plot raw timecourses with fits
     plot_bax_titration_timecourses(data_norm, 4, k_data, fmax_data,
-                plot_filename='141119_timecourses_Bid_20nm')
+                plot_filename='141119_Bid_20nm_timecourses')
 
     # Plot k and fmax scaling
     plot_k_fmax_scaling(k_data, fmax_data, 4, bax_concs,
                                plot_filename='141119_Bid_20nm_scaling')
+
+    # Plot the F/F0 values at various pts vs. Bax concentration
+    plot_endpoints_vs_bax(data_norm, [125, 250, 500], 4, bax_concs,
+                          plot_filename='141119_Bid_20nM_endpts',
+                          avg_pts=10)
 
     sys.exit()
 
