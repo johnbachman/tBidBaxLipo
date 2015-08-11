@@ -168,24 +168,24 @@ def curve_features(data_norm, endpt_ix=-1, num_avg_pts=5):
 
     return (k_data, fmax_data, endpt_data, endpt_sd_data)
 
-
 def plot_bax_titration_timecourses(data_matrix, bid_ix, k_data, fmax_data,
-                                   plot_filename):
-    plt.figure(figsize=(1.5, 1.5), dpi=300)
+                                   plot_filename=None):
+    """Plot F/F0 vs. time for a Bid conc and a range of Bax concs."""
+    fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
     plt.subplots_adjust(left=0.24, bottom=0.21)
+    ax = fig.gca()
     for bax_ix in range(data_matrix.shape[1]):
         if bax_ix not in [0, 6, 10]:
             continue
         t = data_matrix[bid_ix, bax_ix, TIME, :]
         v = data_matrix[bid_ix, bax_ix, VALUE, :]
-        plt.plot(t, v, alpha=0.9, linewidth=0.5)
+        ax.plot(t, v, alpha=0.9, linewidth=0.5)
         # Plot exponential fits
         k = k_data[bid_ix, bax_ix]
         fmax = fmax_data[bid_ix, bax_ix]
         fit = tf.OneExpFmax()
-        plt.plot(t, fit.fit_func(t, [k, fmax]) + 1, 'k')
+        ax.plot(t, fit.fit_func(t, [k, fmax]) + 1, 'k')
 
-    ax = plt.gca()
     ax.set_xticks(np.linspace(0, 2.5e4, 6))
     ax.set_xticklabels([int(f) for f in np.linspace(0, 25, 6)])
     ax.set_ylabel('$F/F_0$')
@@ -193,11 +193,49 @@ def plot_bax_titration_timecourses(data_matrix, bid_ix, k_data, fmax_data,
     format_axis(ax)
 
     if plot_filename:
-        plt.savefig('%s.pdf' % plot_filename)
-        plt.savefig('%s.png' % plot_filename)
+        fig.savefig('%s.pdf' % plot_filename)
+        fig.savefig('%s.png' % plot_filename, dpi=300)
+
+
+def plot_k_fmax_scaling(k_data, fmax_data, bid_ix, bax_concs,
+                        plot_filename=None):
+    """Plot Fmax and k vs. Bax concentration for a given Bid concentration."""
+
+    assert k_data.shape == fmax_data.shape, \
+           "k_data and f_max data must have same dimensions"
+
+    fig = plt.figure('exp_fits_k_fmax_var', figsize=(1.9, 1.5), dpi=300)
+    ax1 = fig.gca()
+    # Plot Fmax vs. concentration on the left-hand axis
+    ax1.plot(bax_concs, fmax_data[bid_ix, :], marker='o', markersize=3,
+             color='b')
+    ax1.set_xlabel('[Bax] (nM)')
+    ax1.set_ylabel('$F_{max}$', color='b')
+    ax1.set_xlim([0, 1100])
+    for tl in ax1.get_yticklabels():
+        tl.set_color('b')
+    #ax1.set_yscale('log')
+    # Plot k vs. concentration on the right-hand axis
+    ax2 = ax1.twinx()
+    #ax2.set_xlim([0.05, 30])
+    ax2.plot(bax_concs, k_data[bid_ix,:], marker='o', markersize=3,
+             color='r')
+    ax2.set_ylabel(r'k (sec$^{-1} \times\ 10^{-5}$)', color='r')
+    for tl in ax2.get_yticklabels():
+        tl.set_color('r')
+    ax2.set_xlim([0, 1100])
+    ax2.set_ylim(5e-5, 3e-4)
+    ax2.set_yticks(np.linspace(5e-5, 3e-4, 6))
+    ax2.set_yticklabels([str(int(f)) for f in np.linspace(5, 30, 6)])
+    format_axis(ax1)
+    format_axis(ax2, yticks_position='right')
+    plt.subplots_adjust(left=0.18, bottom=0.19, right=0.75)
+
+    if plot_filename:
+        fig.savefig('%s.pdf' % plot_filename)
+        fig.savefig('%s.png' % plot_filename, dpi=300)
 
 if __name__ == '__main__':
-    plt.ion()
     #plot_data()
     set_fig_params_for_publication()
 
@@ -209,6 +247,9 @@ if __name__ == '__main__':
     plot_bax_titration_timecourses(data_norm, 4, k_data, fmax_data,
                 plot_filename='141119_timecourses_Bid_20nm')
 
+    # Plot k and fmax scaling
+    plot_k_fmax_scaling(k_data, fmax_data, 4, bax_concs,
+                               plot_filename='141119_Bid_20nm_scaling')
 
     sys.exit()
 
