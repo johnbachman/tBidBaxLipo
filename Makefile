@@ -1,4 +1,4 @@
-FIGDIR := results/figures
+FIGDIR := results/figures/panels
 DATADIR := tbidbaxlipo/data
 CODEDIR := tbidbaxlipo
 MCMCDIR := results/mcmc
@@ -10,6 +10,7 @@ x141119 := $(CODEDIR)/plots/x141119_Bax_Bid_saturation/mcmc
 x141203 := $(CODEDIR)/plots/x141203_Bax_Bax_FRET/mcmc
 
 figures: \
+		$(FIGDIR)/fig_141119_timecourses_Bid_20nm.pdf \
 		$(FIGDIR)/fig_141016_1.pdf \
 		$(FIGDIR)/fig_fmax_fit_comparison.pdf \
 		$(FIGDIR)/poisson_bax_fmax.pdf \
@@ -80,6 +81,13 @@ pt_141203_126C: $(x141203)/pt_141203_126C.deps.txt
 # Don't delete the .md5 files! Without this rule they are treated as
 # intermediates and deleted.
 .PRECIOUS: %.md5
+
+# ==== FIGURES ==============================================
+
+$(FIGDIR)/fig_141119_timecourses_Bid_20nm.pdf:
+	python $(CODEDIR)/plots/x141119_Bax_Bid_saturation/plot_exp_fits.py
+	mv *.pdf $(FIGDIR)
+
 
 # --- Bax depletion figures ----
 # fig_141016_1.pdf, fig_141016_2.pdf
