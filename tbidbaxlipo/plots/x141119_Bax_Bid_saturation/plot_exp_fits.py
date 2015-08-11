@@ -8,7 +8,7 @@ from tbidbaxlipo.util import fitting, colors, set_fig_params_for_publication, \
                              format_axis
 from preprocess_data import bim_bh3, bid_80, bid_40, bid_20, bid_10, \
                             bid_5, bid_2, bid_0, bax_concs, bid_concs, \
-                            bg_averages, bg_diff
+                            bg_averages, bg_diff, data_matrix
 from tbidbaxlipo.plots import titration_fits as tf
 
 def plot_bg():
@@ -112,56 +112,65 @@ def plot_mm(k_data, bax_concs, bid_concs):
     #plt.text(2.5, 0.00027, '$V_0 = %f\ sec^{-1}$' % v0())
     #plt.text(2.5, 0.00024, '$Bid/Lipo\ K_D = %.2f\ nM$' % ekd())
 
-def exp_fits(bid_data, bid_concs, bax_concs):
+def exp_fits(data_matrix):
+    """Fit each of the timecourses in the data matrix to an exponential func.
+
+    Parameters
+    ----------
+    data_matrix : np.array
+        Four-dimensional numpy array, with dimensions
+        [bid, bax, datatype (time or value), timepoints]
+
+    Returns
+    -------
+    tuple of two np.arrays
+        The first array contains the fitted k values, the second the fitted
+        fmax values. Both are of dimension [bid concs, bax_concs]
+    """
 
     fmax_data = np.zeros((len(bid_concs), len(bax_concs)))
     k_data = np.zeros((len(bid_concs), len(bax_concs)))
 
-    for bid_conc, bid_wells in bid_data_dict.iteritems():
-        fmax_list = []
-        k_list = []
+    for bid_ix in range(data_matrix.shape[0]):
+        for bax_ix in range(data_matrix.shape[1]):
 
-        for well_name in bid_wells.keys():
-            well = bid_wells[well_name]
-            t = well[TIME]
-            v = well[VALUE]
-            #figure()
-            # Do linear regression on the first 20 points, normalize to intcpt
+            t = data_matrix[bid_ix, bax_ix, TIME, :]
+            v = data_matrix[bid_ix, bax_ix, VALUE, :]
+
+            # To get the fold-change increase over baseline fluorescence,
+            # we have to estimate the initial baseline fluorescence,
+            # which we do here by fitting a straight line to the first
+            # 20 points and extrapolating to the intercept at t = 0 seconds.
             numpts = 20
             lin_fit = linregress(t[:numpts], v[:numpts])
             intercept = lin_fit[1]
-            #plot(t, v, 'k')
-            #plot(t[:numpts], intercept + lin_fit[0] * t[:numpts], 'r')
+
+
+            # Get an instance of the fitting function
             fit = tf.OneExpFmax()
-            (k, fmax) = fit.fit_timecourse(t, v / intercept - 1)
-            k_list.append(k)
-            fmax_list.append(fmax)
-            #figure()
-            #plot(t, v / intercept - 1)
-            #plot(t, fit.fit_func(t, [k, fmax]))
+            # Normalize the curve by the intercept, then subtract 1 so that
+            # it starts from 0:
+            (k, fmax) = fit.fit_timecourse(t, (v / float(intercept)) - 1)
+            k_data[bid_ix, bax_ix] = k
+            fmax_data[bid_ix, bax_ix] = fmax
 
-        k_data.append(k_list)
+            # Some diagnostic plots (commented out)
+            #plt.figure()
+            #plt.plot(t, v, 'k')
+            #plt.plot(t[:numpts], intercept + lin_fit[0] * t[:numpts], 'r')
 
-        #figure('k')
-        #plot(bax_concs, k_list, marker='o')
-        #title('k')
-        #plt.figure('k')
-        #plt.plot(bax_concs, k_list, marker='o', markersize=3)
+            #plt.figure()
+            #plt.plot(t, v / intercept - 1)
+            #plt.plot(t, fit.fit_func(t, [k, fmax]))
 
-        #plt.figure('fmax')
-        #plt.plot(bax_concs, fmax_list, marker='o', markersize=3)
-    #ax = plt.gca()
-    #format_axis(ax)
-
-    #plot_mm(k_data, bax_concs, bid_concs)
-    return
+    return (k_data, fmax_data)
 
 if __name__ == '__main__':
     plt.ion()
     #plot_data()
 
     # Fit the data with exponential functions
-    exp_fits(data_matrix)
+    (k_data, fmax_data) = exp_fits(data_matrix)
 
     sys.exit()
 

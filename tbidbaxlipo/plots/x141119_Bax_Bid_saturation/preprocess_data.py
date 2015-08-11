@@ -17,9 +17,12 @@ timecourse_file = abspath(join(data_path,
 
 # The concentrations of Bax, including NBD-C126-Bax and competitor.
 # These are given in the order of the wells, e.g., column 1 has 1000 nM
-# and column 11 has 0 nM.
-bax_concs = np.array([1000., 500., 250., 125., 62.5, 31.2, 15.6, 7.8,
+# and column 11 has 0 nM of competitor.
+bax_concs_well_order = np.array([1000., 500., 250., 125., 62.5, 31.2, 15.6, 7.8,
                       3.9, 2.0, 0.]) + 25.
+# Reverse the order of the Bax concentrations to go from lowest to highest,
+# which is much more convenient for plotting/fitting
+bax_concs = bax_concs_well_order[::-1]
 # Concentrations of cBid.
 bid_concs = np.array([0.0, 2.5, 5., 10., 20., 40., 80.])
 
@@ -163,6 +166,7 @@ for bid_ix, bid_dict in enumerate([bid_0, bid_2, bid_5, bid_10, bid_20,
         data_matrix[bid_ix, bax_ix, VALUE, :] = value
 
 # Fit the  20 nM Bid condition
+# DEPRECATED: Should use a data_matrix plus a list of initial conditions
 data_to_fit = []
 numpts = 20
 for well in bid_20.keys():
