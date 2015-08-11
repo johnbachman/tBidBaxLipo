@@ -112,12 +112,12 @@ def plot_mm(k_data, bax_concs, bid_concs):
     #plt.text(2.5, 0.00027, '$V_0 = %f\ sec^{-1}$' % v0())
     #plt.text(2.5, 0.00024, '$Bid/Lipo\ K_D = %.2f\ nM$' % ekd())
 
-def curve_features(data_matrix, endpt_ix=-1, num_avg_pts=5):
+def curve_features(data_norm, endpt_ix=-1, num_avg_pts=5):
     """Fit each of the timecourses in the data matrix to an exponential func.
 
     Parameters
     ----------
-    data_matrix : np.array
+    data_norm : np.array
         Four-dimensional numpy array, with dimensions
         [bid, bax, datatype (time or value), timepoints]
     endpt_ix : int
@@ -139,30 +139,23 @@ def curve_features(data_matrix, endpt_ix=-1, num_avg_pts=5):
     endpt_data = np.zeros((len(bid_concs), len(bax_concs)))
     endpt_sd_data = np.zeros((len(bid_concs), len(bax_concs)))
 
-    for bid_ix in range(data_matrix.shape[0]):
-        for bax_ix in range(data_matrix.shape[1]):
+    for bid_ix in range(data_norm.shape[0]):
+        for bax_ix in range(data_norm.shape[1]):
 
-            t = data_matrix[bid_ix, bax_ix, TIME, :]
-            v = data_matrix[bid_ix, bax_ix, VALUE, :]
-
-            # To get the fold-change increase over baseline fluorescence,
-            # we have to estimate the initial baseline fluorescence,
-            # which we do here by fitting a straight line to the first
-            # 20 points and extrapolating to the intercept at t = 0 seconds.
-            numpts = 20
-            lin_fit = linregress(t[:numpts], v[:numpts])
-            intercept = lin_fit[1]
+            t = data_norm[bid_ix, bax_ix, TIME, :]
+            v = data_norm[bid_ix, bax_ix, VALUE, :]
 
             # Get an instance of the fitting function
             fit = tf.OneExpFmax()
-            (k, fmax) = fit.fit_timecourse(t, norm_v - 1)
+            # Subtract 1 so that the curves start from 0
+            (k, fmax) = fit.fit_timecourse(t, v - 1)
             k_data[bid_ix, bax_ix] = k
             fmax_data[bid_ix, bax_ix] = fmax
 
             # Calculate the endpoint
             start_ix = endpt_ix - num_avg_pts
-            endpt_data[bid_ix, bax_ix] = np.mean(norm_v[start_ix:endpt_ix])
-            endpt_sd_data[bid_ix, bax_ix] = np.std(norm_v[start_ix:endpt_ix],
+            endpt_data[bid_ix, bax_ix] = np.mean(v[start_ix:endpt_ix])
+            endpt_sd_data[bid_ix, bax_ix] = np.std(v[start_ix:endpt_ix],
                                                    ddof=1)
             # Some diagnostic plots (commented out)
             #plt.figure()
@@ -176,7 +169,8 @@ def curve_features(data_matrix, endpt_ix=-1, num_avg_pts=5):
     return (k_data, fmax_data, endpt_data, endpt_sd_data)
 
 
-def plot_bax_titration_timecourses(data_matrix, bid_ix, plot_filename):
+def plot_bax_titration_timecourses(data_matrix, bid_ix, k_data, fmax_data,
+                                   plot_filename):
     plt.figure(figsize=(1.5, 1.5), dpi=300)
     plt.subplots_adjust(left=0.24, bottom=0.21)
     for bax_ix in range(data_matrix.shape[1]):
@@ -184,7 +178,13 @@ def plot_bax_titration_timecourses(data_matrix, bid_ix, plot_filename):
             continue
         t = data_matrix[bid_ix, bax_ix, TIME, :]
         v = data_matrix[bid_ix, bax_ix, VALUE, :]
-        plt.plot(t, v, alpha=0.6, linewidth=0.5)
+        plt.plot(t, v, alpha=0.9, linewidth=0.5)
+        # Plot exponential fits
+        k = k_data[bid_ix, bax_ix]
+        fmax = fmax_data[bid_ix, bax_ix]
+        fit = tf.OneExpFmax()
+        plt.plot(t, fit.fit_func(t, [k, fmax]) + 1, 'k')
+
     ax = plt.gca()
     ax.set_xticks(np.linspace(0, 2.5e4, 6))
     ax.set_xticklabels([int(f) for f in np.linspace(0, 25, 6)])
@@ -201,14 +201,17 @@ if __name__ == '__main__':
     #plot_data()
     set_fig_params_for_publication()
 
-    plot_bax_titration_timecourses(data_norm, 4,
+    # Fit the data with exponential nctions
+    (k_data, fmax_data, endpt_data, endpt_sd_data) = \
+               curve_features(data_norm, endpt_ix=165, num_avg_pts=10)
+
+    # Plot raw timecourses with fits
+    plot_bax_titration_timecourses(data_norm, 4, k_data, fmax_data,
                 plot_filename='141119_timecourses_Bid_20nm')
+
 
     sys.exit()
 
-    # Fit the data with exponential nctions
-    (k_data, fmax_data, endpt_data, endpt_sd_data) = \
-               curve_features(data_matrix, endpt_ix=165, num_avg_pts=10)
 
     plt.figure()
     plt.errorbar(bax_concs, endpt_data[4, :], yerr=endpt_sd_data[4, :],
