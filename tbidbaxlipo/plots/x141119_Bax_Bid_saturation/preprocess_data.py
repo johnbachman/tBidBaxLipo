@@ -158,12 +158,28 @@ num_timepts = len(bg_to_subtract)
 # ...with Bid and Bax concs going from 0 to the max concentration, and
 # corresponding to the entries in the bid_concs and bax_concs arrays.
 data_matrix = np.zeros((len(bid_concs), len(bax_concs), 2, num_timepts))
+# The normalized data will be scaled so that the timecourse values will
+# be in terms of F/F0, where F0 is the initial/baseline fluorescence value:
+data_norm = np.zeros((len(bid_concs), len(bax_concs), 2, num_timepts))
+
 for bid_ix, bid_dict in enumerate([bid_0, bid_2, bid_5, bid_10, bid_20,
                               bid_40, bid_80]):
     for bax_ix, well_name in enumerate(reversed(bid_dict.keys())):
         (time, value) = bid_dict[well_name]
         data_matrix[bid_ix, bax_ix, TIME, :] = time
         data_matrix[bid_ix, bax_ix, VALUE, :] = value
+
+        # To get the fold-change increase over baseline fluorescence,
+        # we have to estimate the initial baseline fluorescence,
+        # which we do here by fitting a straight line to the first
+        # 20 points and extrapolating to the intercept at t = 0 seconds.
+        numpts = 20
+        lin_fit = linregress(time[:numpts], value[:numpts])
+        intercept = lin_fit[1]
+
+        # Normalize the curve by the intercept
+        data_norm[bid_ix, bax_ix, TIME, :] = time
+        data_norm[bid_ix, bax_ix, VALUE, :] = value / float(intercept)
 
 # Fit the  20 nM Bid condition
 # DEPRECATED: Should use a data_matrix plus a list of initial conditions
