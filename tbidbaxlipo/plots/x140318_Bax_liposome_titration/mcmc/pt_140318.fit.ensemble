@@ -5,10 +5,10 @@ data:
     initial_condition_var: lipo_concs_to_fit
     time_var: bg_time
 model:
-    builder: [one_cpt]
+    builder: [one_cpt, lipo_sites]
     baxtranslocation: [1]
     activation: [1]
-    reversal: [0]
+    reversal: [0, 1]
     autoactivation: [0]
     dimerization: [0]
     nbd: [1]
@@ -21,9 +21,9 @@ global_initial_conditions:
 local_initial_condition: Vesicles_0
 global_params: all
 local_params: []
-ntemps: 5
-highest_temp: -2
-nwalkers: 200
-nburnin: 100
+ntemps: 25
+highest_temp: -5
+nwalkers: 300
+nburnin: 400
 nsample: 100
 thin: 1
