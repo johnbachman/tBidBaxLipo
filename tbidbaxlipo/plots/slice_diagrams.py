@@ -1,6 +1,7 @@
+import numpy as np
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
-import numpy as np
+
 from tbidbaxlipo.util import set_fig_params_for_publication
 
 def plot_slice_diagram(fixed_conc):
@@ -20,7 +21,6 @@ def plot_slice_diagram(fixed_conc):
     z = np.zeros((10, 10))
     z.fill(5)
 
-    plt.ion()
     ax = plt.figure(figsize=(1.0, 1.0), dpi=300).gca(projection='3d')
     if fixed_conc == 'x':
         ax.plot_surface(z, yy, xx, color='r', alpha=0.5)
