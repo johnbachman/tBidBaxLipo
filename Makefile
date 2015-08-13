@@ -1,3 +1,5 @@
+SHELL=/bin/bash -O extglob -c
+
 FIGDIR := results/figures/panels
 DATADIR := tbidbaxlipo/data
 CODEDIR := tbidbaxlipo
@@ -21,6 +23,16 @@ figures: \
 		$(FIGDIR)/140429_gouy_chap_fit.pdf
 
 mcmc_figures: $(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf
+
+pt_140320_figures:
+	for f in $(x140320)/*.mcmc; \
+	do \
+		OUTPUT=$(FIGDIR)/pt_140320/$$(basename -s .mcmc $$f) ;\
+		mkdir -p $$OUTPUT ;\
+		python $(CODEDIR)/pt/show_chain.py $$f $$OUTPUT ;\
+	done
+
+#qsub -b y -cwd -V python $(CODEDIR)/pt/show_chain.py $$f $$OUTPUT ;\
 
 clean:
 	cd $(FIGDIR); rm -f *.pdf
@@ -77,7 +89,7 @@ pt_141203_126C: $(x141203)/pt_141203_126C.deps.txt
 %.mcmc: $(call to-md5, %.fit)
 	python -m tbidbaxlipo.pt.compile_models $(call from-md5, $<)
 	#bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1
-	qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err -pe orte 64 mpirun python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos
+	qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err -pe orte 128 mpirun python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos
 
 # Don't delete the .md5 files! Without this rule they are treated as
 # intermediates and deleted.
