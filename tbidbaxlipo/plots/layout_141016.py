@@ -316,7 +316,6 @@ def plot_release_comparisons(plot_abs=True, plot_norm=True, bar_plot=True):
                    loc='upper right',
                    prop={'size': fontsize})
         leg.draw_frame(False)
-        plt.show()
 
 if __name__ == '__main__':
     # First, plot the ANTS controls to show that reaction should be at eq
