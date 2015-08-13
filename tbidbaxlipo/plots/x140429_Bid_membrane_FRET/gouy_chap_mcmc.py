@@ -269,8 +269,6 @@ def plot_saturation_binding_predictions(flatchain):
     plt.plot(lipo_pred, np.mean(ypred_samples, axis=0), color='r')
 
 if __name__ == '__main__':
-    plt.ion()
-
     usage_msg =  "\nUsage:\n"
     usage_msg += "To run the fits and save chain to a pickle file:\n"
     usage_msg += "     python %s sample output_filename\n" % sys.argv[0]

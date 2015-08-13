@@ -1,13 +1,13 @@
-from matplotlib import pyplot as plt
 import numpy as np
+from matplotlib import pyplot as plt
+from matplotlib import ticker
 from scipy.stats import poisson
+
 from tbidbaxlipo.util import set_fig_params_for_publication, format_axis, \
                              fontsize, capsize
 from tbidbaxlipo.plots.layout_140311 import get_twoexp_fmax_arr
 from tbidbaxlipo.util import fitting
-from matplotlib import ticker
 
-plt.ion()
 set_fig_params_for_publication()
 
 # First, plot the figure showing the relationship between the Poisson

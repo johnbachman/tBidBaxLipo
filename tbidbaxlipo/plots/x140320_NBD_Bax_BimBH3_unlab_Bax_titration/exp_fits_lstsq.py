@@ -45,7 +45,7 @@ def plot_exp_fits(time, data_to_fit, bax_concs_to_fit):
 
     for i, bax_conc in enumerate(bax_concs_to_fit):
         # Try fitting the high conc trajectory
-        y = data_to_fit[i]
+        y = data_to_fit[i, 0, :]
         y = y / np.mean(y[0:2])
         fmax = fitting.Parameter(25.)
         k1 = fitting.Parameter(np.log(2)/2000.)
@@ -84,7 +84,6 @@ def plot_exp_fits(time, data_to_fit, bax_concs_to_fit):
     ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
     format_axis(ax)
     plt.subplots_adjust(bottom=0.21, left=0.23)
-    plt.show()
 
     # Now, plot the scaling of the parameters with concentration
     plt.figure('exp_fits', figsize=(1.7, 1.5), dpi=300)
@@ -102,7 +101,7 @@ def plot_exp_fits(time, data_to_fit, bax_concs_to_fit):
     ax2.set_xlim([5, 1000])
     ax2.plot(bax_concs_to_fit[:-1], k1_list[:-1], marker='o', markersize=3,
              color='r')
-    ax2.set_ylabel(r'k (sec $\times$ 10^{-3})', color='r')
+    ax2.set_ylabel(r'k (sec $\times\ 10^{-3}$)', color='r')
     for tl in ax2.get_yticklabels():
         tl.set_color('r')
     ax2.set_yticks(np.linspace(6.6e-4, 7.8e-4, 7))

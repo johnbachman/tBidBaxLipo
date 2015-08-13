@@ -17,8 +17,8 @@ def plot_exp_fits(time, data, concs, plot_fits=True, fmax_value=None):
     ----------
     time : np.array
         Time vector for each timecourse.
-    data : list of np.array
-        List of arrays containing the fluorescence timecourses at each
+    data : np.array: (conditions, observables, timecourses)
+        Array containing the fluorescence timecourses at each
         liposome concentration.
     concs : list
         List of concentrations of liposomes (not lipids) in nanomolar.
@@ -48,7 +48,7 @@ def plot_exp_fits(time, data, concs, plot_fits=True, fmax_value=None):
 
     # Iterate over all of the liposome concentrations
     for i, conc in enumerate(concs):
-        y = data[i]
+        y = data[i, 0, :]
 
         if fmax_value is None:
             fmax = fitting.Parameter(3.85)
@@ -86,7 +86,6 @@ def plot_exp_fits(time, data, concs, plot_fits=True, fmax_value=None):
         ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
         format_axis(ax)
         plt.subplots_adjust(bottom=0.24, left=0.21)
-        plt.show()
 
     residuals = fit_result[0]
     sum_sq_err = np.sum(residuals ** 2)
@@ -113,7 +112,7 @@ def plot_k_fmax_varying(fmax_arr, k_arr, conc_arr):
     ax2 = ax1.twinx()
     ax2.set_xlim([0.05, 30])
     ax2.plot(conc_arr[:-1], k_arr[:-1], marker='o', markersize=3, color='r')
-    ax2.set_ylabel(r'k (sec $\times$ 10^{-3})', color='r')
+    ax2.set_ylabel(r'k (sec $\times 10^{-3}$)', color='r')
     ax2.set_yscale('log')
     for tl in ax2.get_yticklabels():
         tl.set_color('r')
@@ -122,8 +121,6 @@ def plot_k_fmax_varying(fmax_arr, k_arr, conc_arr):
     format_axis(ax1)
     format_axis(ax2, yticks_position='right')
     plt.subplots_adjust(left=0.18, bottom=0.19, right=0.75)
-
-    plt.show()
 
 def plot_k_fmax_fixed(k_arr, conc_arr):
     """Plot fits of k with Fmax fixed to a single value."""
@@ -147,9 +144,9 @@ def plot_k_fmax_fixed(k_arr, conc_arr):
     # Fit to a line
     lin_fit = linregress(conc_arr[:-1], k_arr[:-1])
     plt.plot(conc_arr[:-1], lin_fit[0] * conc_arr[:-1] + lin_fit[1], color='b')
-    print("---")
-    print("Linear fit:")
-    print(lin_fit)
+    #print("---")
+    #print("Linear fit:")
+    #print(lin_fit)
 
     lslope = fitting.Parameter(1.0)
     lintercept = fitting.Parameter(np.exp(-9.6))
@@ -157,24 +154,20 @@ def plot_k_fmax_fixed(k_arr, conc_arr):
         return lintercept() * x ** lslope()
     plaw_fit = fitting.fit(power_law, [lslope, lintercept], k_arr[:-1],
                            conc_arr[:-1])
-    print("----")
-    print("Power law fit (y = int * x ** slope):")
-    print("intercept: %s" % lintercept())
-    print("slope: %s" % lslope())
+    #print("----")
+    #print("Power law fit (y = int * x ** slope):")
+    #print("intercept: %s" % lintercept())
+    #print("slope: %s" % lslope())
     plt.plot(conc_arr[:-1], power_law(conc_arr[:-1]), color='g')
 
     log_fit = linregress(np.log(conc_arr[:-1]), np.log(k_arr[:-1]))
     plt.plot(conc_arr[:-1],
              np.exp(log_fit[1]) * (conc_arr[:-1] ** log_fit[0]), color='k')
-    print("----")
-    print("Log-log linear fit:")
+    #print("----")
+    #print("Log-log linear fit:")
     print(log_fit)
 
-    plt.show()
-
 if __name__ == '__main__':
-    plt.ion()
-
     # First run with fmax free to vary, show that this results in artifacts
     (fmax_arr, k_arr, sum_sq_err) = plot_exp_fits(bg_time, data_to_fit,
                                         lipo_concs_to_fit, plot_fits=True)
