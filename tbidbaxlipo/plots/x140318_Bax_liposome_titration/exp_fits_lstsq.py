@@ -147,9 +147,9 @@ def plot_k_fmax_fixed(k_arr, conc_arr):
     # Fit to a line
     lin_fit = linregress(conc_arr[:-1], k_arr[:-1])
     plt.plot(conc_arr[:-1], lin_fit[0] * conc_arr[:-1] + lin_fit[1], color='b')
-    print("---")
-    print("Linear fit:")
-    print(lin_fit)
+    #print("---")
+    #print("Linear fit:")
+    #print(lin_fit)
 
     lslope = fitting.Parameter(1.0)
     lintercept = fitting.Parameter(np.exp(-9.6))
@@ -157,24 +157,22 @@ def plot_k_fmax_fixed(k_arr, conc_arr):
         return lintercept() * x ** lslope()
     plaw_fit = fitting.fit(power_law, [lslope, lintercept], k_arr[:-1],
                            conc_arr[:-1])
-    print("----")
-    print("Power law fit (y = int * x ** slope):")
-    print("intercept: %s" % lintercept())
-    print("slope: %s" % lslope())
+    #print("----")
+    #print("Power law fit (y = int * x ** slope):")
+    #print("intercept: %s" % lintercept())
+    #print("slope: %s" % lslope())
     plt.plot(conc_arr[:-1], power_law(conc_arr[:-1]), color='g')
 
     log_fit = linregress(np.log(conc_arr[:-1]), np.log(k_arr[:-1]))
     plt.plot(conc_arr[:-1],
              np.exp(log_fit[1]) * (conc_arr[:-1] ** log_fit[0]), color='k')
-    print("----")
-    print("Log-log linear fit:")
+    #print("----")
+    #print("Log-log linear fit:")
     print(log_fit)
 
     plt.show()
 
 if __name__ == '__main__':
-    plt.ion()
-
     # First run with fmax free to vary, show that this results in artifacts
     (fmax_arr, k_arr, sum_sq_err) = plot_exp_fits(bg_time, data_to_fit,
                                         lipo_concs_to_fit, plot_fits=True)
