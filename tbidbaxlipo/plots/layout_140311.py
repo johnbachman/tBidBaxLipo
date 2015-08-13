@@ -9,7 +9,6 @@ from matplotlib import pyplot as plt
 import numpy as np
 from tbidbaxlipo.util import fitting
 from tbidbaxlipo.plots import titration_fits
-import pymc
 from scipy import stats
 
 layout = collections.OrderedDict([
@@ -317,6 +316,7 @@ def approach_2(avgs, stds, layout):
     on the final titration plot."""
     # Get the average trajectories, with standard errors
     #(avgs, stderrs) = averages(wells, layout, stderr=True)
+    import pymc
 
     iter=50000
     burn=iter/4.

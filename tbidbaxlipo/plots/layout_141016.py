@@ -8,7 +8,6 @@ import tbidbaxlipo.data
 from matplotlib import pyplot as plt
 import numpy as np
 from tbidbaxlipo.plots import titration_fits
-import pymc
 from scipy import stats
 from tbidbaxlipo.util import fig_orange, fig_purple, \
                              set_fig_params_for_publication, fontsize, format_axis

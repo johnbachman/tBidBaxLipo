@@ -7,6 +7,10 @@ before_install:
   - sudo apt-get install python-scipy
   #- sudo apt-get install libhdf5-serial-dev # headers for h5py
   - sudo apt-get install openmpi-bin openmpi-dev
+  # Install TeX for plotting
+  - sudo apt-get install texlive
+  - sudo apt-get install dvipng
+  - sudo apt-get install texlive-latex-extra
 install:
   - pip install sympy
   - wget http://bionetgen.googlecode.com/files/BioNetGen-2.2.5-stable.zip
@@ -24,4 +28,7 @@ install:
   #- pip install nose-exclude
   # Patched branch of emcee
   - pip install git+https://github.com/johnbachman/emcee.git
+  # Make the results directory
+  - mkdir -p results/figures/panels
+  - export PYTHONPATH=$PYTHONPATH:.
 script: ./run_tests.sh
