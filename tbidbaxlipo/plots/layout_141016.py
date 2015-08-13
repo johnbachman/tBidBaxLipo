@@ -1,18 +1,16 @@
-from tbidbaxlipo.util.plate_assay import *
 import itertools
 import pickle
 import collections
 import sys
 import os
-import tbidbaxlipo.data
+from copy import copy
 from matplotlib import pyplot as plt
 import numpy as np
+from tbidbaxlipo.util.plate_assay import *
 from tbidbaxlipo.plots import titration_fits
-from scipy import stats
 from tbidbaxlipo.util import fig_orange, fig_purple, \
                              set_fig_params_for_publication, fontsize, format_axis
-from copy import copy
-import matplotlib
+import tbidbaxlipo.data
 
 # All wells have 100 nM cBid and 100 nM Bax
 layout = collections.OrderedDict([
@@ -322,7 +320,6 @@ def plot_release_comparisons(plot_abs=True, plot_norm=True, bar_plot=True):
 
 if __name__ == '__main__':
     # First, plot the ANTS controls to show that reaction should be at eq
-    ion()
     plot_release_comparisons(plot_norm=False, plot_abs=False)
     for i in plt.get_fignums():
         plt.figure(i)
