@@ -10,7 +10,7 @@ x141119 := $(CODEDIR)/plots/x141119_Bax_Bid_saturation/mcmc
 x141203 := $(CODEDIR)/plots/x141203_Bax_Bax_FRET/mcmc
 
 figures: \
-		$(FIGDIR)/fig_141119_timecourses_Bid_20nm.pdf \
+		$(FIGDIR)/141119_Bid_20nm_timecourses.pdf \
 		$(FIGDIR)/fig_141016_1.pdf \
 		$(FIGDIR)/fig_fmax_fit_comparison.pdf \
 		$(FIGDIR)/poisson_bax_fmax.pdf \
@@ -85,7 +85,7 @@ pt_141203_126C: $(x141203)/pt_141203_126C.deps.txt
 
 # ==== FIGURES ==============================================
 
-$(FIGDIR)/fig_141119_timecourses_Bid_20nm.pdf:
+$(FIGDIR)/141119_timecourses_Bid_20nm.pdf:
 	python $(CODEDIR)/plots/x141119_Bax_Bid_saturation/plot_exp_fits.py
 	mv *.pdf $(FIGDIR)
 	mv *.png $(FIGDIR)
@@ -190,7 +190,7 @@ $(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_exact_comp_bind.mcmc: \
 		$(CODEDIR)/plots/x140429_Bid_membrane_FRET/calculate_fret.py \
 		$(CODEDIR)/data/parse_140429_Bid_membrane_FRET.py \
 		$(CODEDIR)/data/140429_Bid_membrane_FRET.xlsx
-	bsub -q short -W 12:00 python $(CODEDIR)/plots/x140429_Bid_membrane_FRET/exact_comp_bind_mcmc.py sample $(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_exact_comp_bind.mcmc
+	python $(CODEDIR)/plots/x140429_Bid_membrane_FRET/exact_comp_bind_mcmc.py sample $(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_exact_comp_bind.mcmc
 
 # Files: 140429_gouy_chap_fit.pdf, 140429_gouy_chap_marginals.pdf
 $(FIGDIR)/140429_gouy_chap_fit.pdf: \
@@ -209,5 +209,5 @@ $(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_gouy_chap.mcmc: \
 		$(CODEDIR)/plots/x140429_Bid_membrane_FRET/calculate_fret.py \
 		$(CODEDIR)/data/parse_140429_Bid_membrane_FRET.py \
 		$(CODEDIR)/data/140429_Bid_membrane_FRET.xlsx
-	bsub -q short -W 12:00 python $(CODEDIR)/plots/x140429_Bid_membrane_FRET/gouy_chap_mcmc.py sample $(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_gouy_chap.mcmc
+	python $(CODEDIR)/plots/x140429_Bid_membrane_FRET/gouy_chap_mcmc.py sample $(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_gouy_chap.mcmc
 
