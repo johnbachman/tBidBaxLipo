@@ -86,7 +86,6 @@ def plot_exp_fits(time, data, concs, plot_fits=True, fmax_value=None):
         ax.set_xticklabels([int(f) for f in np.linspace(0, 10, 6)])
         format_axis(ax)
         plt.subplots_adjust(bottom=0.24, left=0.21)
-        plt.show()
 
     residuals = fit_result[0]
     sum_sq_err = np.sum(residuals ** 2)
@@ -122,8 +121,6 @@ def plot_k_fmax_varying(fmax_arr, k_arr, conc_arr):
     format_axis(ax1)
     format_axis(ax2, yticks_position='right')
     plt.subplots_adjust(left=0.18, bottom=0.19, right=0.75)
-
-    plt.show()
 
 def plot_k_fmax_fixed(k_arr, conc_arr):
     """Plot fits of k with Fmax fixed to a single value."""
@@ -169,8 +166,6 @@ def plot_k_fmax_fixed(k_arr, conc_arr):
     #print("----")
     #print("Log-log linear fit:")
     print(log_fit)
-
-    plt.show()
 
 if __name__ == '__main__':
     # First run with fmax free to vary, show that this results in artifacts
