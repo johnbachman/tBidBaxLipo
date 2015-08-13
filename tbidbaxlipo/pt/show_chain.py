@@ -262,7 +262,7 @@ if __name__ == '__main__':
     # Show plots
     #plt.ion()
     #print("Plotting triangle plots")
-    output_base = os.path.join(output_dir, chain_filename)
+    output_base = os.path.join(output_dir, os.path.basename(chain_filename))
     #triangle_plots(gf, sampler, plot_filename=chain_filename + '.tri')
     print("Plotting convergence")
     plot_chain_convergence(sampler, output_base + '.conv')
