@@ -112,9 +112,6 @@ def plot_exp_fits(time, data_to_fit, bax_concs_to_fit):
     plt.subplots_adjust(left=0.20, bottom=0.19, right=0.80)
 
 if __name__ == '__main__':
-    plt.ion()
-    # plot_data()
-
     plot_exp_fits(time, data_to_fit, bax_concs_to_fit)
 
     plt.figure('exp_fit_curves')
