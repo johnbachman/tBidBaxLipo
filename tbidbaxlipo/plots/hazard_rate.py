@@ -1,14 +1,12 @@
+import sys
+import numpy as np
+from matplotlib import pyplot as plt
+
 from tbidbaxlipo.plots.layout_140311 import bgsub_norm_wells as data
 from tbidbaxlipo.util.plate_assay import TIME, VALUE
-from matplotlib import pyplot as plt
-import numpy as np
 from tbidbaxlipo.util import moving_average, set_fig_params_for_publication, \
         format_axis
 from tbidbaxlipo.util import fitting
-import sys
-
-plt.ion()
-plt.close('all')
 
 well = 'A1'
 tc = data['A1']
