@@ -17,8 +17,8 @@ def plot_exp_fits(time, data, concs, plot_fits=True, fmax_value=None):
     ----------
     time : np.array
         Time vector for each timecourse.
-    data : list of np.array
-        List of arrays containing the fluorescence timecourses at each
+    data : np.array: (conditions, observables, timecourses)
+        Array containing the fluorescence timecourses at each
         liposome concentration.
     concs : list
         List of concentrations of liposomes (not lipids) in nanomolar.
@@ -48,7 +48,7 @@ def plot_exp_fits(time, data, concs, plot_fits=True, fmax_value=None):
 
     # Iterate over all of the liposome concentrations
     for i, conc in enumerate(concs):
-        y = data[i]
+        y = data[i, 0, :]
 
         if fmax_value is None:
             fmax = fitting.Parameter(3.85)
@@ -113,7 +113,7 @@ def plot_k_fmax_varying(fmax_arr, k_arr, conc_arr):
     ax2 = ax1.twinx()
     ax2.set_xlim([0.05, 30])
     ax2.plot(conc_arr[:-1], k_arr[:-1], marker='o', markersize=3, color='r')
-    ax2.set_ylabel(r'k (sec $\times$ 10^{-3})', color='r')
+    ax2.set_ylabel(r'k (sec $\times 10^{-3}$)', color='r')
     ax2.set_yscale('log')
     for tl in ax2.get_yticklabels():
         tl.set_color('r')
