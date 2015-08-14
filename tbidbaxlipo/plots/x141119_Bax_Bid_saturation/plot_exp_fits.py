@@ -257,6 +257,66 @@ def plot_endpoints_vs_bax(data_norm, time_pts, bid_ix, bax_concs,
         fig.savefig('%s.pdf' % plot_filename)
         fig.savefig('%s.png' % plot_filename, dpi=300)
 
+def plot_k_data(k_data, bid_concs, bax_concs, plot_filename=None):
+    fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
+    ax = fig.gca()
+
+    for bid_ix, bid_conc in enumerate(bid_concs):
+        # Titration k data for this Bid concentration
+        bid_k = k_data[bid_ix, :]
+
+        # Plotting
+        c = colors[bid_ix]
+        bid_str = '2.5' if bid_conc == 2.5 else str(int(bid_conc))
+        # Plot the data
+        ax.plot(bax_concs, bid_k, marker='o', color=c,
+                 linestyle='-', markersize=3)
+
+    # Format the plot
+    plt.subplots_adjust(left=0.21, bottom=0.19)
+    ax.set_xlabel('[Total Bax] (nM)')
+    ax.set_ylabel(r'$k$ (sec$^{-1} \times 10^{-5}$)')
+    ax.set_ylim([-1e-5, 37e-5])
+    ax.set_xlim([10, 2000])
+    ax.set_yticks(np.linspace(0, 35e-5, 8))
+    ax.set_yticklabels([int(f) for f in np.linspace(0, 35, 8)])
+    ax.set_xscale('log')
+    format_axis(ax)
+
+    if plot_filename:
+        fig.savefig('%s.pdf' % plot_filename)
+        fig.savefig('%s.png' % plot_filename, dpi=300)
+
+def plot_fmax_data(fmax_data, bid_concs, bax_concs, plot_filename=None):
+    fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
+    ax = fig.gca()
+
+    for bid_ix, bid_conc in enumerate(bid_concs):
+        # Titration fmax data for this Bid concentration
+        bid_fmax = fmax_data[bid_ix, :]
+
+        # Plotting
+        c = colors[bid_ix]
+        bid_str = '2.5' if bid_conc == 2.5 else str(int(bid_conc))
+        # Plot the data
+        ax.plot(bax_concs, bid_fmax, marker='o', color=c,
+                 linestyle='-', markersize=3)
+
+    # Format the plot
+    plt.subplots_adjust(left=0.23, bottom=0.19, right=0.92)
+    ax.set_xlabel('[Total Bax] (nM)')
+    ax.set_ylabel(r'$F_{max}$ (NBD F/F$_0$)')
+    #ax.set_ylim([-1e-5, 37e-5])
+    ax.set_xlim([10, 2000])
+    # ax.set_yticks(np.linspace(0, 35e-5, 8))
+    # ax.set_yticklabels([int(f) for f in np.linspace(0, 35, 8)])
+    ax.set_xscale('log')
+    format_axis(ax)
+
+    if plot_filename:
+        fig.savefig('%s.pdf' % plot_filename)
+        fig.savefig('%s.png' % plot_filename, dpi=300)
+
 if __name__ == '__main__':
     #plot_data()
     set_fig_params_for_publication()
@@ -264,10 +324,16 @@ if __name__ == '__main__':
     # Fit the data with exponential nctions
     (k_data, fmax_data) = calc_exp_fits(data_norm)
 
-    # Plot k scaling with Michaelis-Menten
-    plot_mm(k_data, bid_concs, bax_concs)
+    # Plot the scaling of k vs. [Bax] for all [Bid]
+    plot_k_data(k_data[1:], bid_concs[1:], bax_concs,
+                plot_filename='141119_k_scaling')
 
-    sys.exit()
+    # Plot the scaling of fmax vs. [Bax] for all [Bid]
+    plot_fmax_data(fmax_data[1:], bid_concs[1:], bax_concs,
+                   plot_filename='141119_fmax_scaling')
+
+    # Plot k scaling with Michaelis-Menten local fits
+    plot_mm(k_data, bid_concs, bax_concs)
 
     # Plot raw timecourses with fits
     plot_bax_titration_timecourses(data_norm, 4, k_data, fmax_data,
@@ -282,7 +348,7 @@ if __name__ == '__main__':
                           plot_filename='141119_Bid_20nm_endpts',
                           avg_pts=10)
 
-
+    sys.exit()
 
     plt.figure()
     plt.errorbar(bax_concs, endpt_data[4, :], yerr=endpt_sd_data[4, :],
