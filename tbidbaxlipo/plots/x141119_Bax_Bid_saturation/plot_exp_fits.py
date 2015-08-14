@@ -54,51 +54,62 @@ def plot_data():
     plot_all(bid_0)
     plt.title('Bid 0 nM')
 
-def plot_mm(k_data, bax_concs, bid_concs):
-    plt.figure('mm fit', figsize=(1.5, 1.5), dpi=300)
+def plot_mm(k_data, bid_concs, bax_concs):
+    # Create the figure
+    fig = plt.figure('mm fit', figsize=(1.5, 1.5), dpi=300)
+    ax = fig.gca()
 
-    kcat = fitting.Parameter(0.06)
-    km = fitting.Parameter(250.)
-    v0 = fitting.Parameter(5e-5)
-    ekd = fitting.Parameter(2.)
+    km_list = []
+    kcat_list = []
+    v0_list = []
 
-    def plot_fit():
-        for i, bid in enumerate(bid_concs):
-            c = colors[i]
-            bid_bound = bid / (ekd() + bid)
-            if bid == 2.5:
-                bid_str = '2.5'
-            else:
-                bid_str = str(int(bid))
-            plt.plot(bax_concs,
-                     ((kcat() * bid_bound) / (km() + bax_concs)) + v0(),
-                     color=c, label='%s nM' % bid_str)
-            bid_k = k_data[i]
-            plt.plot(bax_concs, bid_k, marker='o', color=c,
-                     linestyle='', markersize=3)
+    for bid_ix, bid_conc in enumerate(bid_concs):
+        # Fitting parameters
+        kcat = fitting.Parameter(0.06)
+        km = fitting.Parameter(250.)
+        v0 = fitting.Parameter(5e-5)
 
-    def fit_func(bax_concs):
-        res_list = []
-        for bid in bid_concs:
-           bid_bound = bid / (ekd() + bid)
-           res_list.append(((kcat() * bid_bound) / (km() + bax_concs)) + v0())
-        return np.hstack(res_list)
+        # Fit func for this bid concentration
+        def fit_func(bax_concs):
+            return ((kcat() * bid_conc) / (km() + bax_concs)) + v0()
 
-    fitting.fit(fit_func, [kcat, km, v0, ekd],
-                np.hstack(k_data), np.array(bax_concs))
+        # Titration k data for this Bid concentration
+        bid_k = k_data[bid_ix, :]
+        # Fit to the MM equation
+        fitting.fit(fit_func, [kcat, km, v0], bid_k, np.array(bax_concs))
 
-    plot_fit()
+        # Save the fitted values
+        km_list.append(km())
+        kcat_list.append(kcat())
+        v0_list.append(v0())
 
+        # Plotting
+        c = colors[bid_ix]
+        bid_str = '2.5' if bid_conc == 2.5 else str(int(bid_conc))
+        # Plot the data
+        ax.plot(bax_concs, bid_k, marker='o', color=c,
+                 linestyle='', markersize=3)
+        # Plot the MM fit
+        ax.plot(bax_concs, fit_func(bax_concs), color=c,
+                 label='%s nM' % bid_str)
+
+    # Format the plot
     plt.subplots_adjust(left=0.21, bottom=0.19)
-    plt.xlabel('[Total Bax] (nM)')
-    plt.ylabel(r'k (sec$^{-1} \times 10^{-5}$)')
-    ax = plt.gca()
-    ax.set_ylim([5e-5, 37e-5])
+    ax.set_xlabel('[Total Bax] (nM)')
+    ax.set_ylabel(r'k (sec$^{-1} \times 10^{-5}$)')
+    ax.set_ylim([-1e-5, 37e-5])
     ax.set_xlim([10, 2000])
-    ax.set_yticks(np.linspace(5e-5, 35e-5, 7))
-    ax.set_yticklabels([int(f) for f in np.linspace(5, 35, 7)])
+    ax.set_yticks(np.linspace(0, 35e-5, 8))
+    ax.set_yticklabels([int(f) for f in np.linspace(0, 35, 8)])
     ax.set_xscale('log')
     format_axis(ax)
+
+    #plt.figure('KM')
+    #plt.plot(bid_concs[1:], km_list[1:], marker='o')
+    #plt.figure('Kcat')
+    #plt.plot(bid_concs[1:], kcat_list[1:], marker='o')
+    #plt.figure('v0')
+    #plt.plot(bid_concs[1:], v0_list[1:], marker='o')
 
     #ax.legend(handles, loc='upper right', ncol=1,
     #            borderpad=0,
@@ -253,6 +264,11 @@ if __name__ == '__main__':
     # Fit the data with exponential nctions
     (k_data, fmax_data) = calc_exp_fits(data_norm)
 
+    # Plot k scaling with Michaelis-Menten
+    plot_mm(k_data, bid_concs, bax_concs)
+
+    sys.exit()
+
     # Plot raw timecourses with fits
     plot_bax_titration_timecourses(data_norm, 4, k_data, fmax_data,
                 plot_filename='141119_Bid_20nm_timecourses')
@@ -266,7 +282,6 @@ if __name__ == '__main__':
                           plot_filename='141119_Bid_20nm_endpts',
                           avg_pts=10)
 
-    sys.exit()
 
 
     plt.figure()
