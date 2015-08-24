@@ -24,15 +24,24 @@ figures: \
 
 mcmc_figures: $(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf
 
+pt_140318_figures:
+	for f in $(x140318)/*.mcmc; \
+	do \
+		OUTPUT=$(FIGDIR)/pt_140318/$$(basename -s .mcmc $$f) ;\
+		mkdir -p $$OUTPUT ;\
+		qsub -b y -cwd -V python $(CODEDIR)/pt/show_chain.py $$f $$OUTPUT ;\
+	done
+
 pt_140320_figures:
 	for f in $(x140320)/*.mcmc; \
 	do \
 		OUTPUT=$(FIGDIR)/pt_140320/$$(basename -s .mcmc $$f) ;\
 		mkdir -p $$OUTPUT ;\
-		python $(CODEDIR)/pt/show_chain.py $$f $$OUTPUT ;\
+		qsub -b y -cwd -V python $(CODEDIR)/pt/show_chain.py $$f $$OUTPUT ;\
 	done
 
-#qsub -b y -cwd -V python $(CODEDIR)/pt/show_chain.py $$f $$OUTPUT ;\
+#python $(CODEDIR)/pt/show_chain.py $$f $$OUTPUT ;\
+
 
 clean:
 	cd $(FIGDIR); rm -f *.pdf
