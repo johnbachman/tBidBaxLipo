@@ -141,6 +141,8 @@ def calc_exp_fits(data_norm):
 
     fmax_data = np.zeros((len(bid_concs), len(bax_concs)))
     k_data = np.zeros((len(bid_concs), len(bax_concs)))
+    fmax_sd_data = np.zeros((len(bid_concs), len(bax_concs)))
+    k_sd_data = np.zeros((len(bid_concs), len(bax_concs)))
 
     for bid_ix in range(data_norm.shape[0]):
         for bax_ix in range(data_norm.shape[1]):
@@ -149,11 +151,24 @@ def calc_exp_fits(data_norm):
             v = data_norm[bid_ix, bax_ix, VALUE, :]
 
             # Get an instance of the fitting function
-            fit = tf.OneExpFmax()
+            k = fitting.Parameter(1e-4)
+            fmax = fitting.Parameter(3.)
+
+            def fit_func(t):
+                return 1 + fmax() * (1 - np.exp(-k()*t))
             # Subtract 1 so that the curves start from 0
-            (k, fmax) = fit.fit_timecourse(t, v - 1)
-            k_data[bid_ix, bax_ix] = k
-            fmax_data[bid_ix, bax_ix] = fmax
+            (residuals, result) = fitting.fit(fit_func, [k, fmax], v, t)
+            cov_matrix = result[1]
+            #(k, fmax) = fit.fit_timecourse(t, v)
+            k_data[bid_ix, bax_ix] = k()
+            fmax_data[bid_ix, bax_ix] = fmax()
+
+            #import ipdb; ipdb.set_trace()
+            # Get variance estimates
+            [k_sd, fmax_sd] = np.sqrt(np.diag(np.var(residuals, ddof=1) *
+                                              cov_matrix))
+            k_sd_data[bid_ix, bax_ix] = k_sd
+            fmax_sd_data[bid_ix, bax_ix] = fmax_sd
 
             # Some diagnostic plots (commented out)
             #plt.figure()
@@ -164,7 +179,7 @@ def calc_exp_fits(data_norm):
             #plt.plot(t, v / intercept - 1)
             #plt.plot(t, fit.fit_func(t, [k, fmax]))
 
-    return (k_data, fmax_data)
+    return (k_data, k_sd_data, fmax_data, fmax_sd_data)
 
 def plot_bax_titration_timecourses(data_matrix, bid_ix, k_data, fmax_data,
                                    plot_filename=None):
@@ -257,20 +272,23 @@ def plot_endpoints_vs_bax(data_norm, time_pts, bid_ix, bax_concs,
         fig.savefig('%s.pdf' % plot_filename)
         fig.savefig('%s.png' % plot_filename, dpi=300)
 
-def plot_k_data(k_data, bid_concs, bax_concs, plot_filename=None):
+def plot_k_data(k_data, k_sd_data, bid_concs, bax_concs, plot_filename=None):
     fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
     ax = fig.gca()
 
     for bid_ix, bid_conc in enumerate(bid_concs):
         # Titration k data for this Bid concentration
         bid_k = k_data[bid_ix, :]
-
+        bid_k_sd = k_sd_data[bid_ix, :]
+        bid_k_ub = 10 ** (np.log10(bid_k) + bid_k_sd) - bid_k
+        bid_k_lb = bid_k - 10 ** (np.log10(bid_k) - bid_k_sd)
+        #import ipdb; ipdb.set_trace()
         # Plotting
         c = colors[bid_ix]
         bid_str = '2.5' if bid_conc == 2.5 else str(int(bid_conc))
         # Plot the data
-        ax.plot(bax_concs, bid_k, marker='o', color=c,
-                 linestyle='-', markersize=3)
+        ax.errorbar(bax_concs, bid_k, yerr=[bid_k_lb, bid_k_ub], marker='o',
+                    color=c, linestyle='-', markersize=3)
 
     # Format the plot
     plt.subplots_adjust(left=0.21, bottom=0.19)
@@ -320,13 +338,18 @@ def plot_fmax_data(fmax_data, bid_concs, bax_concs, plot_filename=None):
 if __name__ == '__main__':
     #plot_data()
     set_fig_params_for_publication()
-
+    plt.ion()
     # Fit the data with exponential nctions
-    (k_data, fmax_data) = calc_exp_fits(data_norm)
+    (k_data, k_sd_data, fmax_data, fmax_sd_data) = calc_exp_fits(data_norm)
 
     # Plot the scaling of k vs. [Bax] for all [Bid]
-    plot_k_data(k_data[1:], bid_concs[1:], bax_concs,
+    plot_k_data(k_data[1:], k_sd_data[1:], bid_concs[1:], bax_concs,
                 plot_filename='141119_k_scaling')
+
+    # Plot the scaling of k vs. [Bax] for all [Bid]
+    plot_k_data(k_data[0:], k_sd_data[0:], bid_concs[0:], bax_concs,
+                plot_filename='141119_k_scaling')
+    sys.exit()
 
     # Plot the scaling of fmax vs. [Bax] for all [Bid]
     plot_fmax_data(fmax_data[1:], bid_concs[1:], bax_concs,
