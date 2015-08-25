@@ -5,7 +5,7 @@ from tbidbaxlipo.util import set_fig_params_for_publication, format_axis
 
 #plt.ion()
 
-fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
+fig = plt.figure(figsize=(2, 2), dpi=300)
 ax = fig.gca()
 
 
