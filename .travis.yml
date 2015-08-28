@@ -37,6 +37,7 @@ install:
   - export BNGPATH=`pwd`/BioNetGen-2.2.5-stable
   - pip install git+https://github.com/pysb/pysb.git
   - pip install git+https://github.com/johnbachman/emcee.git
+  - pip install triangle-plot
   - mkdir -p results/figures/panels
   - export PYTHONPATH=$PYTHONPATH:.
 
