@@ -1,34 +1,54 @@
 language: python
 python:
   - "2.7"
-virtualenv:
-  system_site_packages: true
+sudo: false
+addons:
+  apt:
+    packages:
+      - openmpi-bin
+      - openmpi-dev
+      - texlive
+      - dvipng
+      - texlive-latex-extra
+      # - libhdf5-serial-dev # headers for h5py
+#before_install:
+#  - sudo apt-get install python-scipy
+#  - sudo apt-get install openmpi-bin openmpi-dev
+#  # Install TeX for plotting
+#  - sudo apt-get install texlive
+#  - sudo apt-get install dvipng
+#  - sudo apt-get install texlive-latex-extra
 before_install:
-  - sudo apt-get install python-scipy
-  #- sudo apt-get install libhdf5-serial-dev # headers for h5py
-  - sudo apt-get install openmpi-bin openmpi-dev
-  # Install TeX for plotting
-  - sudo apt-get install texlive
-  - sudo apt-get install dvipng
-  - sudo apt-get install texlive-latex-extra
+  # Getting scipy/numpy from Miniconda speeds up Travis builds,
+  # see https://gist.github.com/dan-blanchard/7045057
+  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=/home/travis/miniconda/bin:$PATH
+  - conda update --yes conda
 install:
-  - pip install sympy
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib nose sympy mpi4py pandas pyyaml
   - wget http://bionetgen.googlecode.com/files/BioNetGen-2.2.5-stable.zip
   - unzip BioNetGen-2.2.5-stable.zip
-  - sudo ln -s `pwd`/BioNetGen-2.2.5-stable /usr/local/share/BioNetGen
+  - export BNGPATH=`pwd`/BioNetGen-2.2.5-stable
   - pip install git+https://github.com/pysb/pysb.git
+  - pip install git+https://github.com/johnbachman/emcee.git
+  - mkdir -p results/figures/panels
+  - export PYTHONPATH=$PYTHONPATH:.
+
+  #- wget http://bionetgen.googlecode.com/files/BioNetGen-2.2.5-stable.zip
+  #- unzip BioNetGen-2.2.5-stable.zip
+  #- sudo ln -s `pwd`/BioNetGen-2.2.5-stable /usr/local/share/BioNetGen
   # Misc dependencies
-  - pip install matplotlib
-  - pip install pyyaml
-  - pip install mpi4py
-  - pip install pandas
+  #- pip install matplotlib
+  #- pip install pyyaml
+  #- pip install mpi4py
+  #- pip install pandas
+  #
   #- pip install cython # needed by h5py
   #- pip install h5py
   # Install the nose-exclude plugin allowing us to ignore dirs
   #- pip install nose-exclude
   # Patched branch of emcee
-  - pip install git+https://github.com/johnbachman/emcee.git
   # Make the results directory
-  - mkdir -p results/figures/panels
-  - export PYTHONPATH=$PYTHONPATH:.
 script: ./run_tests.sh
