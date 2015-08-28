@@ -5,10 +5,10 @@
 export BASEDIR=`pwd`
 cd $BASEDIR/kale/make
 make
-cd $BASEDIR/kale/doc
-make html
-cd $BASEDIR
-nosetests tbidbaxlipo/plots/x140318_Bax_liposome_titration
-nosetests tbidbaxlipo/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration
-nosetests tbidbaxlipo/models
-make figures
+#cd $BASEDIR/kale/doc
+#make html
+#cd $BASEDIR
+#nosetests tbidbaxlipo/plots/x140318_Bax_liposome_titration
+#nosetests tbidbaxlipo/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration
+#nosetests tbidbaxlipo/models
+#make figures

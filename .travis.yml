@@ -31,9 +31,11 @@ install:
   - pip install git+https://github.com/johnbachman/emcee.git
   - pip install triangle-plot
   - pip install openpyxl
+  - pip install sphinx 
   # Make the results directory
   - mkdir -p results/figures/panels
-  - export PYTHONPATH=$PYTHONPATH:.
+  - `pwd`
+  - export PYTHONPATH=$PYTHONPATH:/home/travis/tbidbaxlipo
   # Misc dependencies
   #- pip install cython # needed by h5py
   #- pip install h5py
