@@ -26,7 +26,7 @@ FIRST_ROW_INDEX = 4
 #LAST_ROW_INDEX = 128
 LAST_ROW_INDEX = 123
 
-wb = load_workbook(data_file)
+wb = load_workbook(data_file, data_only=True)
 
 # Load the first worksheet
 sheet = wb.worksheets[0]
