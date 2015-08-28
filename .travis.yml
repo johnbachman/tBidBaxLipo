@@ -31,7 +31,7 @@ before_install:
   - "export DISPLAY=:99.0"
   - "sh -e /etc/init.d/xvfb start"
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib nose sympy mpi4py pandas pyyaml
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib nose sympy mpi4py pandas pyyaml openpyxl
   - wget http://bionetgen.googlecode.com/files/BioNetGen-2.2.5-stable.zip
   - unzip BioNetGen-2.2.5-stable.zip
   - export BNGPATH=`pwd`/BioNetGen-2.2.5-stable
