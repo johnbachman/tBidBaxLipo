@@ -5,19 +5,10 @@ sudo: false
 addons:
   apt:
     packages:
-      #- openmpi-bin
-      #- openmpi-dev
       - texlive
       - dvipng
       - texlive-latex-extra
       # - libhdf5-serial-dev # headers for h5py
-#before_install:
-#  - sudo apt-get install python-scipy
-#  - sudo apt-get install openmpi-bin openmpi-dev
-#  # Install TeX for plotting
-#  - sudo apt-get install texlive
-#  - sudo apt-get install dvipng
-#  - sudo apt-get install texlive-latex-extra
 before_install:
   # Getting scipy/numpy from Miniconda speeds up Travis builds,
   # see https://gist.github.com/dan-blanchard/7045057
@@ -36,25 +27,14 @@ install:
   - unzip BioNetGen-2.2.5-stable.zip
   - export BNGPATH=`pwd`/BioNetGen-2.2.5-stable
   - pip install git+https://github.com/pysb/pysb.git
+  # Patched branch of emcee
   - pip install git+https://github.com/johnbachman/emcee.git
   - pip install triangle-plot
   - pip install openpyxl
+  # Make the results directory
   - mkdir -p results/figures/panels
   - export PYTHONPATH=$PYTHONPATH:.
-  - python -c "import openpyxl; print openpyxl.__version__"
-  #- wget http://bionetgen.googlecode.com/files/BioNetGen-2.2.5-stable.zip
-  #- unzip BioNetGen-2.2.5-stable.zip
-  #- sudo ln -s `pwd`/BioNetGen-2.2.5-stable /usr/local/share/BioNetGen
   # Misc dependencies
-  #- pip install matplotlib
-  #- pip install pyyaml
-  #- pip install mpi4py
-  #- pip install pandas
-  #
   #- pip install cython # needed by h5py
   #- pip install h5py
-  # Install the nose-exclude plugin allowing us to ignore dirs
-  #- pip install nose-exclude
-  # Patched branch of emcee
-  # Make the results directory
 script: ./run_tests.sh
