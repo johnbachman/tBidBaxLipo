@@ -5,8 +5,8 @@ sudo: false
 addons:
   apt:
     packages:
-      - openmpi-bin
-      - openmpi-dev
+      #- openmpi-bin
+      #- openmpi-dev
       - texlive
       - dvipng
       - texlive-latex-extra
@@ -40,7 +40,7 @@ install:
   - pip install triangle-plot
   - mkdir -p results/figures/panels
   - export PYTHONPATH=$PYTHONPATH:.
-
+  - python -c "import openpyxl; print openpyxl.__version__"
   #- wget http://bionetgen.googlecode.com/files/BioNetGen-2.2.5-stable.zip
   #- unzip BioNetGen-2.2.5-stable.zip
   #- sudo ln -s `pwd`/BioNetGen-2.2.5-stable /usr/local/share/BioNetGen
