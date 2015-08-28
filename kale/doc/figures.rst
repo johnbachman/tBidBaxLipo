@@ -7,9 +7,13 @@ Activity of mutants
 Dataset 1 (NBD/Tb)
 ~~~~~~~~~~~~~~~~~~
 
-.. image:: /../make/data1_nbd_endpt.png
+.. image:: /../make/data1_nbd_endpt_norm.png
 
-:download:`PDF </../make/data1_nbd_endpt.pdf>`
+:download:`PDF </../make/data1_nbd_endpt_norm.pdf>`
+
+.. image:: /../make/data1_nbd_endpt_no_norm.png
+
+:download:`PDF </../make/data1_nbd_endpt_no_norm.pdf>`
 
 .. image:: /../make/data1_release_endpt_no_norm.png
 
@@ -35,13 +39,20 @@ Dataset 1 (NBD/Tb)
 
 :download:`PDF </../make/data1_init_scatter_norm_Bim.pdf>`
 
+.. image:: /../make/data1_nbd_example_curves.png
+
+:download:`PDF </../make/data1_nbd_example_curves.pdf>`
 
 Dataset 2 (FRET/NBD/Tb)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: /../make/data2_nbd_endpt.png
+.. image:: /../make/data2_nbd_endpt_norm.png
 
-:download:`PDF </../make/data2_nbd_endpt.pdf>`
+:download:`PDF </../make/data2_nbd_endpt_norm.pdf>`
+
+.. image:: /../make/data2_nbd_endpt_no_norm.png
+
+:download:`PDF </../make/data2_nbd_endpt_no_norm.pdf>`
 
 .. image:: /../make/data2_release_endpt_no_norm.png
 
