@@ -10,6 +10,7 @@ Contents:
 
 .. toctree::
    :maxdepth: 2
+   :numbered:
 
    figures
    bid_bim_nbd_release/index

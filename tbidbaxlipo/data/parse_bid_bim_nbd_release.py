@@ -82,7 +82,7 @@ def load_data():
                               col_types))
 
 
-    wb = load_workbook(data_file)
+    wb = load_workbook(data_file, data_only=True)
 
     (bid_release_tuples, bid_release_data) = \
                         get_data_from_sheet(wb.worksheets[0], 'Bid', 'Release',
