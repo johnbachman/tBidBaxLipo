@@ -1,6 +1,7 @@
 from tbidbaxlipo.data.parse_bid_bim_nbd_release import nbd_residues
 import os
 
+#nbd_residues = ['3', '5']
 confs = range(2, 6)
 activators = ['Bid', 'Bim']
 reps = range(1, 4)
@@ -15,6 +16,8 @@ index_text += '    :maxdepth: 2\n\n'
 
 # Iterate over the mutants
 for nbd_residue in nbd_residues:
+    if nbd_residue == 'WT':
+        continue
     text =  'NBD-%sC-Bax\n' % nbd_residue
     text += '===============\n\n'
     # Iterate over the activators
