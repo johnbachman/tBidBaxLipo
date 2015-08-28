@@ -34,7 +34,7 @@ install:
   - pip install sphinx 
   # Make the results directory
   - mkdir -p results/figures/panels
-  - `pwd`
+  - "`pwd`"
   - export PYTHONPATH=$PYTHONPATH:/home/travis/tbidbaxlipo
   # Misc dependencies
   #- pip install cython # needed by h5py
