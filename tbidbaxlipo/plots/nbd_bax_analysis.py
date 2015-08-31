@@ -63,13 +63,17 @@ class FitResult(object):
         return '%s_%s_r%s_%s.csv' % (self.activator, self.nbd_site, \
                                     str(self.rep_index), self.measurement)
 
-def plot_all(df, nbd_residues, datatypes, file_basename=None,
-             normalize_nbd=False):
+def plot_all(df, nbd_residues, datatypes, activators=None, replicates=None,
+             file_basename=None, normalize_nbd=False):
     """Release should be first in the list of datatypes."""
     if datatypes[0] != 'Release':
         raise ValueError("Release should be first in the datatypes list.")
     # Some definitions
-    activators = ['Bid', 'Bim']
+    # Define some default values
+    if activators is None:
+        activators = ['Bid', 'Bim']
+    if replicates is None:
+        replicates = (1, 2, 3)
     num_subplots = len(datatypes)
     # Labels and titles for each datatype
     ylabels = {'Release': '% Dye Release',
@@ -81,7 +85,8 @@ def plot_all(df, nbd_residues, datatypes, file_basename=None,
             fig_width = 11
         elif len(datatypes) == 3:
             fig_width = 14
-        plt.figure(figsize=(fig_width, 5))
+        fig = plt.figure(figsize=(fig_width, 5))
+        fig.set_tight_layout(True)
         # Define the subplot titles
         titles = {'Release': r'Dye release for NBD-%s-Bax' % nbd_site,
                   'NBD': 'NBD F/$F_0$ for NBD-%s-Bax' % nbd_site,
@@ -96,7 +101,7 @@ def plot_all(df, nbd_residues, datatypes, file_basename=None,
             # Activators and replicates are separate lines on the same plot
             for activator in activators:
                 # Iterate over replicates...
-                for i in range(1, 4):
+                for i in replicates:
                     # Get the data
                     t = df[(activator, dtype, nbd_site, i, 'TIME')]
                     v = df[(activator, dtype, nbd_site, i, 'VALUE')]
@@ -113,18 +118,21 @@ def plot_all(df, nbd_residues, datatypes, file_basename=None,
             # Datatype-specific formatting
             if dtype == 'Release':
                 plt.ylim([0, 100])
-        plt.tight_layout()
         if file_basename:
             plt.savefig('%s_%s.pdf' % (file_basename, nbd_site))
             plt.savefig('%s_%s.png' % (file_basename, nbd_site))
 
-def plot_all_by_replicate(df, nbd_residues, datatypes, file_basename=None,
+def plot_all_by_replicate(df, nbd_residues, datatypes, activators=None,
+                          replicates=None, file_basename=None,
                           normalize_nbd=False):
     """Release should be first in the datatypes list."""
     if datatypes[0] != 'Release':
         raise ValueError("Release should be first in the datatypes list.")
-    # Some definitions
-    activators = ['Bid', 'Bim']
+    # Define some default values
+    if activators is None:
+        activators = ['Bid', 'Bim']
+    if replicates is None:
+        replicates = (1, 2, 3)
     # Every mutant gets its own plot
     for nbd_index, nbd_site in enumerate(nbd_residues):
         for activator in activators:
@@ -133,7 +141,7 @@ def plot_all_by_replicate(df, nbd_residues, datatypes, file_basename=None,
             ax2_list = []
             nbd_max = -np.inf
             nbd_min = np.inf
-            for rep in [1, 2, 3]:
+            for rep in replicates:
                 # Make the release plot
                 plt.subplot(1, 3, rep)
                 ax1 = plt.gca()
