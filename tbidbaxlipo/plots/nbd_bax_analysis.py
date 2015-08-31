@@ -63,13 +63,17 @@ class FitResult(object):
         return '%s_%s_r%s_%s.csv' % (self.activator, self.nbd_site, \
                                     str(self.rep_index), self.measurement)
 
-def plot_all(df, nbd_residues, datatypes, file_basename=None,
-             normalize_nbd=False):
+def plot_all(df, nbd_residues, datatypes, activators=None, replicates=None,
+             file_basename=None, normalize_nbd=False):
     """Release should be first in the list of datatypes."""
     if datatypes[0] != 'Release':
         raise ValueError("Release should be first in the datatypes list.")
     # Some definitions
-    activators = ['Bid', 'Bim']
+    # Define some default values
+    if activators is None:
+        activators = ['Bid', 'Bim']
+    if replicates is None:
+        replicates = (1, 2, 3)
     num_subplots = len(datatypes)
     # Labels and titles for each datatype
     ylabels = {'Release': '% Dye Release',
@@ -81,7 +85,8 @@ def plot_all(df, nbd_residues, datatypes, file_basename=None,
             fig_width = 11
         elif len(datatypes) == 3:
             fig_width = 14
-        plt.figure(figsize=(fig_width, 5))
+        fig = plt.figure(figsize=(fig_width, 5))
+        fig.set_tight_layout(True)
         # Define the subplot titles
         titles = {'Release': r'Dye release for NBD-%s-Bax' % nbd_site,
                   'NBD': 'NBD F/$F_0$ for NBD-%s-Bax' % nbd_site,
@@ -96,7 +101,7 @@ def plot_all(df, nbd_residues, datatypes, file_basename=None,
             # Activators and replicates are separate lines on the same plot
             for activator in activators:
                 # Iterate over replicates...
-                for i in range(1, 4):
+                for i in replicates:
                     # Get the data
                     t = df[(activator, dtype, nbd_site, i, 'TIME')]
                     v = df[(activator, dtype, nbd_site, i, 'VALUE')]
@@ -113,18 +118,21 @@ def plot_all(df, nbd_residues, datatypes, file_basename=None,
             # Datatype-specific formatting
             if dtype == 'Release':
                 plt.ylim([0, 100])
-        plt.tight_layout()
         if file_basename:
             plt.savefig('%s_%s.pdf' % (file_basename, nbd_site))
             plt.savefig('%s_%s.png' % (file_basename, nbd_site))
 
-def plot_all_by_replicate(df, nbd_residues, datatypes, file_basename=None,
+def plot_all_by_replicate(df, nbd_residues, datatypes, activators=None,
+                          replicates=None, file_basename=None,
                           normalize_nbd=False):
     """Release should be first in the datatypes list."""
     if datatypes[0] != 'Release':
         raise ValueError("Release should be first in the datatypes list.")
-    # Some definitions
-    activators = ['Bid', 'Bim']
+    # Define some default values
+    if activators is None:
+        activators = ['Bid', 'Bim']
+    if replicates is None:
+        replicates = (1, 2, 3)
     # Every mutant gets its own plot
     for nbd_index, nbd_site in enumerate(nbd_residues):
         for activator in activators:
@@ -133,7 +141,7 @@ def plot_all_by_replicate(df, nbd_residues, datatypes, file_basename=None,
             ax2_list = []
             nbd_max = -np.inf
             nbd_min = np.inf
-            for rep in [1, 2, 3]:
+            for rep in replicates:
                 # Make the release plot
                 plt.subplot(1, 3, rep)
                 ax1 = plt.gca()
@@ -1233,20 +1241,24 @@ def plot_3conf_fits(df, nbd_sites, activator, normalize_nbd=False):
 
     return fit_results
 
-def plot_nbd_error_estimates(df, nbd_sites, last_n_pts=50, fit_type='cubic',
+def plot_nbd_error_estimates(df, nbd_sites, dtype='NBD', activators=None,
+                             replicates=None, last_n_pts=50, fit_type='cubic',
                              plot=True, normalize_nbd=False):
-    replicates = range(1, 4)
     # Filter out the WT residue, if present in the list
     nbd_sites_filt = [s for s in nbd_sites if s != 'WT']
-    activators = ['Bid', 'Bim']
+    # Set some defaults
+    if activators is None:
+        activators = ['Bid', 'Bim']
+    if replicates is None:
+        replicates = (1, 2, 3)
 
     for nbd_index, nbd_site in enumerate(nbd_sites_filt):
         for act_ix, activator in enumerate(activators):
             residuals_reps = []
             for rep_index, rep_num in enumerate(replicates):
-                ny = df[activator, 'NBD', nbd_site, rep_num, 'VALUE'].values
+                ny = df[activator, dtype, nbd_site, rep_num, 'VALUE'].values
                 # Normalize NBD to F/F0
-                if normalize_nbd:
+                if dtype == 'NBD' and normalize_nbd:
                     ny = ny / ny[0]
                 # Get the error value and the fig (if not figure desired, then
                 # fig will be None
@@ -1261,12 +1273,15 @@ def plot_nbd_error_estimates(df, nbd_sites, last_n_pts=50, fit_type='cubic',
                 if plot:
                     fig.subplots_adjust(top=0.86)
                     fig.text(0.5, 0.95,
-                             'Est. Error for %s, %sC-Bax, rep %d: %f' %
-                             (activator, nbd_site, rep_num, nbd_err),
+                             'Est. Error for %s, %s, %sC-Bax, rep %d: %f' %
+                             (activator, dtype, nbd_site, rep_num, nbd_err),
                              verticalalignment='top',
                              horizontalalignment='center')
-            # Combine the three residuals replicates into one big set of
-            # residuals
+
+            # If there is more than one replicates, combine the three residuals
+            # replicates into one big set of residuals
+            if len(replicates) == 1:
+                continue
             pooled_residuals = np.array(residuals_reps).flatten()
             pooled_err = np.std(pooled_residuals, ddof=1)
             if plot:
@@ -1281,8 +1296,8 @@ def plot_nbd_error_estimates(df, nbd_sites, last_n_pts=50, fit_type='cubic',
                 plt.tight_layout()
                 plt.subplots_adjust(top=0.86)
                 fig.text(0.5, 0.95,
-                         'Est. Error of NBD for %s, %sC-Bax: %f' %
-                         (activator, nbd_site, pooled_err),
+                         'Est. Error of %s for %s, %sC-Bax: %f' %
+                         (activator, dtype, nbd_site, pooled_err),
                          verticalalignment='top',
                          horizontalalignment='center')
 
