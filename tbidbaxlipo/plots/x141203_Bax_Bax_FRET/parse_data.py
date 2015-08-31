@@ -11,7 +11,7 @@ data_file = abspath(join(data_path,
 
 nbd_residues = ['126', '54'] # This must match the spreadsheet
 datatypes_time = ['Time', 'Release', 'FRET', 'NBD']
-activator = 'cBid'
+activator = 'Bid'
 rep_index = 1
 
 FIRST_ROW_INDEX = 2
