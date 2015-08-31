@@ -7,3 +7,4 @@ Bax/Bax FRET + NBD-Bax + Tb Release
     :maxdepth: 3
 
     raw_data
+    error_estimates

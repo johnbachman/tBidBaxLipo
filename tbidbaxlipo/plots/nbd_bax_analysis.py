@@ -1241,20 +1241,24 @@ def plot_3conf_fits(df, nbd_sites, activator, normalize_nbd=False):
 
     return fit_results
 
-def plot_nbd_error_estimates(df, nbd_sites, last_n_pts=50, fit_type='cubic',
+def plot_nbd_error_estimates(df, nbd_sites, dtype='NBD', activators=None,
+                             replicates=None, last_n_pts=50, fit_type='cubic',
                              plot=True, normalize_nbd=False):
-    replicates = range(1, 4)
     # Filter out the WT residue, if present in the list
     nbd_sites_filt = [s for s in nbd_sites if s != 'WT']
-    activators = ['Bid', 'Bim']
+    # Set some defaults
+    if activators is None:
+        activators = ['Bid', 'Bim']
+    if replicates is None:
+        replicates = (1, 2, 3)
 
     for nbd_index, nbd_site in enumerate(nbd_sites_filt):
         for act_ix, activator in enumerate(activators):
             residuals_reps = []
             for rep_index, rep_num in enumerate(replicates):
-                ny = df[activator, 'NBD', nbd_site, rep_num, 'VALUE'].values
+                ny = df[activator, dtype, nbd_site, rep_num, 'VALUE'].values
                 # Normalize NBD to F/F0
-                if normalize_nbd:
+                if dtype == 'NBD' and normalize_nbd:
                     ny = ny / ny[0]
                 # Get the error value and the fig (if not figure desired, then
                 # fig will be None
@@ -1269,12 +1273,15 @@ def plot_nbd_error_estimates(df, nbd_sites, last_n_pts=50, fit_type='cubic',
                 if plot:
                     fig.subplots_adjust(top=0.86)
                     fig.text(0.5, 0.95,
-                             'Est. Error for %s, %sC-Bax, rep %d: %f' %
-                             (activator, nbd_site, rep_num, nbd_err),
+                             'Est. Error for %s, %s, %sC-Bax, rep %d: %f' %
+                             (activator, dtype, nbd_site, rep_num, nbd_err),
                              verticalalignment='top',
                              horizontalalignment='center')
-            # Combine the three residuals replicates into one big set of
-            # residuals
+
+            # If there is more than one replicates, combine the three residuals
+            # replicates into one big set of residuals
+            if len(replicates) == 1:
+                continue
             pooled_residuals = np.array(residuals_reps).flatten()
             pooled_err = np.std(pooled_residuals, ddof=1)
             if plot:
@@ -1289,8 +1296,8 @@ def plot_nbd_error_estimates(df, nbd_sites, last_n_pts=50, fit_type='cubic',
                 plt.tight_layout()
                 plt.subplots_adjust(top=0.86)
                 fig.text(0.5, 0.95,
-                         'Est. Error of NBD for %s, %sC-Bax: %f' %
-                         (activator, nbd_site, pooled_err),
+                         'Est. Error of %s for %s, %sC-Bax: %f' %
+                         (activator, dtype, nbd_site, pooled_err),
                          verticalalignment='top',
                          horizontalalignment='center')
 
