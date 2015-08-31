@@ -263,7 +263,7 @@ if __name__ == '__main__':
 
     # Plot the F/F0 values at various pts vs. Bax concentration
     plot_endpoints_vs_bax(data_norm, [125, 250, 500], 4, bax_concs,
-                          plot_filename='141119_Bid_20nM_endpts',
+                          plot_filename='141119_Bid_20nm_endpts',
                           avg_pts=10)
 
     sys.exit()

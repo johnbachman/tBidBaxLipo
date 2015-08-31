@@ -81,7 +81,7 @@ $(NBD_MCMC_DIR)/pt_data1.deps.txt: \
 
 
 # -- Dataset 1, NBD + Tb release, summary plots ------------------------
-nbd_release: nbd_release_endpts nbd_release_initial_rates, nbd_example_curves
+nbd_release: nbd_release_endpts nbd_release_initial_rates nbd_example_curves
 nbd_release_endpts: \
     data1_release_endpt_norm.pdf data1_release_endpt_no_norm.pdf \
     data1_nbd_endpt_norm.pdf data1_nbd_endpt_no_norm.pdf
