@@ -4,6 +4,8 @@ from copy import deepcopy
 from matplotlib import pyplot as plt
 from tbidbaxlipo.util.calculate_error_variance import calc_err_var
 
+nbd_residues = ['54', '126']
+
 # There are a number of outliers in the FRET data that Justin attributes
 # to debris floating in the cuvette that produces momentary spikes. Here
 # we explicitly remove several of these from the 54C data, setting them to
@@ -35,17 +37,25 @@ data_126[0, 1, :] = df_pre[('126', 'FRET', 'VALUE')].values
 
 # Calculate the prior on standard error of the data by running polynomial
 # fits on the final points
+# 54
 data_54_sigma = np.zeros((1, 2))
-data_54_sigma[0, 0] = calc_err_var(data_54[0, 0, :], last_n_pts=80,
-                                   fit_type='cubic', plot=False)
-data_54_sigma[0, 1] = calc_err_var(data_54[0, 1, :], last_n_pts=80,
-                                   fit_type='cubic', plot=False)
+(residuals, _) = calc_err_var(data_54[0, 0, :], last_n_pts=80,
+                              fit_type='cubic', plot=False)
+data_54_sigma[0, 0] = np.std(residuals, ddof=1)
 
+(residuals, _) = calc_err_var(data_54[0, 1, :], last_n_pts=80,
+                              fit_type='cubic', plot=False)
+data_54_sigma[0, 1] = np.std(residuals, ddof=1)
+
+# 126
 data_126_sigma = np.zeros((1, 2))
-data_126_sigma[0, 0] = calc_err_var(data_126[0, 0, :], last_n_pts=80,
-                                          fit_type='cubic', plot=False)
-data_126_sigma[0, 1] = calc_err_var(data_126[0, 1, :], last_n_pts=80,
-                                          fit_type='cubic', plot=False)
+(residuals, _) = calc_err_var(data_126[0, 0, :], last_n_pts=80,
+                              fit_type='cubic', plot=False)
+data_126_sigma[0, 0] = np.std(residuals, ddof=1)
+
+(residuals, _) = calc_err_var(data_126[0, 1, :], last_n_pts=80,
+                              fit_type='cubic', plot=False)
+data_126_sigma[0, 1] = np.std(residuals, ddof=1)
 
 
 def plot_outliers():
