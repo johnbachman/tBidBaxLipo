@@ -11,6 +11,8 @@ data_file = abspath(join(data_path,
 
 nbd_residues = ['126', '54'] # This must match the spreadsheet
 datatypes_time = ['Time', 'Release', 'FRET', 'NBD']
+activator = 'cBid'
+rep_index = 1
 
 FIRST_ROW_INDEX = 2
 LAST_ROW_INDEX = 128 # 54C ends on index 127, so will have a lot of NaNs
@@ -44,8 +46,8 @@ for nbd_ix, nbd_residue in enumerate(nbd_residues):
         # Otherwise, get the data and add it along with a time column
         else:
             assert time_vector is not None
-            time_tuple = (nbd_residue, dtype, 'TIME')
-            value_tuple = (nbd_residue, dtype, 'VALUE')
+            time_tuple = (activator, dtype, nbd_residue, rep_index, 'TIME')
+            value_tuple = (activator, dtype, nbd_residue, rep_index, 'VALUE')
             col_tuples.append(time_tuple)
             col_tuples.append(value_tuple)
             data.append(time_vector)
@@ -56,7 +58,8 @@ for nbd_ix, nbd_residue in enumerate(nbd_residues):
 # Create the Pandas dataframe
 data_matrix = np.array(data)
 col_index = pd.MultiIndex.from_tuples(col_tuples,
-                    names=('NBD Site', 'Datatype', 'Column'))
+                    names=('Activator', 'Datatype', 'NBD Site', 'Replicate',
+                           'Column'))
 df = pd.DataFrame(data_matrix.T,
                   index=range(LAST_ROW_INDEX - FIRST_ROW_INDEX),
                   columns=col_index)
