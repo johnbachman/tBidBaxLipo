@@ -26,6 +26,8 @@ def calc_err_var(data, last_n_pts=50, fit_type='cubic', plot=False,
     ypred = fit.fit_func(t_subset, params)
     # Calculate residuals
     residuals = data_subset - ypred
+    # Remove NaNs
+    residuals = residuals[~np.isnan(residuals)]
     # Plot results
     fig = None
     if plot:
