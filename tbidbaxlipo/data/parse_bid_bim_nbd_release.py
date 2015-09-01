@@ -68,7 +68,7 @@ def get_labeling_ratios(sheet, mutant_name_row, ratio_row):
     ratios = {}
     for i, col in enumerate(sheet.columns[FIRST_COL_INDEX:]):
         mutant_name = str(col[mutant_name_row].value)
-        if mutant_name == '':
+        if mutant_name == '' or mutant_name is None or mutant_name == 'None':
             continue
         labeling_ratio = col[ratio_row].value
         if mutant_name not in ratios:
