@@ -24,6 +24,7 @@ kale/doc/_static
 kale/doc/sphinxreport.log
 kale/make/*.pdf
 kale/make/*.png
+kale/make/*.csv
 *.deps.txt
 *.fit
 *.md5
