@@ -10,11 +10,13 @@ NBD_FRET_DATA := $(DATADIR)/2015-02-27\ -\ Bid-Bim\ FRET\ with\ Bax\ NBD\ mutant
 x140430 := $(CODEDIR)/plots/x140430_Bid_Bax_FRET/mcmc
 #PQUEUE := sorger_par_unlimited
 PQUEUE := parallel
+# md5 sum program to use (md5 on mac, md5sum on Linux)
+MD5 := md5
 
-all: nbd_release fret_nbd_release
+all: nbd_release fret_nbd_release nbd_labeling_ratios_table
 
 clean:
-	rm -f ./*.pdf ./*.png
+	rm -f ./*.pdf ./*.png ./*.csv
 
 clean_pt_data1:
 	cd $(NBD_MCMC_DIR); rm -f *.md5 *.fit *.deps.txt *.ensemble
@@ -27,7 +29,7 @@ from-md5 = $(patsubst %.md5,%,$1)
 
 # The .md5 file is updated only if the hash has changed
 %.md5: FORCE
-	@$(if $(filter-out $(shell cat $@ 2>/dev/null), $(shell md5sum $*)),md5sum $* > $@)
+	@$(if $(filter-out $(shell cat $@ 2>/dev/null), $(shell $(MD5) $*)),$(MD5) $* > $@)
 
 # Dummy target so the .md5 step is always run
 FORCE:
@@ -182,3 +184,8 @@ data2_init_nbd_bar.pdf: \
         $(NBD_FRET_DATA)
 	python -m tbidbaxlipo.plots.bid_bim_fret_nbd_release.plots initial_rate_samples data2
 
+nbd_labeling_ratios_table: \
+        $(PLOTSDIR)/bid_bim_nbd_release/nbd_labeling_ratios_table.py \
+        $(NBD_DATA)
+	python -m tbidbaxlipo.plots.bid_bim_nbd_release.nbd_labeling_ratios_table \
+                      nbd_labeling_ratios_table.csv
