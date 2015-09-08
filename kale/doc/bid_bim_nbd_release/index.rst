@@ -8,12 +8,13 @@ different liposome preps; reps for Bid and Bim are matched to the
 same liposome prep.
 
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 1
 
     raw_data
     bid_vs_bim_release
     two_conf_fits
     three_conf_fits
     fits/index
+    evidence_table
     derivatives
     nbd_error_estimates
