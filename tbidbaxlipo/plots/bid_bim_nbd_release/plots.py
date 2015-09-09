@@ -40,6 +40,9 @@ if __name__ == '__main__':
     elif plot_type == 'initial_rate_samples':
         nba.plot_initial_rate_samples(df, nbd_residues, timepoint_ix=4,
                                       file_basename=file_basename)
+    elif plot_type == 'calc_release_peaks':
+        nba.calc_release_peaks(df, nbd_residues,
+                               csv_filename='data1_release_peak_times.csv')
     # Unknown plot type
     else:
         print "Unknown plot type: %s" % plot_type
