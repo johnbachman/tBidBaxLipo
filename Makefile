@@ -22,6 +22,9 @@ figures: \
 		$(FIGDIR)/140429_exact_comp_bind_fit.pdf \
 		$(FIGDIR)/140429_gouy_chap_fit.pdf
 
+deploy:
+	rsync -av results/figures/ ~/Dropbox/Bachman-Sorger\ Talks\ and\ Papers/Bachman-Kale\ Bax\ kinetics/figures
+
 mcmc_figures: $(FIGDIR)/pt_140318_nbd_2_conf_fits.pdf
 
 pt_140318_figures:

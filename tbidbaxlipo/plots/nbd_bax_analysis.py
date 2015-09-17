@@ -1,3 +1,5 @@
+import csv
+import itertools
 import collections
 from matplotlib import pyplot as plt
 import numpy as np
@@ -932,6 +934,64 @@ def plot_bid_vs_bim_release(df, nbd_sites, dtype='Release',
                 plt.savefig('%s_%s.pdf' % (file_basename, fig_name))
                 plt.savefig('%s_%s.png' % (file_basename, fig_name))
 
+def calc_release_peaks(df, nbd_sites, activators=None, replicates=None,
+                       window=1, csv_filename=None):
+    """Measure the lag phase of the release data.
+
+    Takes the derivative of the release data for the given set of
+    activators, NBD sites, and replicates, and gets the time associated
+    with the peak of the derivative.
+
+    Returns
+    -------
+    Dictionary containing keys of the form (activator, nbd_site, replicate)
+    mapped to the times of the maximum rate of release.
+    """
+
+    # Set some defaults
+    if activators is None:
+        activators = ['Bid', 'Bim']
+    if replicates is None:
+        replicates = range(1, 4)
+    peak_dict = collections.OrderedDict()
+    # Initialize the filter
+    b, a = scipy.signal.butter(1, 0.2)
+    for activator, nbd_site, rep_index in \
+            itertools.product(activators, nbd_sites, replicates):
+        key = (activator, nbd_site, rep_index)
+        # Get the data
+        rt = df[(activator, 'Release', nbd_site,
+                 rep_index, 'TIME')].values
+        ry = df[(activator, 'Release', nbd_site,
+                 rep_index, 'VALUE')].values
+        # Apply the filter
+
+        # Filter the timecourse
+        r_filt = scipy.signal.filtfilt(b, a, ry)
+        r_avg = moving_average(r_filt, n=window)
+        # Take the derivative
+        r_diff = np.diff(r_avg)
+        # When we take the derivative, the size of the array shrinks by
+        # one, because we are calculating the differences between neighboring
+        # elements. So if the data is [0, 1, 3, 4, 5], the derivatives will
+        # be [1, 2, 1, 1], and the maximum of the derivative array will be at
+        # index 1, which corresponds to the difference of two and the entry of
+        # three in the original array. If we adopt the convention that the
+        # index to use for the maximum slope is the latter of the two values
+        # used in calculating the difference, this means we need to add one to
+        # the index associated with the maximum value of the diff array.
+        r_max_tpt = np.argmax(r_diff) + 1
+        peak_dict[key] = rt[r_max_tpt]
+
+    if csv_filename:
+        with open(csv_filename, 'w') as csv_file:
+            csv_writer = csv.writer(csv_file, delimiter=',')
+            for key, value in peak_dict.iteritems():
+                line = list(key)
+                line.append(value)
+                csv_writer.writerow(line)
+    return peak_dict
+
 def plot_derivatives(df, nbd_sites, normalize_nbd=False):
     replicates = range(1, 4)
     num_pts = 4
@@ -941,6 +1001,10 @@ def plot_derivatives(df, nbd_sites, normalize_nbd=False):
     b, a = scipy.signal.butter(1, 0.2)
     for nbd_index, nbd_site in enumerate(nbd_sites):
         for activator in activators:
+            # We store the list of timepoints where the release derivative
+            # reaches its peak so that we can plot lines for all three with
+            # the same upper and lower y-coordinates.
+            peak_pts = []
             for rep_index in replicates:
                 rt = df[(activator, 'Release', nbd_site,
                          rep_index, 'TIME')].values
@@ -951,7 +1015,9 @@ def plot_derivatives(df, nbd_sites, normalize_nbd=False):
                 r_avg = moving_average(r_filt, n=window)
                 # Take the derivative
                 r_diff = np.diff(r_avg)
-
+                # See comment in calc_release_peaks, above
+                r_max_tpt = np.argmax(r_diff) + 1
+                peak_pts.append(rt[r_max_tpt])
                 # Calculate max NBD slope, but not for WT
                 if nbd_site != 'WT':
                     nt = df[(activator, 'NBD', nbd_site,
@@ -960,7 +1026,7 @@ def plot_derivatives(df, nbd_sites, normalize_nbd=False):
                              rep_index, 'VALUE')].values
                     # Normalize NBD to F/F0
                     if normalize_nbd:
-                        ny = ny / ny[0]
+                        ny = ny / float(ny[0])
                     # Filter
                     n_filt = scipy.signal.filtfilt(b, a, ny)
                     n_avg = moving_average(n_filt, n=window)
@@ -1007,6 +1073,13 @@ def plot_derivatives(df, nbd_sites, normalize_nbd=False):
                     plt.title('%s, NBD-%s-Bax normalized derivative' %
                               (activator, nbd_site))
                     plt.legend(loc='upper right')
+
+                # Add vertical lines to the normalized derivative plot
+                plt.figure('%s, NBD-%s-Bax normalized derivative' %
+                           (activator, nbd_site))
+                ymin, ymax = plt.ylim()
+                plt.vlines(peak_pts, ymin, ymax)
+
                 # Call tight_layout for the Tb/NBD 2-panel figure
                 plt.figure('%s, NBD-%s-Bax derivative' % (activator, nbd_site))
                 plt.tight_layout()
@@ -1302,19 +1375,19 @@ def plot_nbd_error_estimates(df, nbd_sites, dtype='NBD', activators=None,
                          horizontalalignment='center')
 
 if __name__ == '__main__':
-    #from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
+    from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
     #from tbidbaxlipo.data.parse_bid_bim_fret_nbd_release import df, nbd_residues
     plt.ion()
-    import pickle
+    #import pickle
     #with open('data2.pck', 'w') as f:
         #pickle.dump((df, nbd_residues), f)
-    with open('data2.pck') as f:
-        (df, nbd_residues) = pickle.load(f)
+    #with open('data2.pck') as f:
+    #    (df, nbd_residues) = pickle.load(f)
     #plot_release_endpoints(df, nbd_residues, normalized_to_wt=True,
     #                       last_n_pts=3, file_basename=None)
-    plot_initial_rate_samples(df, nbd_residues, timepoint_ix=20,
-                              file_basename=None, normalized_to_wt=True)
-    #plot_derivatives(df, ['WT', '3'])
+    #plot_initial_rate_samples(df, nbd_residues, timepoint_ix=20,
+    #                          file_basename=None, normalized_to_wt=True)
+    plot_derivatives(df, ['WT'])
     #plot_nbd_error_estimates(df, ['68'], last_n_pts=80, fit_type='cubic')
     #plot_release_endpoints(df, nbd_residues, normalized_to_wt=True)
     #plot_bid_vs_bim_release(df, nbd_residues)

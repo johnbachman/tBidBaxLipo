@@ -15,6 +15,10 @@ MD5 := md5
 
 all: nbd_release fret_nbd_release nbd_labeling_ratios_table
 
+deploy:
+	rsync -av ./ ~/Dropbox/Bachman-Sorger\ Talks\ and\ Papers/Kale-Bachman\ Bax\ mutants/figures/panels
+
+
 clean:
 	rm -f ./*.pdf ./*.png ./*.csv
 
@@ -83,13 +87,13 @@ $(NBD_MCMC_DIR)/pt_data1.deps.txt: \
 
 
 # -- Dataset 1, NBD + Tb release, summary plots ------------------------
-nbd_release: nbd_release_endpts nbd_release_initial_rates nbd_example_curves
+nbd_release: nbd_release_endpts nbd_release_initial_rates nbd_example_curves \
+             data1_release_peak_times.csv
 nbd_release_endpts: \
     data1_release_endpt_norm.pdf data1_release_endpt_no_norm.pdf \
     data1_nbd_endpt_norm.pdf data1_nbd_endpt_no_norm.pdf
 nbd_release_initial_rates: data1_init_nbd_bar.pdf
 nbd_example_curves: data1_nbd_example_curves.pdf
-
 
 # -- Dataset 2, Bid FRET + NBD + Tb release, summary plots -------------
 fret_nbd_release: fret_nbd_release_endpts fret_nbd_release_initial_rates
@@ -139,9 +143,15 @@ data1_init_nbd_bar.pdf: \
 	python -m tbidbaxlipo.plots.bid_bim_nbd_release.plots initial_rate_samples data1
 
 data1_nbd_example_curves.pdf: \
-		$(PLOTSDIR)/bid_bim_nbd_release/plot_example_curves.py \
-		$(NBD_DATA)
+        $(PLOTSDIR)/bid_bim_nbd_release/plot_example_curves.py \
+        $(NBD_DATA)
 	python -m tbidbaxlipo.plots.bid_bim_nbd_release.plot_example_curves
+
+data1_release_peak_times.csv: \
+        $(PLOTSDIR)/nbd_bax_analysis.py \
+        $(PLOTSDIR)/bid_bim_nbd_release/plots.py \
+        $(NBD_DATA)
+	python -m tbidbaxlipo.plots.bid_bim_nbd_release.plots calc_release_peaks
 
 # --- Normalized release endpoint data for release, dataset 2 ---
 data2_release_endpt_norm.pdf: \

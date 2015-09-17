@@ -17,4 +17,5 @@ same liposome prep.
     fits/index
     evidence_table
     derivatives
+    nbd_tb_correlation
     nbd_error_estimates
