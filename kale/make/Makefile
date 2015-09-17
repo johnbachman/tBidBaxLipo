@@ -15,6 +15,10 @@ MD5 := md5
 
 all: nbd_release fret_nbd_release nbd_labeling_ratios_table
 
+deploy:
+	rsync -av ./ ~/Dropbox/Bachman-Sorger\ Talks\ and\ Papers/Kale-Bachman\ Bax\ mutants/figures/panels
+
+
 clean:
 	rm -f ./*.pdf ./*.png ./*.csv
 
