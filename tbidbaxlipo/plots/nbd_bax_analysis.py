@@ -992,6 +992,54 @@ def calc_release_peaks(df, nbd_sites, activators=None, replicates=None,
                 csv_writer.writerow(line)
     return peak_dict
 
+def plot_example_derivatives(df, activator, nbd_site, rep_index, window=1,
+                             normalize_nbd=False, plot_filename=None):
+    set_fig_params_for_publication()
+    # Create an order 3 lowpass butterworth filter.
+    b, a = scipy.signal.butter(1, 0.2)
+
+    # RELEASE DERIVATIVE
+    rt = df[(activator, 'Release', nbd_site, rep_index, 'TIME')].values
+    ry = df[(activator, 'Release', nbd_site, rep_index, 'VALUE')].values
+    # Filter the timecourse
+    r_filt = scipy.signal.filtfilt(b, a, ry)
+    r_avg = moving_average(r_filt, n=window)
+    # Take the derivative
+    r_diff = np.diff(r_avg)
+
+    # NBD DERIVATIVE
+    nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
+    ny = df[(activator, 'NBD', nbd_site, rep_index, 'VALUE')].values
+    # Normalize NBD to F/F0
+    if normalize_nbd:
+        ny = ny / float(ny[0])
+    # Filter
+    n_filt = scipy.signal.filtfilt(b, a, ny)
+    n_avg = moving_average(n_filt, n=window)
+    # Take derivative
+    n_diff = np.diff(n_avg)
+
+    # PLOT
+    fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
+    ax = fig.gca()
+    n_diff_norm = n_diff / np.max(np.abs(n_diff))
+    r_diff_norm = r_diff / np.max(np.abs(r_diff))
+    ax.plot(nt[1+window-1:], n_diff_norm, label=r'$\frac{d}{dt}$ NBD')
+    ax.plot(rt[1+window-1:], r_diff_norm, color='r',
+            label=r'$\frac{d}{dt}$ Tb release')
+    ax.set_xlabel('Time (sec)')
+    ax.set_ylabel(r'\% Max Rate')
+    #ax.set_title('%s, NBD-%s-Bax normalized derivative' % (activator, nbd_site))
+    ax.set_ylim(-0.1, 1.1)
+    ax.set_xlim(0, 2000)
+    plt.subplots_adjust(left=0.22, bottom=0.19)
+    plt.legend(loc='upper right', fontsize=fontsize, frameon=False)
+    format_axis(ax)
+
+    if plot_filename:
+        plt.savefig('%s.pdf' % plot_filename)
+        plt.savefig('%s.png' % plot_filename, dpi=300)
+
 def plot_derivatives(df, nbd_sites, normalize_nbd=False):
     replicates = range(1, 4)
     num_pts = 4
@@ -1083,6 +1131,7 @@ def plot_derivatives(df, nbd_sites, normalize_nbd=False):
                 # Call tight_layout for the Tb/NBD 2-panel figure
                 plt.figure('%s, NBD-%s-Bax derivative' % (activator, nbd_site))
                 plt.tight_layout()
+
 
 def welch_t_test(means1, sds1, means2, sds2):
     n1 = 3
@@ -1387,7 +1436,8 @@ if __name__ == '__main__':
     #                       last_n_pts=3, file_basename=None)
     #plot_initial_rate_samples(df, nbd_residues, timepoint_ix=20,
     #                          file_basename=None, normalized_to_wt=True)
-    plot_derivatives(df, ['WT'])
+    plot_example_derivatives(df, 'Bid', '15', 1)
+    #plot_derivatives(df, ['WT'])
     #plot_nbd_error_estimates(df, ['68'], last_n_pts=80, fit_type='cubic')
     #plot_release_endpoints(df, nbd_residues, normalized_to_wt=True)
     #plot_bid_vs_bim_release(df, nbd_residues)

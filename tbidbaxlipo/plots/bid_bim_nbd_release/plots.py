@@ -18,7 +18,6 @@ if __name__ == '__main__':
     if len(sys.argv) > 2:
         file_basename = sys.argv[2]
     else:
-        plt.ion()
         file_basename = None
 
     # Plot all (raw data)
@@ -43,6 +42,9 @@ if __name__ == '__main__':
     elif plot_type == 'calc_release_peaks':
         nba.calc_release_peaks(df, nbd_residues,
                                csv_filename='data1_release_peak_times.csv')
+    elif plot_type == 'example_derivatives':
+        nba.plot_example_derivatives(df, 'Bid', '15', 1,
+                                     plot_filename='data1_example_derivatives')
     # Unknown plot type
     else:
         print "Unknown plot type: %s" % plot_type
