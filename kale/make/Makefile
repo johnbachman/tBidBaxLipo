@@ -153,7 +153,7 @@ data1_release_peak_times.csv: \
         $(NBD_DATA)
 	python -m tbidbaxlipo.plots.bid_bim_nbd_release.plots calc_release_peaks
 
-data1_example_derivatives.pdf: \
+data1_derivatives_Bid_15_r1.pdf: \
         $(PLOTSDIR)/nbd_bax_analysis.py \
         $(PLOTSDIR)/bid_bim_nbd_release/plots.py \
         $(NBD_DATA)

@@ -993,7 +993,8 @@ def calc_release_peaks(df, nbd_sites, activators=None, replicates=None,
     return peak_dict
 
 def plot_example_derivatives(df, activator, nbd_site, rep_index, window=1,
-                             normalize_nbd=False, plot_filename=None):
+                             normalize_nbd=False, plot_filename=None,
+                             plot_tb_peak=False):
     set_fig_params_for_publication()
     # Create an order 3 lowpass butterworth filter.
     b, a = scipy.signal.butter(1, 0.2)
@@ -1006,6 +1007,9 @@ def plot_example_derivatives(df, activator, nbd_site, rep_index, window=1,
     r_avg = moving_average(r_filt, n=window)
     # Take the derivative
     r_diff = np.diff(r_avg)
+    # Peak release derivative
+    r_max_tpt = np.argmax(r_diff) + 1
+    peak_pt = rt[r_max_tpt]
 
     # NBD DERIVATIVE
     nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
@@ -1026,15 +1030,21 @@ def plot_example_derivatives(df, activator, nbd_site, rep_index, window=1,
     r_diff_norm = r_diff / np.max(np.abs(r_diff))
     ax.plot(nt[1+window-1:], n_diff_norm, label=r'$\frac{d}{dt}$ NBD')
     ax.plot(rt[1+window-1:], r_diff_norm, color='r',
-            label=r'$\frac{d}{dt}$ Tb release')
+            label=r'$\frac{d}{dt}$ Tb')
     ax.set_xlabel('Time (sec)')
     ax.set_ylabel(r'\% Max Rate')
     #ax.set_title('%s, NBD-%s-Bax normalized derivative' % (activator, nbd_site))
-    ax.set_ylim(-0.1, 1.1)
-    ax.set_xlim(0, 2000)
-    plt.subplots_adjust(left=0.22, bottom=0.19)
+    ax.set_ylim(-0.25, 1.1)
+    (xmin, xmax) = (0, 2000)
+    ax.set_xlim(xmin, xmax)
+    plt.hlines(0, xmin, xmax, linestyle='-')
+    plt.subplots_adjust(left=0.27, bottom=0.19)
     plt.legend(loc='upper right', fontsize=fontsize, frameon=False)
+    ymin, ymax = plt.ylim()
     format_axis(ax)
+
+    if plot_tb_peak:
+        plt.vlines(peak_pt, ymin, ymax, color='gray', alpha=0.5)
 
     if plot_filename:
         plt.savefig('%s.pdf' % plot_filename)

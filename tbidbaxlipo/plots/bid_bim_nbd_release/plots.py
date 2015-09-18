@@ -44,7 +44,10 @@ if __name__ == '__main__':
                                csv_filename='data1_release_peak_times.csv')
     elif plot_type == 'example_derivatives':
         nba.plot_example_derivatives(df, 'Bid', '15', 1,
-                                     plot_filename='data1_example_derivatives')
+                                     plot_filename='data1_derivatives_Bid_15_r1')
+        nba.plot_example_derivatives(df, 'Bid', '54', 1,
+                                     plot_filename='data1_derivatives_Bid_54_r1',
+                                     plot_tb_peak=True)
     # Unknown plot type
     else:
         print "Unknown plot type: %s" % plot_type
