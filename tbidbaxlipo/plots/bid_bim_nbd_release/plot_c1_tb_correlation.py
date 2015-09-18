@@ -38,15 +38,19 @@ replicates = list(sorted(replicates))
 plt.ion()
 xdata = []
 ydata = []
+
+ctrl = np.linspace(0, 1000, 5)
+plt.figure()
+plt.plot(ctrl, ctrl, color='gray')
 for (act, nbd, rep) in product(activators, nbd_residues, replicates):
-    #if nbd == 'WT' or nbd == '68' or nbd == '79' or nbd == '120' or \
-    #   nbd =='188':
-    #    continue
-    cur = '175'
-    if nbd == '54' or nbd == '62' or nbd == cur:
-        pass
-    else:
+    if nbd == 'WT': # or nbd == '68' or nbd == '79' or nbd == '120' or \
         continue
+    #   nbd =='188':
+    cur = None
+    #if nbd == '54' or nbd == '62':
+    #    pass
+    #else:
+    #    continue
     rel_time = rel_dict[(act, nbd, rep)]
     (c1_avg, c1_sd) = c1_dict[(act, nbd, rep)]
     (rel_time, c1_avg, c1_sd) = map(float, [rel_time, c1_avg, c1_sd])
@@ -60,12 +64,13 @@ for (act, nbd, rep) in product(activators, nbd_residues, replicates):
     else:
         col = 'b'
     plt.scatter(rel_time, c1_avg, color=col)
+    print act, nbd, rep
+    #import ipdb; ipdb.set_trace()
 
 xdata = np.array(xdata)
 ydata = np.array(ydata)
 (slope, intercept, r, p, stderr) = linregress(xdata, ydata)
 
 plt.plot(ydata, ydata*slope + intercept)
-plt.plot(ydata, ydata, color='gray')
 print slope, intercept, r, p
 
