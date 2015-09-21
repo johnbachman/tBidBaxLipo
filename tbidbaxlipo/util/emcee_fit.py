@@ -274,7 +274,8 @@ class GlobalFit(object):
             ax.plot(self.time, s.yobs[self.obs_name], color='r',
                      alpha=alpha)
 
-    def plot_func(self, x, ax=None, obs_ix=0, plot_args=None):
+    def plot_func(self, x, ax=None, obs_ix=0, plot_args=None,
+                  normalize_to_f0=False):
         """Plots the timecourses with the parameter values given by x.
 
         Parameters
@@ -284,6 +285,9 @@ class GlobalFit(object):
             in the same order used by the objective function: globally fit
             parameters first, then a set of local parameters for each of the
             timecourses being fit.
+        normalize_to_f0: boolean
+            If True, divides the observable trajectory by the initial value
+            before plotting. Defaults to False.
         """
         if plot_args is None:
             plot_args = {}
@@ -297,13 +301,16 @@ class GlobalFit(object):
             # Plot the observable
             obs_colors = ['r', 'g', 'b', 'k']
             obs_name = self.obs_name[obs_ix]
-
+            # Get from either yexpr or yobs
             if self.use_expr:
-                ax.plot(self.solver.tspan, self.solver.yexpr[obs_name],
-                         **plot_args)
+                yplot = self.solver.yexpr[obs_name]
             else:
-                ax.plot(self.solver.tspan, self.solver.yobs[obs_name],
-                         **plot_args)
+                yplot = self.solver.yobs[obs_name]
+            # Normalize the curve if necessary
+            if normalize_to_f0:
+                yplot = yplot / float(yplot[0])
+            # Plot
+            ax.plot(self.solver.tspan, yplot, **plot_args)
 
     def set_parameters(self, x, obs_ix=0, cond_ix=0, plot_args=None):
         """Sets the parameter values in the model for simulation.
