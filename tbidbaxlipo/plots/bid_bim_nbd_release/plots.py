@@ -51,8 +51,8 @@ if __name__ == '__main__':
     elif plot_type == 'evidence':
         from tbidbaxlipo.plots.bid_bim_nbd_release.plot_bf_values import \
              plot_2confs, plot_3confs
-        plot_2confs('data1_evidence_plot_2confs')
-        plot_3confs('data1_evidence_plot_3confs')
+        plot_2confs('data1_evidence_2confs')
+        plot_3confs('data1_evidence_3confs')
     # Unknown plot type
     else:
         print "Unknown plot type: %s" % plot_type
