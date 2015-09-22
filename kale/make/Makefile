@@ -88,7 +88,8 @@ $(NBD_MCMC_DIR)/pt_data1.deps.txt: \
 
 # -- Dataset 1, NBD + Tb release, summary plots ------------------------
 nbd_release: nbd_release_endpts nbd_release_initial_rates nbd_example_curves \
-             data1_release_peak_times.csv 
+             data1_release_peak_times.csv data1_derivatives_Bid_15_r1.pdf \
+             data1_evidence_2confs.pdf
 nbd_release_endpts: \
     data1_release_endpt_norm.pdf data1_release_endpt_no_norm.pdf \
     data1_nbd_endpt_norm.pdf data1_nbd_endpt_no_norm.pdf
@@ -158,6 +159,13 @@ data1_derivatives_Bid_15_r1.pdf: \
         $(PLOTSDIR)/bid_bim_nbd_release/plots.py \
         $(NBD_DATA)
 	python -m tbidbaxlipo.plots.bid_bim_nbd_release.plots example_derivatives
+
+data1_evidence_2confs.pdf: \
+        $(PLOTSDIR)/nbd_bax_analysis.py \
+        $(PLOTSDIR)/bid_bim_nbd_release/plots.py \
+        $(PLOTSDIR)/bid_bim_nbd_release/plot_bf_values.py \
+        $(NBD_DATA)
+	python -m tbidbaxlipo.plots.bid_bim_nbd_release.plots evidence
 
 # --- Normalized release endpoint data for release, dataset 2 ---
 data2_release_endpt_norm.pdf: \

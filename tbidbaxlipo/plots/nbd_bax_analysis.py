@@ -20,6 +20,18 @@ dtype_line_colors = {'Release':'r', 'NBD':'g', 'FRET':'b'}
 line_styles = {1:':', 2:'-', 3:'--'}
 rep_colors = {1:'r', 2:'g', 3:'b'}
 
+# Create lookup dict for sites
+site_region = dict(
+     map(lambda s: (s, 'nterm'), ['3', '5', '15', '36', '40', '47']) +
+     map(lambda s: (s, 'bh3'),  ['54', '62', '68', '79']) +
+     map(lambda s: (s, 'h56'), ['120', '122', '126', '138', '151']) +
+     map(lambda s: (s, 'h9'), ['175', '179', '184', '188']))
+
+# Color code the points based on the region of the protein
+color_dict = collections.OrderedDict([
+                        ('nterm', 'purple'), ('bh3', 'red'),
+                        ('h56', 'green'), ('h9', 'blue')])
+
 def _mean_sd(p_name, builder, pysb_fit):
     """Given the named parameter and the fit result, get mean and SE."""
     p = builder.model.parameters[p_name]
@@ -738,16 +750,6 @@ def plot_initial_rate_samples(df, nbd_sites, timepoint_ix=4,
         #    plt.savefig('%s.pdf' % fig_name)
 
     # 2D scatter plot of NBD/Tb rates, normalized ----------------------------
-    # Create lookup dict for sites
-    site_region = dict(
-         map(lambda s: (s, 'nterm'), ['3', '5', '15', '36', '40', '47']) +
-         map(lambda s: (s, 'bh3'),  ['54', '62', '68', '79']) +
-         map(lambda s: (s, 'h56'), ['120', '122', '126', '138', '151']) +
-         map(lambda s: (s, 'h9'), ['175', '179', '184', '188']))
-    # Color code the points based on the region of the protein
-    color_dict = collections.OrderedDict([
-                            ('nterm', 'purple'), ('bh3', 'red'),
-                            ('h56', 'green'), ('h9', 'blue')])
     # Make two separate plots, one for each activator
     for act_ix, activator in enumerate(activators):
         fig_name = "%s_init_scatter_norm_%s" % (file_basename, activator)
