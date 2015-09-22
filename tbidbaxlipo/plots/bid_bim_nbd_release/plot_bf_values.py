@@ -1,3 +1,4 @@
+import os
 import sys
 import csv
 import numpy as np
@@ -9,7 +10,6 @@ from tbidbaxlipo.util import format_axis, set_fig_params_for_publication,\
 from tbidbaxlipo.plots.nbd_bax_analysis import site_region, color_dict
 set_fig_params_for_publication()
 
-csv_filename = sys.argv[1]
 evi_dict = {}
 activators = set()
 residues = set()
@@ -19,6 +19,10 @@ max_conf = 5
 # The number of distinct conformational models tested
 nconf_models = max_conf - min_conf + 1
 
+# Set path to .csv file containing evidence values
+curdir = os.path.dirname(__file__)
+csv_filename = os.path.join(curdir, 'mcmc', 'pt_data1_evidence.csv')
+print csv_filename
 with open(csv_filename) as csv_file:
     csvreader = csv.reader(csv_file, delimiter=',')
     for row in csvreader:
@@ -34,8 +38,6 @@ with open(csv_filename) as csv_file:
         reps.add(rep)
 
 num_rows = len(activators) * len(residues) * len(reps)
-
-plt.ion()
 
 def plot_3confs(plot_filename):
     min_conf_to_plot = 3

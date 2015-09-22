@@ -48,6 +48,11 @@ if __name__ == '__main__':
         nba.plot_example_derivatives(df, 'Bid', '54', 1,
                                      plot_filename='data1_derivatives_Bid_54_r1',
                                      plot_tb_peak=True)
+    elif plot_type == 'evidence':
+        from tbidbaxlipo.plots.bid_bim_nbd_release.plot_bf_values import \
+             plot_2confs, plot_3confs
+        plot_2confs('data1_evidence_plot_2confs')
+        plot_3confs('data1_evidence_plot_3confs')
     # Unknown plot type
     else:
         print "Unknown plot type: %s" % plot_type
