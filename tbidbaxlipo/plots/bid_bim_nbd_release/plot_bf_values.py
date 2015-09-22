@@ -41,7 +41,7 @@ num_rows = len(activators) * len(residues) * len(reps)
 
 def plot_3confs(plot_filename):
     min_conf_to_plot = 3
-    fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
+    fig = plt.figure(figsize=(1.5, 1.8), dpi=300)
     ax = fig.gca()
 
     # Create an array to hold all of the values
