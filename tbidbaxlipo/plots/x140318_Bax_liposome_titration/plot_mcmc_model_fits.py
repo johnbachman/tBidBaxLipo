@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from preprocess_data import data_to_fit, bg_time
 from tbidbaxlipo.util import set_fig_params_for_publication, format_axis
-import triangle
+import corner
 
 def plot_emcee_fits(gf, sampler):
     """Plot fits from the MCMC chain vs. the data."""
@@ -37,7 +37,7 @@ if __name__ == '__main__':
         plt.savefig('%s_fits.pdf' % output_base)
         # Triangle plot for parameters
         plt.figure()
-        triangle.corner(sampler.flatchain[0])
+        corner.corner(sampler.flatchain[0])
         plt.savefig('%s_tri.pdf' % output_base)
         sys.exit()
 

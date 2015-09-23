@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import emcee
 import calculate_fret as cf
-import triangle
+import corner
 from scipy.stats import distributions as dist
 
 (bid_concs, fret_means, fret_ses) = cf.get_fret_from_endpoints()
@@ -98,7 +98,7 @@ def plot_chain(sampler):
                  linewidth=2)
 
     # Triangle plots
-    triangle.corner(sampler.flatchain)
+    corner.corner(sampler.flatchain)
 
 
 

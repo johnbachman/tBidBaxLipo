@@ -9,7 +9,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import emcee
 from emcee.utils import MPIPool
-import triangle
+import corner
 
 from matplotlib.ticker import MultipleLocator, ScalarFormatter
 from scipy.stats import linregress
@@ -302,8 +302,8 @@ def plot_chain(sampler):
 
     # Triangle plots
     for d_ix in range(len(data)):
-        triangle.corner(sampler.flatchain[:,d_ix*3:(d_ix+1)*3])
-    triangle.corner(sampler.flatchain[:,3*len(data):])
+        corner.corner(sampler.flatchain[:,d_ix*3:(d_ix+1)*3])
+    corner.corner(sampler.flatchain[:,3*len(data):])
 
 def get_bim_bh3_curves():
     bim_bh3_curves = {}

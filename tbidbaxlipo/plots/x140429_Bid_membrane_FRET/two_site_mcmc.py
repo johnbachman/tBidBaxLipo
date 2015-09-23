@@ -10,7 +10,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import emcee
 import calculate_fret as cf
-import triangle
+import corner
 
 (bid_concs, fret_means, fret_ses) = cf.get_fret_from_endpoints()
 bid568_conc = 10.
@@ -125,7 +125,7 @@ def plot_chain(sampler):
                  linewidth=2)
 
     # Triangle plots
-    triangle.corner(sampler.flatchain)
+    corner.corner(sampler.flatchain)
 
 
 
