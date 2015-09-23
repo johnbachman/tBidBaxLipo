@@ -51,10 +51,10 @@ def plot_chain(gf, sampler, num_samples=500):
         # Get the set of parameters at the randomly chosen index, s_ix
         gf.plot_func(sampler.flatchain[0, s_ix], alpha=0.1)
     # Triangle plot
-    triangle.corner(sampler.flatchain[0])
+    corner.corner(sampler.flatchain[0])
 
 if __name__ == '__main__':
-    import triangle
+    import corner
     plt.ion()
 
     usage_msg =  "\nUsage:\n"

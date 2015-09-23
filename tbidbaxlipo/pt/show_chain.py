@@ -1,9 +1,9 @@
-"""A script that shows the triangle plots of the parameters and the posterior
+"""A script that shows the corner plots of the parameters and the posterior
 probability at different steps of the chain for inspection of convergence.
 """
 import sys
 import pickle
-import triangle
+import corner
 import numpy as np
 from matplotlib import pyplot as plt
 from tbidbaxlipo.util import set_fig_params_for_publication, format_axis
@@ -23,8 +23,8 @@ def save_fig(fig, plot_filename, display):
     else:
         raise Exception("No plot_filename given, doing nothing.")
 
-def triangle_plots(gf, sampler, plot_filename=None):
-    """Triangle plots of lowest and highest temperature chains."""
+def corner_plots(gf, sampler, plot_filename=None):
+    """Corner plots of lowest and highest temperature chains."""
     chain = sampler.flatchain
     num_params = chain.shape[2]
     # Lowest temp
@@ -47,18 +47,18 @@ def triangle_plots(gf, sampler, plot_filename=None):
                 hi_fig.add_subplot(num_params, num_params, ix)
                 ix += 1
 
-    triangle.corner(chain[0], fig=low_fig,
+    corner.corner(chain[0], fig=low_fig,
                     labels=[p.name for p in gf.builder.global_params])
-    low_fig.suptitle('Triangle plot, lowest temp')
+    low_fig.suptitle('Corner plot, lowest temp')
     # Intermediate temp
     temp_ix = 4
-    triangle.corner(chain[temp_ix], fig=med_fig,
+    corner.corner(chain[temp_ix], fig=med_fig,
                     labels=[p.name for p in gf.builder.global_params])
-    med_fig.suptitle('Triangle plot, temp %s' % temp_ix)
+    med_fig.suptitle('Corner plot, temp %s' % temp_ix)
     # Highest temp
-    triangle.corner(chain[-1], fig=hi_fig,
+    corner.corner(chain[-1], fig=hi_fig,
                     labels=[p.name for p in gf.builder.global_params])
-    hi_fig.suptitle('Triangle plot, highest temp')
+    hi_fig.suptitle('Corner plot, highest temp')
 
     if plot_filename:
         save_fig(low_fig, '%s.low' % plot_filename, DISPLAY)
@@ -261,9 +261,9 @@ if __name__ == '__main__':
 
     # Show plots
     #plt.ion()
-    #print("Plotting triangle plots")
+    #print("Plotting corner plots")
     output_base = os.path.join(output_dir, os.path.basename(chain_filename))
-    #triangle_plots(gf, sampler, plot_filename=chain_filename + '.tri')
+    #corner_plots(gf, sampler, plot_filename=chain_filename + '.tri')
     print("Plotting convergence")
     plot_chain_convergence(sampler, output_base + '.conv')
     print("Plotting sample fits")

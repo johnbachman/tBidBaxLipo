@@ -11,7 +11,7 @@ from matplotlib import pyplot as plt
 import matplotlib
 import emcee
 import calculate_fret as cf
-import triangle
+import corner
 import pickle
 from os.path import exists
 from tbidbaxlipo.util import set_fig_params_for_publication, format_axis, \
@@ -208,7 +208,7 @@ def plot_chain(flatchain, lnprob):
 
     # Triangle plots
     #(tri_fig, axes) = plt.subplots(4, 4, figsize=(6, 6))
-    triangle.corner(flatchain,
+    corner.corner(flatchain,
                     labels=['$log_{10}(K_D)$ (nM)', '$log_{10}(P)$ (nM)',
                             'Nonspec', 'FRET'])
     plt.subplots_adjust(right=0.96, top=0.96)
