@@ -27,18 +27,19 @@ def corner_plots(gf, sampler, plot_filename=None):
     """Corner plots of lowest and highest temperature chains."""
     chain = sampler.flatchain
     num_params = chain.shape[2]
+    fig_dim = num_params * 1.7
     # Lowest temp
     if DISPLAY:
-        low_fig = plt.figure(figsize=(5, 5))
+        low_fig = plt.figure(figsize=(fig_dim, fig_dim))
         low_fig.subplots(num_params, num_params)
-        med_fig = plt.figure(figsize=(5, 5))
+        med_fig = plt.figure(figsize=(fig_dim, fig_dim))
         med_fig.subplots(num_params, num_params)
-        hi_fig = plt.figure(figsize=(5, 5))
+        hi_fig = plt.figure(figsize=(fig_dim, fig_dim))
         hi_fig.subplots(num_params, num_params)
     else:
-        low_fig = Figure(figsize=(5, 5))
-        med_fig = Figure(figsize=(5, 5))
-        hi_fig = Figure(figsize=(5, 5))
+        low_fig = Figure(figsize=(fig_dim, fig_dim))
+        med_fig = Figure(figsize=(fig_dim, fig_dim))
+        hi_fig = Figure(figsize=(fig_dim, fig_dim))
         ix = 1
         for i in range(num_params):
             for j in range(num_params):
@@ -261,16 +262,16 @@ if __name__ == '__main__':
 
     # Show plots
     #plt.ion()
-    #print("Plotting corner plots")
+    print("Plotting corner plots")
     output_base = os.path.join(output_dir, os.path.basename(chain_filename))
-    #corner_plots(gf, sampler, plot_filename=chain_filename + '.tri')
+    corner_plots(gf, sampler, plot_filename=output_base + '.tri')
     print("Plotting convergence")
     plot_chain_convergence(sampler, output_base + '.conv')
     print("Plotting sample fits")
     plot_emcee_fits(gf, sampler, burn=None, sample=True,
                     plot_filename=output_base + '.fits')
     print("Plotting conformation timecourses")
-    #plot_conformations(gf, sampler, burn=None, sample=True,
-    #                   plot_filename=output_base + '.confs')
+    plot_conformations(gf, sampler, burn=None, sample=True,
+                       plot_filename=output_base + '.confs')
     #plot_emcee_fits_subplots(gf, sampler)
 
