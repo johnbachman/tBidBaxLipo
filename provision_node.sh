@@ -86,3 +86,24 @@ apt-get install -y vim-gnome
 apt-get install -y gitk
 apt-get install -y imagemagick
 
+### PySB AMI v4 ###
+
+# To update matplotlib
+# see http://geeksww.com/tutorials/libraries/libpng/installation/installing_libpng_on_ubuntu_linux.php
+# Install libpng
+cd /tmp
+wget http://prdownloads.sourceforge.net/libpng/libpng-1.5.4.tar.gz
+tar xzf libpng-1.5.4.tar.gz
+cd libpng-1.5.4
+./configure --prefix=/usr
+make
+make install
+# Matplotlib requires a newer version of setuptools
+pip install -U setuptools
+pip install -U matplotlib
+
+# Update openpyxl
+pip install -U openpyxl
+# Install sphinx-rtd-theme
+pip install sphinx-rtd-theme
+
