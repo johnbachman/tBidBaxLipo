@@ -16,42 +16,31 @@ def load_mcmc_file(filename):
         (gf, sampler) = pickle.load(f)
     return (gf, sampler)
 
-def get_k1_k2_samples(gf, sampler):
-    # The index of k1 in the chain is the same as the index in estimate_params
-    k1 = gf.builder.model.parameters['c0_to_c1_k']
-    k2 = gf.builder.model.parameters['c1_to_c2_k']
-    k1_index = gf.builder.estimate_params.index(k1)
-    k2_index = gf.builder.estimate_params.index(k2)
-    k1_log_samples = sampler.flatchain[0, :, k1_index]
-    k2_log_samples = sampler.flatchain[0, :, k2_index]
-    return (k1_log_samples, k2_log_samples)
+def get_parameter_samples(pname, gf, sampler):
+    # The index of p in the chain is the same as the index in estimate_params
+    p = gf.builder.model.parameters[pname]
+    p_index = gf.builder.estimate_params.index(p)
+    p_samples = sampler.flatchain[0, :, p_index]
+    return p_samples
 
-def k1_k2_histogram(k1_samples, k2_samples):
-    # -- Calculate the histograms for k1 and k2 (normalized) --
+def parameter_histogram(p_samples, lower_bound, upper_bound, filename,
+                        bins_per_log=10):
+    # -- Calculate the histograms for the parameter (normalized density) --
     # For now, we declare the width of the prior up front to avoid having to
     # load it first and then set it
-    upper_bound = -1
-    lower_bound = -6
     width = upper_bound - lower_bound
     # Get bin boundaries for prior distribution
-    bins_per_log = 10
     num_bin_edges = width * bins_per_log + 1
     bin_edges = np.linspace(lower_bound, upper_bound, num_bin_edges)
     num_bins = num_bin_edges - 1
     # Calculate the histogram
-    (k1_counts, _) = np.histogram(k1_samples, bins=bin_edges)
-    (k2_counts, _) = np.histogram(k2_samples, bins=bin_edges)
-    k1_norm_counts = k1_counts / float(len(k1_samples))
-    k2_norm_counts = k2_counts / float(len(k2_samples))
+    (p_counts, _) = np.histogram(p_samples, bins=bin_edges)
+    p_norm_counts = p_counts / float(len(p_samples))
     # Save histograms
-    k1_hist_filename = '%s.k1_hist' % basename
-    k2_hist_filename = '%s.k2_hist' % basename
-    print("Writing %s" % k1_hist_filename)
-    print("Writing %s" % k2_hist_filename)
-    np.savetxt(k1_hist_filename, k1_norm_counts)
-    np.savetxt(k2_hist_filename, k2_norm_counts)
+    print("Writing: %s" % filename)
+    np.savetxt(filename, p_norm_counts)
 
-def c1_peak_times(k1_log_samples, k2_log_samples):
+def c1_peak_times(k1_log_samples, k2_log_samples, basename):
     # Transform the samples to linear space
     k1_samples = 10 ** k1_log_samples
     k2_samples = 10 ** k2_log_samples
@@ -71,8 +60,18 @@ if __name__ == '__main__':
     filename = sys.argv[1]
 
     (gf, sampler) = load_mcmc_file(filename)
-    # if three conformations:
-    (k1_samples, k2_samples) = get_k1_k2_samples(gf, sampler)
-    k1_k2_histogram(k1_samples, k2_samples)
-    c1_peak_times(k1_samples, k2_samples)
+
+    # Histograms
+    param_info = [('c0_to_c1_k', 'k1_hist', -6, -1),
+                  ('c1_to_c2_k', 'k2_hist', -6, -1),
+                  ('c1_scaling', 'c1_scaling', 1, 5.5),
+                  ('c2_scaling', 'c2_scaling', 1, 5.5),]
+    for (p_name, file_suffix, lower_bound, upper_bound) in param_info:
+        p_samples = get_parameter_samples(p_name, gf, sampler)
+        parameter_histogram(p_samples, lower_bound, upper_bound,
+                            '%s.%s' % (filename, file_suffix))
+    # Peak times
+    k1_samples = get_parameter_samples('c0_to_c1_k', gf, sampler)
+    k2_samples = get_parameter_samples('c1_to_c2_k', gf, sampler)
+    c1_peak_times(k1_samples, k2_samples, filename)
 
