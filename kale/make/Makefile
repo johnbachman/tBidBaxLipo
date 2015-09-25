@@ -95,6 +95,8 @@ nbd_release_endpts: \
     data1_nbd_endpt_norm.pdf data1_nbd_endpt_no_norm.pdf
 nbd_release_initial_rates: data1_init_nbd_bar.pdf
 nbd_example_curves: data1_nbd_example_curves.pdf
+nbd_param_densities: data1_Bid_k1k2_densities.pdf data1_Bid_c1c2_densities.pdf\
+                     data1_Bim_k1k2_densities.pdf data1_Bim_c1c2_densities.pdf
 
 # -- Dataset 2, Bid FRET + NBD + Tb release, summary plots -------------
 fret_nbd_release: fret_nbd_release_endpts fret_nbd_release_initial_rates
@@ -166,6 +168,47 @@ data1_evidence_2confs.pdf: \
         $(PLOTSDIR)/bid_bim_nbd_release/plot_bf_values.py \
         $(NBD_DATA)
 	python -m tbidbaxlipo.plots.bid_bim_nbd_release.plots evidence
+
+data1_Bid_k1k2_densities.pdf: \
+        $(PLOTSDIR)/bid_bim_nbd_release/plot_k1_k2_dists.py \
+        $(PLOTSDIR)/bid_bim_nbd_release/process_3conf_mcmc.py \
+        $(NBD_MCMC_DIR)/Bid_k1_density_mx.txt \
+        $(NBD_MCMC_DIR)/Bid_k2_density_mx.txt
+	python -m tbidbaxlipo.plots.bid_bim_nbd_release.plot_k1_k2_dists plot k1k2 \
+		$(NBD_MCMC_DIR)/Bid_k1_density_mx.txt \
+		$(NBD_MCMC_DIR)/Bid_k2_density_mx.txt \
+		data1_Bid_k1k2_densities
+
+data1_Bid_c1c2_densities.pdf: \
+        $(PLOTSDIR)/bid_bim_nbd_release/plot_k1_k2_dists.py \
+        $(PLOTSDIR)/bid_bim_nbd_release/process_3conf_mcmc.py \
+        $(NBD_MCMC_DIR)/Bid_c1_density_mx.txt \
+        $(NBD_MCMC_DIR)/Bid_c2_density_mx.txt
+	python -m tbidbaxlipo.plots.bid_bim_nbd_release.plot_k1_k2_dists plot c1c2 \
+		$(NBD_MCMC_DIR)/Bid_c1_density_mx.txt \
+		$(NBD_MCMC_DIR)/Bid_c2_density_mx.txt \
+		data1_Bid_c1c2_densities
+
+data1_Bim_k1k2_densities.pdf: \
+        $(PLOTSDIR)/bid_bim_nbd_release/plot_k1_k2_dists.py \
+        $(PLOTSDIR)/bid_bim_nbd_release/process_3conf_mcmc.py \
+        $(NBD_MCMC_DIR)/Bim_k1_density_mx.txt \
+        $(NBD_MCMC_DIR)/Bim_k2_density_mx.txt
+	python -m tbidbaxlipo.plots.bid_bim_nbd_release.plot_k1_k2_dists plot k1k2 \
+		$(NBD_MCMC_DIR)/Bim_k1_density_mx.txt \
+		$(NBD_MCMC_DIR)/Bim_k2_density_mx.txt \
+		data1_Bim_k1k2_densities
+
+data1_Bim_c1c2_densities.pdf: \
+        $(PLOTSDIR)/bid_bim_nbd_release/plot_k1_k2_dists.py \
+        $(PLOTSDIR)/bid_bim_nbd_release/process_3conf_mcmc.py \
+        $(NBD_MCMC_DIR)/Bim_c1_density_mx.txt \
+        $(NBD_MCMC_DIR)/Bim_c2_density_mx.txt
+	python -m tbidbaxlipo.plots.bid_bim_nbd_release.plot_k1_k2_dists plot c1c2 \
+		$(NBD_MCMC_DIR)/Bim_c1_density_mx.txt \
+		$(NBD_MCMC_DIR)/Bim_c2_density_mx.txt \
+		data1_Bim_c1c2_densities
+
 
 # --- Normalized release endpoint data for release, dataset 2 ---
 data2_release_endpt_norm.pdf: \
