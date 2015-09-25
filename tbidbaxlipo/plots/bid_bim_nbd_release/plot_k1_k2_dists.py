@@ -5,18 +5,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 import sys
 import re
+import os
 
-def get_matrix_dimensions(num_nbd_residues, num_reps):
-    # For now, we declare the width of the prior up front to avoid having to
-    # load it first and then set it
-    upper_bound = -1
-    lower_bound = -6
-    width = upper_bound - lower_bound
-    # Get bin boundaries for prior distribution
-    bins_per_log = 10
-    num_bin_edges = width * bins_per_log + 1
-    bin_edges = np.linspace(lower_bound, upper_bound, num_bin_edges)
-    num_bins = num_bin_edges - 1
+def get_matrix_dimensions(num_nbd_residues, num_reps, num_bin_edges):
     # The number of columns (mutants * reps) * spaces,
     # where spaces = mutants - 1
     num_spaces = num_nbd_residues - 1
@@ -36,8 +27,10 @@ def assemble_density_matrix(p_name, filelist):
     file_dict = {}
 
     for filename in filelist:
-        # First, split off the extension(s)
-        prefix = filename.split('.')[0]
+        # First, split off the dirname
+        basename = os.path.basename(filename)
+        # Next, split off the extension(s)
+        prefix = basename.split('.')[0]
         # Next, split the filename into parts at underscores
         m = pattern.match(prefix)
         if not m:
@@ -59,9 +52,20 @@ def assemble_density_matrix(p_name, filelist):
     replicates = list(sorted(replicates))
 
     for act in activators:
+        # Sort of a hack so that I don't have to store the setup somewhere else
+        if p_name in ['k1', 'k2']:
+            num_bin_edges = 51
+        elif p_name in ['c1', 'c2']:
+            num_bin_edges = 46
+        else:
+            print "Unknown parameter name: %s" % p_name
+            sys.exit(1)
+
         # Matrix to fill in
-        density_mx = np.zeros(get_matrix_dimensions(len(nbd_residues),
-                                                   len(replicates)))
+        mx_dims = get_matrix_dimensions(len(nbd_residues), len(replicates),
+                                        num_bin_edges)
+        density_mx = np.zeros(mx_dims)
+
         # The current column in the matrix
         col_ix = 0
         for res in nbd_residues:
@@ -82,9 +86,23 @@ def assemble_density_matrix(p_name, filelist):
 
 if __name__ == '__main__':
 
-    p_name = sys.argv[1]
-    filelist = sys.argv[2:]
-    assemble_density_matrix(p_name, filelist)
+    usage =  'Usage:\n'
+    usage += '    python plot_k1_k2_dists.py assemble [k1|k2] ' \
+                                    '[*.k1_hist|*.k2_hist]\n'
+    usage += '    python plot_k1_k2_dists.py plot k1_density_file ' \
+                                    'k2_density_file\n'
+    if len(sys.argv) < 4:
+        print(usage)
+        sys.exit(1)
+    if sys.argv[1] == 'assemble':
+        p_name = sys.argv[2]
+        filelist = sys.argv[3:]
+        assemble_density_matrix(p_name, filelist)
+    elif sys.argv[1] == 'plot':
+        pass
+    else:
+        print(usage)
+        sys.exit(1)
 
 #activator = 'Bid'
 #nbd_residues = ['3', '5', '15', '54', '68']
