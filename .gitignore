@@ -13,6 +13,8 @@ thesis/_build
 thesis/_static
 thesis/sphinxreport.log
 
+*.k1_hist
+*.k2_hist
 *.c1_peak
 *.evi
 *.lhs
