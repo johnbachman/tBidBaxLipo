@@ -5,13 +5,13 @@ import numpy as np
 import sys
 from tbidbaxlipo.data.parse_bid_bim_nbd_release import nbd_residues
 
-residues = [res for res in nbd_residues if res != 'WT']
 
 def combine_matrices(k1_mx_filename, k2_mx_filename, rgb_inverted=True):
     # Load the two matrices
     k1_mx = np.loadtxt(k1_mx_filename)
     k2_mx = np.loadtxt(k2_mx_filename)
-    assert k1_mx.shape == k2_mx.shape, "k1/k2 matrices must have same size"
+    assert k1_mx.shape == k2_mx.shape, \
+           "k1/k2 matrices must have same size"
 
     # Create the combined RGB matrix
     rgb_shape = (k1_mx.shape[1], k1_mx.shape[0], 3)
@@ -34,11 +34,16 @@ def combine_matrices(k1_mx_filename, k2_mx_filename, rgb_inverted=True):
 if __name__ == '__main__':
     set_fig_params_for_publication()
 
-    k1_filename = 'mcmc/Bid_k1_density_mx.txt'
-    k2_filename = 'mcmc/Bid_k2_density_mx.txt'
+    residues = [res for res in nbd_residues if res != 'WT']
 
-    #plt.ion()
-    density_mx = combine_matrices(k1_filename, k2_filename, rgb_inverted=True)
+    #k1_filename = 'mcmc/Bid_k1_density_mx.txt'
+    #k2_filename = 'mcmc/Bid_k2_density_mx.txt'
+    #k1_filename = 'mcmc/Bid_c1_density_mx.txt'
+    #k2_filename = 'mcmc/Bid_c2_density_mx.txt'
+
+    plt.ion()
+    density_mx = combine_matrices(k1_filename, k2_filename,
+                                  rgb_inverted=True)
 
     #density_filename = sys.argv[1]
     #density_mx = np.loadtxt(density_filename)
@@ -46,16 +51,20 @@ if __name__ == '__main__':
     #inverted_mx = inverted_mx - density_mx
 
     ncols = density_mx.shape[0]
-
+    #lbound = -6
+    #ubound = -1
+    lbound = 2.5
+    ubound = 5.5
     fig = plt.figure(figsize=(2, 3), dpi=300)
     ax = fig.gca()
     #ax.matshow(inverted_mx.T, cmap='gray')
     #, extent=(-4, -1, 0, 19), aspect='auto')
-    ax.imshow(density_mx, interpolation='none', extent=(-6, -1, ncols, 0),
-              aspect='auto')
+    ax.imshow(density_mx[:,15:,:], interpolation='none',
+              extent=(lbound, ubound, ncols, 0), aspect='auto')
     format_axis(ax)
     lines = np.arange(3, ncols, 4) + 0.5
-    plt.hlines(lines, -6, -1)
+
+    plt.hlines(lines, lbound, ubound)
 
     ytick_positions = np.arange(1, ncols, 4) + 0.5
     ax.set_yticks(ytick_positions)
