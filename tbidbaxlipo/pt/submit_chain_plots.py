@@ -29,6 +29,7 @@ for activator in ['Bid', 'Bim']:
                 out_filename = mcmc_filename + '.plots.out'
                 err_filename = mcmc_filename + '.plots.err'
                 if not os.path.isfile(mcmc_filename):
+                    print("%s not found, continuing" % mcmc_filename)
                     continue
                 if job_scheduler == 'qsub':
                     cmd_list = ['qsub', '-b', 'y', '-cwd', '-V', '-o',
