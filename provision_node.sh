@@ -50,10 +50,11 @@ update-alternatives --set mpi /usr/lib/openmpi/include
 pip install mpi4py
 
 # Install additional software
-pip install triangle_plot
 pip install ipdb
 pip install pydoe
 pip install pymc
+# (triangle-plot changed name to corner)
+# pip install triangle_plot
 
 # Install packages for PySB
 pip install sympy
@@ -106,4 +107,4 @@ pip install -U matplotlib
 pip install -U openpyxl
 # Install sphinx-rtd-theme
 pip install sphinx-rtd-theme
-
+pip install corner
