@@ -13,6 +13,9 @@ this_module = sys.modules[__name__]
 # Remove outliers
 pass
 
+# We're going to store the highest observed NBD fluorescence value as a
+# reference to evaluate plausibility of fitted fluorescence values
+max_nbd_value = -np.inf
 
 # Instead of creating a list of ~60 variables for every replicate of every
 # residue, we add entries to the __dict__ variable for this namespace,
@@ -46,11 +49,15 @@ for activator in activators:
             data_var[0, 0, :] = timecourse
             # Initial fluorescence value
             f0 = timecourse[0]
-            # Get the minimum fluorescence for this rep: 0.1 * the initial
-            # value
+            # Update maximum fluorescence value
+            max_nbd_for_rep = np.max(timecourse)
+            if max_nbd_for_rep > max_nbd_value:
+                max_nbd_value = max_nbd_for_rep
+            # Get the minimum fluorescence allowable for this rep: 0.1 * the
+            # initial value
             lbound = f0 * 0.1
-            # Get the maximum fluorescence for this rep: the lesser of 10
-            # times the initial value or a corrected absolute NBD
+            # Get the maximum allowable fluorescence for this rep: the lesser
+            # of 10 times the initial value or a corrected absolute NBD
             # fluorescence of 300k
             max_nbd_fluorescence = 300000
             mutant_absolute_max = \

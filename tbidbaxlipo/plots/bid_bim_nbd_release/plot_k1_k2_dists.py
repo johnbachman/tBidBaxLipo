@@ -7,7 +7,8 @@ import sys
 import re
 import os
 from tbidbaxlipo.util import format_axis, set_fig_params_for_publication
-from tbidbaxlipo.data.parse_bid_bim_nbd_release import nbd_residues
+from tbidbaxlipo.plots.bid_bim_nbd_release.preprocess_data \
+        import nbd_residues, max_nbd_value
 
 def get_matrix_dimensions(num_nbd_residues, num_reps, num_bin_edges):
     # The number of columns (mutants * reps) * spaces,
@@ -131,10 +132,13 @@ def plot_matrix(plot_type, density_mx, residues, output_file_base):
     num_reps = 3
     ax.imshow(density_mx[:,lbound_ix:,:], interpolation='none',
               extent=(lbound, ubound, ncols, 0), aspect='auto')
+    # Plot line representing max observed value
+    if plot_type == 'c1c2':
+        plt.vlines(np.log10(max_nbd_value), ncols, 0, color='gray')
     # Lines separating the different mutants
     lines = np.arange(num_reps, ncols, num_reps + 1) + 0.5
     plt.hlines(lines, lbound, ubound)
-    # Ticks for the difference mutants
+    # Ticks for the different mutants
     ytick_positions = np.arange(1, ncols, 4) + 0.5
     ax.set_yticks(ytick_positions)
     assert len(residues) == len(ytick_positions)
