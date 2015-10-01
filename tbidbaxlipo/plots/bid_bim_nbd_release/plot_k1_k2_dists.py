@@ -7,7 +7,8 @@ import sys
 import re
 import os
 from tbidbaxlipo.util import format_axis, set_fig_params_for_publication
-from tbidbaxlipo.data.parse_bid_bim_nbd_release import nbd_residues
+from tbidbaxlipo.plots.bid_bim_nbd_release.preprocess_data \
+        import nbd_residues, max_nbd_value, df
 
 def get_matrix_dimensions(num_nbd_residues, num_reps, num_bin_edges):
     # The number of columns (mutants * reps) * spaces,
@@ -129,12 +130,34 @@ def plot_matrix(plot_type, density_mx, residues, output_file_base):
     ax = fig.gca()
     ncols = density_mx.shape[0]
     num_reps = 3
+    assert ncols == (len(residues) * num_reps) + len(residues) - 1, \
+           "Dimensions of density_mx must match numbers of reps/residues"
     ax.imshow(density_mx[:,lbound_ix:,:], interpolation='none',
               extent=(lbound, ubound, ncols, 0), aspect='auto')
+    # Plot line representing max observed value
+    if plot_type == 'c1c2':
+        plt.vlines(np.log10(max_nbd_value), ncols, 0, color='gray')
     # Lines separating the different mutants
     lines = np.arange(num_reps, ncols, num_reps + 1) + 0.5
     plt.hlines(lines, lbound, ubound)
-    # Ticks for the difference mutants
+    """
+    # Plot lines representing starting values
+    # FIXME FIXME FIXME
+    mut_ix_bounds = [0] + list(lines) + [ncols]
+    activator = 'Bid'
+    row_ix = 0
+    for nbd_ix, nbd_residue in enumerate(residues):
+        for rep_num in range(1, num_reps + 1):
+            timecourse = \
+                    df[(activator, 'NBD', nbd_residue, rep_num, 'VALUE')].values
+            f0 = timecourse[0]
+            #res_ix_lbound = mut_ix_bounds[nbd_ix]
+            #res_ix_ubound = mut_ix_bounds[nbd_ix + 1]
+            plt.vlines(np.log10(f0), row_ix, row_ix + 1, color='gray')
+            row_ix += 1
+        row_ix += 1
+    """
+    # Ticks for the different mutants
     ytick_positions = np.arange(1, ncols, 4) + 0.5
     ax.set_yticks(ytick_positions)
     assert len(residues) == len(ytick_positions)
