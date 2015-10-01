@@ -26,7 +26,7 @@ if __name__ == '__main__':
     if plot_type == 'raw':
         nba.plot_all(df, nbd_residues, file_basename=file_basename)
     # Plot endpoints
-    elif plot_type == 'nbd_endpoint_nor':
+    elif plot_type == 'nbd_endpoint_norm':
         nba.plot_nbd_endpoints(df, nbd_residues, last_n_pts=3,
                            file_basename=file_basename, normalize_nbd=True)
     elif plot_type == 'nbd_endpoint_no_norm':
