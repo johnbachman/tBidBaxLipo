@@ -226,8 +226,8 @@ def calc_barplot_width(num_sites, rmarg=0.13, lmarg=0.11):
     rel_right = 1 - (abs_right / float(fig_width))
     return (fig_width, rel_left, rel_right)
 
-def plot_nbd_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None,
-                       normalize_nbd=False):
+def plot_nbd_endpoints(df, nbd_sites, datatype='NBD', last_n_pts=3,
+                       file_basename=None, normalize_nbd=False):
     replicates = range(1, 4)
     activators = ['Bid', 'Bim']
     # Filter out the WT residue from the list, if its there
@@ -236,17 +236,26 @@ def plot_nbd_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None,
     n_endpts = np.zeros((len(nbd_sites_no_wt), len(replicates)))
     # Figure setup
     set_fig_params_for_publication()
-    if normalize_nbd:
-        yaxis_label = 'NBD F/$F_0$'
-        (fig_width, rel_left, rel_right) = \
-                            calc_barplot_width(len(nbd_sites_no_wt))
+    if datatype == 'NBD':
+        if normalize_nbd:
+            yaxis_label = 'NBD F/$F_0$'
+            (fig_width, rel_left, rel_right) = \
+                                calc_barplot_width(len(nbd_sites_no_wt))
+        else:
+            yaxis_label = 'NBD fluorescence (RFU)'
+            # If we're not normalizing the NBD values, then the additional 0s will
+            # push the axis label off the left-hand side. Therefore we adjust the
+            # left margin accordingly.
+            (fig_width, rel_left, rel_right) = \
+                                calc_barplot_width(len(nbd_sites_no_wt),
+                                                   lmarg=0.13)
+    elif datatype == 'FRET':
+            yaxis_label = '\% FRET'
+            (fig_width, rel_left, rel_right) = \
+                                calc_barplot_width(len(nbd_sites_no_wt))
     else:
-        yaxis_label = 'NBD fluorescence (RFU)'
-        # If we're not normalizing the NBD values, then the additional 0s will
-        # push the axis label off the left-hand side. Therefore we adjust the
-        # left margin accordingly.
-        (fig_width, rel_left, rel_right) = \
-                            calc_barplot_width(len(nbd_sites_no_wt), lmarg=0.13)
+        raise Exception('Invalid datatype: %s' % datatype)
+
     plt.figure(file_basename, figsize=(fig_width, 1.5), dpi=300)
     plt.ylabel(yaxis_label, fontsize=fontsize)
     bar_colors = {'Bid': 'gray', 'Bim': 'black'}
@@ -261,12 +270,13 @@ def plot_nbd_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None,
             # for the replicates (0, 1, 2)
             for rep_index, rep_num in enumerate(replicates):
                 # Get the release data
-                ny = df[(activator, 'NBD', nbd_site, rep_num, 'VALUE')].values
+                ny = df[(activator, datatype, nbd_site, rep_num, 'VALUE')].values
+                # Filter out the NaNs, if any
                 # Fill in entry for this replicate with mean over last n pts
                 if normalize_nbd:
-                    endpt_vals = np.mean(ny[-last_n_pts:] / ny[0])
+                    endpt_vals = np.nanmean(ny[-last_n_pts:] / ny[0])
                 else:
-                    endpt_vals = np.mean(ny[-last_n_pts:])
+                    endpt_vals = np.nanmean(ny[-last_n_pts:])
                 n_endpts[nbd_index, rep_index] = endpt_vals
 
             # Bar plot of NBD endpoint
@@ -275,12 +285,15 @@ def plot_nbd_endpoints(df, nbd_sites, last_n_pts=3, file_basename=None,
                     width=1, color=bar_colors[activator], linewidth=0,
                     ecolor='k', capsize=1.5,
                     yerr=np.std(n_endpts[nbd_index, :], ddof=1))
-
-    # Add horizontal gridlines
     x_lbound = -1
     x_ubound = len(nbd_sites_no_wt) * 3
-    plt.hlines(range(0, 6), x_lbound, x_ubound, color='0.85', zorder=1,
-               linewidth=0.5)
+    # Add horizontal gridlines
+    if datatype == 'NBD':
+        plt.hlines(range(0, 6), x_lbound, x_ubound, color='0.85', zorder=1,
+                   linewidth=0.5)
+    elif datatype == 'FRET':
+        plt.hlines(0, x_lbound, x_ubound, color='0.85', zorder=1,
+                   linewidth=0.5)
     # Format the plot
     plt.subplots_adjust(left=rel_left, bottom=0.10, right=rel_right, top=0.94)
     ax = plt.gca()
@@ -1436,9 +1449,12 @@ def plot_nbd_error_estimates(df, nbd_sites, dtype='NBD', activators=None,
                          horizontalalignment='center')
 
 if __name__ == '__main__':
-    from tbidbaxlipo.data.parse_bid_bim_nbd_release import df, nbd_residues
+    from tbidbaxlipo.plots.bid_bim_fret_nbd_release.preprocess_data \
+            import df_pre, nbd_residues
     #from tbidbaxlipo.data.parse_bid_bim_fret_nbd_release import df, nbd_residues
     plt.ion()
+    plot_nbd_endpoints(df_pre, nbd_residues, datatype='FRET', last_n_pts=10,
+                       file_basename=None, normalize_nbd=False)
     #import pickle
     #with open('data2.pck', 'w') as f:
         #pickle.dump((df, nbd_residues), f)
@@ -1448,7 +1464,7 @@ if __name__ == '__main__':
     #                       last_n_pts=3, file_basename=None)
     #plot_initial_rate_samples(df, nbd_residues, timepoint_ix=20,
     #                          file_basename=None, normalized_to_wt=True)
-    plot_example_derivatives(df, 'Bid', '15', 1)
+    #plot_example_derivatives(df, 'Bid', '15', 1)
     #plot_derivatives(df, ['WT'])
     #plot_nbd_error_estimates(df, ['68'], last_n_pts=80, fit_type='cubic')
     #plot_release_endpoints(df, nbd_residues, normalized_to_wt=True)

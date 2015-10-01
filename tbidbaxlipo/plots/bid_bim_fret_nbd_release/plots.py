@@ -1,5 +1,6 @@
 import sys
-from tbidbaxlipo.data.parse_bid_bim_fret_nbd_release import df, nbd_residues
+from tbidbaxlipo.plots.bid_bim_fret_nbd_release.preprocess_data \
+        import df, df_pre, nbd_residues
 import tbidbaxlipo.plots.nbd_bax_analysis as nba
 from matplotlib import pyplot as plt
 
@@ -40,6 +41,9 @@ if __name__ == '__main__':
     elif plot_type == 'initial_rate_samples':
         nba.plot_initial_rate_samples(df, nbd_residues, timepoint_ix=4,
                                       file_basename=file_basename)
+    elif plot_type == 'fret_endpoint':
+        nba.plot_nbd_endpoints(df_pre, nbd_residues, datatype='FRET',
+                               last_n_pts=10, file_basename=file_basename)
     # Unknown plot type
     else:
         print "Unknown plot type: %s" % plot_type
