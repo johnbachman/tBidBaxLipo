@@ -1193,8 +1193,10 @@ def student_t_test(means1, sds1, means2, sds2, n):
 params_dict = {'c1_to_c2_k': 1e-4, 'c1_scaling': 2,
                'c0_to_c1_k': 2e-3}
 
-def plot_2conf_fits(df, nbd_sites, activator, normalize_nbd=False):
-    replicates = range(1, 4)
+def plot_2conf_fits(df, nbd_sites, activator, dtype='NBD', replicates=None,
+                    normalize_nbd=False):
+    if replicates is None:
+        replicates = range(1, 4)
     fit_results = []
     # Filter out the WT residue, if present in the list
     nbd_sites_filt = [s for s in nbd_sites if s != 'WT']
@@ -1202,12 +1204,11 @@ def plot_2conf_fits(df, nbd_sites, activator, normalize_nbd=False):
     for nbd_index, nbd_site in enumerate(nbd_sites_filt):
         k1_means = []
         k1_sds = []
-
         for rep_index in replicates:
-            nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
-            ny = df[(activator, 'NBD', nbd_site, rep_index, 'VALUE')].values
+            nt = df[(activator, dtype, nbd_site, rep_index, 'TIME')].values
+            ny = df[(activator, dtype, nbd_site, rep_index, 'VALUE')].values
             # Normalize NBD to F/F0
-            if normalize_nbd:
+            if dtype == 'NBD' and normalize_nbd:
                 ny = ny / ny[0]
 
             plt.figure('%s, NBD-%s-Bax Fits' % (activator, nbd_site),
@@ -1240,15 +1241,16 @@ def plot_2conf_fits(df, nbd_sites, activator, normalize_nbd=False):
             param_dict = {'c0_to_c1_k': (k1_mean, k1_sd),
                           'c1_scaling': (c1_mean, c1_sd)}
             fit_results.append(FitResult(builder, activator, nbd_site,
-                                         rep_index, 'NBD', param_dict,
+                                         rep_index, dtype, param_dict,
                                          nt, pysb_fit.ypred))
 
         plt.figure('%s, NBD-%s-Bax Fits' % (activator, nbd_site))
         plt.tight_layout()
 
         plt.figure("Fitted k1")
-        plt.bar(range(nbd_index*4, (nbd_index*4) + 3), k1_means,
-                yerr=k1_sds, width=1, color='r', ecolor='k')
+        nreps = len(replicates)
+        plt.bar(range(nbd_index*(nreps+1), (nbd_index*(nreps+1)) + nreps),
+                k1_means, yerr=k1_sds, width=1, color='r', ecolor='k')
 
     num_sites = len(nbd_sites_filt)
     plt.figure("Fitted k1")
@@ -1259,11 +1261,13 @@ def plot_2conf_fits(df, nbd_sites, activator, normalize_nbd=False):
 
     return fit_results
 
-def plot_3conf_fits(df, nbd_sites, activator, normalize_nbd=False):
+def plot_3conf_fits(df, nbd_sites, activator, dtype='NBD', replicates=None,
+                    normalize_nbd=False):
     #nbd_sites = ['15', '54', '62', '68', '79', '126', '138', '175']
     # Filter out the WT residue, if present in the list
     nbd_sites_filt = [s for s in nbd_sites if s != 'WT']
-    replicates = range(1, 4)
+    if replicates is None:
+        replicates = range(1, 4)
     fit_results = []
     for nbd_index, nbd_site in enumerate(nbd_sites_filt):
         k1_means = []
@@ -1274,10 +1278,10 @@ def plot_3conf_fits(df, nbd_sites, activator, normalize_nbd=False):
         for rep_index in replicates:
             rt = df[(activator, 'Release', nbd_site, rep_index, 'TIME')].values
             ry = df[(activator, 'Release', nbd_site, rep_index, 'VALUE')].values
-            nt = df[(activator, 'NBD', nbd_site, rep_index, 'TIME')].values
-            ny = df[(activator, 'NBD', nbd_site, rep_index, 'VALUE')].values
+            nt = df[(activator, dtype, nbd_site, rep_index, 'TIME')].values
+            ny = df[(activator, dtype, nbd_site, rep_index, 'VALUE')].values
             # Normalize NBD to F/F0
-            if normalize_nbd:
+            if dtype == 'NBD' and normalize_nbd:
                 ny = ny / ny[0]
             """
             plt.figure()
@@ -1351,7 +1355,7 @@ def plot_3conf_fits(df, nbd_sites, activator, normalize_nbd=False):
                           'c2_scaling': (c2_mean, c2_sd)}
 
             fit_results.append(FitResult(builder, activator, nbd_site,
-                                         rep_index, 'NBD', param_dict,
+                                         rep_index, dtype, param_dict,
                                          nt, pysb_fit.ypred))
 
             k1_means.append(k1_mean)
@@ -1374,9 +1378,11 @@ def plot_3conf_fits(df, nbd_sites, activator, normalize_nbd=False):
         plt.tight_layout()
 
         plt.figure("Fitted k1/k2")
-        plt.bar(range(nbd_index*7, (nbd_index*7) + 3), k1_means,
+        nreps = len(replicates)
+        K = (2 * nreps) + 1 # A shorthand constant
+        plt.bar(range(nbd_index*K, (nbd_index*K) + nreps), k1_means,
                 yerr=k1_sds, width=1, color='r', ecolor='k')
-        plt.bar(range(nbd_index*7+3, (nbd_index*7) + 6), k2_means,
+        plt.bar(range(nbd_index*K+nreps, (nbd_index*K) + (2*nreps)), k2_means,
                 yerr=k2_sds, width=1, color='g', ecolor='k')
 
     num_sites = len(nbd_sites_filt)
