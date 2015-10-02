@@ -33,15 +33,15 @@ def plot_error_estimates():
                  plot_title='Est. error for NBD-C126-Bax, ')
 
 def plot_fits():
-    params_dict = {'c0_to_c1_k': 2e-3,
-                   'c1_scaling': 0.4,
-                   'c1_to_c2_k': 1e-3,
-                   'c2_scaling': 0.6,
+    params_dict = {'c0_to_c1_k': 2e-2,
+                   'c1_scaling': 20.,
+                   'c1_to_c2_k': 1e-4,
+                   'c2_scaling': 6.,
                    'c1_to_c2_k': 1e-3,
                    'c3_scaling': 0.5}
 
     builder = Builder(params_dict=params_dict)
-    builder.build_model_multiconf(5, data['c68_fret'][0],
+    builder.build_model_multiconf(3, data_dict['c126_nbd'][0],
                                   normalized_data=True,
                                   reversible=False)
 
@@ -54,16 +54,17 @@ def plot_fits():
     k2_est_index = builder.estimate_params.index(k2)
     """
 
-    pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', data['c68_fret_time'],
-                                        data['c68_fret'])
+    pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', data_dict['c126_nbd_time'],
+                                        data_dict['c126_nbd'])
 
     plt.figure()
-    plt.plot(data['c68_fret_time'], data['c68_fret'], linestyle='', marker='.')
-    plt.plot(data['c68_fret_time'], pysb_fit.ypred)
+    plt.plot(data_dict['c126_nbd_time'], data_dict['c126_nbd'], linestyle='', marker='.')
+    plt.plot(data_dict['c126_nbd_time'], pysb_fit.ypred)
     plt.xlabel('Time (sec)')
 
 if __name__ == '__main__':
     plt.ion()
+    plot_fits()
     #plot_fret()
     #plot_nbd()
-    plot_error_estimates()
+    #plot_error_estimates()
