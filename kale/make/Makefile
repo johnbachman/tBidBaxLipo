@@ -100,7 +100,7 @@ nbd_param_densities: data1_Bid_k1k2_densities.pdf data1_Bid_c1c2_densities.pdf\
 
 # -- Dataset 2, Bid FRET + NBD + Tb release, summary plots -------------
 fret_nbd_release: fret_nbd_release_endpts fret_nbd_release_initial_rates \
-    fret_endpts
+    fret_endpts data2_example_curves.pdf
 fret_nbd_release_endpts: \
     data2_release_endpt_norm.pdf data2_release_endpt_no_norm.pdf \
     data2_nbd_endpt_norm.pdf data2_nbd_endpt_no_norm.pdf
@@ -258,6 +258,12 @@ data2_fret_endpt.pdf: \
         $(PLOTSDIR)/bid_bim_fret_nbd_release/preprocess_data.py \
         $(NBD_FRET_DATA)
 	python -m tbidbaxlipo.plots.bid_bim_fret_nbd_release.plots fret_endpoint $(basename $@)
+
+data2_example_curves.pdf: \
+        $(PLOTSDIR)/bid_bim_fret_nbd_release/plot_example_fret_curves.py \
+        $(NBD_FRET_DATA)
+	python -m tbidbaxlipo.plots.bid_bim_fret_nbd_release.plot_example_fret_curves
+
 
 nbd_labeling_ratios_table: \
         $(PLOTSDIR)/bid_bim_nbd_release/nbd_labeling_ratios_table.py \
