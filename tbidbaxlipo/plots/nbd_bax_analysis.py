@@ -1298,7 +1298,7 @@ def plot_3conf_fits(df, nbd_sites, activator, dtype='NBD', replicates=None,
             plt.plot(rt, ry_norm, color='g')
             plt.plot(rt, ny_norm, color='b')
             """
-            plt.figure('%s, NBD-%s-Bax Fits' % (activator, nbd_site),
+            plt.figure('%s, %s, NBD-%s-Bax Fits' % (activator, dtype, nbd_site),
                        figsize=(12, 5))
             plt.subplot(1, 2, 1)
             plt.plot(rt, ry,
@@ -1329,7 +1329,7 @@ def plot_3conf_fits(df, nbd_sites, activator, dtype='NBD', replicates=None,
                                                     ny[c1_timescale_index]
             # Rough guesses for the timescales of the first and second
             # transitions
-            builder.model.parameters['c0_to_c1_k'].value = 5e-3
+            builder.model.parameters['c0_to_c1_k'].value = 0.025
             builder.model.parameters['c1_to_c2_k'].value = 5e-4
 
             pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', nt, ny)
@@ -1374,7 +1374,7 @@ def plot_3conf_fits(df, nbd_sites, activator, dtype='NBD', replicates=None,
         #plt.title(nbd_site)
         #plt.xlabel('Time (sec)')
         #plt.ylabel('$F/F_0$')
-        plt.figure('%s, NBD-%s-Bax Fits' % (activator, nbd_site))
+        plt.figure('%s, %s, NBD-%s-Bax Fits' % (activator, dtype, nbd_site))
         plt.tight_layout()
 
         plt.figure("Fitted k1/k2")
