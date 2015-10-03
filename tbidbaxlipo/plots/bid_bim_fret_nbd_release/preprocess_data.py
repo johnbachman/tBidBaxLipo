@@ -116,9 +116,28 @@ outliers = [30, 62, 85, 91, 92, 101]
 for outlier_ix in outliers:
     df_pre[('Bim', 'FRET', '62', 3, 'VALUE')][outlier_ix] = np.nan
 
-# 122
+# Bid/122/1
+outliers = [9]
+for outlier_ix in outliers:
+    df_pre[('Bid', 'FRET', '122', 1, 'VALUE')][outlier_ix] = np.nan
+# Bid/122/2: pretty good
+# Bid/122/3: pretty good
+
+# Bim/122/1: pretty good
+# Bim/122/2
+outliers = [7, 8, 28, 45, 84, 89, 90, 95, 96]
+for outlier_ix in outliers:
+    df_pre[('Bim', 'FRET', '122', 2, 'VALUE')][outlier_ix] = np.nan
+# Bim/122/3
+outliers = [70, 71, 84, 86, 96]
+for outlier_ix in outliers:
+    df_pre[('Bim', 'FRET', '122', 3, 'VALUE')][outlier_ix] = np.nan
 
 # 126
+# Bid/126/1: OK
+# Bid/126/2: OK
+# Bid/126/3: OK
+
 # Bim/126/1
 outliers = [49]
 for outlier_ix in outliers:
@@ -133,7 +152,79 @@ outliers = [48, 49]
 for outlier_ix in outliers:
     df_pre[('Bim', 'FRET', '126', 3, 'VALUE')][outlier_ix] = np.nan
 
-# 138
-# 151
-# 175
-# 184
+# Bid/138/1
+outliers = [7, 13, 14, 36, 47, 64, 81, 99, 100, 106, 107, 110, 113]
+for outlier_ix in outliers:
+    df_pre[('Bid', 'FRET', '138', 1, 'VALUE')][outlier_ix] = np.nan
+# Bid/138/2: this one in rough shape, many drops in signal, hard
+# to draw a line for what to take out
+outliers = [2, 19, 24, 40, 43, 47, 52, 74, 80, 81, 82, 85, 86, 89, ]
+for outlier_ix in outliers:
+    df_pre[('Bid', 'FRET', '138', 2, 'VALUE')][outlier_ix] = np.nan
+# Bid/138/3
+outliers = [7, 8, 9, 13, 31, 42, 51, 54, 55, 58, 73]
+for outlier_ix in outliers:
+    df_pre[('Bid', 'FRET', '138', 3, 'VALUE')][outlier_ix] = np.nan
+
+# Bim/138/1
+outliers = [53, 56, 62, 75, 90, 103, 114]
+for outlier_ix in outliers:
+    df_pre[('Bim', 'FRET', '138', 1, 'VALUE')][outlier_ix] = np.nan
+# Bim/138/2
+outliers = [41]
+for outlier_ix in outliers:
+    df_pre[('Bim', 'FRET', '138', 2, 'VALUE')][outlier_ix] = np.nan
+# Bim/138/3
+outliers = [32]
+for outlier_ix in outliers:
+    df_pre[('Bim', 'FRET', '138', 3, 'VALUE')][outlier_ix] = np.nan
+
+# Bid/151/1
+outliers = [2, 6, 76, 83, 88, 99, 103, 106, 118]
+for outlier_ix in outliers:
+    df_pre[('Bid', 'FRET', '151', 1, 'VALUE')][outlier_ix] = np.nan
+# Bid/151/2: noise, but no outliers
+# Bid/151/3: noise, but no outliers
+
+# Bim/151/1
+outliers = [10]
+for outlier_ix in outliers:
+    df_pre[('Bim', 'FRET', '151', 1, 'VALUE')][outlier_ix] = np.nan
+# Bim/151/2
+outliers = [1, 50, 64, 87, 89, 94, 101, 103]
+for outlier_ix in outliers:
+    df_pre[('Bim', 'FRET', '151', 2, 'VALUE')][outlier_ix] = np.nan
+# Bim/151/3: noisy, but no major outliers
+
+# Bid/175/1: very noisy, but hard to pick out outliers
+outliers = [32, 41, 42, 51, 93, 107]
+for outlier_ix in outliers:
+    df_pre[('Bid', 'FRET', '175', 1, 'VALUE')][outlier_ix] = np.nan
+# Bid/175/2: pretty good
+# Bid/175/3: pretty good
+
+# Bim/175/1: not too bad
+# Bim/175/2
+outliers = [55, 57, 68, 71, 75, 87, 88, 106, 108, 114]
+for outlier_ix in outliers:
+    df_pre[('Bim', 'FRET', '175', 2, 'VALUE')][outlier_ix] = np.nan
+# Bim/175/3
+outliers = [44, 56, 57, 67, 69, 70, 72, 78]
+for outlier_ix in outliers:
+    df_pre[('Bim', 'FRET', '175', 3, 'VALUE')][outlier_ix] = np.nan
+
+# Bid/184/1: pretty good
+# Bid/184/2
+outliers = [26, 49, 52, 85, 94]
+for outlier_ix in outliers:
+    df_pre[('Bid', 'FRET', '184', 2, 'VALUE')][outlier_ix] = np.nan
+# Bid/184/3
+outliers = [2, 4, 39]
+for outlier_ix in outliers:
+    df_pre[('Bid', 'FRET', '184', 3, 'VALUE')][outlier_ix] = np.nan
+
+# Bim/184/1: pretty good
+# Bim/184/2: pretty good
+# Bim/184/3: pretty good
+
+
