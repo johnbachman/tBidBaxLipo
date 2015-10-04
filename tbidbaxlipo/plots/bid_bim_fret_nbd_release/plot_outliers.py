@@ -39,5 +39,5 @@ def plot_fret_outliers(df, df_pre, activators, residues, reps=(1, 2, 3)):
             plt.subplots_adjust(hspace=0.4, top=0.93)
 
 if __name__ == '__main__':
-    plot_fret_outliers(df, df_pre, ('Bid',), ('62', '126'))
+    plot_fret_outliers(df, df_pre, ['Bid', 'Bim'], nbd_residues)
 

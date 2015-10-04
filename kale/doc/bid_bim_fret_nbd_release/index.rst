@@ -11,6 +11,7 @@ same liposome prep.
     :maxdepth: 3
 
     raw_data
+    outlier_removal
     two_conf_fits
     three_conf_fits
     derivatives
