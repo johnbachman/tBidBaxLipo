@@ -54,7 +54,10 @@ outliers = [0, 28, 68, 97, 100]
 for outlier_ix in outliers:
     df_pre[('Bim', 'FRET', '36', 3, 'VALUE')][outlier_ix] = np.nan
 
-# Bid/47/1: OK, ignoring two early outliers though
+# Bid/47/1: two early outliers
+outliers = [7, 15]
+for outlier_ix in outliers:
+    df_pre[('Bid', 'FRET', '47', 1, 'VALUE')][outlier_ix] = np.nan
 # Bid/47/2: Several outlying negative pts:
 outliers = [86, 97, 110, 111, 116]
 for outlier_ix in outliers:

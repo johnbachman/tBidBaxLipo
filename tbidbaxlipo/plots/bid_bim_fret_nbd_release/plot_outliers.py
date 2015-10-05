@@ -4,20 +4,6 @@ from itertools import product
 import numpy as np
 from matplotlib import pyplot as plt
 
-plt.ion()
-
-"""
-for rep in [1, 2, 3]:
-    dkey = ('Bim', 'FRET', '184', rep, 'VALUE')
-    v = df[dkey].values
-    vpre = df_pre[dkey].values
-    ind = np.arange(len(v))
-    plt.subplot(3, 1,rep)
-    plt.plot(v, linestyle='', marker='.', color='b', markersize=10)
-    plt.plot(vpre, color='red', marker='.', linestyle='', markersize=10)
-    plt.hlines(0, 0, len(v))
-"""
-
 def plot_fret_outliers(df, df_pre, activators, residues, reps=(1, 2, 3)):
     for act in activators:
         for res in residues:
@@ -32,8 +18,8 @@ def plot_fret_outliers(df, df_pre, activators, residues, reps=(1, 2, 3)):
                 plt.plot(vpre, color='red', marker='.', linestyle='',
                          markersize=10)
                 plt.ylabel('% FRET')
+                plt.hlines(0, 0, len(v))
             # Add a line at 0
-            plt.hlines(0, 0, len(v))
             # Add axis labels
             plt.xlabel('Timepoint index')
             plt.subplots_adjust(hspace=0.4, top=0.93)
