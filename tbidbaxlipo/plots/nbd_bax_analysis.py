@@ -1262,8 +1262,7 @@ def plot_2conf_fits(df, nbd_sites, activator, dtype='NBD', replicates=None,
     return fit_results
 
 def plot_3conf_fits(df, nbd_sites, activator, dtype='NBD', replicates=None,
-                    normalize_nbd=False):
-    #nbd_sites = ['15', '54', '62', '68', '79', '126', '138', '175']
+                    normalize_nbd=False, do_plot=True):
     # Filter out the WT residue, if present in the list
     nbd_sites_filt = [s for s in nbd_sites if s != 'WT']
     if replicates is None:
@@ -1276,13 +1275,17 @@ def plot_3conf_fits(df, nbd_sites, activator, dtype='NBD', replicates=None,
         k2_sds = []
 
         for rep_index in replicates:
+            print("Fitting %s, %s, %s" % (activator, nbd_site, rep_index))
             rt = df[(activator, 'Release', nbd_site, rep_index, 'TIME')].values
             ry = df[(activator, 'Release', nbd_site, rep_index, 'VALUE')].values
             nt = df[(activator, dtype, nbd_site, rep_index, 'TIME')].values
             ny = df[(activator, dtype, nbd_site, rep_index, 'VALUE')].values
+            # Filter out any Nans
+            nt_nonan = nt[~np.isnan(ny)]
+            ny_nonan = ny[~np.isnan(ny)]
             # Normalize NBD to F/F0
             if dtype == 'NBD' and normalize_nbd:
-                ny = ny / ny[0]
+                ny_nonan = ny_nonan / ny_nonan[0]
             """
             plt.figure()
             plt.plot(rt, ry)
@@ -1298,51 +1301,69 @@ def plot_3conf_fits(df, nbd_sites, activator, dtype='NBD', replicates=None,
             plt.plot(rt, ry_norm, color='g')
             plt.plot(rt, ny_norm, color='b')
             """
-            plt.figure('%s, %s, NBD-%s-Bax Fits' % (activator, dtype, nbd_site),
-                       figsize=(12, 5))
-            plt.subplot(1, 2, 1)
-            plt.plot(rt, ry,
-                     linestyle='', marker='.',
-                     color=rep_colors[rep_index])
+            # Fit the release timecourse
             twoexp = tf.TwoExpLinear()
             #twoexp = tf.TwoExp()
             params = twoexp.fit_timecourse(rt, ry)
-            plt.plot(rt, twoexp.fit_func(rt, params),
-                     label='%s Rep %d' % (activator, rep_index),
-                     color=rep_colors[rep_index])
-            plt.xlabel('Time (sec)')
-            plt.ylabel('% Tb release')
-            plt.title('%% Tb release fits, NBD-%s-Bax' % nbd_site)
-            plt.legend(loc='lower right')
 
+            # Set up the NBD/FRET model
             builder = Builder(params_dict=params_dict)
-            builder.build_model_multiconf(3, ny[0], normalized_data=True)
+            builder.build_model_multiconf(3, ny_nonan[0], normalized_data=True)
             # Add some initial guesses
             # Guess that the scaling value for the final conformation is close
             # to the final data value
-            builder.model.parameters['c2_scaling'].value = ny[-1]
+            builder.model.parameters['c2_scaling'].value = ny_nonan[-1]
             # Guess that the scaling value for the intermediate conformation
             # is close to the value at ~300 sec
             c1_timescale_seconds = 300
             c1_timescale_index = np.where(nt > 300)[0].min()
             builder.model.parameters['c1_scaling'].value = \
-                                                    ny[c1_timescale_index]
+                                                    ny_nonan[c1_timescale_index]
             # Rough guesses for the timescales of the first and second
             # transitions
             builder.model.parameters['c0_to_c1_k'].value = 0.025
             builder.model.parameters['c1_to_c2_k'].value = 5e-4
 
-            pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', nt, ny)
-            plt.subplot(1, 2, 2)
-            plt.plot(nt, ny, linestyle='', marker='.',
-                    color=rep_colors[rep_index])
-            plt.plot(nt, pysb_fit.ypred,
-                     label='%s Rep %d' % (activator, rep_index),
-                     color=rep_colors[rep_index])
-            plt.xlabel('Time (sec)')
-            plt.ylabel('$F/F_0$')
-            plt.title('NBD $F/F_0$ fits, NBD-%s-Bax' % nbd_site)
-            plt.legend(loc='lower right')
+            # The FRET data contains many negative values, so don't log-transform
+            # parameters if that's what we're fitting
+            log_transform = False if dtype == 'FRET' else False
+
+            # Do the fit
+            pysb_fit = fitting.fit_pysb_builder(builder, 'NBD', nt_nonan,
+                                           ny_nonan, log_transform=log_transform)
+
+            if do_plot:
+                plt.figure('%s, %s, NBD-%s-Bax Fits' %
+                           (activator, dtype, nbd_site), figsize=(12, 5))
+                # Plot the release with fits
+                plt.subplot(1, 2, 1)
+                plt.plot(rt, ry,
+                         linestyle='', marker='.',
+                         color=rep_colors[rep_index])
+                plt.plot(rt, twoexp.fit_func(rt, params),
+                         label='%s Rep %d' % (activator, rep_index),
+                         color=rep_colors[rep_index])
+                plt.xlabel('Time (sec)')
+                plt.ylabel('% Tb release')
+                plt.title('%% Tb release fits, NBD-%s-Bax' % nbd_site)
+                plt.legend(loc='lower right')
+
+                # Plot the NBD with fits
+                plt.subplot(1, 2, 2)
+                plt.plot(nt_nonan, ny_nonan, linestyle='', marker='.',
+                        color=rep_colors[rep_index])
+                plt.plot(nt_nonan, pysb_fit.ypred,
+                         label='%s Rep %d' % (activator, rep_index),
+                         color=rep_colors[rep_index])
+                plt.xlabel('Time (sec)')
+                plt.ylabel('$F/F_0$')
+                plt.title('NBD $F/F_0$ fits, NBD-%s-Bax' % nbd_site)
+                plt.legend(loc='lower right')
+
+                plt.figure('%s, %s, NBD-%s-Bax Fits' %
+                           (activator, dtype, nbd_site))
+                plt.tight_layout()
+
             # Calculate stderr of parameters (doesn't account for covariance)
             (k1_mean, k1_sd) = _mean_sd('c0_to_c1_k', builder, pysb_fit)
             (k2_mean, k2_sd) = _mean_sd('c1_to_c2_k', builder, pysb_fit)
@@ -1363,34 +1384,22 @@ def plot_3conf_fits(df, nbd_sites, activator, dtype='NBD', replicates=None,
             k1_sds.append(k1_sd)
             k2_sds.append(k2_sd)
 
-            """
-            plt.figure()
-            s = Solver(builder.model, nt)
-            s.run(param_values=pysb_fit.params)
-            plt.plot(nt, s.yobs['Bax_c0'])
-            plt.plot(nt, s.yobs['Bax_c1'])
-            plt.plot(nt, s.yobs['Bax_c2'])
-            """
-        #plt.title(nbd_site)
-        #plt.xlabel('Time (sec)')
-        #plt.ylabel('$F/F_0$')
-        plt.figure('%s, %s, NBD-%s-Bax Fits' % (activator, dtype, nbd_site))
-        plt.tight_layout()
+        if do_plot:
+            plt.figure("Fitted k1/k2")
+            nreps = len(replicates)
+            K = (2 * nreps) + 1 # A shorthand constant
+            plt.bar(range(nbd_index*K, (nbd_index*K) + nreps), k1_means,
+                    yerr=k1_sds, width=1, color='r', ecolor='k')
+            plt.bar(range(nbd_index*K+nreps, (nbd_index*K) + (2*nreps)), k2_means,
+                    yerr=k2_sds, width=1, color='g', ecolor='k')
 
+    if do_plot:
+        num_sites = len(nbd_sites_filt)
         plt.figure("Fitted k1/k2")
-        nreps = len(replicates)
-        K = (2 * nreps) + 1 # A shorthand constant
-        plt.bar(range(nbd_index*K, (nbd_index*K) + nreps), k1_means,
-                yerr=k1_sds, width=1, color='r', ecolor='k')
-        plt.bar(range(nbd_index*K+nreps, (nbd_index*K) + (2*nreps)), k2_means,
-                yerr=k2_sds, width=1, color='g', ecolor='k')
-
-    num_sites = len(nbd_sites_filt)
-    plt.figure("Fitted k1/k2")
-    plt.ylabel('Fitted k1/k2 ($sec^{-1}$)')
-    ax = plt.gca()
-    ax.set_xticks(np.arange(3, 3 + num_sites * 7, 7))
-    ax.set_xticklabels(nbd_sites_filt)
+        plt.ylabel('Fitted k1/k2 ($sec^{-1}$)')
+        ax = plt.gca()
+        ax.set_xticks(np.arange(3, 3 + num_sites * 7, 7))
+        ax.set_xticklabels(nbd_sites_filt)
 
     return fit_results
 

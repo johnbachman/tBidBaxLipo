@@ -174,7 +174,7 @@ class PySBFitResult(object):
         self.residuals = residuals
         self.result = result
 
-def fit_pysb_builder(builder, obs_name, t, data,
+def fit_pysb_builder(builder, obs_name, t, data, log_transform=True,
                      obs_type='Expression'):
     """Use SciPy's leastsq algorithm to fit a PySB model to data.
 
@@ -211,7 +211,6 @@ def fit_pysb_builder(builder, obs_name, t, data,
     # Function defining the model output
     s = Solver(builder.model, t)
     def fit_func(t):
-        #import ipdb; ipdb.set_trace()
         param_values = [p() for p in all_params]
         s.run(param_values=param_values)
         if obs_type == 'Expression':
@@ -222,7 +221,8 @@ def fit_pysb_builder(builder, obs_name, t, data,
             raise ValueError('Unrecognized obs_type; must be '
                              '"Expression" or "Observable"')
     # The call to the fit function
-    (residuals, result) = fit(fit_func, params_to_fit, data, t)
+    (residuals, result) = fit(fit_func, params_to_fit, data, t,
+                              log_transform=log_transform)
     pysb_fit = PySBFitResult([p() for p in all_params], fit_func(t),
                              residuals, result)
     return pysb_fit
