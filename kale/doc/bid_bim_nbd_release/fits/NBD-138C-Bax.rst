@@ -19,6 +19,18 @@ Bid, Rep 1
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_2confs.mcmc.conv.pdf>`
 
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_2confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_2confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_2confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_2confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_2confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_2confs.mcmc.tri.hi.pdf>`
+
 3 conformations
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -33,6 +45,18 @@ Bid, Rep 1
 .. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_3confs.mcmc.conv.png
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_3confs.mcmc.conv.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_3confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_3confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_3confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_3confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_3confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_3confs.mcmc.tri.hi.pdf>`
 
 4 conformations
 ~~~~~~~~~~~~~~~~~~~~
@@ -49,6 +73,18 @@ Bid, Rep 1
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_4confs.mcmc.conv.pdf>`
 
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_4confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_4confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_4confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_4confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_4confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_4confs.mcmc.tri.hi.pdf>`
+
 5 conformations
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -63,6 +99,18 @@ Bid, Rep 1
 .. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_5confs.mcmc.conv.png
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_5confs.mcmc.conv.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_5confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_5confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_5confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_5confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_5confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r1_5confs.mcmc.tri.hi.pdf>`
 
 Bid, Rep 2
 -----------------
@@ -82,6 +130,18 @@ Bid, Rep 2
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_2confs.mcmc.conv.pdf>`
 
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_2confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_2confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_2confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_2confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_2confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_2confs.mcmc.tri.hi.pdf>`
+
 3 conformations
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -96,6 +156,18 @@ Bid, Rep 2
 .. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_3confs.mcmc.conv.png
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_3confs.mcmc.conv.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_3confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_3confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_3confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_3confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_3confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_3confs.mcmc.tri.hi.pdf>`
 
 4 conformations
 ~~~~~~~~~~~~~~~~~~~~
@@ -112,6 +184,18 @@ Bid, Rep 2
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_4confs.mcmc.conv.pdf>`
 
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_4confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_4confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_4confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_4confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_4confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_4confs.mcmc.tri.hi.pdf>`
+
 5 conformations
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -126,6 +210,18 @@ Bid, Rep 2
 .. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_5confs.mcmc.conv.png
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_5confs.mcmc.conv.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_5confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_5confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_5confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_5confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_5confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r2_5confs.mcmc.tri.hi.pdf>`
 
 Bid, Rep 3
 -----------------
@@ -145,6 +241,18 @@ Bid, Rep 3
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_2confs.mcmc.conv.pdf>`
 
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_2confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_2confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_2confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_2confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_2confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_2confs.mcmc.tri.hi.pdf>`
+
 3 conformations
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -159,6 +267,18 @@ Bid, Rep 3
 .. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_3confs.mcmc.conv.png
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_3confs.mcmc.conv.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_3confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_3confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_3confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_3confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_3confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_3confs.mcmc.tri.hi.pdf>`
 
 4 conformations
 ~~~~~~~~~~~~~~~~~~~~
@@ -175,6 +295,18 @@ Bid, Rep 3
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_4confs.mcmc.conv.pdf>`
 
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_4confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_4confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_4confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_4confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_4confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_4confs.mcmc.tri.hi.pdf>`
+
 5 conformations
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -189,6 +321,18 @@ Bid, Rep 3
 .. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_5confs.mcmc.conv.png
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_5confs.mcmc.conv.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_5confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_5confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_5confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_5confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_5confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bid_NBD_138_r3_5confs.mcmc.tri.hi.pdf>`
 
 Bim, Rep 1
 -----------------
@@ -208,6 +352,18 @@ Bim, Rep 1
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_2confs.mcmc.conv.pdf>`
 
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_2confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_2confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_2confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_2confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_2confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_2confs.mcmc.tri.hi.pdf>`
+
 3 conformations
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -222,6 +378,18 @@ Bim, Rep 1
 .. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_3confs.mcmc.conv.png
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_3confs.mcmc.conv.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_3confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_3confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_3confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_3confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_3confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_3confs.mcmc.tri.hi.pdf>`
 
 4 conformations
 ~~~~~~~~~~~~~~~~~~~~
@@ -238,6 +406,18 @@ Bim, Rep 1
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_4confs.mcmc.conv.pdf>`
 
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_4confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_4confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_4confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_4confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_4confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_4confs.mcmc.tri.hi.pdf>`
+
 5 conformations
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -252,6 +432,18 @@ Bim, Rep 1
 .. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_5confs.mcmc.conv.png
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_5confs.mcmc.conv.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_5confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_5confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_5confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_5confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_5confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r1_5confs.mcmc.tri.hi.pdf>`
 
 Bim, Rep 2
 -----------------
@@ -271,6 +463,18 @@ Bim, Rep 2
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_2confs.mcmc.conv.pdf>`
 
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_2confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_2confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_2confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_2confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_2confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_2confs.mcmc.tri.hi.pdf>`
+
 3 conformations
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -285,6 +489,18 @@ Bim, Rep 2
 .. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_3confs.mcmc.conv.png
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_3confs.mcmc.conv.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_3confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_3confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_3confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_3confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_3confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_3confs.mcmc.tri.hi.pdf>`
 
 4 conformations
 ~~~~~~~~~~~~~~~~~~~~
@@ -301,6 +517,18 @@ Bim, Rep 2
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_4confs.mcmc.conv.pdf>`
 
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_4confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_4confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_4confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_4confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_4confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_4confs.mcmc.tri.hi.pdf>`
+
 5 conformations
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -315,6 +543,18 @@ Bim, Rep 2
 .. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_5confs.mcmc.conv.png
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_5confs.mcmc.conv.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_5confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_5confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_5confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_5confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_5confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r2_5confs.mcmc.tri.hi.pdf>`
 
 Bim, Rep 3
 -----------------
@@ -334,6 +574,18 @@ Bim, Rep 3
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_2confs.mcmc.conv.pdf>`
 
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_2confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_2confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_2confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_2confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_2confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_2confs.mcmc.tri.hi.pdf>`
+
 3 conformations
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -348,6 +600,18 @@ Bim, Rep 3
 .. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_3confs.mcmc.conv.png
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_3confs.mcmc.conv.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_3confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_3confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_3confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_3confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_3confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_3confs.mcmc.tri.hi.pdf>`
 
 4 conformations
 ~~~~~~~~~~~~~~~~~~~~
@@ -364,6 +628,18 @@ Bim, Rep 3
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_4confs.mcmc.conv.pdf>`
 
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_4confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_4confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_4confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_4confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_4confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_4confs.mcmc.tri.hi.pdf>`
+
 5 conformations
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -378,4 +654,16 @@ Bim, Rep 3
 .. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_5confs.mcmc.conv.png
 
 :download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_5confs.mcmc.conv.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_5confs.mcmc.tri.low.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_5confs.mcmc.tri.low.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_5confs.mcmc.tri.med.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_5confs.mcmc.tri.med.pdf>`
+
+.. image:: /_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_5confs.mcmc.tri.hi.png
+
+:download:`(pdf) </_static/pt_data1_plots/pt_data1_Bim_NBD_138_r3_5confs.mcmc.tri.hi.pdf>`
 
