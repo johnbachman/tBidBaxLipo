@@ -25,6 +25,9 @@ clean:
 clean_pt_data1:
 	cd $(NBD_MCMC_DIR); rm -f *.md5 *.fit *.deps.txt *.ensemble
 
+clean_pt_data2:
+	cd $(NBD_FRET_MCMC_DIR); rm -f *.md5 *.fit *.deps.txt *.ensemble
+
 # This bit here allows us to only rebuild when the hash of a file changes.
 # See blog post describing the approach here:
 # http://blog.jgc.org/2006/04/rebuilding-when-hash-has-changed-not.html
