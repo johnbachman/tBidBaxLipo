@@ -7,7 +7,7 @@ from tbidbaxlipo.data.parse_bid_bim_fret_nbd_release import nbd_residues
 args = {
     'model': {
         'multiconf': [2], # 2, 3, 4
-        'normalized_nbd_data': [False]},
+        'normalized_nbd_data': [True]},
     'model_observable': ['NBD'],
     'global_initial_conditions': {},
     'local_initial_condition': None,
