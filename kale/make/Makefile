@@ -86,6 +86,15 @@ $(NBD_MCMC_DIR)/pt_data1.deps.txt: \
     $(NBD_MCMC_DIR)/generate_fit_files_for_nbd_curves.py
 	python $(NBD_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_MCMC_DIR)
 
+# -- MCMC Fitting for Dataset 2, complete set of NBD-Bax trajectories with FRET --
+pt_data2: pt_data2_deps
+
+pt_data2_deps: $(NBD_FRET_MCMC_DIR)/pt_data2.deps.txt
+-include $(NBD_FRET_MCMC_DIR)/pt_data2.deps.txt
+
+$(NBD_FRET_MCMC_DIR)/pt_data2.deps.txt: \
+    $(NBD_FRET_MCMC_DIR)/generate_fit_files_for_nbd_curves.py
+	python $(NBD_FRET_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_FRET_MCMC_DIR)
 
 # -- Dataset 1, NBD + Tb release, summary plots ------------------------
 nbd_release: nbd_release_endpts nbd_release_initial_rates nbd_example_curves \
