@@ -64,7 +64,7 @@ for activator in ['Bim']:
 
 # Now write the file with the dependencies of the overall target on the
 # list of .mcmc files
-deps_filename = os.path.join(basedir, 'pt_data1.deps.txt')
+deps_filename = os.path.join(basedir, 'pt_data2.deps.txt')
 target_name = 'pt_data2'
 with open(deps_filename, 'w') as deps_file:
     #base_target = os.path.basename(basedir) # Strip off the directory info
