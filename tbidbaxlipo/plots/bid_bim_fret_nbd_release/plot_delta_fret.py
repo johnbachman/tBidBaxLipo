@@ -5,39 +5,37 @@ import numpy as np
 import cPickle
 from tbidbaxlipo.util import set_fig_params_for_publication, format_axis, \
                              fontsize
+from tbidbaxlipo.plots.bid_bim_fret_nbd_release.preprocess_data \
+    import df_pre, nbd_residues
 import matplotlib.patches as mpatches
 import sys
 
 def calc_fret_deltas(residues):
-    from tbidbaxlipo.plots.bid_bim_fret_nbd_release.preprocess_data \
-            import df_pre, nbd_residues
     delta_dict = {}
 
     # --- First, fit Bid data ---
     bid_fit_results = nba.plot_3conf_fits(df_pre, residues, 'Bid', dtype='FRET',
                                           do_plot=False)
-
     for fr in bid_fit_results:
         # Calculate the difference
         key = (fr.activator, fr.measurement, fr.nbd_site, fr.rep_index)
         delta_fret = np.max(fr.y) - fr.y[-1]
         delta_dict[key] = delta_fret
 
-    with open('fret_deltas_bid.pck', 'w') as f:
-        cPickle.dump(delta_dict, f)
-
     # --- Now do Bim ---
     bim_fit_results = nba.plot_3conf_fits(df_pre, residues, 'Bim', dtype='FRET',
                                           do_plot=False)
-
     for fr in bim_fit_results:
         # Calculate the difference
         key = (fr.activator, fr.measurement, fr.nbd_site, fr.rep_index)
         delta_fret = np.max(fr.y) - fr.y[-1]
         delta_dict[key] = delta_fret
 
-    with open('fret_deltas_bim.pck', 'w') as f:
+    # Cache the results
+    with open('fret_deltas.pck', 'w') as f:
         cPickle.dump(delta_dict, f)
+
+    return delta_dict
 
 def load_fret_deltas():
     # Load data
@@ -115,5 +113,8 @@ if __name__ == '__main__':
         sys.exit(1)
     plot_filename = sys.argv[1]
 
-    deltas = load_fret_deltas()
+    residues = [res for res in nbd_residues if res != '62']
+    deltas = calc_fret_deltas(residues)
     plot_means(deltas, plot_filename)
+
+
