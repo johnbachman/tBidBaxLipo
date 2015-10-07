@@ -36,6 +36,7 @@ install:
   # Make the results directory
   - mkdir -p results/figures/panels
   - export PYTHONPATH=$PYTHONPATH:`pwd`
+  - export MD5_NAME=md5sum
   # Misc dependencies
   #- pip install cython # needed by h5py
   #- pip install h5py

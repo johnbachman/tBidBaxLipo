@@ -11,7 +11,7 @@ x140430 := $(CODEDIR)/plots/x140430_Bid_Bax_FRET/mcmc
 #PQUEUE := sorger_par_unlimited
 PQUEUE := parallel
 # md5 sum program to use (md5 on mac, md5sum on Linux)
-MD5 := md5
+MD5 := $(MD5_NAME)
 
 all: nbd_release fret_nbd_release nbd_labeling_ratios_table
 
@@ -24,6 +24,9 @@ clean:
 
 clean_pt_data1:
 	cd $(NBD_MCMC_DIR); rm -f *.md5 *.fit *.deps.txt *.ensemble
+
+clean_pt_data2:
+	cd $(NBD_FRET_MCMC_DIR); rm -f *.md5 *.fit *.deps.txt *.ensemble
 
 # This bit here allows us to only rebuild when the hash of a file changes.
 # See blog post describing the approach here:
@@ -86,6 +89,15 @@ $(NBD_MCMC_DIR)/pt_data1.deps.txt: \
     $(NBD_MCMC_DIR)/generate_fit_files_for_nbd_curves.py
 	python $(NBD_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_MCMC_DIR)
 
+# -- MCMC Fitting for Dataset 2, complete set of NBD-Bax trajectories with FRET --
+pt_data2: pt_data2_deps
+
+pt_data2_deps: $(NBD_FRET_MCMC_DIR)/pt_data2.deps.txt
+-include $(NBD_FRET_MCMC_DIR)/pt_data2.deps.txt
+
+$(NBD_FRET_MCMC_DIR)/pt_data2.deps.txt: \
+    $(NBD_FRET_MCMC_DIR)/generate_fit_files_for_nbd_curves.py
+	python $(NBD_FRET_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_FRET_MCMC_DIR)
 
 # -- Dataset 1, NBD + Tb release, summary plots ------------------------
 nbd_release: nbd_release_endpts nbd_release_initial_rates nbd_example_curves \
