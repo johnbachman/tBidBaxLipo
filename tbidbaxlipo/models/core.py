@@ -249,6 +249,8 @@ import sympy
 import math
 import itertools
 
+LOGGING = False
+
 class Builder(pysb.builder.Builder):
     """
     Class/constructor documentation here.
@@ -454,12 +456,14 @@ class Builder(pysb.builder.Builder):
 
     # -- MECHANISTIC MOTIFS ------------------------------------------------
     def translocate_tBid_Bax(self):
-        print("core: translocate_tBid_Bax()")
+        if LOGGING:
+            print("core: translocate_tBid_Bax()")
         self.translocate_tBid()
         self.translocate_Bax()
 
     def translocate_tBid(self):
-        print("core: translocate_tBid()")
+        if LOGGING:
+            print("core: translocate_tBid()")
 
         assert len(self.cpt_list) != 0
         if len(self.cpt_list) > 1:
@@ -502,7 +506,8 @@ class Builder(pysb.builder.Builder):
 
 
     def translocate_Bax(self):
-        print("core: translocate_Bax()")
+        if LOGGING:
+            print("core: translocate_Bax()")
 
         assert len(self.cpt_list) != 0
         if len(self.cpt_list) > 1:
@@ -571,8 +576,9 @@ class Builder(pysb.builder.Builder):
         Rates used in old version, iBax_binds_tBid_at_bh3: kf 1e-1, kr 2.5
         """
 
-        print('core: tBid_binds_Bax(bax_site=%s, bax_conf=%s)' %
-              (bax_site, bax_conf))
+        if LOGGING:
+            print('core: tBid_binds_Bax(bax_site=%s, bax_conf=%s)' %
+                  (bax_site, bax_conf))
 
         # Forward rate of tBid binding to Bax
         kf = self.parameter('tBid_Bax_%s_%s_kf' % (bax_conf, bax_site), 1e-2,
@@ -659,9 +665,10 @@ class Builder(pysb.builder.Builder):
         concentration.
         """
 
-        print('core: tBid_activates_Bax(bax_site=%s, bax_bind_conf=%s, '
-              'bax_active_conf=%s)' %
-              (bax_site, bax_bind_conf, bax_active_conf))
+        if LOGGING:
+            print('core: tBid_activates_Bax(bax_site=%s, bax_bind_conf=%s, '
+                  'bax_active_conf=%s)' %
+                  (bax_site, bax_bind_conf, bax_active_conf))
 
         self.tBid_binds_Bax(bax_site, bax_bind_conf)
 
@@ -686,9 +693,10 @@ class Builder(pysb.builder.Builder):
                                  bax_active_conf='ins'):
         """tBid + Bax <-> tBid:Bax -> tBid:Bax* <-> Bax* + tBid"""
 
-        print('core: tBid_activates_Bax_3step(bax_site=%s, bax_bind_conf=%s, '
-              'bax_active_conf=%s)' %
-              (bax_site, bax_bind_conf, bax_active_conf))
+        if LOGGING:
+            print('core: tBid_activates_Bax_3step(bax_site=%s, bax_bind_conf=%s, '
+                  'bax_active_conf=%s)' %
+                  (bax_site, bax_bind_conf, bax_active_conf))
 
         self.tBid_binds_Bax(bax_site, bax_bind_conf)
         self.tBid_binds_Bax(bax_site, bax_active_conf)
@@ -711,7 +719,8 @@ class Builder(pysb.builder.Builder):
              kc)
 
     def basal_Bax_activation(self):
-        print "core: basal_Bax_activation"
+        if LOGGING:
+            print "core: basal_Bax_activation"
         # Spontaneous rate of transition of Bax from the mitochondrial to the
         # inserted state
         Bax = self['Bax']
@@ -727,7 +736,8 @@ class Builder(pysb.builder.Builder):
     def Bax_reverses(self):
         """Reversion of inserted Bax to the peripherally bound form."""
 
-        print('core: Bax_reverses')
+        if LOGGING:
+            print('core: Bax_reverses')
 
         Bax = self['Bax']
 
@@ -761,7 +771,8 @@ class Builder(pysb.builder.Builder):
           steady-state at around 12 minutes.
         """
 
-        print("core: Bax_dimerizes(bax_conf=%s, reversible=%s)" %
+        if LOGGING:
+            print("core: Bax_dimerizes(bax_conf=%s, reversible=%s)" %
               (bax_conf, reversible))
 
         Bax = self['Bax']
@@ -802,7 +813,8 @@ class Builder(pysb.builder.Builder):
         non-extractable, resistant to gel filtration etc.) after
         """
 
-        print("core: Bax_tetramerizes()")
+        if LOGGING:
+            print("core: Bax_tetramerizes()")
 
         # Rate of dimerization formation/oligomerization of activated Bax (s^-1)
         Bax_tetramerization_kf = \
@@ -861,7 +873,8 @@ class Builder(pysb.builder.Builder):
         form without the pore former itself changing state. This appears
         a simpler approach that is worth using for comparing methods of
         permeabilization."""
-        print("core: pores_from_Bax_schwarz()")
+        if LOGGING:
+            print("core: pores_from_Bax_schwarz()")
 
         pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3,
                                                prior=Normal(-4, 1))
@@ -903,7 +916,8 @@ class Builder(pysb.builder.Builder):
         only reversibility of Bax insertion, which is already encoded by
         the macro Bax_reverses().
         """
-        print("core: pores_from_Bax_monomers()")
+        if LOGGING:
+            print("core: pores_from_Bax_monomers()")
 
         pore_formation_rate_k = self.parameter('pore_formation_rate_k', 1e-3,
                                                prior=Normal(-4, 1))
@@ -924,7 +938,8 @@ class Builder(pysb.builder.Builder):
 
         See notes for pores_from_Bax_monomers, above.
         """
-        print("core: pores_from_Bax_dimers(bax_conf=%s)" % bax_conf)
+        if LOGGING:
+            print("core: pores_from_Bax_dimers(bax_conf=%s)" % bax_conf)
 
         Bax = self['Bax']
         Pores = self['Pores']
@@ -957,7 +972,8 @@ class Builder(pysb.builder.Builder):
              lhs >> rhs + Pores(), pore_formation_rate_k)
 
     def pores_aggregate(self, bax_conf='mem'):
-        print("core: pores_aggregate()")
+        if LOGGING:
+            print("core: pores_aggregate()")
 
         pore_aggregation_rate_k = self.parameter('pore_aggregation_rate_k',
                                                  5e-3, prior=Normal(-3, 1))
@@ -980,7 +996,8 @@ class Builder(pysb.builder.Builder):
         (activated) Bax is specified as fully unbound may be a problem.
         """
 
-        print "core: Bax_auto_activates"
+        if LOGGING:
+            print "core: Bax_auto_activates"
 
         iBax_mBax_kf = self.parameter('iBax_mBax_kf', 1e-3)
         iBax_mBax_kr = self.parameter('iBax_mBax_kr', 10)
@@ -1008,7 +1025,8 @@ class Builder(pysb.builder.Builder):
         is monomeric--this implies that it is not only bound to tBid, but also
         implies that it cannot be in a pore."""
 
-        print "core: Bax_auto_activates_one_step"
+        if LOGGING:
+            print "core: Bax_auto_activates_one_step"
 
         iBax_activates_mBax_k = self.parameter('iBax_activates_mBax_k', 1e-4,
                                                prior=Normal(-4, 2))
@@ -1023,7 +1041,8 @@ class Builder(pysb.builder.Builder):
                       iBax_activates_mBax_k)
 
     def basal_bh3_exposure_auto2(self):
-        print "core: basal_bh3_exposure_auto2"
+        if LOGGING:
+            print "core: basal_bh3_exposure_auto2"
 
         Bax = self['Bax']
 
@@ -1271,30 +1290,34 @@ class Builder(pysb.builder.Builder):
         self.model.name = model_string
 
     def build_model_t(self):
-        print "---------------------------"
-        print "core: Building model t:"
+        if LOGGING:
+            print "---------------------------"
+            print "core: Building model t:"
         self.translocate_tBid_Bax()
         self.model.name = 't'
 
     def build_model_ta(self):
-        print "---------------------------"
-        print "core: Building model ta:"
+        if LOGGING:
+            print "---------------------------"
+            print "core: Building model ta:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3', bax_bind_conf='mem',
                                 bax_active_conf='ins')
         self.model.name = 'ta'
 
     def build_model_tai(self):
-        print "---------------------------"
-        print "core: Building model tai:"
+        if LOGGING:
+            print "---------------------------"
+            print "core: Building model tai:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.tBid_binds_Bax(bax_site='bh3', bax_conf='ins')
         self.model.name = 'tai'
 
     def build_model_taid(self):
-        print "---------------------------"
-        print "core: Building model taid:"
+        if LOGGING:
+            print "---------------------------"
+            print "core: Building model taid:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.tBid_binds_Bax(bax_site='bh3', bax_conf='ins')
@@ -1302,8 +1325,9 @@ class Builder(pysb.builder.Builder):
         self.model.name = 'taid'
 
     def build_model_taidt(self):
-        print "---------------------------"
-        print "core: Building model taidt:"
+        if LOGGING:
+            print "---------------------------"
+            print "core: Building model taidt:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.tBid_binds_Bax(bax_site='bh3', bax_conf='ins')
@@ -1312,8 +1336,9 @@ class Builder(pysb.builder.Builder):
         self.model.name = 'taidt'
 
     def build_model_tair(self):
-        print "---------------------------"
-        print "core: Building model tair:"
+        if LOGGING:
+            print "---------------------------"
+            print "core: Building model tair:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.tBid_binds_Bax(bax_site='bh3', bax_conf='ins')
@@ -1321,8 +1346,9 @@ class Builder(pysb.builder.Builder):
         self.model.name = 'tair'
 
     def build_model_taird(self):
-        print "---------------------------"
-        print "core: Building model taird:"
+        if LOGGING:
+            print "---------------------------"
+            print "core: Building model taird:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.tBid_binds_Bax(bax_site='bh3', bax_conf='ins')
@@ -1331,8 +1357,9 @@ class Builder(pysb.builder.Builder):
         self.model.name = 'taird'
 
     def build_model_tairdt(self):
-        print "---------------------------"
-        print "core: Building model tairdt:"
+        if LOGGING:
+            print "---------------------------"
+            print "core: Building model tairdt:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.tBid_binds_Bax(bax_site='bh3', bax_conf='ins')
@@ -1342,16 +1369,18 @@ class Builder(pysb.builder.Builder):
         self.model.name = 'tairdt'
 
     def build_model_tad(self):
-        print "---------------------------"
-        print "core: Building model tad:"
+        if LOGGING:
+            print "---------------------------"
+            print "core: Building model tad:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.Bax_dimerizes(bax_conf='ins')
         self.model.name = 'tad'
 
     def build_model_tadt(self):
-        print "---------------------------"
-        print "core: Building model tadt:"
+        if LOGGING:
+            print "---------------------------"
+            print "core: Building model tadt:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.Bax_dimerizes(bax_conf='ins')
@@ -1359,16 +1388,18 @@ class Builder(pysb.builder.Builder):
         self.model.name = 'tadt'
 
     def build_model_tar(self):
-        print "---------------------------"
-        print "core: Building model tar:"
+        if LOGGING:
+            print "---------------------------"
+            print "core: Building model tar:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.Bax_reverses()
         self.model.name = 'tar'
 
     def build_model_tard(self):
-        print "---------------------------"
-        print "core: Building model tard:"
+        if LOGGING:
+            print "---------------------------"
+            print "core: Building model tard:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.Bax_reverses()
@@ -1376,8 +1407,9 @@ class Builder(pysb.builder.Builder):
         self.model.name = 'tard'
 
     def build_model_tardt(self):
-        print "---------------------------"
-        print "core: Building model tardt:"
+        if LOGGING:
+            print "---------------------------"
+            print "core: Building model tardt:"
         self.translocate_tBid_Bax()
         self.tBid_activates_Bax(bax_site='bh3')
         self.Bax_reverses()
@@ -1669,8 +1701,9 @@ class Builder(pysb.builder.Builder):
         self.model.name = 'bax_schwarz_tetramer_reversible'
 
     def build_model_tap1(self):
-        print "---------------------------"
-        print "core: Building model tap1:"
+        if LOGGING:
+            print "---------------------------"
+            print "core: Building model tap1:"
         self.build_model_ta()
         self.pores_from_Bax_monomers()
         self.model.name = 'tap1'

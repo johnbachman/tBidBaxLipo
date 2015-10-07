@@ -60,7 +60,8 @@ class Builder(core.Builder):
             self.declare_nbd_scaling_parameters(nbd_sites)
 
     def translocate_Bax(self):
-        print("lipo_sites: translocate_Bax()")
+        if core.LOGGING:
+            print("lipo_sites: translocate_Bax()")
 
         Bax_transloc_kf = self.parameter('Bax_transloc_kf', 1e-2,
                             factor=(1/float(self['sites_per_liposome'].value)),
@@ -84,7 +85,8 @@ class Builder(core.Builder):
              Bax_transloc_kr)
 
     def translocate_tBid(self):
-        print("lipo_sites: translocate_tBid()")
+        if core.LOGGING:
+            print("lipo_sites: translocate_tBid()")
 
         tBid_transloc_kf = self.parameter('tBid_transloc_kf', 1e-2,
                             factor=(1/float(self['sites_per_liposome'].value)),
@@ -106,7 +108,8 @@ class Builder(core.Builder):
              tBid_transloc_kr)
 
     def basal_Bax_activation_nonsat(self, reversible=False):
-        print "lipo_sites: basal_Bax_activation=%s" % reversible
+        if core.LOGGING:
+            print "lipo_sites: basal_Bax_activation=%s" % reversible
         Bax = self['Bax']
         Vesicles = self['Vesicles']
         basal_Bax_kf = self.parameter('basal_Bax_kf', 2e-3,

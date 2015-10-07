@@ -104,7 +104,8 @@ class Builder(core.Builder):
 
     # MODEL MACROS
     def translocate_Bax_dimers(self):
-        print("one_cpt: translocate_Bax_dimers()")
+        if core.LOGGING:
+            print("one_cpt: translocate_Bax_dimers()")
 
         param_names = [p.name for p in self.model.parameters]
         if 'Bax_transloc_kf' not in param_names or \
