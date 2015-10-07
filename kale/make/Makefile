@@ -11,7 +11,7 @@ x140430 := $(CODEDIR)/plots/x140430_Bid_Bax_FRET/mcmc
 #PQUEUE := sorger_par_unlimited
 PQUEUE := parallel
 # md5 sum program to use (md5 on mac, md5sum on Linux)
-MD5 := md5
+MD5 := $(MD5_NAME)
 
 all: nbd_release fret_nbd_release nbd_labeling_ratios_table
 
