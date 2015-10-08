@@ -6,7 +6,7 @@ from tbidbaxlipo.data.parse_bid_bim_nbd_release import nbd_residues
 # Arguments shared across all fits
 args = {
     'model': {
-        'multiconf': [2, 3, 4, 5], # 2, 3, 4
+        'multiconf': [[3, 'rev']], # 2, 3, 4
         'normalized_nbd_data': [False]},
     'model_observable': ['NBD'],
     'global_initial_conditions': {},
@@ -27,9 +27,9 @@ output_filename_pattern = output_target_pattern + '.fit.ensemble'
 dependencies_list = []
 
 # Iterate over the activators
-for activator in ['Bid', 'Bim']:
+for activator in ['Bid']:
     # Iterate over the NBD residues
-    for nbd_residue in nbd_residues: # ['54', '126']
+    for nbd_residue in ['54']:
         # Skip the wild type curves since there is no NBD trace
         if nbd_residue == 'WT':
             continue
