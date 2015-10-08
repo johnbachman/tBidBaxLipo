@@ -25,7 +25,7 @@ def generate_files(args, basename):
         if 'multiconf' in m:
             # Is the NBD data normalized?
             norm_data = m['normalized_nbd_data']
-            # Number of confs and whether the models is reversible
+            # Number of confs and whether the model is reversible
             try:
                 num_confs = int(m['multiconf'])
                 reversible = False

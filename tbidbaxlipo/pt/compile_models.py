@@ -24,9 +24,23 @@ for yaml_filename in yaml_filenames:
     # Check for whether this is a multiconf model or not
     if 'multiconf' in args['model']:
         bd = multiconf.Builder()
-        num_confs = args['model']['multiconf']
+        # Number of confs and whether the model is reversible
+        try:
+            num_confs = int(args['model']['multiconf'])
+            reversible = False
+        # If it's not an int, assume it's two-element list with a flag
+        # specifying a reversible model, indicated by 'rev'
+        except TypeError:
+            num_confs = int(args['model']['multiconf'][0])
+            rev = args['model']['multiconf'][1]
+            if rev == 'rev':
+                reversible = True
+            else:
+                raise Exception('Unknown multiconf model flag %s' % rev)
+
         norm_data = args['model']['normalized_nbd_data'] = True
-        bd.build_model_multiconf(num_confs, 1, normalized_data=norm_data)
+        bd.build_model_multiconf(num_confs, 1, normalized_data=norm_data,
+                                 reversible=reversible)
     else:
         bd = one_cpt.Builder()
         bd.build_model_from_dict(args['model'])
