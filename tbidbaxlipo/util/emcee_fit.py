@@ -778,13 +778,26 @@ def global_fit_from_args(args):
     # and determines that this is a multiconf model
     if 'multiconf' in args['model']:
         bd = multiconf.Builder()
-        num_confs = args['model']['multiconf']
+        # Number of confs and whether the model is reversible
+        try:
+            num_confs = int(args['model']['multiconf'])
+            reversible = False
+        # If it's not an int, assume it's two-element list with a flag
+        # specifying a reversible model, indicated by 'rev'
+        except TypeError:
+            num_confs = int(args['model']['multiconf'][0])
+            rev = args['model']['multiconf'][1]
+            if rev == 'rev':
+                reversible = True
+            else:
+                raise Exception('Unknown multiconf model flag %s' % rev)
         norm_data = args['model']['normalized_nbd_data']
         nbd_ubound = data_module.__dict__[data_args['nbd_ubound']]
         nbd_lbound = data_module.__dict__[data_args['nbd_lbound']]
         nbd_f0 = data_module.__dict__[data_args['nbd_f0']]
         bd.build_model_multiconf(num_confs, nbd_f0, nbd_lbound, nbd_ubound,
-                                 normalized_data=norm_data, reversible=False)
+                                 normalized_data=norm_data,
+                                 reversible=reversible)
     # Check the builder: one_cpt or lipo_sites
     elif 'builder' in args['model'] and \
          args['model']['builder'] == 'lipo_sites':

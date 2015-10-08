@@ -47,7 +47,7 @@ class Builder(core.Builder):
             self.rule('c%d_to_c%d' % (i, i+1),
                       Bax(conf='c%d' % i) >> Bax(conf='c%d' % (i+1)), rate)
             if reversible:
-                rate = self.parameter('c%d_to_c%d_kr' % (i+1, i), 1e-3,
+                rate = self.parameter('c%d_to_c%d_k' % (i+1, i), 1e-3,
                                       prior=Uniform(-6, -1))
                 self.rule('c%d_to_c%d' % (i+1, i),
                           Bax(conf='c%d' % (i+1)) >> Bax(conf='c%d' % i), rate)
