@@ -780,11 +780,13 @@ def global_fit_from_args(args):
         bd = multiconf.Builder()
         num_confs = args['model']['multiconf']
         norm_data = args['model']['normalized_nbd_data']
+        reversible = args['model']['reversible']
         nbd_ubound = data_module.__dict__[data_args['nbd_ubound']]
         nbd_lbound = data_module.__dict__[data_args['nbd_lbound']]
         nbd_f0 = data_module.__dict__[data_args['nbd_f0']]
         bd.build_model_multiconf(num_confs, nbd_f0, nbd_lbound, nbd_ubound,
-                                 normalized_data=norm_data, reversible=False)
+                                 normalized_data=norm_data,
+                                 reversible=reversible)
     # Check the builder: one_cpt or lipo_sites
     elif 'builder' in args['model'] and \
          args['model']['builder'] == 'lipo_sites':
