@@ -23,9 +23,21 @@ def generate_files(args, basename):
     for m in m_ensemble:
         # Multiconf model, supercedes any other model features
         if 'multiconf' in m:
-            num_confs = int(m['multiconf'])
+            # Is the NBD data normalized?
             norm_data = m['normalized_nbd_data']
-            reversible = m['reversible']
+            # Number of confs and whether the models is reversible
+            try:
+                num_confs = int(m['multiconf'])
+                reversible = False
+            # If it's not an int, assume it's two-element list with a flag
+            # specifying a reversible model, indicated by 'rev'
+            except TypeError:
+                num_confs = int(m['multiconf'][0])
+                rev = m['multiconf'][1]
+                if rev == 'rev':
+                    reversible = True
+                else:
+                    raise Exception('Unknown multiconf model flag %s' % rev)
             # We don't need to build the model just to get the model name
             if reversible:
                 model_name = '%dconfsrev' % num_confs
