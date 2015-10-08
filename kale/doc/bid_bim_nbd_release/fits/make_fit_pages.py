@@ -5,7 +5,7 @@ import os
 confs = range(2, 6)
 activators = ['Bid', 'Bim']
 reps = range(1, 4)
-extensions = ['.fits', '.confs', '.conv']
+extensions = ['.fits', '.confs', '.conv', '.tri.low', '.tri.med', '.tri.hi']
 dir_prefix = '/_static/pt_data1_plots/'
 
 # Text for index file
