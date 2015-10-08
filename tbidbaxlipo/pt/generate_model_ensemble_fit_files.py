@@ -25,8 +25,12 @@ def generate_files(args, basename):
         if 'multiconf' in m:
             num_confs = int(m['multiconf'])
             norm_data = m['normalized_nbd_data']
+            reversible = m['reversible']
             # We don't need to build the model just to get the model name
-            model_name = '%dconfs' % num_confs
+            if reversible:
+                model_name = '%dconfsrev' % num_confs
+            else:
+                model_name = '%dconfs' % num_confs
         # Mechanistic model
         else:
             # If Bid doesn't get to the membrane, activation by bound Bid will
