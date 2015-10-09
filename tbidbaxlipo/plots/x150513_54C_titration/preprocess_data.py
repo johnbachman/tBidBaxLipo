@@ -52,6 +52,26 @@ data_dict['ry_62'] = get_col(27)
 data_dict['nt_62'] = get_col(30)
 data_dict['ny_62'] = get_col(31)
 
+# Format the time and data matrices for fitting with via a GlobalFit instance
+time = data_dict['nt_62']
+bax_concs = [62.5, 125, 250, 500]
+# Dimensions: (conditions, observables, time)
+data = np.zeros((len(bax_concs), 1, len(time)))
+# Fill in the data matrix
+data[0, 0, :] = data_dict['ny_62']
+data[1, 0, :] = data_dict['ny_125']
+data[2, 0, :] = data_dict['ny_250']
+data[3, 0, :] = data_dict['ny_500']
+
+# Estimates of experimental error
+# Initialize the array
+data_sigma = np.zeros((len(bax_concs), 1))
+for data_ix in range(data.shape[0]):
+    y = data[data_ix, 0, :]
+    (residuals, fig) = calc_err_var(y, last_n_pts=80, fit_type='quadratic',
+                                    plot=False)
+    data_sigma[data_ix, 0] = np.std(residuals, ddof=1)
+
 def plot_data():
     plt.figure()
     plt.plot(data_dict['nt_500'], data_dict['ny_500'], label='Bplt 500 nM')
@@ -64,4 +84,3 @@ def plot_data():
 
 if __name__ == '__main__':
     plt.ion()
-    plot_data()
