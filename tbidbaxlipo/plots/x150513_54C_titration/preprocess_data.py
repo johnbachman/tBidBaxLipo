@@ -74,10 +74,10 @@ for data_ix in range(data.shape[0]):
 
 def plot_data():
     plt.figure()
-    plt.plot(data_dict['nt_500'], data_dict['ny_500'], label='Bplt 500 nM')
-    plt.plot(data_dict['nt_250'], data_dict['ny_250'], label='Bplt 250 nM')
-    plt.plot(data_dict['nt_125'], data_dict['ny_125'], label='Bplt 125 nM')
-    plt.plot(data_dict['nt_62'], data_dict['ny_62'], label='Bplt 62.5 nM')
+    plt.plot(data_dict['nt_500'], data_dict['ny_500'], label='Bax 500 nM')
+    plt.plot(data_dict['nt_250'], data_dict['ny_250'], label='Bax 250 nM')
+    plt.plot(data_dict['nt_125'], data_dict['ny_125'], label='Bax 125 nM')
+    plt.plot(data_dict['nt_62'], data_dict['ny_62'], label='Bax 62.5 nM')
     plt.legend(loc='upper right')
     plt.xlabel('Time (sec)')
     plt.ylabel('NBD F/F0')
