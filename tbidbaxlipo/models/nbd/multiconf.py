@@ -259,6 +259,7 @@ class Builder(core.Builder):
         # Assign the function to the instance
         self.obs_func = nbd_func
 
+<<<<<<< HEAD
     def set_nbd_fret_obs_func(self):
         """Assigns a function to self.formula that, when called after setting
         the parameter values of self.model, returns the timecourse for the
@@ -328,4 +329,62 @@ class Builder(core.Builder):
             nbd_fret_func = None
         # Assign the function to the instance
         self.obs_func = nbd_fret_func
+
+    def build_model_3confs_c2_dimer(self, c0_scaling, nbd_lbound=None,
+                                   nbd_ubound=None, normalized_data=False,
+                                   reversible=False):
+        self.num_confs = 3
+        # Initialize monomer and initial condition
+        Bax = self.monomer('Bax', ['conf'],
+                           {'conf': ['c0', 'c1', 'c2']})
+        Bax_0 = self.parameter('Bax_0', 1, prior=None)
+        self.initial(Bax(conf='c0'), Bax_0)
+
+        # Scaling for initial conformation
+        scaling = self.parameter('c0_scaling', c0_scaling, prior=None)
+
+        # Set the bounds for the scaling parameters
+        if normalized_data:
+            scaling_prior = UniformLinear(-1, 1)
+        else:
+            if nbd_lbound is None or nbd_ubound is None:
+                raise ValueError("If NBD data is not normalized, upper and "
+                                 "lower bounds for the scaling parameters "
+                                 "must be explicitly specified.")
+            scaling_prior = UniformLinear(np.log10(nbd_lbound),
+                                          np.log10(nbd_ubound))
+
+        # Rules for transitions between other conformations
+        c1_rate = self.parameter('c0_to_c1_k', 1e-3, prior=Uniform(-6, -1))
+        c2_rate = self.parameter('c1_to_c2_k', 1e-5, prior=Uniform(-6, -1))
+        c1_scaling = self.parameter('c1_scaling', 1, prior=scaling_prior)
+        c2_scaling = self.parameter('c2_scaling', 1, prior=scaling_prior)
+        self.rule('c0_to_c1',
+                  Bax(conf='c0') >> Bax(conf='c1'), c1_rate)
+        # DIMERIZATION RULE!!! --------
+        self.rule('c1_to_c2',
+                  Bax(conf='c1') + Bax(conf='c1') >>
+                  Bax(conf='c2') + Bax(conf='c2'), c1_rate)
+        # -----------------------------
+        if reversible:
+            c1_rev_rate = self.parameter('c1_to_c0_k', 1e-3,
+                                         prior=Uniform(-6, -1))
+            c2_rev_rate = self.parameter('c2_to_c1_k', 5e-4,
+                                         prior=Uniform(-6, -1))
+            self.rule('c1_to_c0',
+                      Bax(conf='c1') >> Bax(conf='c0'), c1_rev_rate)
+            self.rule('c2_to_c1',
+                      Bax(conf='c2') >> Bax(conf='c1'), c2_rev_rate)
+
+        c0_obs = self.observable('Bax_c0', Bax(conf='c0'))
+        c1_obs = self.observable('Bax_c1', Bax(conf='c1'))
+        c2_obs = self.observable('Bax_c2', Bax(conf='c2'))
+
+        # The expression mapping to our experimental observable
+        self.expression('NBD', ((c0_obs * c0_scaling) +
+                                (c1_obs * c1_scaling) +
+                                (c2_obs * c2_scaling)) / Bax_0)
+
+        # Set the model name
+        self.model.name = "3confsc2dimer"
 
