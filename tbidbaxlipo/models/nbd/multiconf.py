@@ -71,7 +71,7 @@ class Builder(core.Builder):
             sympy_expr += (scaling * obs)
 
         # The expression mapping to our experimental observable
-        self.expression('NBD', sympy_expr)
+        self.expression('NBD', sympy_expr / self['Bax_0'])
 
         # Set the model name
         self.model.name = "%dconfs" % num_confs
