@@ -4,6 +4,7 @@ DATADIR := $(CODEDIR)/data
 NBD_MCMC_DIR := $(PLOTSDIR)/bid_bim_nbd_release/mcmc
 NBD_FRET_MCMC_DIR := $(PLOTSDIR)/bid_bim_fret_nbd_release/mcmc
 NBD_FRET_DUAL_MCMC_DIR := $(PLOTSDIR)/bid_bim_fret_nbd_release/fret_mcmc
+x150513_MCMC_DIR := $(PLOTSDIR)/x150513_54C_titration/mcmc
 NBD_DATA := $(DATADIR)/Compiled\ Release\ percentages\ and\ NBD\ F-F0.xlsx \
             $(DATADIR)/parse_bid_bim_nbd_release.py
 NBD_FRET_DATA := $(DATADIR)/2015-02-27\ -\ Bid-Bim\ FRET\ with\ Bax\ NBD\ mutants\ in\ Tb-DPA\ Liposomes\ compiled\ reps+WT\ Bax.xlsx \
@@ -108,6 +109,12 @@ pt_data2_fret_deps: $(NBD_FRET_DUAL_MCMC_DIR)/pt_data2_fret.deps.txt
 $(NBD_FRET_DUAL_MCMC_DIR)/pt_data2_fret.deps.txt: \
     $(NBD_FRET_DUAL_MCMC_DIR)/generate_fit_files_for_nbd_curves.py
 	python $(NBD_FRET_DUAL_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_FRET_DUAL_MCMC_DIR)
+
+# -- MCMC Fitting for C54 titration data --
+pt_150513: pt_150513_deps
+
+pt_150513_deps: $(x150513_MCMC_DIR)/pt_150513.deps.txt
+-include $(x150513_MCMC_DIR)/pt_150513.deps.txt
 
 # -- Dataset 1, NBD + Tb release, summary plots ------------------------
 nbd_release: nbd_release_endpts nbd_release_initial_rates nbd_example_curves \
