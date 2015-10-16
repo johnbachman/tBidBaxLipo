@@ -72,6 +72,10 @@ for data_ix in range(data.shape[0]):
                                     plot=False)
     data_sigma[data_ix, 0] = np.std(residuals, ddof=1)
 
+nbd_lbound = 0.01
+nbd_ubound = 10
+nbd_f0 = 1.
+
 def plot_data():
     plt.figure()
     plt.plot(data_dict['nt_500'], data_dict['ny_500'], label='Bax 500 nM')
