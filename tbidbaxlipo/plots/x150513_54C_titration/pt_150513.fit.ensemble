@@ -1,0 +1,29 @@
+data:
+    module: tbidbaxlipo.plots.x150513_54C_titration.preprocess_data
+    data_var: data
+    data_sigma_var: data_sigma
+    initial_condition_var: bax_concs
+    time_var: time
+    nbd_lbound: nbd_lbound
+    nbd_ubound: nbd_ubound
+    nbd_f0: nbd_f0
+model:
+    multiconf: [[3, 'rev']]
+    normalized_nbd_data: [True]
+model_observable: [NBD]
+global_initial_conditions: {}
+local_initial_condition: Bax_0
+global_params:
+    - c1_scaling
+    - c2_scaling
+local_params:
+    - c1_to_c0_k
+    - c1_to_c2_k
+    - c2_scaling
+    - c2_to_c1_k
+ntemps: 10
+highest_temp: -3
+nwalkers: 500
+nburnin: 100
+nsample: 30
+thin: 1
