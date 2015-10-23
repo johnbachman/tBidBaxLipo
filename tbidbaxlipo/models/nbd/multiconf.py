@@ -1,6 +1,6 @@
 import numpy as np
 from tbidbaxlipo.models import core
-from tbidbaxlipo.priors import Uniform, UniformLinear
+from tbidbaxlipo.priors import Uniform, UniformLinear, Normal
 
 class Builder(core.Builder):
 
@@ -44,12 +44,15 @@ class Builder(core.Builder):
         if normalized_data:
             scaling_prior = UniformLinear(-1, 1)
         else:
+            """
             if nbd_lbound is None or nbd_ubound is None:
                 raise ValueError("If NBD data is not normalized, upper and "
                                  "lower bounds for the scaling parameters "
                                  "must be explicitly specified.")
             scaling_prior = UniformLinear(np.log10(nbd_lbound),
                                           np.log10(nbd_ubound))
+            """
+            scaling_prior = Normal(np.log10(c0_scaling), 0.5)
 
         # Rules for transitions between other conformations
         for i in range(num_confs-1):
