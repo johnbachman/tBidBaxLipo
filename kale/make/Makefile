@@ -111,10 +111,7 @@ $(NBD_FRET_DUAL_MCMC_DIR)/pt_data2_fret.deps.txt: \
 	python $(NBD_FRET_DUAL_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_FRET_DUAL_MCMC_DIR)
 
 # -- MCMC Fitting for C54 titration data --
-pt_150513: pt_150513_deps
-
-pt_150513_deps: $(x150513_MCMC_DIR)/pt_150513.deps.txt
--include $(x150513_MCMC_DIR)/pt_150513.deps.txt
+pt_150513: $(x150513_MCMC_DIR)/pt_150513_3confs.mcmc $(x150513_MCMC_DIR)/pt_150513_3confsrev.mcmc
 
 # -- Dataset 1, NBD + Tb release, summary plots ------------------------
 nbd_release: nbd_release_endpts nbd_release_initial_rates nbd_example_curves \
