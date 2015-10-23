@@ -262,9 +262,9 @@ if __name__ == '__main__':
 
     # Show plots
     #plt.ion()
-    print("Plotting corner plots")
     output_base = os.path.join(output_dir, os.path.basename(chain_filename))
-    corner_plots(gf, sampler, plot_filename=output_base + '.tri')
+    #print("Plotting corner plots")
+    #corner_plots(gf, sampler, plot_filename=output_base + '.tri')
     print("Plotting convergence")
     plot_chain_convergence(sampler, output_base + '.conv')
     print("Plotting sample fits")
