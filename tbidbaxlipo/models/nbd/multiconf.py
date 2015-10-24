@@ -14,6 +14,7 @@ class Builder(core.Builder):
             raise ValueError('There must be a minimum of two conformations.')
 
         self.num_confs = num_confs
+        self.reversible = reversible
 
         # Initialize monomer and initial condition
         Bax = self.monomer('Bax', ['conf'],
@@ -61,3 +62,25 @@ class Builder(core.Builder):
 
         # Set the model name
         self.model.name = "%dconfs" % num_confs
+
+        # Set the model nbd func
+        if self.num_confs == 2 or (self.num_confs == 3 and reversible == False):
+            self.set_nbd_func()
+
+
+    def set_nbd_func(self):
+        """Assigns a function to self.formula that, when called after setting
+        the parameter values of self.model, returns the timecourse for the
+        given parameters."""
+        def nbd_func(t):
+            Bax_0 = self['Bax_0'].value
+            c0 = Bax_0 * np.exp(-self['c0_to_c1_k'].value * t)
+            nbd = (self['c0_scaling'].value * c0 +
+                   self['c1_scaling'].value * (Bax_0 - c0))
+            return nbd
+        self.nbd_func = nbd_func
+
+
+
+
+
