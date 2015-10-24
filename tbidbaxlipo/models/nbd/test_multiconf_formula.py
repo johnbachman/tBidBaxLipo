@@ -25,6 +25,10 @@ def test_2conf_rev_formula():
     sol.run()
     nbd_sol = sol.yexpr['NBD']
     nbd_func = bd.nbd_func(t)
+    plt.ion()
+    plt.figure()
+    plt.plot(t, nbd_sol)
+    plt.plot(t, nbd_func)
     ok_(np.allclose(nbd_sol, nbd_func),
         'Integrated NBD does not match closed form for 2conf reversible model')
 
@@ -41,10 +45,6 @@ def test_3conf_irrev_formula():
     sol.run()
     nbd_sol = sol.yexpr['NBD']
     nbd_func = bd.nbd_func(t)
-    plt.ion()
-    plt.figure()
-    plt.plot(t, nbd_sol)
-    plt.plot(t, nbd_func)
     ok_(np.allclose(nbd_sol, nbd_func),
         'Integrated NBD does not match closed form NBD for 3conf model')
 

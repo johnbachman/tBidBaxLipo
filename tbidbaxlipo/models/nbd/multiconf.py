@@ -79,6 +79,17 @@ class Builder(core.Builder):
                 nbd = (self['c0_scaling'].value * c0 +
                        self['c1_scaling'].value * (Bax_0 - c0))
                 return nbd
+        elif self.num_confs == 2 and self.reversible == True:
+            def nbd_func(t):
+                kf = self['c0_to_c1_k'].value
+                kr = self['c1_to_c0_k'].value
+                Bax_0 = self['Bax_0'].value
+                c0eq = (kr * Bax_0) / float(kf + kr)
+                c1eq = (kf * Bax_0) / float(kf + kr)
+                c0 = c1eq * np.exp(-(kf+kr)*t) + c0eq
+                nbd = (self['c0_scaling'].value * c0 +
+                       self['c1_scaling'].value * (Bax_0 - c0))
+                return nbd
         elif self.num_confs == 3 and self.reversible == False:
             # First, the case where k1 and k2 are not equal
             def nbd_func(t):
