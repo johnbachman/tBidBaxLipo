@@ -72,12 +72,26 @@ class Builder(core.Builder):
         """Assigns a function to self.formula that, when called after setting
         the parameter values of self.model, returns the timecourse for the
         given parameters."""
-        def nbd_func(t):
-            Bax_0 = self['Bax_0'].value
-            c0 = Bax_0 * np.exp(-self['c0_to_c1_k'].value * t)
-            nbd = (self['c0_scaling'].value * c0 +
-                   self['c1_scaling'].value * (Bax_0 - c0))
-            return nbd
+        if self.num_confs == 2 and self.reversible == False:
+            def nbd_func(t):
+                Bax_0 = self['Bax_0'].value
+                c0 = Bax_0 * np.exp(-self['c0_to_c1_k'].value * t)
+                nbd = (self['c0_scaling'].value * c0 +
+                       self['c1_scaling'].value * (Bax_0 - c0))
+                return nbd
+        elif self.num_confs == 3 and self.reversible == False:
+            # First, the case where k1 and k2 are not equal
+            def nbd_func(t):
+                Bax_0 = self['Bax_0'].value
+                k1 = self['c0_to_c1_k'].value
+                k2 = self['c1_to_c2_k'].value
+                c0 = Bax_0 * np.exp(-k1 * t)
+                c1 = (((np.exp(-k1*t) - np.exp(-k2*t)) * k1 * Bax_0) /
+                      (k2 - k1))
+                nbd = (self['c0_scaling'].value * c0 +
+                       self['c1_scaling'].value * c1 +
+                       self['c2_scaling'].value * (Bax_0 - c0 - c1))
+                return nbd
         self.nbd_func = nbd_func
 
 
