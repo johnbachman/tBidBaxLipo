@@ -2,7 +2,7 @@ from tbidbaxlipo.models.nbd.multiconf import Builder
 from pysb.integrate import Solver
 from matplotlib import pyplot as plt
 import numpy as np
-from nose.tools import ok_
+from nose.tools import ok_, raises
 
 def test_2conf_irrev_formula():
     params_dict = {'c1_scaling': 5}
@@ -77,10 +77,21 @@ def test_4conf_irrev_formula_k1_k2_k3_different():
     nbd_func = bd.obs_func(t)
     ok_(np.allclose(nbd_sol, nbd_func),
         'Integrated NBD does not match closed form NBD for 4conf model')
-    plt.ion()
-    plt.figure()
-    plt.plot(nbd_sol)
-    plt.plot(nbd_func)
+
+@raises(ValueError)
+def test_4conf_irrev_formula_k1_k2_same():
+    params_dict = {'c1_scaling': 8,
+                   'c2_scaling': 2,
+                   'c3_scaling': 4,
+                   'c0_to_c1_k': 0.05,
+                   'c1_to_c2_k': 0.05,
+                   'c2_to_c3_k': 0.001
+            }
+    bd = Builder(params_dict=params_dict)
+    bd.build_model_multiconf(4, 1., reversible=False, normalized_data=True)
+    t = np.linspace(0, 4000, 100)
+    bd.obs_func(t)
 
 if __name__ == '__main__':
-    test_4conf_irrev_formula_k1_k2_k3_different()
+    test_4conf_irrev_formula_k1_k2_same()
+    pass
