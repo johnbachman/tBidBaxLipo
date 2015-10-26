@@ -7,6 +7,19 @@ class Builder(core.Builder):
     def __init__(self, params_dict=None):
         core.Builder.__init__(self, params_dict=params_dict)
 
+    def __getstate__(self):
+        # Clear nbd_func since it causes problems with pickling
+        state = self.__dict__.copy()
+        if 'obs_func' in state:
+            del state['obs_func']
+        return state
+
+    def __setstate__(self, state):
+        # Re-init the obs_func which we didn't pickle
+        self.__dict__.update(state)
+        self.set_obs_func()
+
+
     def build_model_multiconf(self, num_confs, c0_scaling, nbd_lbound=None,
                               nbd_ubound=None, normalized_data=False,
                               reversible=False):
@@ -14,6 +27,7 @@ class Builder(core.Builder):
             raise ValueError('There must be a minimum of two conformations.')
 
         self.num_confs = num_confs
+        self.reversible = reversible
 
         # Initialize monomer and initial condition
         Bax = self.monomer('Bax', ['conf'],
@@ -61,3 +75,125 @@ class Builder(core.Builder):
 
         # Set the model name
         self.model.name = "%dconfs" % num_confs
+
+        # Set the model obs func
+        self.set_obs_func()
+
+
+    def set_obs_func(self):
+        """Assigns a function to self.formula that, when called after setting
+        the parameter values of self.model, returns the timecourse for the
+        given parameters."""
+        if self.num_confs == 2 and self.reversible == False:
+            def nbd_func(t):
+                Bax_0 = self['Bax_0'].value
+                c0 = Bax_0 * np.exp(-self['c0_to_c1_k'].value * t)
+                nbd = (self['c0_scaling'].value * c0 +
+                       self['c1_scaling'].value * (Bax_0 - c0))
+                return nbd
+        elif self.num_confs == 2 and self.reversible == True:
+            def nbd_func(t):
+                kf = self['c0_to_c1_k'].value
+                kr = self['c1_to_c0_k'].value
+                Bax_0 = self['Bax_0'].value
+                c0eq = (kr * Bax_0) / float(kf + kr)
+                c1eq = (kf * Bax_0) / float(kf + kr)
+                c0 = c1eq * np.exp(-(kf+kr)*t) + c0eq
+                nbd = (self['c0_scaling'].value * c0 +
+                       self['c1_scaling'].value * (Bax_0 - c0))
+                return nbd
+        elif self.num_confs == 3 and self.reversible == False:
+            def nbd_func(t):
+                k1 = self['c0_to_c1_k'].value
+                k2 = self['c1_to_c2_k'].value
+                Bax_0 = self['Bax_0'].value
+                # First, the case where k1 and k2 are equal (need to treat
+                # separately to avoid divide by 0 errors)
+                if k1 == k2:
+                    print "nbd_func, equal"
+                    c0 = Bax_0 * np.exp(-k1 * t)
+                    c1 = Bax_0 * t * k1 * np.exp(-k1 * t)
+                    nbd = (self['c0_scaling'].value * c0 +
+                           self['c1_scaling'].value * c1 +
+                           self['c2_scaling'].value * (Bax_0 - c0 - c1))
+                    return nbd
+                # The typical case, where k1 and k2 are not equal
+                else:
+                    c0 = Bax_0 * np.exp(-k1 * t)
+                    c1 = (((np.exp(-k1*t) - np.exp(-k2*t)) * k1 * Bax_0) /
+                          (k2 - k1))
+                    nbd = (self['c0_scaling'].value * c0 +
+                           self['c1_scaling'].value * c1 +
+                           self['c2_scaling'].value * (Bax_0 - c0 - c1))
+                    return nbd
+        elif self.num_confs == 4 and self.reversible == False:
+            # Here we don't specifically handle the case where the parameters are
+            # equal since it's so unlikely to come up in parameter estimation,
+            # which is the immediate concern
+            def nbd_func(t):
+                k1 = self['c0_to_c1_k'].value
+                k2 = self['c1_to_c2_k'].value
+                k3 = self['c2_to_c3_k'].value
+                if k1 == k2 or k2 == k3 or k1 == k3:
+                    raise ValueError('Function for equal values of k1, k2, or '
+                                     'k3 is not currently implemented.')
+                Bax_0 = self['Bax_0'].value
+                c0 = np.exp(-k1*t)*Bax_0
+                c1 = (((np.exp(-k1*t) - np.exp(-k2*t)) * k1 * Bax_0) /
+                      (k2 - k1))
+                c2 = ((np.exp(-(k1 + k2 + k3) * t) * k1 * k2 *
+                       (np.exp((k1+k2)*t) * (k1 - k2) +
+                        np.exp((k2+k3)*t) * (k2 - k3) +
+                        np.exp((k1+k3)*t) * (k3 - k1)) * Bax_0) /
+                        ((k1 - k2) * (k1 - k3) * (k2 - k3)))
+                c3 = Bax_0 - c0 - c1 - c2
+                nbd = (self['c0_scaling'].value * c0 +
+                       self['c1_scaling'].value * c1 +
+                       self['c2_scaling'].value * c2 +
+                       self['c3_scaling'].value * c3)
+                return nbd
+        elif self.num_confs == 5 and self.reversible == False:
+            # Here we don't specifically handle the case where the parameters are
+            # equal since it's so unlikely to come up in parameter estimation,
+            # which is the immediate concern
+            def nbd_func(t):
+                k1 = self['c0_to_c1_k'].value
+                k2 = self['c1_to_c2_k'].value
+                k3 = self['c2_to_c3_k'].value
+                k4 = self['c3_to_c4_k'].value
+                if k1 == k2 or k1 == k3 or k2 == k3 or k1 == k4 or k2 == k4 or \
+                   k3 == k4:
+                    raise ValueError('Function for equal values of k1, k2, k3, '
+                                     'or k4 is not currently implemented.')
+                Bax_0 = self['Bax_0'].value
+                c0 = np.exp(-k1*t)*Bax_0
+                c1 = (((np.exp(-k1*t) - np.exp(-k2*t)) * k1 * Bax_0) /
+                      (k2 - k1))
+                c2 = ((np.exp(-(k1 + k2 + k3) * t) * k1 * k2 *
+                       (np.exp((k1+k2)*t) * (k1 - k2) +
+                        np.exp((k2+k3)*t) * (k2 - k3) +
+                        np.exp((k1+k3)*t) * (k3 - k1)) * Bax_0) /
+                        ((k1 - k2) * (k1 - k3) * (k2 - k3)))
+                c3 = ((np.exp(-(k1+k2+k3+k4)*t) * k1 * k2 * k3 *
+                       (np.exp((k1+k2+k3)*t)*(k1-k2)*(k1-k3)*(k2-k3) -
+                        np.exp((k1+k2+k4)*t)*(k1-k2)*(k1-k4)*(k2-k4) +
+                        np.exp((k1+k3+k4)*t)*(k1-k3)*(k1-k4)*(k3-k4) -
+                        np.exp((k2+k3+k4)*t)*(k2-k3)*(k2-k4)*(k3-k4)) * Bax_0) /
+                       ((k1-k2)*(k1-k3)*(k2-k3)*(k1-k4)*(k2-k4)*(k3-k4)))
+                c4 = Bax_0 - c0 - c1 - c2 - c3
+                nbd = (self['c0_scaling'].value * c0 +
+                       self['c1_scaling'].value * c1 +
+                       self['c2_scaling'].value * c2 +
+                       self['c3_scaling'].value * c3 +
+                       self['c4_scaling'].value * c4)
+                return nbd
+        # If we don't fit one of these categories, set to None
+        else:
+            nbd_func = None
+        # Assign the function to the instance
+        self.obs_func = nbd_func
+
+
+
+
+
