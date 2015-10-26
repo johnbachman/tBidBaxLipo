@@ -60,5 +60,27 @@ def test_3conf_irrev_formula_k1_k2_same():
     ok_(np.allclose(nbd_sol, nbd_func),
         'Integrated NBD does not match closed form NBD for 3conf model')
 
+def test_4conf_irrev_formula_k1_k2_k3_different():
+    params_dict = {'c1_scaling': 8,
+                   'c2_scaling': 2,
+                   'c3_scaling': 4,
+                   'c0_to_c1_k': 0.05,
+                   'c1_to_c2_k': 0.005,
+                   'c2_to_c3_k': 0.001
+            }
+    bd = Builder(params_dict=params_dict)
+    bd.build_model_multiconf(4, 1., reversible=False, normalized_data=True)
+    t = np.linspace(0, 4000, 100)
+    sol = Solver(bd.model, t)
+    sol.run()
+    nbd_sol = sol.yexpr['NBD']
+    nbd_func = bd.obs_func(t)
+    ok_(np.allclose(nbd_sol, nbd_func),
+        'Integrated NBD does not match closed form NBD for 4conf model')
+    plt.ion()
+    plt.figure()
+    plt.plot(nbd_sol)
+    plt.plot(nbd_func)
+
 if __name__ == '__main__':
-    pass
+    test_4conf_irrev_formula_k1_k2_k3_different()
