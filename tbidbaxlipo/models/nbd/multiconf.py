@@ -52,7 +52,7 @@ class Builder(core.Builder):
             scaling_prior = UniformLinear(np.log10(nbd_lbound),
                                           np.log10(nbd_ubound))
             """
-            scaling_prior = Normal(np.log10(c0_scaling), 0.5)
+            scaling_prior = Normal(np.log10(c0_scaling), 0.15)
 
         # Rules for transitions between other conformations
         for i in range(num_confs-1):
