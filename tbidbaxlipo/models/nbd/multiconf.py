@@ -76,12 +76,12 @@ class Builder(core.Builder):
         # Set the model name
         self.model.name = "%dconfs" % num_confs
 
-        # Set the model nbd func
+        # Set the model obs func
         if self.num_confs == 2 or (self.num_confs == 3 and reversible == False):
-            self.set_nbd_func()
+            self.set_obs_func()
 
 
-    def set_nbd_func(self):
+    def set_obs_func(self):
         """Assigns a function to self.formula that, when called after setting
         the parameter values of self.model, returns the timecourse for the
         given parameters."""
@@ -104,23 +104,22 @@ class Builder(core.Builder):
                        self['c1_scaling'].value * (Bax_0 - c0))
                 return nbd
         elif self.num_confs == 3 and self.reversible == False:
-            k1 = self['c0_to_c1_k'].value
-            k2 = self['c1_to_c2_k'].value
-            Bax_0 = self['Bax_0'].value
-            # First, the case where k1 and k2 are equal (need to treat
-            # separately to avoid divide by 0 errors)
-            if k1 == k2:
-                def nbd_func(t):
+            def nbd_func(t):
+                k1 = self['c0_to_c1_k'].value
+                k2 = self['c1_to_c2_k'].value
+                Bax_0 = self['Bax_0'].value
+                # First, the case where k1 and k2 are equal (need to treat
+                # separately to avoid divide by 0 errors)
+                if k1 == k2:
+                    print "nbd_func, equal"
                     c0 = Bax_0 * np.exp(-k1 * t)
                     c1 = Bax_0 * t * k1 * np.exp(-k1 * t)
                     nbd = (self['c0_scaling'].value * c0 +
                            self['c1_scaling'].value * c1 +
                            self['c2_scaling'].value * (Bax_0 - c0 - c1))
                     return nbd
-            # The typical case, where k1 and k2 are not equal
-            else:
-                def nbd_func(t):
-                    Bax_0 = self['Bax_0'].value
+                # The typical case, where k1 and k2 are not equal
+                else:
                     c0 = Bax_0 * np.exp(-k1 * t)
                     c1 = (((np.exp(-k1*t) - np.exp(-k2*t)) * k1 * Bax_0) /
                           (k2 - k1))
@@ -128,7 +127,7 @@ class Builder(core.Builder):
                            self['c1_scaling'].value * c1 +
                            self['c2_scaling'].value * (Bax_0 - c0 - c1))
                     return nbd
-        self.nbd_func = nbd_func
+        self.obs_func = nbd_func
 
 
 
