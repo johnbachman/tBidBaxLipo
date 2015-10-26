@@ -38,6 +38,13 @@ def likelihood(position, gf):
     # A generic objective function
     # The cumulative error over all timecourses
     err = 0
+    obs_func = getattr(gf.builder, 'obs_func', None)
+    # If the builder has an explicit function for the observable,
+    # then we'll use it, but only if there is only one observable
+    # in the data
+    if callable(obs_func) and gf.data.shape[1] != 1:
+        raise ValueError('A builder with obs_func can only be used for data '
+                         'with one observable.')
 
     # Iterate over each condition (1st dimension of the data matrix)
     for cond_ix in range(gf.data.shape[0]):
@@ -61,15 +68,24 @@ def likelihood(position, gf):
                 p.value = values[cond_ix]
         # Reset the timespan by adding one additional pt at the beginning
         if timeoffset:
-            gf.solver.tspan = np.insert(gf.time, 0, -timeoffset)
+            tspan = np.insert(gf.time, 0, -timeoffset)
+        else:
+            tspan = gf.time
         # Now run the simulation
-        gf.solver.run()
+        if callable(obs_func):
+            ysim = obs_func(tspan)
+        else:
+            gf.solver.tspan = tspan
+            gf.solver.run()
+
         # Calculate the squared error over all the observables
         for obs_ix, obs_name in enumerate(gf.obs_name):
-            if gf.use_expr:
-                ysim = gf.solver.yexpr[obs_name]
-            else:
-                ysim = gf.solver.yobs[obs_name]
+            # If we're using the solver
+            if not callable(obs_func):
+                if gf.use_expr:
+                    ysim = gf.solver.yexpr[obs_name]
+                else:
+                    ysim = gf.solver.yobs[obs_name]
             # If we're using a time offset, skip the first point (the offset)
             # for the purposes of comparing to data
             if timeoffset:
