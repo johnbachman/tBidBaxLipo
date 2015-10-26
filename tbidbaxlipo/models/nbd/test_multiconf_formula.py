@@ -12,7 +12,7 @@ def test_2conf_irrev_formula():
     sol = Solver(bd.model, t)
     sol.run()
     nbd_sol = sol.yexpr['NBD']
-    nbd_func = bd.nbd_func(t)
+    nbd_func = bd.obs_func(t)
     ok_(np.allclose(nbd_sol, nbd_func),
         'Integrated NBD does not match closed form NBD for 2conf model')
 
@@ -24,7 +24,7 @@ def test_2conf_rev_formula():
     sol = Solver(bd.model, t)
     sol.run()
     nbd_sol = sol.yexpr['NBD']
-    nbd_func = bd.nbd_func(t)
+    nbd_func = bd.obs_func(t)
     ok_(np.allclose(nbd_sol, nbd_func),
         'Integrated NBD does not match closed form for 2conf reversible model')
 
@@ -40,7 +40,7 @@ def test_3conf_irrev_formula_k1_k2_different():
     sol = Solver(bd.model, t)
     sol.run()
     nbd_sol = sol.yexpr['NBD']
-    nbd_func = bd.nbd_func(t)
+    nbd_func = bd.obs_func(t)
     ok_(np.allclose(nbd_sol, nbd_func),
         'Integrated NBD does not match closed form NBD for 3conf model')
 
@@ -56,10 +56,9 @@ def test_3conf_irrev_formula_k1_k2_same():
     sol = Solver(bd.model, t)
     sol.run()
     nbd_sol = sol.yexpr['NBD']
-    nbd_func = bd.nbd_func(t)
+    nbd_func = bd.obs_func(t)
     ok_(np.allclose(nbd_sol, nbd_func),
         'Integrated NBD does not match closed form NBD for 3conf model')
 
 if __name__ == '__main__':
-    test_3conf_irrev_formula_k1_k2_same()
-
+    pass
