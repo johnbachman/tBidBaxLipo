@@ -7,6 +7,19 @@ class Builder(core.Builder):
     def __init__(self, params_dict=None):
         core.Builder.__init__(self, params_dict=params_dict)
 
+    def __getstate__(self):
+        # Clear nbd_func since it causes problems with pickling
+        state = self.__dict__.copy()
+        if 'obs_func' in state:
+            del state['obs_func']
+        return state
+
+    def __setstate__(self, state):
+        # Re-init the obs_func which we didn't pickle
+        self.__dict__.update(state)
+        self.set_obs_func()
+
+
     def build_model_multiconf(self, num_confs, c0_scaling, nbd_lbound=None,
                               nbd_ubound=None, normalized_data=False,
                               reversible=False):
