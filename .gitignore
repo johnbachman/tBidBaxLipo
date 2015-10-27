@@ -5,6 +5,7 @@ tbidbaxlipo/plots/bax_bax_fret_nbd_release/mcmc/*.ensemble
 tbidbaxlipo/plots/bax_bax_fret_nbd_release/fret_mcmc/*.ensemble
 
 tbidbaxlipo/plots/bid_bim_nbd_release/mcmc/*.ensemble
+tbidbaxlipo/plots/bid_bim_nbd_release/mcmc_norm_prior/*.ensemble
 tbidbaxlipo/plots/bid_bim_fret_nbd_release/mcmc/*.ensemble
 tbidbaxlipo/plots/bid_bim_fret_nbd_release/fret_mcmc/*.ensemble
 tbidbaxlipo/plots/bid_bim_fret_nbd_release/fret_only_mcmc/*.ensemble
