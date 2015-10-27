@@ -87,7 +87,29 @@ def assemble_density_matrix(p_name, filelist):
         print("Saving %s" % density_mx_filename)
         np.savetxt(density_mx_filename, density_mx)
 
-def combine_matrices(k1_mx_filename, k2_mx_filename, rgb_inverted=True):
+def stack_matrices(k1_mx_filename, k2_mx_filename):
+    # Load the two matrices
+    k1_mx = np.loadtxt(k1_mx_filename)
+    k2_mx = np.loadtxt(k2_mx_filename)
+    assert k1_mx.shape == k2_mx.shape, \
+           "k1/k2 matrices must have same size"
+
+    # Create the combined RGB matrix
+    rgb_shape = (k1_mx.shape[1]*2, k1_mx.shape[0], 3)
+    #rgb_shape = (k1_mx.shape[1]*2, k1_mx.shape[0])
+    #rgb_mx = np.zeros(rgb_shape)
+    rgb_mx = np.ones(rgb_shape)
+    for row_ix in range(k1_mx.shape[1]):
+        rgb_mx[2*row_ix, :, 1] -= k1_mx[:, row_ix]
+        rgb_mx[2*row_ix, :, 2] -= k1_mx[:, row_ix]
+        rgb_mx[(2*row_ix)+1, :, 0] -= k2_mx[:, row_ix]
+        rgb_mx[(2*row_ix)+1, :, 2] -= k2_mx[:, row_ix]
+        #rgb_mx[2*row_ix, :] = k1_mx[:, row_ix]
+        #rgb_mx[(2*row_ix)+1, :] = k2_mx[:, row_ix]
+
+    return rgb_mx
+
+def merge_matrices(k1_mx_filename, k2_mx_filename, rgb_inverted=True):
     # Load the two matrices
     k1_mx = np.loadtxt(k1_mx_filename)
     k2_mx = np.loadtxt(k2_mx_filename)
@@ -130,16 +152,18 @@ def plot_matrix(plot_type, density_mx, residues, output_file_base):
     ax = fig.gca()
     ncols = density_mx.shape[0]
     num_reps = 3
-    assert ncols == (len(residues) * num_reps) + len(residues) - 1, \
-           "Dimensions of density_mx must match numbers of reps/residues"
+    #assert ncols == (len(residues) * num_reps) + len(residues) - 1, \
+    #       "Dimensions of density_mx must match numbers of reps/residues"
     ax.imshow(density_mx[:,lbound_ix:,:], interpolation='none',
               extent=(lbound, ubound, ncols, 0), aspect='auto')
+    #ax.matshow(density_mx[:,lbound_ix:], interpolation='none',
+    #          extent=(lbound, ubound, ncols, 0), aspect='auto')
     # Plot line representing max observed value
     if plot_type == 'c1c2':
         plt.vlines(np.log10(max_nbd_value), ncols, 0, color='gray')
     # Lines separating the different mutants
-    lines = np.arange(num_reps, ncols, num_reps + 1) + 0.5
-    plt.hlines(lines, lbound, ubound)
+    lines = np.arange((2*num_reps), ncols, (2*num_reps) + 1) + 0.5
+    #plt.hlines(lines, lbound, ubound)
     """
     # Plot lines representing starting values
     # FIXME FIXME FIXME
@@ -158,10 +182,11 @@ def plot_matrix(plot_type, density_mx, residues, output_file_base):
         row_ix += 1
     """
     # Ticks for the different mutants
-    ytick_positions = np.arange(1, ncols, 4) + 0.5
-    ax.set_yticks(ytick_positions)
-    assert len(residues) == len(ytick_positions)
-    ax.set_yticklabels(residues)
+    #spacing = 7
+    #ytick_positions = np.arange(3, ncols, spacing) + 0.5
+    #ax.set_yticks(ytick_positions)
+    #assert len(residues) == len(ytick_positions)
+    #ax.set_yticklabels(residues)
     # Ticks for the units on the x-axis
     xtick_positions = np.arange(lbound, ubound + 0.1, 0.5)
     ax.set_xticks(xtick_positions)
@@ -170,7 +195,8 @@ def plot_matrix(plot_type, density_mx, residues, output_file_base):
     format_axis(ax)
     fig.subplots_adjust(left=0.17, bottom=0.11, top=0.94)
     fig.savefig('%s.pdf' % output_file_base)
-    fig.savefig('%s.png' % output_file_base)
+    #fig.savefig('%s.png' % output_file_base)
+    import ipdb; ipdb.set_trace()
 
 if __name__ == '__main__':
 
@@ -197,8 +223,9 @@ if __name__ == '__main__':
             print(usage)
             sys.exit(1)
         # Load and combine the matrices
-        density_mx = combine_matrices(density_file1, density_file2,
-                                      rgb_inverted=True)
+        #density_mx = merge_matrices(density_file1, density_file2,
+        #                              rgb_inverted=True)
+        density_mx = stack_matrices(density_file1, density_file2)
         # Get the residues that we're plotting for
         residues = [res for res in nbd_residues if res != 'WT']
         # Plot
