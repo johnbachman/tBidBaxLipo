@@ -28,9 +28,9 @@ output_filename_pattern = output_target_pattern + '.fit.ensemble'
 dependencies_list = []
 
 # Iterate over the activators
-for activator in ['Bid']:
+for activator in ['Bid', 'Bim']:
     # Iterate over the NBD residues
-    for nbd_residue in ['5', '40', '54', '122', '138']: #nbd_residues:
+    for nbd_residue in nbd_residues:
         # Skip the wild type curves since there is no NBD trace
         if nbd_residue == 'WT':
             continue
