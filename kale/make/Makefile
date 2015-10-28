@@ -2,6 +2,7 @@ CODEDIR := ../../tbidbaxlipo
 PLOTSDIR := $(CODEDIR)/plots
 DATADIR := $(CODEDIR)/data
 NBD_MCMC_DIR := $(PLOTSDIR)/bid_bim_nbd_release/mcmc
+NBD_MCMC_NEWPR_DIR := $(PLOTSDIR)/bid_bim_nbd_release/mcmc_norm_prior
 NBD_FRET_MCMC_DIR := $(PLOTSDIR)/bid_bim_fret_nbd_release/mcmc
 NBD_FRET_DUAL_MCMC_DIR := $(PLOTSDIR)/bid_bim_fret_nbd_release/fret_mcmc
 BAX_NBD_FRET_DUAL_MCMC_DIR := $(PLOTSDIR)/bax_bax_fret_nbd_release/fret_mcmc
@@ -94,6 +95,16 @@ pt_data1_deps: $(NBD_MCMC_DIR)/pt_data1.deps.txt
 $(NBD_MCMC_DIR)/pt_data1.deps.txt: \
     $(NBD_MCMC_DIR)/generate_fit_files_for_nbd_curves.py
 	python $(NBD_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_MCMC_DIR)
+	#
+# -- MCMC Fitting for Dataset 1, complete set of NBD-Bax trajectories --
+pt_data1_newpr: pt_data1_newpr_deps
+
+pt_data1_newpr_deps: $(NBD_MCMC_NEWPR_DIR)/pt_data1_newpr.deps.txt
+-include $(NBD_MCMC_NEWPR_DIR)/pt_data1_newpr.deps.txt
+
+$(NBD_MCMC_NEWPR_DIR)/pt_data1_newpr.deps.txt: \
+    $(NBD_MCMC_NEWPR_DIR)/generate_fit_files_for_nbd_curves.py
+	python $(NBD_MCMC_NEWPR_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_MCMC_NEWPR_DIR)
 
 # -- MCMC Fitting for Dataset 2, complete set of NBD-Bax trajectories with FRET --
 pt_data2: pt_data2_deps
