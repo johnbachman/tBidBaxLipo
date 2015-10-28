@@ -40,19 +40,19 @@ class Builder(core.Builder):
         obs = self.observable('Bax_c0', Bax(conf='c0'))
         sympy_expr = (scaling * obs)
 
+        """
         # Set the bounds for the scaling parameters
         if normalized_data:
             scaling_prior = UniformLinear(-1, 1)
         else:
-            """
             if nbd_lbound is None or nbd_ubound is None:
                 raise ValueError("If NBD data is not normalized, upper and "
                                  "lower bounds for the scaling parameters "
                                  "must be explicitly specified.")
             scaling_prior = UniformLinear(np.log10(nbd_lbound),
                                           np.log10(nbd_ubound))
-            """
-            scaling_prior = Normal(np.log10(c0_scaling), 0.15)
+        """
+        scaling_prior = Normal(np.log10(c0_scaling), np.log10(1.5))
 
         # Rules for transitions between other conformations
         for i in range(num_confs-1):
