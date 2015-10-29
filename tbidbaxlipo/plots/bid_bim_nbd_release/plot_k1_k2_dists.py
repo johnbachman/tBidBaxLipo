@@ -29,7 +29,7 @@ def assemble_density_matrix(p_name, filelist):
     activators = set()
     nbd_residues = set()
     replicates = set()
-    pattern = re.compile('pt_data1_(\w+)_NBD_(\d+)_r(\d)_3confs')
+    pattern = re.compile('pt_data1_newpr_(\w+)_NBD_(\d+)_r(\d)_3confs')
 
     file_dict = {}
 
@@ -78,7 +78,11 @@ def assemble_density_matrix(p_name, filelist):
         for res in nbd_residues:
             for rep in replicates:
                 # Get the histogram array associated with this rep
-                norm_counts = file_dict[(act, res, rep)]
+                try:
+                    norm_counts = file_dict[(act, res, rep)]
+                # If there is no file for this act/res/rep combo, insert zeros
+                except KeyError:
+                    norm_counts = np.zeros(num_bin_edges - 1)
                 # Fill in this "stripe" of the matrix
                 # We don't fill in the last value b/c it's just there to let us
                 # get the axis labels correct
