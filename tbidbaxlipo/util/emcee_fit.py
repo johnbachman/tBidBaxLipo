@@ -793,7 +793,6 @@ def global_fit_from_args(args):
     # If there is a multiconf attribute, that trumps any other attribute
     # and determines that this is a multiconf model
     if 'multiconf' in args['model'] or 'multiconf_nbd_fret' in args['model']:
-        import ipdb; ipdb.set_trace()
         # Determine the multiconf type
         multiconf_type = 'multiconf' if 'multiconf' in args['model'] \
                                      else 'multiconf_nbd_fret'
