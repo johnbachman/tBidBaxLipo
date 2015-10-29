@@ -13,7 +13,7 @@ highest_temp: -6
 local_initial_condition: null
 local_params: []
 model:
-  multiconf: [[3, 'rev']]
+  multiconf_nbd_fret: [[3, 'rev']]
   normalized_nbd_data:
   - true
 model_observable: [NBD, FRET]

@@ -792,17 +792,21 @@ def global_fit_from_args(args):
     # Call the appropriate model-building macro
     # If there is a multiconf attribute, that trumps any other attribute
     # and determines that this is a multiconf model
-    if 'multiconf' in args['model']:
+    if 'multiconf' in args['model'] or 'multiconf_nbd_fret' in args['model']:
+        import ipdb; ipdb.set_trace()
+        # Determine the multiconf type
+        multiconf_type = 'multiconf' if 'multiconf' in args['model'] \
+                                     else 'multiconf_nbd_fret'
         bd = multiconf.Builder()
         # Number of confs and whether the model is reversible
         try:
-            num_confs = int(args['model']['multiconf'])
+            num_confs = int(args['model'][multiconf_type])
             reversible = False
         # If it's not an int, assume it's two-element list with a flag
         # specifying a reversible model, indicated by 'rev'
         except TypeError:
-            num_confs = int(args['model']['multiconf'][0])
-            rev = args['model']['multiconf'][1]
+            num_confs = int(args['model'][multiconf_type][0])
+            rev = args['model'][multiconf_type][1]
             if rev == 'rev':
                 reversible = True
             else:
@@ -811,9 +815,15 @@ def global_fit_from_args(args):
         nbd_ubound = data_module.__dict__[data_args['nbd_ubound']]
         nbd_lbound = data_module.__dict__[data_args['nbd_lbound']]
         nbd_f0 = data_module.__dict__[data_args['nbd_f0']]
-        bd.build_model_multiconf(num_confs, nbd_f0, nbd_lbound, nbd_ubound,
-                                 normalized_data=norm_data,
-                                 reversible=reversible)
+        if multiconf_type == 'multiconf':
+            bd.build_model_multiconf(num_confs, nbd_f0, nbd_lbound, nbd_ubound,
+                                     normalized_data=norm_data,
+                                     reversible=reversible)
+        elif multiconf_type == 'multiconf_nbd_fret':
+            bd.build_model_multiconf_nbd_fret(num_confs, nbd_f0, nbd_lbound,
+                                              nbd_ubound,
+                                              normalized_data=norm_data,
+                                              reversible=reversible)
     # Check the builder: one_cpt or lipo_sites
     elif 'builder' in args['model'] and \
          args['model']['builder'] == 'lipo_sites':
