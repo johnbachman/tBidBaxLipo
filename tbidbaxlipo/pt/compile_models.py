@@ -22,25 +22,32 @@ for yaml_filename in yaml_filenames:
     with open(yaml_filename) as yaml_file:
         args = yaml.load(yaml_file)
     # Check for whether this is a multiconf model or not
-    if 'multiconf' in args['model']:
+    if 'multiconf' in args['model'] or 'multiconf_nbd_fret' in args['model']:
+        multiconf_type = 'multiconf' if 'multiconf' in args['model'] \
+                                     else 'multiconf_nbd_fret'
         bd = multiconf.Builder()
         # Number of confs and whether the model is reversible
         try:
-            num_confs = int(args['model']['multiconf'])
+            num_confs = int(args['model'][multiconf_type])
             reversible = False
         # If it's not an int, assume it's two-element list with a flag
         # specifying a reversible model, indicated by 'rev'
         except TypeError:
-            num_confs = int(args['model']['multiconf'][0])
-            rev = args['model']['multiconf'][1]
+            num_confs = int(args['model'][multiconf_type][0])
+            rev = args['model'][multiconf_type][1]
             if rev == 'rev':
                 reversible = True
             else:
                 raise Exception('Unknown multiconf model flag %s' % rev)
 
-        norm_data = args['model']['normalized_nbd_data'] = True
-        bd.build_model_multiconf(num_confs, 1, normalized_data=norm_data,
-                                 reversible=reversible)
+        norm_data = args['model']['normalized_nbd_data']
+        if multiconf_type == 'multiconf':
+            bd.build_model_multiconf(num_confs, 1, normalized_data=norm_data,
+                                     reversible=reversible)
+        else:
+            bd.build_model_multiconf_nbd_fret(num_confs, 1,
+                                              normalized_data=norm_data,
+                                              reversible=reversible)
     else:
         bd = one_cpt.Builder()
         bd.build_model_from_dict(args['model'])
