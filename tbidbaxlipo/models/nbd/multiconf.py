@@ -79,6 +79,70 @@ class Builder(core.Builder):
         # Set the model obs func
         self.set_obs_func()
 
+    def build_model_multiconf_nbd_fret(self, num_confs, c0_scaling,
+                                       nbd_lbound=None, nbd_ubound=None,
+                                       normalized_data=False, reversible=False):
+        if num_confs < 2:
+            raise ValueError('There must be a minimum of two conformations.')
+
+        self.num_confs = num_confs
+        self.reversible = reversible
+
+        # Initialize monomer and initial condition
+        Bax = self.monomer('Bax', ['conf'],
+                           {'conf': ['c%d' % i for i in range(num_confs)]})
+        Bax_0 = self.parameter('Bax_0', 1, prior=None)
+        self.initial(Bax(conf='c0'), Bax_0)
+
+        # Scaling for initial NBD conformation
+        scaling = self.parameter('c0_scaling', c0_scaling, prior=None)
+        obs = self.observable('Bax_c0', Bax(conf='c0'))
+        sympy_expr = (scaling * obs)
+
+        # Scaling for initial NBD conformation
+        fret_scaling = self.parameter('fret0_scaling', 0, prior=None)
+        fret_sympy_expr = (fret_scaling * obs)
+
+        # Set the bounds for the scaling parameters
+        fret_scaling_prior = UniformLinear(-1, 2)
+        if normalized_data:
+            scaling_prior = UniformLinear(-1, 1)
+        else:
+            if nbd_lbound is None or nbd_ubound is None:
+                raise ValueError("If NBD data is not normalized, upper and "
+                                 "lower bounds for the scaling parameters "
+                                 "must be explicitly specified.")
+            scaling_prior = UniformLinear(np.log10(nbd_lbound),
+                                          np.log10(nbd_ubound))
+
+        # Rules for transitions between other conformations
+        for i in range(num_confs-1):
+            rate = self.parameter('c%d_to_c%d_k' % (i, i+1), 1e-3,
+                                  prior=Uniform(-6, -1))
+            scaling = self.parameter('c%d_scaling' % (i+1), 1,
+                                     prior=scaling_prior)
+            fret_scaling = self.parameter('fret%d_scaling' % (i+1), 20.,
+                                     prior=scaling_prior)
+
+            self.rule('c%d_to_c%d' % (i, i+1),
+                      Bax(conf='c%d' % i) >> Bax(conf='c%d' % (i+1)), rate)
+            if reversible:
+                rate = self.parameter('c%d_to_c%d_k' % (i+1, i), 1e-3,
+                                      prior=Uniform(-6, -1))
+                self.rule('c%d_to_c%d' % (i+1, i),
+                          Bax(conf='c%d' % (i+1)) >> Bax(conf='c%d' % i), rate)
+
+            obs = self.observable('Bax_c%d' % (i+1), Bax(conf='c%d' % (i+1)))
+
+            sympy_expr += (scaling * obs)
+            fret_sympy_expr += (fret_scaling * obs)
+        # The expression mapping to our experimental observable
+        self.expression('NBD', sympy_expr)
+        self.expression('FRET', fret_sympy_expr)
+
+        # Set the model name
+        self.model.name = "%dconfs" % num_confs
+
 
     def set_obs_func(self):
         """Assigns a function to self.formula that, when called after setting
