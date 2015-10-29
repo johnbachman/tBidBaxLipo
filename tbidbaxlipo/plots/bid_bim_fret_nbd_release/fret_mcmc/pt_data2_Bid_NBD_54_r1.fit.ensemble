@@ -1,0 +1,29 @@
+data:
+  data_sigma_var: data_sigma_Bid_NBD_54
+  data_var: data_Bid_NBD_54_r1
+  initial_condition_var: null
+  module: tbidbaxlipo.plots.bid_bim_fret_nbd_release.preprocess_data
+  nbd_f0: data_Bid_NBD_54_r1_f0
+  nbd_lbound: data_Bid_NBD_54_r1_lbound
+  nbd_ubound: data_Bid_NBD_54_r1_ubound
+  time_var: time_Bid_NBD_54_r1
+global_initial_conditions: {}
+global_params: all
+highest_temp: -6
+local_initial_condition: null
+local_params: []
+model:
+  multiconf:
+  - 2
+  - 3
+  - 4
+  - 5
+  normalized_nbd_data:
+  - true
+model_observable:
+- NBD
+nburnin: 5000
+nsample: 100
+ntemps: 50
+nwalkers: 400
+thin: 1
