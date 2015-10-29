@@ -3,6 +3,7 @@ PLOTSDIR := $(CODEDIR)/plots
 DATADIR := $(CODEDIR)/data
 NBD_MCMC_DIR := $(PLOTSDIR)/bid_bim_nbd_release/mcmc
 NBD_FRET_MCMC_DIR := $(PLOTSDIR)/bid_bim_fret_nbd_release/mcmc
+NBD_FRET_DUAL_MCMC_DIR := $(PLOTSDIR)/bid_bim_fret_nbd_release/fret_mcmc
 NBD_DATA := $(DATADIR)/Compiled\ Release\ percentages\ and\ NBD\ F-F0.xlsx \
             $(DATADIR)/parse_bid_bim_nbd_release.py
 NBD_FRET_DATA := $(DATADIR)/2015-02-27\ -\ Bid-Bim\ FRET\ with\ Bax\ NBD\ mutants\ in\ Tb-DPA\ Liposomes\ compiled\ reps+WT\ Bax.xlsx \
@@ -52,9 +53,9 @@ FORCE:
 # regenerated in the step that regenerated the dependency file. What
 # we care about is whether the hash is any different.
 %.mcmc: $(call to-md5, %.fit)
-	python -m tbidbaxlipo.pt.compile_models $(call from-md5, $<)
+	#python -m tbidbaxlipo.pt.compile_models $(call from-md5, $<)
 	#bsub -q $(PQUEUE) -n 10 -W 100:00 -N -o $(call from-md5, $<).out -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1 $(call from-md5, $<).pos
-	qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err -pe orte 64 mpirun python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos
+	qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err -pe orte 160 mpirun python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos
 
 # Don't delete the .md5 files! Without this rule they are treated as
 # intermediates and deleted.
@@ -98,6 +99,16 @@ pt_data2_deps: $(NBD_FRET_MCMC_DIR)/pt_data2.deps.txt
 $(NBD_FRET_MCMC_DIR)/pt_data2.deps.txt: \
     $(NBD_FRET_MCMC_DIR)/generate_fit_files_for_nbd_curves.py
 	python $(NBD_FRET_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_FRET_MCMC_DIR)
+
+# -- MCMC fitting for NBD + FRET, dataset 2
+pt_data2_fret: pt_data2_fret_deps
+
+pt_data2_fret_deps: $(NBD_FRET_DUAL_MCMC_DIR)/pt_data2_fret.deps.txt
+-include $(NBD_FRET_DUAL_MCMC_DIR)/pt_data2_fret.deps.txt
+
+$(NBD_FRET_DUAL_MCMC_DIR)/pt_data2_fret.deps.txt: \
+    $(NBD_FRET_DUAL_MCMC_DIR)/generate_fit_files_for_nbd_curves.py
+	python $(NBD_FRET_DUAL_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_FRET_DUAL_MCMC_DIR)
 
 # -- Dataset 1, NBD + Tb release, summary plots ------------------------
 nbd_release: nbd_release_endpts nbd_release_initial_rates nbd_example_curves \
