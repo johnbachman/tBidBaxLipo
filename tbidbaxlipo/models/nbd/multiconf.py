@@ -122,7 +122,7 @@ class Builder(core.Builder):
             scaling = self.parameter('c%d_scaling' % (i+1), 1,
                                      prior=scaling_prior)
             fret_scaling = self.parameter('fret%d_scaling' % (i+1), 20.,
-                                     prior=scaling_prior)
+                                     prior=fret_scaling_prior)
 
             self.rule('c%d_to_c%d' % (i, i+1),
                       Bax(conf='c%d' % i) >> Bax(conf='c%d' % (i+1)), rate)
