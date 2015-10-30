@@ -15,7 +15,7 @@ df_pre = deepcopy(df)
 
 def remove_outliers(key, outliers):
     for outlier_ix in outliers:
-        df_pre[key] = np.nan
+        df_pre[key][outlier_ix] = np.nan
 
 def remove_all_fret_outliers():
     # Bid/3/1: though negative, no terrible outliers
