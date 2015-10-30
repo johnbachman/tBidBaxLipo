@@ -6,7 +6,7 @@ from tbidbaxlipo.data.parse_bid_bim_fret_nbd_release import nbd_residues
 # Arguments shared across all fits
 args = {
     'model': {
-        'multiconf_nbd_fret': [[3, 'rev']], # 2, 3, 4
+        'multiconf_nbd_fret': [[3, 'rev'], [4, 'rev']], # 2, 3, 4
         'normalized_nbd_data': [True]},
     'model_observable': ['NBD', 'FRET'],
     'global_initial_conditions': {},
@@ -27,14 +27,14 @@ output_filename_pattern = output_target_pattern + '.fit.ensemble'
 dependencies_list = []
 
 # Iterate over the activators
-for activator in ['Bid']:
+for activator in ['Bid', 'Bim']:
     # Iterate over the NBD residues
-    for nbd_residue in ['54']: # 54, 126
+    for nbd_residue in ['54', '126']: # 54, 126
         # Skip the wild type curves since there is no NBD trace
         if nbd_residue == 'WT':
             continue
         # Iterate over the replicates
-        for rep_ix, rep_num in enumerate(range(1, 2)):
+        for rep_ix, rep_num in enumerate(range(1, 4)):
             # Initialize the data portion of the dict
             data_args = {
               'initial_condition_var': None,
