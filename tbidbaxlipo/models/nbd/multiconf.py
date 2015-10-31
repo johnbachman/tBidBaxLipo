@@ -143,6 +143,8 @@ class Builder(core.Builder):
         # Set the model name
         self.model.name = "%dconfs" % num_confs
 
+        # Set the model obs func
+        self.set_nbd_fret_obs_func()
 
     def set_obs_func(self):
         """Assigns a function to self.formula that, when called after setting
@@ -154,7 +156,7 @@ class Builder(core.Builder):
                 c0 = Bax_0 * np.exp(-self['c0_to_c1_k'].value * t)
                 nbd = (self['c0_scaling'].value * c0 +
                        self['c1_scaling'].value * (Bax_0 - c0))
-                return nbd
+                return {'NBD': nbd}
         elif self.num_confs == 2 and self.reversible == True:
             def nbd_func(t):
                 kf = self['c0_to_c1_k'].value
@@ -165,7 +167,7 @@ class Builder(core.Builder):
                 c0 = c1eq * np.exp(-(kf+kr)*t) + c0eq
                 nbd = (self['c0_scaling'].value * c0 +
                        self['c1_scaling'].value * (Bax_0 - c0))
-                return nbd
+                return {'NBD': nbd}
         elif self.num_confs == 3 and self.reversible == False:
             def nbd_func(t):
                 k1 = self['c0_to_c1_k'].value
@@ -180,7 +182,7 @@ class Builder(core.Builder):
                     nbd = (self['c0_scaling'].value * c0 +
                            self['c1_scaling'].value * c1 +
                            self['c2_scaling'].value * (Bax_0 - c0 - c1))
-                    return nbd
+                    return {'NBD': nbd}
                 # The typical case, where k1 and k2 are not equal
                 else:
                     c0 = Bax_0 * np.exp(-k1 * t)
@@ -189,7 +191,7 @@ class Builder(core.Builder):
                     nbd = (self['c0_scaling'].value * c0 +
                            self['c1_scaling'].value * c1 +
                            self['c2_scaling'].value * (Bax_0 - c0 - c1))
-                    return nbd
+                    return {'NBD': nbd}
         elif self.num_confs == 4 and self.reversible == False:
             # Here we don't specifically handle the case where the parameters are
             # equal since it's so unlikely to come up in parameter estimation,
@@ -215,7 +217,7 @@ class Builder(core.Builder):
                        self['c1_scaling'].value * c1 +
                        self['c2_scaling'].value * c2 +
                        self['c3_scaling'].value * c3)
-                return nbd
+                return {'NBD': nbd}
         elif self.num_confs == 5 and self.reversible == False:
             # Here we don't specifically handle the case where the parameters are
             # equal since it's so unlikely to come up in parameter estimation,
@@ -250,14 +252,50 @@ class Builder(core.Builder):
                        self['c2_scaling'].value * c2 +
                        self['c3_scaling'].value * c3 +
                        self['c4_scaling'].value * c4)
-                return nbd
+                return {'NBD': nbd}
         # If we don't fit one of these categories, set to None
         else:
             nbd_func = None
         # Assign the function to the instance
         self.obs_func = nbd_func
 
-
-
-
+    def set_nbd_fret_obs_func(self):
+        """Assigns a function to self.formula that, when called after setting
+        the parameter values of self.model, returns the timecourse for the
+        given parameters."""
+        if self.num_confs == 3 and self.reversible == False:
+            def nbd_fret_func(t):
+                k1 = self['c0_to_c1_k'].value
+                k2 = self['c1_to_c2_k'].value
+                Bax_0 = self['Bax_0'].value
+                # First, the case where k1 and k2 are equal (need to treat
+                # separately to avoid divide by 0 errors)
+                if k1 == k2:
+                    print "nbd_func, equal"
+                    c0 = Bax_0 * np.exp(-k1 * t)
+                    c1 = Bax_0 * t * k1 * np.exp(-k1 * t)
+                    nbd = (self['c0_scaling'].value * c0 +
+                           self['c1_scaling'].value * c1 +
+                           self['c2_scaling'].value * (Bax_0 - c0 - c1))
+                    fret = (self['fret0_scaling'].value * c0 +
+                           self['fret1_scaling'].value * c1 +
+                           self['fret2_scaling'].value * (Bax_0 - c0 - c1))
+                    return {'NBD': nbd, 'FRET': fret}
+                # The typical case, where k1 and k2 are not equal
+                else:
+                    c0 = Bax_0 * np.exp(-k1 * t)
+                    c1 = (((np.exp(-k1*t) - np.exp(-k2*t)) * k1 * Bax_0) /
+                          (k2 - k1))
+                    nbd = (self['c0_scaling'].value * c0 +
+                           self['c1_scaling'].value * c1 +
+                           self['c2_scaling'].value * (Bax_0 - c0 - c1))
+                    fret = (self['fret0_scaling'].value * c0 +
+                           self['fret1_scaling'].value * c1 +
+                           self['fret2_scaling'].value * (Bax_0 - c0 - c1))
+                    return {'NBD': nbd, 'FRET': fret}
+        # If we don't fit one of these categories, set to None
+        else:
+            nbd_fret_func = None
+        # Assign the function to the instance
+        self.obs_func = nbd_fret_func
 
