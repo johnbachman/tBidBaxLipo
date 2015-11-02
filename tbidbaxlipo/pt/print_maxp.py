@@ -5,6 +5,11 @@ import sys
 import os.path
 import pickle
 import numpy as np
+from matplotlib import pyplot as plt
+
+if len(sys.argv) <= 1:
+    print("Must include a list of .mcmc files.")
+    sys.exit(1)
 
 file_list = sys.argv[1:]
 maxp_list = []
