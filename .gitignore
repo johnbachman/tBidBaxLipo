@@ -2,6 +2,7 @@
 
 tbidbaxlipo/plots/bid_bim_nbd_release/mcmc/*.ensemble
 tbidbaxlipo/plots/bid_bim_fret_nbd_release/mcmc/*.ensemble
+tbidbaxlipo/plots/bid_bim_fret_nbd_release/fret_mcmc/*.ensemble
 *.pos
 
 results

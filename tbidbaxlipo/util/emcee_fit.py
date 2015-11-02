@@ -39,12 +39,6 @@ def likelihood(position, gf):
     # The cumulative error over all timecourses
     err = 0
     obs_func = getattr(gf.builder, 'obs_func', None)
-    # If the builder has an explicit function for the observable,
-    # then we'll use it, but only if there is only one observable
-    # in the data
-    if callable(obs_func) and gf.data.shape[1] != 1:
-        raise ValueError('A builder with obs_func can only be used for data '
-                         'with one observable.')
 
     # Iterate over each condition (1st dimension of the data matrix)
     for cond_ix in range(gf.data.shape[0]):
@@ -73,19 +67,19 @@ def likelihood(position, gf):
             tspan = gf.time
         # Now run the simulation
         if callable(obs_func):
-            ysim = obs_func(tspan)
+            ydict = obs_func(tspan)
         else:
             gf.solver.tspan = tspan
             gf.solver.run()
+            if gf.use_expr:
+                ydict = gf.solver.yexpr
+            else:
+                ydict = gf.solver.yobs
 
         # Calculate the squared error over all the observables
         for obs_ix, obs_name in enumerate(gf.obs_name):
-            # If we're using the solver
-            if not callable(obs_func):
-                if gf.use_expr:
-                    ysim = gf.solver.yexpr[obs_name]
-                else:
-                    ysim = gf.solver.yobs[obs_name]
+            # Get the observable timecourse from the dict/recarray
+            ysim = ydict[obs_name]
             # If we're using a time offset, skip the first point (the offset)
             # for the purposes of comparing to data
             if timeoffset:
@@ -792,28 +786,49 @@ def global_fit_from_args(args):
     # Call the appropriate model-building macro
     # If there is a multiconf attribute, that trumps any other attribute
     # and determines that this is a multiconf model
-    if 'multiconf' in args['model']:
+    if 'multiconf' in args['model'] or 'multiconf_nbd_fret' in args['model']:
+        # Determine the multiconf type
+        multiconf_type = 'multiconf' if 'multiconf' in args['model'] \
+                                     else 'multiconf_nbd_fret'
         bd = multiconf.Builder()
         # Number of confs and whether the model is reversible
         try:
-            num_confs = int(args['model']['multiconf'])
+            num_confs = int(args['model'][multiconf_type])
             reversible = False
         # If it's not an int, assume it's two-element list with a flag
         # specifying a reversible model, indicated by 'rev'
         except TypeError:
-            num_confs = int(args['model']['multiconf'][0])
-            rev = args['model']['multiconf'][1]
+            num_confs = int(args['model'][multiconf_type][0])
+            rev = args['model'][multiconf_type][1]
             if rev == 'rev':
                 reversible = True
             else:
                 raise Exception('Unknown multiconf model flag %s' % rev)
         norm_data = args['model']['normalized_nbd_data']
-        nbd_ubound = data_module.__dict__[data_args['nbd_ubound']]
-        nbd_lbound = data_module.__dict__[data_args['nbd_lbound']]
-        nbd_f0 = data_module.__dict__[data_args['nbd_f0']]
-        bd.build_model_multiconf(num_confs, nbd_f0, nbd_lbound, nbd_ubound,
-                                 normalized_data=norm_data,
-                                 reversible=reversible)
+        # Try to get the parameters for the bounds of the data
+        # (may not be present if the data is normalized)
+        try:
+            nbd_ubound = data_module.__dict__[data_args['nbd_ubound']]
+        except KeyError:
+            nbd_ubound = None
+        try:
+            nbd_lbound = data_module.__dict__[data_args['nbd_lbound']]
+        except KeyError:
+            nbd_lbound = None
+        try:
+            nbd_f0 = data_module.__dict__[data_args['nbd_f0']]
+        except KeyError:
+            nbd_f0 = 1.
+
+        if multiconf_type == 'multiconf':
+            bd.build_model_multiconf(num_confs, nbd_f0, nbd_lbound, nbd_ubound,
+                                     normalized_data=norm_data,
+                                     reversible=reversible)
+        elif multiconf_type == 'multiconf_nbd_fret':
+            bd.build_model_multiconf_nbd_fret(num_confs, nbd_f0, nbd_lbound,
+                                              nbd_ubound,
+                                              normalized_data=norm_data,
+                                              reversible=reversible)
     # Check the builder: one_cpt or lipo_sites
     elif 'builder' in args['model'] and \
          args['model']['builder'] == 'lipo_sites':

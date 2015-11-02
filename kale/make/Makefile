@@ -3,6 +3,7 @@ PLOTSDIR := $(CODEDIR)/plots
 DATADIR := $(CODEDIR)/data
 NBD_MCMC_DIR := $(PLOTSDIR)/bid_bim_nbd_release/mcmc
 NBD_FRET_MCMC_DIR := $(PLOTSDIR)/bid_bim_fret_nbd_release/mcmc
+NBD_FRET_DUAL_MCMC_DIR := $(PLOTSDIR)/bid_bim_fret_nbd_release/fret_mcmc
 NBD_DATA := $(DATADIR)/Compiled\ Release\ percentages\ and\ NBD\ F-F0.xlsx \
             $(DATADIR)/parse_bid_bim_nbd_release.py
 NBD_FRET_DATA := $(DATADIR)/2015-02-27\ -\ Bid-Bim\ FRET\ with\ Bax\ NBD\ mutants\ in\ Tb-DPA\ Liposomes\ compiled\ reps+WT\ Bax.xlsx \
@@ -17,7 +18,6 @@ all: nbd_release fret_nbd_release nbd_labeling_ratios_table
 
 deploy:
 	rsync -av ./ ~/Dropbox/Bachman-Sorger\ Talks\ and\ Papers/Kale-Bachman\ Bax\ mutants/figures/panels
-
 
 clean:
 	rm -f ./*.pdf ./*.png ./*.csv
@@ -52,9 +52,10 @@ FORCE:
 # regenerated in the step that regenerated the dependency file. What
 # we care about is whether the hash is any different.
 %.mcmc: $(call to-md5, %.fit)
-	python -m tbidbaxlipo.pt.compile_models $(call from-md5, $<)
+	#python -m tbidbaxlipo.pt.compile_models $(call from-md5, $<)
 	#bsub -q $(PQUEUE) -n 10 -W 100:00 -N -o $(call from-md5, $<).out -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1 $(call from-md5, $<).pos
-	qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err -pe orte 64 mpirun python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos
+	#qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err -pe orte 160 mpirun python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos
+	qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos nompi
 
 # Don't delete the .md5 files! Without this rule they are treated as
 # intermediates and deleted.
@@ -72,7 +73,6 @@ pt_140430_126C: $(x140430)/pt_140430_126C.deps.txt
 
 # -- MCMC Fitting for Dataset 1, complete set of NBD-Bax trajectories --
 pt_data1: pt_data1_deps
-
 
 # The pt_data1_deps target allows for the dependencies list to be created
 # without running all of the jobs that pt_data1 itself depends on. For example,
@@ -99,6 +99,16 @@ $(NBD_FRET_MCMC_DIR)/pt_data2.deps.txt: \
     $(NBD_FRET_MCMC_DIR)/generate_fit_files_for_nbd_curves.py
 	python $(NBD_FRET_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_FRET_MCMC_DIR)
 
+# -- MCMC fitting for NBD + FRET, dataset 2
+pt_data2_fret: pt_data2_fret_deps
+
+pt_data2_fret_deps: $(NBD_FRET_DUAL_MCMC_DIR)/pt_data2_fret.deps.txt
+-include $(NBD_FRET_DUAL_MCMC_DIR)/pt_data2_fret.deps.txt
+
+$(NBD_FRET_DUAL_MCMC_DIR)/pt_data2_fret.deps.txt: \
+    $(NBD_FRET_DUAL_MCMC_DIR)/generate_fit_files_for_nbd_curves.py
+	python $(NBD_FRET_DUAL_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_FRET_DUAL_MCMC_DIR)
+
 # -- Dataset 1, NBD + Tb release, summary plots ------------------------
 nbd_release: nbd_release_endpts nbd_release_initial_rates nbd_example_curves \
              data1_release_peak_times.csv data1_derivatives_Bid_15_r1.pdf \
@@ -113,7 +123,8 @@ nbd_param_densities: data1_Bid_k1k2_densities.pdf data1_Bid_c1c2_densities.pdf\
 
 # -- Dataset 2, Bid FRET + NBD + Tb release, summary plots -------------
 fret_nbd_release: fret_nbd_release_endpts fret_nbd_release_initial_rates \
-    data2_fret_endpt.pdf data2_example_curves.pdf data2_delta_fret.pdf
+    data2_fret_endpt.pdf data2_example_curves.pdf data2_delta_fret.pdf \
+    data2_example_nbd_fret_fits.pdf
 fret_nbd_release_endpts: \
     data2_release_endpt_norm.pdf data2_release_endpt_no_norm.pdf \
     data2_nbd_endpt_norm.pdf data2_nbd_endpt_no_norm.pdf
@@ -275,6 +286,11 @@ data2_example_curves.pdf: \
         $(PLOTSDIR)/bid_bim_fret_nbd_release/plot_example_fret_curves.py \
         $(NBD_FRET_DATA)
 	python -m tbidbaxlipo.plots.bid_bim_fret_nbd_release.plot_example_fret_curves
+
+data2_example_nbd_fret_fits.pdf: \
+        $(PLOTSDIR)/bid_bim_fret_nbd_release/plot_example_fret_fits.py \
+        $(NBD_FRET_DATA)
+	python -m tbidbaxlipo.plots.bid_bim_fret_nbd_release.plot_example_fret_fits
 
 data2_delta_fret.pdf: \
         $(PLOTSDIR)/nbd_bax_analysis.py \
