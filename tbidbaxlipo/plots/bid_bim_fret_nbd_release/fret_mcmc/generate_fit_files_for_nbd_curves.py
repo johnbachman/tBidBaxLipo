@@ -6,7 +6,8 @@ from tbidbaxlipo.data.parse_bid_bim_fret_nbd_release import nbd_residues
 # Arguments shared across all fits
 args = {
     'model': {
-        'multiconf_nbd_fret': [[3, 'rev'], [4, 'rev']], # 2, 3, 4
+        #'multiconf_nbd_fret': [[3, 'rev'], [4, 'rev']], # 2, 3, 4
+        'multiconf_nbd_fret': [3, 4],
         'normalized_nbd_data': [True]},
     'model_observable': ['NBD', 'FRET'],
     'global_initial_conditions': {},
