@@ -14,7 +14,7 @@ PQUEUE := parallel
 # md5 sum program to use (md5 on mac, md5sum on Linux)
 MD5 := $(MD5_NAME)
 
-all: nbd_release fret_nbd_release nbd_labeling_ratios_table
+all: nbd_release fret_nbd_release bax_bax_fret nbd_labeling_ratios_table
 
 deploy:
 	rsync -av ./ ~/Dropbox/Bachman-Sorger\ Talks\ and\ Papers/Kale-Bachman\ Bax\ mutants/figures/panels
@@ -41,7 +41,7 @@ from-md5 = $(patsubst %.md5,%,$1)
 # Dummy target so the .md5 step is always run
 FORCE:
 
-.PHONY: clean clean_pt deploy nbd_release fret_nbd_release
+.PHONY: clean clean_pt deploy nbd_release fret_nbd_release bax_bax_fret
 
 # Running this script generates both the dependency list and the .yaml files
 # specifying the fit parameters for each individual model
@@ -129,6 +129,11 @@ fret_nbd_release_endpts: \
     data2_release_endpt_norm.pdf data2_release_endpt_no_norm.pdf \
     data2_nbd_endpt_norm.pdf data2_nbd_endpt_no_norm.pdf
 fret_nbd_release_initial_rates: data2_init_nbd_bar.pdf
+
+# -- Bax-Bax FRET data (141203) ------------------------------------------
+bax_bax_fret: 141203_example_nbd_fret_fits.pdf
+
+
 
 # --- Normalized release endpoint data for release, dataset 1 ---
 data1_release_endpt_norm.pdf: \
@@ -304,3 +309,8 @@ nbd_labeling_ratios_table: \
         $(NBD_DATA)
 	python -m tbidbaxlipo.plots.bid_bim_nbd_release.nbd_labeling_ratios_table \
                       nbd_labeling_ratios_table.csv
+
+141203_example_nbd_fret_fits.pdf: \
+    $(PLOTSDIR)/x141203_Bax_Bax_FRET/plot_example_fret_fits.py
+	python -m tbidbaxlipo.plots.x141203_Bax_Bax_FRET.plot_example_fret_fits
+
