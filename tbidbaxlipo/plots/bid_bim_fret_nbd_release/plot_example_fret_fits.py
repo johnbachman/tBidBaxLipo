@@ -5,13 +5,20 @@ from tbidbaxlipo.plots.bid_bim_fret_nbd_release.preprocess_data import \
 import numpy as np
 from matplotlib import pyplot as plt
 import cPickle
+import tbidbaxlipo.plots.bid_bim_fret_nbd_release
+import sys
+import os
 
 set_fig_params_for_publication()
 
 curves_to_plot = [('Bid', '54', 'NBD'),
                   ('Bid', '126', 'FRET')]
 num_samples = 100
+module_name = 'tbidbaxlipo.plots.bid_bim_fret_nbd_release'
+mcmc_path = os.path.join(os.path.dirname(sys.modules[module_name].__file__),
+                         'fret_mcmc')
 
+print mcmc_path
 plt.ion()
 
 fig, axarr = plt.subplots(2, 2, sharex=True, figsize=(3, 3), dpi=300)
@@ -40,7 +47,8 @@ for col_ix, curve_info in enumerate(curves_to_plot):
         else:
             ax1.set_ylabel('FRET')
 
-        filename = 'fret_mcmc/pt_data2_fret_%s_NBD_%s_r1_3confs.mcmc' % (act, res)
+        filename = os.path.join(mcmc_path,
+                        'pt_data2_fret_%s_NBD_%s_r1_3confs.mcmc' % (act, res))
         with open(filename) as f:
             print("Loading %s" % filename)
             (gf, sampler) = cPickle.load(f)
@@ -78,8 +86,8 @@ for col_ix, curve_info in enumerate(curves_to_plot):
         format_axis(ax1)
 
 plt.subplots_adjust(left=0.14, bottom=0.14, hspace=0.35, wspace=0.4)
-fig.savefig('data2_example_nbd_fret_fits2.pdf', dpi=300)
-fig.savefig('data2_example_nbd_fret_fits2.png', dpi=300)
+fig.savefig('data2_example_nbd_fret_fits.pdf', dpi=300)
+fig.savefig('data2_example_nbd_fret_fits.png', dpi=300)
 plt.show()
 
 
