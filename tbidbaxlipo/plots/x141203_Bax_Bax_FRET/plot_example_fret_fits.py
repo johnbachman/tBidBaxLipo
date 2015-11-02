@@ -18,9 +18,6 @@ module_name = 'tbidbaxlipo.plots.x141203_Bax_Bax_FRET'
 mcmc_path = os.path.join(os.path.dirname(sys.modules[module_name].__file__),
                          '3conf_mcmc')
 
-print mcmc_path
-plt.ion()
-
 fig, axarr = plt.subplots(2, 2, sharex=True, figsize=(3, 3), dpi=300)
 
 for col_ix, curve_info in enumerate(curves_to_plot):

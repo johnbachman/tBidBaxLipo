@@ -18,9 +18,6 @@ module_name = 'tbidbaxlipo.plots.bid_bim_fret_nbd_release'
 mcmc_path = os.path.join(os.path.dirname(sys.modules[module_name].__file__),
                          'fret_mcmc')
 
-print mcmc_path
-plt.ion()
-
 fig, axarr = plt.subplots(2, 2, sharex=True, figsize=(3, 3), dpi=300)
 
 for col_ix, curve_info in enumerate(curves_to_plot):
@@ -35,7 +32,8 @@ for col_ix, curve_info in enumerate(curves_to_plot):
         ax1.plot(t, v, color='k')
         # Format axes
         act_name = 'cBid' if act == 'Bid' else act
-        ax1.set_title('NBD-%sC-Bax, DAC-%s' % (res, act_name), fontsize=fontsize)
+        ax1.set_title('NBD-%sC-Bax, DAC-%s' % (res, act_name),
+                      fontsize=fontsize)
         ax1.set_xlim(-50, 4000)
         ax1.set_xticks(np.linspace(0, 4000, 5))
         # Label the axes
