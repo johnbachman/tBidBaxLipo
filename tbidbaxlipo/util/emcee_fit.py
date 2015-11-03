@@ -559,7 +559,28 @@ def pt_sample(gf, ntemps, nwalkers, burn_steps, sample_steps, thin=1,
                 for p_ix in range(ndim):
                     p0[temp_ix, walk_ix, p_ix] = gf.priors[p_ix].random()
     else:
-        p0 = pos
+        print pos.shape
+        print ntemps
+        print nwalkers
+        print ndim
+        if pos.shape[-1] != ndim:
+            raise ValueError('The position file must contain %s ndim '
+                             'parameters, not %s' % (ndim, p0.shape[-1]))
+        if pos.shape == (ntemps, nwalkers, ndim):
+            print("Setting initial position to contents of file.")
+            p0 = pos
+        else:
+            print("Setting initial position to low temp samples.")
+            p0 = np.zeros((ntemps, nwalkers, ndim))
+            pos_nwalkers = pos.shape[1]
+            pos_samples = pos[0]
+            for temp_ix in range(ntemps):
+                # Generate a set of random indices
+                walker_indices = np.random.randint(0, pos_nwalkers,
+                                                   size=nwalkers)
+                for walk_ix in range(nwalkers):
+                    p0[temp_ix, walk_ix, :] = \
+                            pos_samples[walker_indices[walk_ix], :]
 
     # Create the sampler
     sampler = emcee.PTSampler(ntemps, nwalkers, ndim, likelihood, prior,
