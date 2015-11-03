@@ -12,10 +12,8 @@ same liposome prep.
 
     raw_data
     bid_vs_bim_release
-    two_conf_fits
-    three_conf_fits
+    derivatives
     fits/index
     evidence_table
-    derivatives
     nbd_tb_correlation
     nbd_error_estimates
