@@ -4,6 +4,7 @@ import numpy as np
 from tbidbaxlipo.util import \
             set_fig_params_for_publication, format_axis, fontsize
 import re
+from tbidbaxlipo.models import model_aliases
 
 set_fig_params_for_publication()
 
@@ -41,7 +42,7 @@ ev_vals, ev_errs = zip(*ev)
 ev_vals = -np.array(ev_vals)
 
 plt.ion()
-plt.figure(figsize=(3, 1), dpi=300)
+plt.figure(figsize=(1.5, 1), dpi=300)
 
 """
 # Group 1: Dimerization, NBD species is dimer
@@ -63,10 +64,10 @@ plt.barh(15, ev_vals[15], color='g')
 plt.barh(range(len(ev_vals)), ev_vals, xerr=ev_errs, ecolor='k')
 plt.xlabel('-log(Marg. Lkl.)')
 plt.xticks(rotation='vertical')
-parsed_names = [re.match('pt_140318_(\w*)\.mcmc', name).groups()[0]
+parsed_names = [model_aliases[re.match('pt_140318_(\w*)\.mcmc', name).groups()[0]]
                 for name in names]
 plt.yticks(np.arange(len(ev_vals)) + 0.4, parsed_names)
-plt.subplots_adjust(bottom=0.42, left=0.52, right=0.95, top=0.95)
+plt.subplots_adjust(bottom=0.42, left=0.17, right=0.95, top=0.95)
 ax = plt.gca()
 format_axis(ax)
 
@@ -81,7 +82,7 @@ names, ev = zip(*ev_list2)
 ev_vals, ev_errs = zip(*ev)
 ev_vals = -np.array(ev_vals)
 
-plt.figure(figsize=(3, 3), dpi=300)
+plt.figure(figsize=(1.5, 3), dpi=300)
 
 """
 # Group 1: Dimerization, NBD species is dimer
@@ -103,10 +104,10 @@ plt.barh(15, ev_vals[15], color='g')
 plt.barh(range(len(ev_vals)), ev_vals, xerr=ev_errs, ecolor='k')
 plt.xlabel('-log(Marg. Lkl.)')
 plt.xticks(rotation='vertical')
-parsed_names = [re.match('pt_140318_(\w*)\.mcmc', name).groups()[0]
+parsed_names = [model_aliases[re.match('pt_140318_(\w*)\.mcmc', name).groups()[0]]
                 for name in names]
 plt.yticks(np.arange(len(ev_vals)) + 0.4, parsed_names)
-plt.subplots_adjust(bottom=0.21, left=0.52, right=0.95, top=0.95)
+plt.subplots_adjust(bottom=0.21, left=0.17, right=0.95, top=0.95)
 ax = plt.gca()
 format_axis(ax)
 
