@@ -259,7 +259,6 @@ class Builder(core.Builder):
         # Assign the function to the instance
         self.obs_func = nbd_func
 
-<<<<<<< HEAD
     def set_nbd_fret_obs_func(self):
         """Assigns a function to self.formula that, when called after setting
         the parameter values of self.model, returns the timecourse for the
