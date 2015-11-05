@@ -15,9 +15,9 @@ class Builder(core.Builder):
         return state
 
     def __setstate__(self, state):
-        # Re-init the obs_func which we didn't pickle
+        # Don't re-init the obs_func which we didn't pickle
         self.__dict__.update(state)
-        self.set_obs_func()
+        #self.set_obs_func()
 
 
     def build_model_multiconf(self, num_confs, c0_scaling, nbd_lbound=None,
