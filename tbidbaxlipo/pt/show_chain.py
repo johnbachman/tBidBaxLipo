@@ -263,15 +263,15 @@ if __name__ == '__main__':
     # Show plots
     #plt.ion()
     output_base = os.path.join(output_dir, os.path.basename(chain_filename))
-    #print("Plotting corner plots")
-    #corner_plots(gf, sampler, plot_filename=output_base + '.tri')
+    print("Plotting corner plots")
+    corner_plots(gf, sampler, plot_filename=output_base + '.tri')
     print("Plotting convergence")
     plot_chain_convergence(sampler, output_base + '.conv')
     print("Plotting sample fits")
     plot_emcee_fits(gf, sampler, burn=None, sample=True,
                     plot_filename=output_base + '.fits')
-    print("Plotting conformation timecourses")
-    plot_conformations(gf, sampler, burn=None, sample=True,
-                       plot_filename=output_base + '.confs')
+    #print("Plotting conformation timecourses")
+    #plot_conformations(gf, sampler, burn=None, sample=True,
+    #                   plot_filename=output_base + '.confs')
     #plot_emcee_fits_subplots(gf, sampler)
 
