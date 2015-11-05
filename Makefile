@@ -10,6 +10,7 @@ x140320 := $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/mcmc
 x140318 := $(CODEDIR)/plots/x140318_Bax_liposome_titration/mcmc
 x141119 := $(CODEDIR)/plots/x141119_Bax_Bid_saturation/mcmc
 x141203 := $(CODEDIR)/plots/x141203_Bax_Bax_FRET/mcmc
+x150513 := $(CODEDIR)/plots/x150513_54C_titration/mcmc
 
 figures: \
 		$(FIGDIR)/141119_Bid_20nm_timecourses.pdf \
@@ -90,6 +91,10 @@ pt_141203_54C: $(x141203)/pt_141203_54C.deps.txt
 pt_141203_126C: $(x141203)/pt_141203_126C.deps.txt
 -include $(x141203)/pt_141203_126C.deps.txt
 
+# See comments for pt_140320, above
+pt_150513: $(x150513)/pt_150513.deps.txt
+-include $(x150513)/pt_150513.deps.txt
+
 # Running this script generates both the dependency list and the .yaml files
 # specifying the fit parameters for each individual model
 %.deps.txt: %.fit.ensemble
@@ -101,7 +106,7 @@ pt_141203_126C: $(x141203)/pt_141203_126C.deps.txt
 %.mcmc: $(call to-md5, %.fit)
 	python -m tbidbaxlipo.pt.compile_models $(call from-md5, $<)
 	#bsub -q $(PQUEUE) -n 50 -W 12:00 -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1
-	qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err -pe orte 128 mpirun python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos
+	qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err -pe orte 312 mpirun python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos
 
 # Don't delete the .md5 files! Without this rule they are treated as
 # intermediates and deleted.
