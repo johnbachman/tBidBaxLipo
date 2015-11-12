@@ -39,7 +39,7 @@ ev_list1 = [ev_list_item for ev_list_item in ev_list
 
 names, ev = zip(*ev_list1)
 ev_vals, ev_errs = zip(*ev)
-ev_vals = -np.array(ev_vals)
+ev_vals = np.array(ev_vals) - np.max(ev_vals)
 
 plt.ion()
 plt.figure(figsize=(1.5, 1), dpi=300)
@@ -80,7 +80,7 @@ ev_list2 = [ev_list_item for ev_list_item in ev_list
 
 names, ev = zip(*ev_list2)
 ev_vals, ev_errs = zip(*ev)
-ev_vals = -np.array(ev_vals)
+ev_vals = np.array(ev_vals) - np.max(ev_vals)
 
 plt.figure(figsize=(1.5, 3), dpi=300)
 
