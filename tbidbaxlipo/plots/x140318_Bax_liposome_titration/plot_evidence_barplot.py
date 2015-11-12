@@ -62,7 +62,7 @@ plt.barh(13, ev_vals[13], color='g')
 plt.barh(15, ev_vals[15], color='g')
 """
 plt.barh(range(len(ev_vals)), ev_vals, xerr=ev_errs, ecolor='k')
-plt.xlabel(r'$\Delta$ log(Marg. Lkl.)')
+plt.xlabel(r'$\mathsf{\Delta}$ log(Marg. Lkl.)')
 plt.xticks(rotation='vertical')
 parsed_names = [model_aliases[re.match('pt_140318_(\w*)\.mcmc', name).groups()[0]]
                 for name in names]
@@ -103,7 +103,7 @@ plt.barh(13, ev_vals[13], color='g')
 plt.barh(15, ev_vals[15], color='g')
 """
 plt.barh(range(len(ev_vals)), ev_vals, xerr=ev_errs, ecolor='k')
-plt.xlabel(r'$\Delta$ log(Marg. Lkl.)')
+plt.xlabel(r'$\mathsf{\Delta}$ log(Marg. Lkl.)')
 plt.xticks(rotation='vertical')
 parsed_names = [model_aliases[re.match('pt_140318_(\w*)\.mcmc', name).groups()[0]]
                 for name in names]
