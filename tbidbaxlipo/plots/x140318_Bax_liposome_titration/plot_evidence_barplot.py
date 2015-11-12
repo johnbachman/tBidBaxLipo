@@ -39,7 +39,7 @@ ev_list1 = [ev_list_item for ev_list_item in ev_list
 
 names, ev = zip(*ev_list1)
 ev_vals, ev_errs = zip(*ev)
-ev_vals = -np.array(ev_vals)
+ev_vals = np.max(ev_vals) - np.array(ev_vals)
 
 plt.ion()
 plt.figure(figsize=(1.5, 1), dpi=300)
@@ -62,11 +62,12 @@ plt.barh(13, ev_vals[13], color='g')
 plt.barh(15, ev_vals[15], color='g')
 """
 plt.barh(range(len(ev_vals)), ev_vals, xerr=ev_errs, ecolor='k')
-plt.xlabel('-log(Marg. Lkl.)')
+plt.xlabel(r'$\mathsf{\Delta}$ log(Marg. Lkl.)')
 plt.xticks(rotation='vertical')
 parsed_names = [model_aliases[re.match('pt_140318_(\w*)\.mcmc', name).groups()[0]]
                 for name in names]
 plt.yticks(np.arange(len(ev_vals)) + 0.4, parsed_names)
+plt.xlim(left=0)
 plt.subplots_adjust(bottom=0.42, left=0.17, right=0.95, top=0.95)
 ax = plt.gca()
 format_axis(ax)
@@ -80,7 +81,7 @@ ev_list2 = [ev_list_item for ev_list_item in ev_list
 
 names, ev = zip(*ev_list2)
 ev_vals, ev_errs = zip(*ev)
-ev_vals = -np.array(ev_vals)
+ev_vals = np.max(ev_vals) - np.array(ev_vals)
 
 plt.figure(figsize=(1.5, 3), dpi=300)
 
@@ -102,10 +103,11 @@ plt.barh(13, ev_vals[13], color='g')
 plt.barh(15, ev_vals[15], color='g')
 """
 plt.barh(range(len(ev_vals)), ev_vals, xerr=ev_errs, ecolor='k')
-plt.xlabel('-log(Marg. Lkl.)')
+plt.xlabel(r'$\mathsf{\Delta}$ log(Marg. Lkl.)')
 plt.xticks(rotation='vertical')
 parsed_names = [model_aliases[re.match('pt_140318_(\w*)\.mcmc', name).groups()[0]]
                 for name in names]
+plt.xlim(left=0)
 plt.yticks(np.arange(len(ev_vals)) + 0.4, parsed_names)
 plt.subplots_adjust(bottom=0.21, left=0.17, right=0.95, top=0.95)
 ax = plt.gca()
