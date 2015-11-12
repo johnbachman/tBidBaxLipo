@@ -7,7 +7,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from preprocess_data import data_to_fit, bg_time, lipo_concs_to_fit
 from tbidbaxlipo.util import fitting, set_fig_params_for_publication, \
-                             format_axis
+                             format_axis, fontsize
 from scipy.stats import linregress
 
 def plot_exp_fits(time, data, concs, plot_fits=True, fmax_value=None):
@@ -98,7 +98,7 @@ def plot_k_fmax_varying(fmax_arr, k_arr, conc_arr):
     set_fig_params_for_publication()
     plt.figure('exp_fits_fmax_var', figsize=(1.9, 1.5), dpi=300)
     # Plot Fmax vs. concentration on the left-hand axis
-    plt.plot(conc_arr[:-1], fmax_arr[:-1], marker='o', markersize=3,
+    plt.plot(conc_arr, fmax_arr, marker='o', markersize=3,
              color='b')
     plt.xlabel('[Liposomes] (nM)')
     ax1 = plt.gca()
@@ -111,7 +111,7 @@ def plot_k_fmax_varying(fmax_arr, k_arr, conc_arr):
     # Plot k vs. concentration on the right-hand axis
     ax2 = ax1.twinx()
     ax2.set_xlim([0.05, 30])
-    ax2.plot(conc_arr[:-1], k_arr[:-1], marker='o', markersize=3, color='r')
+    ax2.plot(conc_arr, k_arr, marker='o', markersize=3, color='r')
     ax2.set_ylabel(r'k (sec $\times 10^{-3}$)', color='r')
     ax2.set_yscale('log')
     for tl in ax2.get_yticklabels():
@@ -127,44 +127,53 @@ def plot_k_fmax_fixed(k_arr, conc_arr):
     set_fig_params_for_publication()
     plt.figure('exp_fits_fmax_fixed', figsize=(1.5, 1.5), dpi=300)
     # Plot k vs. concentration on the left-hand axis
-    plt.plot(conc_arr[:-1], k_arr[:-1], marker='o', markersize=3,
+    plt.plot(conc_arr, k_arr, marker='o', markersize=3,
              color='r', linestyle='', zorder=3)
     plt.xlabel('[Liposomes] (nM)')
     ax1 = plt.gca()
-    ax1.set_ylabel(r'k (sec$^{-1}$)', color='r')
+    ax1.set_ylabel(r'k (sec$^{-1}$)') #, color='r')
     ax1.set_xscale('log')
     ax1.set_xlim([0.05, 30])
     ax1.set_yscale('log')
     ax1.set_ylim([1e-6, 1.2e-3])
-    for tl in ax1.get_yticklabels():
-        tl.set_color('r')
+    #for tl in ax1.get_yticklabels():
+    #    tl.set_color('r')
     format_axis(ax1)
     plt.subplots_adjust(left=0.30, bottom=0.19, right=0.93, top=0.93)
 
     # Fit to a line
-    lin_fit = linregress(conc_arr[:-1], k_arr[:-1])
-    plt.plot(conc_arr[:-1], lin_fit[0] * conc_arr[:-1] + lin_fit[1], color='b')
-    #print("---")
-    #print("Linear fit:")
-    #print(lin_fit)
+    lin_fit = linregress(conc_arr, k_arr)
+    see = lin_fit[4]
+    mx = conc_arr.mean()
+    sx2 = ((conc_arr - mx)**2).sum()
+    sd_slope = see * np.sqrt(1./sx2)
 
-    lslope = fitting.Parameter(1.0)
-    lintercept = fitting.Parameter(np.exp(-9.6))
-    def power_law(x):
-        return lintercept() * x ** lslope()
-    plaw_fit = fitting.fit(power_law, [lslope, lintercept], k_arr[:-1],
-                           conc_arr[:-1])
+    plt.plot(conc_arr, lin_fit[0] * conc_arr + lin_fit[1], color='b',
+             label='Linear fit')
+    print("---")
+    print("Linear fit of k:")
+    print(lin_fit)
+    print("Slope: %s +/- %s" % (lin_fit[0], sd_slope))
+
+    #lslope = fitting.Parameter(1.0)
+    #lintercept = fitting.Parameter(np.exp(-9.6))
+    #def power_law(x):
+    #    return lintercept() * x ** lslope()
+    #plaw_fit = fitting.fit(power_law, [lslope, lintercept], k_arr[:-1],
+    #                       conc_arr[:-1])
     #print("----")
     #print("Power law fit (y = int * x ** slope):")
     #print("intercept: %s" % lintercept())
     #print("slope: %s" % lslope())
-    plt.plot(conc_arr[:-1], power_law(conc_arr[:-1]), color='g')
+    #plt.plot(conc_arr[:-1], power_law(conc_arr[:-1]), color='g')
 
-    log_fit = linregress(np.log(conc_arr[:-1]), np.log(k_arr[:-1]))
-    plt.plot(conc_arr[:-1],
-             np.exp(log_fit[1]) * (conc_arr[:-1] ** log_fit[0]), color='k')
-    #print("----")
-    #print("Log-log linear fit:")
+    log_fit = linregress(np.log(conc_arr), np.log(k_arr))
+    plt.plot(conc_arr,
+             np.exp(log_fit[1]) * (conc_arr ** log_fit[0]), color='g',
+             label='Log-linear fit')
+    plt.legend(loc='lower right', fontsize=fontsize, frameon=False)
+    print("----")
+    print("Log-log linear fit:")
     print(log_fit)
 
 if __name__ == '__main__':
@@ -182,6 +191,10 @@ if __name__ == '__main__':
     (fmax_arr, k_arr, sum_sq_err) = plot_exp_fits(bg_time, data_to_fit,
                                         lipo_concs_to_fit, plot_fits=True,
                                         fmax_value=3.85)
+    print "Fmax fixed: fmax array"
+    print fmax_arr
+    print "Fmax fixed: k array"
+    print k_arr
     plot_k_fmax_fixed(k_arr, lipo_concs_to_fit)
     plt.figure('exp_fits_fmax_fixed')
     plt.savefig('140318_exp_fits_lstsq_fmax_fixed.pdf')
