@@ -1,0 +1,31 @@
+data:
+    module: tbidbaxlipo.plots.x150513_54C_titration.preprocess_data
+    data_var: data
+    data_sigma_var: data_sigma
+    initial_condition_var: bax_concs
+    time_var: time
+    nbd_lbound: nbd_lbound
+    nbd_ubound: nbd_ubound
+    nbd_f0: nbd_f0
+model:
+    bidtranslocation: [1]
+    baxtranslocation: [1]
+    activation: [3]
+    reversal: [0]
+    dimerization: [2]
+    nbd: [3]
+model_observable: [NBD]
+global_initial_conditions:
+    Bax_0: 0
+    tBid_0: 20.
+    c0_scaling: 1.0
+    Vesicles_0: 1.9
+local_initial_condition: Bax_NBD_0
+global_params: all
+local_params: []
+ntemps: 25
+highest_temp: -5
+nwalkers: 400
+nburnin: 100
+nsample: 100
+thin: 1
