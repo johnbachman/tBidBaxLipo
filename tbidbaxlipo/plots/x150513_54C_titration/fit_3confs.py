@@ -84,7 +84,7 @@ def global_fluorescence_det_fits(data_dict):
 
 if __name__ == '__main__':
     plt.ion()
-    gf = global_fluorescence_fits(data_dict)
+    gf = global_fluorescence_det_fits(data_dict)
     plt.figure()
     t = data_dict['nt_62']
     data_list = [data_dict[key] for key in
