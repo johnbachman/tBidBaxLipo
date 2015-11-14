@@ -20,7 +20,8 @@ figures: \
 		$(FIGDIR)/140320_exp_fits.pdf \
 		$(FIGDIR)/140318_exp_fits_lstsq_fmax_var.pdf \
 		$(FIGDIR)/140429_exact_comp_bind_fit.pdf \
-		$(FIGDIR)/140429_gouy_chap_fit.pdf
+		$(FIGDIR)/140429_gouy_chap_fit.pdf \
+		$(FIGDIR)/model_predictions_bax_titration.pdf
 
 deploy:
 	rsync -av results/figures/ ~/Dropbox/Bachman-Sorger\ Talks\ and\ Papers/Bachman-Kale\ Bax\ kinetics/figures
@@ -235,3 +236,8 @@ $(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_gouy_chap.mcmc: \
 		$(CODEDIR)/data/140429_Bid_membrane_FRET.xlsx
 	python $(CODEDIR)/plots/x140429_Bid_membrane_FRET/gouy_chap_mcmc.py sample $(CODEDIR)/plots/x140429_Bid_membrane_FRET/140429_gouy_chap.mcmc
 
+$(FIGDIR)/model_predictions_bax_titration.pdf: \
+        $(CODEDIR)/plots/model_predictions_bax_titration.py
+	python $(CODEDIR)/plots/model_predictions_bax_titration.py
+	mv *.pdf $(FIGDIR)
+	mv *.png $(FIGDIR)
