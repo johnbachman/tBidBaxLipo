@@ -21,7 +21,8 @@ figures: \
 		$(FIGDIR)/140318_exp_fits_lstsq_fmax_var.pdf \
 		$(FIGDIR)/140429_exact_comp_bind_fit.pdf \
 		$(FIGDIR)/140429_gouy_chap_fit.pdf \
-		$(FIGDIR)/model_predictions_bax_titration.pdf
+		$(FIGDIR)/model_predictions_bax_titration.pdf \
+		$(FIGDIR)/model_predictions_lipo_titration.pdf
 
 deploy:
 	rsync -av results/figures/ ~/Dropbox/Bachman-Sorger\ Talks\ and\ Papers/Bachman-Kale\ Bax\ kinetics/figures
@@ -241,3 +242,10 @@ $(FIGDIR)/model_predictions_bax_titration.pdf: \
 	python $(CODEDIR)/plots/model_predictions_bax_titration.py
 	mv *.pdf $(FIGDIR)
 	mv *.png $(FIGDIR)
+
+$(FIGDIR)/model_predictions_lipo_titration.pdf: \
+        $(CODEDIR)/plots/model_predictions_lipo_titration.py
+	python $(CODEDIR)/plots/model_predictions_lipo_titration.py
+	mv *.pdf $(FIGDIR)
+	mv *.png $(FIGDIR)
+

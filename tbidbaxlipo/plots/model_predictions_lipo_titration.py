@@ -6,9 +6,6 @@ from tbidbaxlipo.util import fontsize, set_fig_params_for_publication
 
 set_fig_params_for_publication()
 
-plt.ion()
-
-
 color_list = [
     '#d73027',
     '#fc8d59',
@@ -18,12 +15,14 @@ color_list = [
     '#91bfdb',
     '#4575b4'
 ]
+color_list.reverse()
+tmax = 3e4
 
 # A function for simulating a titration
 def lipo_titration(builder, ax):
-    t = np.linspace(0, 1e4, 1e3)
+    t = np.linspace(0, tmax, 1e3)
     sol = Solver(bd.model, t)
-    lipo_concs = np.logspace(1.5, -1, 7)
+    lipo_concs = np.logspace(-1, 1.5, 7)
     for i, lipo_conc in enumerate(lipo_concs):
         bd['Vesicles_0'].value = lipo_conc
         sol.run()
@@ -35,7 +34,7 @@ def lipo_titration(builder, ax):
 f, ((ax1, ax2)) = plt.subplots(1, 2, sharex=True, sharey=True,
                                            figsize=(2, 1.1), dpi=300)
 ax1.set_ylim(0, 5)
-ax2.set_xlim(-200, 1e4)
+ax2.set_xlim(-500, tmax)
 
 # Simplest model (M1)
 model_dict = {
@@ -90,7 +89,7 @@ f.text(0.06, 0.5, r'\% Inserted Bax', ha='center', va='center',
          rotation='vertical', fontsize=fontsize)
 
 vert = 0.5
-horiz = 5000
+horiz = tmax / 2.
 ax1.text(horiz, vert, 'Partitioning (M1)', ha='center',
          fontsize=fontsize)
 ax2.text(horiz, vert, 'Lipo sites (M3)', fontsize=fontsize,
