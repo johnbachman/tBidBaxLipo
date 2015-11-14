@@ -5,7 +5,7 @@ from scipy.stats import linregress
 
 from tbidbaxlipo.util.plate_assay import plot_all, TIME, VALUE
 from tbidbaxlipo.util import fitting, colors, set_fig_params_for_publication, \
-                             format_axis
+                             format_axis, fontsize
 from preprocess_data import bim_bh3, bid_80, bid_40, bid_20, bid_10, \
                             bid_5, bid_2, bid_0, bax_concs, bid_concs, \
                             bg_averages, bg_diff, data_matrix, data_norm
@@ -54,7 +54,8 @@ def plot_data():
     plot_all(bid_0)
     plt.title('Bid 0 nM')
 
-def plot_mm(k_data, bid_concs, bax_concs):
+
+def plot_mm(k_data, bid_concs, bax_concs, plot_filename=None):
     # Create the figure
     fig = plt.figure('mm fit', figsize=(1.5, 1.5), dpi=300)
     ax = fig.gca()
@@ -104,7 +105,44 @@ def plot_mm(k_data, bid_concs, bax_concs):
     ax.set_xscale('log')
     format_axis(ax)
 
-    #plt.figure('KM')
+    #max_rate_list = []
+    #for bid_ix, bid_conc in enumerate(bid_concs):
+    #    km = km_list[bid_ix]
+    #    kcat = kcat_list[bid_ix]
+    #    v0 = v0_list[bid_ix]
+    #   #max_rate = ((kcat * bid_conc) / km) + v0
+    #    max_rate = (kcat * bid_conc) + v0
+    #    max_rate_list.append(max_rate)
+
+    kcat_fig = plt.figure('kcat', figsize=(1.5, 1.5), dpi=300)
+    kcat_ax = kcat_fig.gca()
+    #kcat_ax.plot(bid_concs[1:], max_rate_list[1:], marker='o')
+    max_rate_list = [k_data[i, 0] for i in range(len(bid_concs))]
+    kcat_ax.plot(bid_concs, max_rate_list, marker='o', markersize=3,
+                 label='Observed $k$')
+
+    #kcat_ax.set_xscale('log')
+    kcat_ax.set_xlabel('[cBid]')
+    kcat_ax.set_ylabel('Rate')
+    kcat_ax.set_ylabel(r'k (sec$^{-1} \times 10^{-5}$)')
+    kcat_ax.set_ylim([-1e-5, 37e-5])
+    kcat_ax.set_yticks(np.linspace(0, 35e-5, 8))
+    kcat_ax.set_yticklabels([int(f) for f in np.linspace(0, 35, 8)])
+    kcat_ax.set_xlim(-2, 82)
+    # Define line connecting 0 Bid and 2.5 Bid concs
+    bid_slope = (max_rate_list[1] - max_rate_list[0]) / float(bid_concs[1])
+    kcat_ax.plot(bid_concs, bid_slope * bid_concs + max_rate_list[0],
+                 color='r', label='Fixed $k_{cat}$')
+    plt.legend(loc='lower right', frameon=False, fontsize=fontsize)
+    kcat_fig.subplots_adjust(left=0.22, bottom=0.2)
+    format_axis(kcat_ax)
+
+    if plot_filename:
+        fig.savefig('%s.pdf' % plot_filename)
+        fig.savefig('%s.png' % plot_filename, dpi=300)
+        kcat_fig.savefig('%s_kcat.pdf' % plot_filename)
+        kcat_fig.savefig('%s_kcat.png' % plot_filename, dpi=300)
+
     #plt.plot(bid_concs[1:], km_list[1:], marker='o')
     #plt.figure('Kcat')
     #plt.plot(bid_concs[1:], kcat_list[1:], marker='o')
@@ -192,13 +230,14 @@ def plot_bax_titration_timecourses(data_matrix, bid_ix, k_data, fmax_data,
             continue
         t = data_matrix[bid_ix, bax_ix, TIME, :]
         v = data_matrix[bid_ix, bax_ix, VALUE, :]
-        ax.plot(t, v, alpha=0.9, linewidth=0.5)
+        ax.plot(t, v, alpha=0.9, linewidth=1,
+                label='%d nM Bax' % bax_concs[bax_ix])
         # Plot exponential fits
         k = k_data[bid_ix, bax_ix]
         fmax = fmax_data[bid_ix, bax_ix]
         fit = tf.OneExpFmax()
         ax.plot(t, fit.fit_func(t, [k, fmax]) + 1, 'k')
-
+    plt.legend(loc='lower right', fontsize=fontsize, frameon=False)
     ax.set_xticks(np.linspace(0, 2.5e4, 6))
     ax.set_xticklabels([int(f) for f in np.linspace(0, 25, 6)])
     ax.set_ylabel('$F/F_0$')
@@ -342,25 +381,38 @@ if __name__ == '__main__':
     # Fit the data with exponential nctions
     (k_data, k_sd_data, fmax_data, fmax_sd_data) = calc_exp_fits(data_norm)
 
+    # Plot k scaling with Michaelis-Menten local fits
+    plot_mm(k_data, bid_concs, bax_concs)
+    sys.exit()
+
     # Plot the scaling of k vs. [Bax] for all [Bid]
     plot_k_data(k_data[1:], k_sd_data[1:], bid_concs[1:], bax_concs,
                 plot_filename='141119_k_scaling')
 
     # Plot the scaling of k vs. [Bax] for all [Bid]
-    plot_k_data(k_data[0:], k_sd_data[0:], bid_concs[0:], bax_concs,
-                plot_filename='141119_k_scaling')
-    sys.exit()
+    #plot_k_data(k_data[0:], k_sd_data[0:], bid_concs[0:], bax_concs,
+    #            plot_filename='141119_k_scaling')
+    #sys.exit()
 
     # Plot the scaling of fmax vs. [Bax] for all [Bid]
     plot_fmax_data(fmax_data[1:], bid_concs[1:], bax_concs,
                    plot_filename='141119_fmax_scaling')
 
     # Plot k scaling with Michaelis-Menten local fits
-    plot_mm(k_data, bid_concs, bax_concs)
+    plot_mm(k_data, bid_concs, bax_concs, plot_filename='141119_k_mm_fits')
+
+    # Plot raw timecourses with fits
+    plot_bax_titration_timecourses(data_norm, 1, k_data, fmax_data,
+                plot_filename='141119_Bid_2nm_timecourses')
 
     # Plot raw timecourses with fits
     plot_bax_titration_timecourses(data_norm, 4, k_data, fmax_data,
                 plot_filename='141119_Bid_20nm_timecourses')
+
+
+    # Plot raw timecourses with fits
+    plot_bax_titration_timecourses(data_norm, 6, k_data, fmax_data,
+                plot_filename='141119_Bid_80nm_timecourses')
 
     # Plot k and fmax scaling
     plot_k_fmax_scaling(k_data, fmax_data, 4, bax_concs,
