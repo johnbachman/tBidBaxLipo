@@ -231,7 +231,7 @@ def plot_chain(flatchain, lnprob):
     corner.corner(flatchain, labels=['V', 'B', 'PC', 'FRET', 'F0'] )
     plt.subplots_adjust(right=0.96, top=0.96)
 
-def plot_saturation_binding_predictions(flatchain):
+def plot_saturation_binding_predictions(flatchain, plot_filename=None):
     # Plot binding curve for different liposome concentrations
     plt.figure('Lipobinding', figsize=(1.5, 1.5), dpi=300)
     num_tot_steps = flatchain.shape[0]
@@ -268,6 +268,10 @@ def plot_saturation_binding_predictions(flatchain):
     # Plot mean of predictions
     plt.plot(lipo_pred, np.mean(ypred_samples, axis=0), color='r')
 
+    if plot_filename:
+        plt.savefig('%s.pdf' % plot_filename)
+        plt.savefig('%s.png' % plot_filename, dpi=300)
+
 if __name__ == '__main__':
     usage_msg =  "\nUsage:\n"
     usage_msg += "To run the fits and save chain to a pickle file:\n"
@@ -289,7 +293,8 @@ if __name__ == '__main__':
         with open(pck_filename) as f:
             sampler = pickle.load(f)
         plot_chain(sampler.flatchain[0], sampler.lnprobability[0])
-        plot_saturation_binding_predictions(sampler.flatchain[0])
+        plot_saturation_binding_predictions(sampler.flatchain[0],
+                                            '140429_gouy_chap_bind_pred')
         plt.figure('Fits')
         plt.savefig('140429_gouy_chap_fit.pdf')
         plt.figure(3)
