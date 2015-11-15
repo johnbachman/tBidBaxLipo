@@ -11,6 +11,44 @@ from preprocess_data import bim_bh3, bid_80, bid_40, bid_20, bid_10, \
                             bg_averages, bg_diff, data_matrix, data_norm
 from tbidbaxlipo.plots import titration_fits as tf
 
+#plt.ion()
+
+brew_colors11 = [
+    '#a50026',
+    '#d73027',
+    '#f46d43',
+    '#fdae61',
+    '#fee090',
+    '#ffffbf',
+    '#e0f3f8',
+    '#abd9e9',
+    '#74add1',
+    '#4575b4',
+    '#313695',
+]
+brew_colors11.reverse()
+
+brew_colors7 = [
+    '#d73027',
+    '#fc8d59',
+    '#fee090',
+    '#ffffbf',
+    '#e0f3f8',
+    '#91bfdb',
+    '#4575b4',
+]
+brew_colors7.reverse()
+
+brew_colors6 = [
+    '#d73027',
+    '#fc8d59',
+    '#fee090',
+    '#e0f3f8',
+    '#91bfdb',
+    '#4575b4',
+]
+brew_colors6.reverse()
+
 def plot_bg():
     plt.figure()
     plot_all(bg_averages)
@@ -64,7 +102,8 @@ def plot_mm(k_data, bid_concs, bax_concs, plot_filename=None):
     kcat_list = []
     v0_list = []
 
-    for bid_ix, bid_conc in enumerate(bid_concs):
+    for bid_ix in range(1, len(bid_concs)):
+        bid_conc = bid_concs[bid_ix]
         # Fitting parameters
         kcat = fitting.Parameter(0.06)
         km = fitting.Parameter(250.)
@@ -85,14 +124,15 @@ def plot_mm(k_data, bid_concs, bax_concs, plot_filename=None):
         v0_list.append(v0())
 
         # Plotting
-        c = colors[bid_ix]
+        #c = colors[bid_ix]
+        c = brew_colors6[bid_ix-1]
         bid_str = '2.5' if bid_conc == 2.5 else str(int(bid_conc))
-        # Plot the data
-        ax.plot(bax_concs, bid_k, marker='o', color=c,
-                 linestyle='', markersize=3)
         # Plot the MM fit
         ax.plot(bax_concs, fit_func(bax_concs), color=c,
                  label='%s nM' % bid_str)
+        # Plot the data
+        ax.plot(bax_concs, bid_k, marker='o', color=c,
+                linestyle='', markersize=3)
 
     # Format the plot
     plt.subplots_adjust(left=0.21, bottom=0.19)
@@ -122,7 +162,7 @@ def plot_mm(k_data, bid_concs, bax_concs, plot_filename=None):
                  label='Observed $k$')
 
     #kcat_ax.set_xscale('log')
-    kcat_ax.set_xlabel('[cBid]')
+    kcat_ax.set_xlabel('[cBid] (nM)')
     kcat_ax.set_ylabel('Rate')
     kcat_ax.set_ylabel(r'k (sec$^{-1} \times 10^{-5}$)')
     kcat_ax.set_ylim([-1e-5, 37e-5])
@@ -315,7 +355,8 @@ def plot_k_data(k_data, k_sd_data, bid_concs, bax_concs, plot_filename=None):
     fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
     ax = fig.gca()
 
-    for bid_ix, bid_conc in enumerate(bid_concs):
+    for bid_ix in reversed(range(len(bid_concs))):
+        bid_conc = bid_concs[bid_ix]
         # Titration k data for this Bid concentration
         bid_k = k_data[bid_ix, :]
         bid_k_sd = k_sd_data[bid_ix, :]
@@ -323,7 +364,7 @@ def plot_k_data(k_data, k_sd_data, bid_concs, bax_concs, plot_filename=None):
         bid_k_lb = bid_k - 10 ** (np.log10(bid_k) - bid_k_sd)
         #import ipdb; ipdb.set_trace()
         # Plotting
-        c = colors[bid_ix]
+        c = brew_colors6[bid_ix]
         bid_str = '2.5' if bid_conc == 2.5 else str(int(bid_conc))
         # Plot the data
         ax.errorbar(bax_concs, bid_k, yerr=[bid_k_lb, bid_k_ub], marker='o',
@@ -344,6 +385,38 @@ def plot_k_data(k_data, k_sd_data, bid_concs, bax_concs, plot_filename=None):
         fig.savefig('%s.pdf' % plot_filename)
         fig.savefig('%s.png' % plot_filename, dpi=300)
 
+    # Now, plot the same data looking at the scaling with Bid
+    bid_fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
+    ax = bid_fig.gca()
+
+    for bax_ix in reversed(range(len(bax_concs))):
+        bax_conc = bax_concs[bax_ix]
+        # Titration k data for this Bax concentration
+        bax_k = k_data[:, bax_ix]
+        bax_k_sd = k_sd_data[:, bax_ix]
+        bax_k_ub = 10 ** (np.log10(bax_k) + bax_k_sd) - bax_k
+        bax_k_lb = bax_k - 10 ** (np.log10(bax_k) - bax_k_sd)
+        #import ipdb; ipdb.set_trace()
+        # Plotting
+        c = brew_colors11[bax_ix]
+        # Plot the data
+        ax.errorbar(bid_concs, bax_k, yerr=[bax_k_lb, bax_k_ub], marker='o',
+                    color=c, linestyle='-', markersize=3, capsize=3)
+
+    # Format the plot
+    plt.subplots_adjust(left=0.21, bottom=0.19)
+    ax.set_xlabel('[cBid] (nM)')
+    ax.set_ylabel(r'$k$ (sec$^{-1} \times 10^{-5}$)')
+    ax.set_ylim([-1e-5, 37e-5])
+    ax.set_xlim([-2, 82])
+    ax.set_yticks(np.linspace(0, 35e-5, 8))
+    ax.set_yticklabels([int(f) for f in np.linspace(0, 35, 8)])
+    format_axis(ax)
+
+    if plot_filename:
+        bid_fig.savefig('%s_bid.pdf' % plot_filename)
+        bid_fig.savefig('%s_bid.png' % plot_filename, dpi=300)
+
 def plot_fmax_data(fmax_data, bid_concs, bax_concs, plot_filename=None):
     fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
     ax = fig.gca()
@@ -353,7 +426,8 @@ def plot_fmax_data(fmax_data, bid_concs, bax_concs, plot_filename=None):
         bid_fmax = fmax_data[bid_ix, :]
 
         # Plotting
-        c = colors[bid_ix]
+        #c = colors[bid_ix]
+        c = brew_colors6[bid_ix]
         bid_str = '2.5' if bid_conc == 2.5 else str(int(bid_conc))
         # Plot the data
         ax.plot(bax_concs, bid_fmax, marker='o', color=c,
@@ -377,13 +451,9 @@ def plot_fmax_data(fmax_data, bid_concs, bax_concs, plot_filename=None):
 if __name__ == '__main__':
     #plot_data()
     set_fig_params_for_publication()
-    plt.ion()
+    #plt.ion()
     # Fit the data with exponential nctions
     (k_data, k_sd_data, fmax_data, fmax_sd_data) = calc_exp_fits(data_norm)
-
-    # Plot k scaling with Michaelis-Menten local fits
-    plot_mm(k_data, bid_concs, bax_concs)
-    sys.exit()
 
     # Plot the scaling of k vs. [Bax] for all [Bid]
     plot_k_data(k_data[1:], k_sd_data[1:], bid_concs[1:], bax_concs,
@@ -399,7 +469,8 @@ if __name__ == '__main__':
                    plot_filename='141119_fmax_scaling')
 
     # Plot k scaling with Michaelis-Menten local fits
-    plot_mm(k_data, bid_concs, bax_concs, plot_filename='141119_k_mm_fits')
+    plot_mm(k_data, bid_concs, bax_concs,
+            plot_filename='141119_k_mm_fits')
 
     # Plot raw timecourses with fits
     plot_bax_titration_timecourses(data_norm, 1, k_data, fmax_data,

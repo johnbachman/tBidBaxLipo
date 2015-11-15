@@ -111,7 +111,8 @@ pt_141203_126C: $(x141203)/pt_141203_126C.deps.txt
 
 # ==== FIGURES ==============================================
 
-$(FIGDIR)/141119_Bid_20nm_timecourses.pdf:
+$(FIGDIR)/141119_Bid_20nm_timecourses.pdf: \
+        $(CODEDIR)/plots/x141119_Bax_Bid_saturation/plot_exp_fits.py
 	python $(CODEDIR)/plots/x141119_Bax_Bid_saturation/plot_exp_fits.py
 	mv *.pdf $(FIGDIR)
 	mv *.png $(FIGDIR)
