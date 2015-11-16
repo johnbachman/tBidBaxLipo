@@ -25,7 +25,9 @@ figures: \
 		$(FIGDIR)/model_predictions_lipo_titration.pdf \
 		$(FIGDIR)/140724_requench_bid_2.pdf \
 		$(FIGDIR)/140710_requench_bax.pdf \
-		$(FIGDIR)/requenching_examples.pdf
+		$(FIGDIR)/requenching_examples.pdf \
+		$(FIGDIR)/140318_evidence_barplot1.pdf \
+		$(FIGDIR)/140320_evidence_barplot.pdf
 
 deploy:
 	rsync -av results/figures/ ~/Dropbox/Bachman-Sorger\ Talks\ and\ Papers/Bachman-Kale\ Bax\ kinetics/figures
@@ -269,6 +271,20 @@ $(FIGDIR)/140710_requench_bax.pdf: \
 
 $(FIGDIR)/requenching_examples.pdf: $(CODEDIR)/util/dpx_assay.py
 	python $(CODEDIR)/util/dpx_assay.py
+	mv *.pdf $(FIGDIR)
+	mv *.png $(FIGDIR)
+
+$(FIGDIR)/140318_evidence_barplot1.pdf: \
+        $(CODEDIR)/plots/x140318_Bax_liposome_titration/evidence_list.pck \
+        $(CODEDIR)/plots/x140318_Bax_liposome_titration/plot_evidence_barplot.py
+	python $(CODEDIR)/plots/x140318_Bax_liposome_titration/plot_evidence_barplot.py $(CODEDIR)/plots/x140318_Bax_liposome_titration/evidence_list.pck
+	mv *.pdf $(FIGDIR)
+	mv *.png $(FIGDIR)
+
+$(FIGDIR)/140320_evidence_barplot.pdf: \
+        $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/evidence_list.pck \
+        $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/plot_evidence_barplot.py
+	python $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/plot_evidence_barplot.py $(CODEDIR)/plots/x140320_NBD_Bax_BimBH3_unlab_Bax_titration/evidence_list.pck
 	mv *.pdf $(FIGDIR)
 	mv *.png $(FIGDIR)
 
