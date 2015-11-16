@@ -206,12 +206,36 @@ def plot_chain(flatchain, lnprob):
     format_axis(ax)
     plt.subplots_adjust(bottom=0.18, left=0.25, right=0.94, top=0.94)
 
+    plt.figure(figsize=(1.1, 1), dpi=300)
+    plt.hist(flatchain[:, 1], bins=20, normed=True)
+    plt.xlabel('log$_{10}$(Lipid sites) (nM)')
+    plt.ylabel('Density')
+    plt.subplots_adjust(bottom=0.25, left=0.28)
+    ax = plt.gca()
+    format_axis(ax)
+
+    """
     # Triangle plots
-    #(tri_fig, axes) = plt.subplots(4, 4, figsize=(6, 6))
-    corner.corner(flatchain,
+    (tri_fig, tri_axes) = plt.subplots(4, 4, figsize=(3, 3), dpi=300)
+    corner.corner(flatchain, fig=tri_fig,
                     labels=['$log_{10}(K_D)$ (nM)', '$log_{10}(P)$ (nM)',
                             'Nonspec', 'FRET'])
-    plt.subplots_adjust(right=0.96, top=0.96)
+    for row_ix, row in enumerate(tri_axes):
+        for col_ix, ax in enumerate(row):
+            #format_axis(ax, label_padding=20)
+            ax.xaxis.set_ticks_position('bottom')
+            ax.yaxis.set_ticks_position('left')
+            ax.xaxis.set_tick_params(labelsize=fontsize, pad=1, length=1.5,
+                                     width=0.5)
+            ax.yaxis.set_tick_params(labelsize=fontsize, pad=1, length=1.5,
+                                     width=0.5)
+            ax.xaxis.label.set_size(fontsize)
+            ax.yaxis.label.set_size(fontsize)
+            ax.xaxis.set_label_coords(0.5, -0.5)
+            ax.yaxis.set_label_coords(-0.4, 0.5)
+    tri_fig.subplots_adjust(right=0.96, top=0.96, bottom=0.15, left=0.15,
+                            hspace=0.15, wspace=0.15)
+    """
 
 def plot_saturation_binding_predictions(flatchain, plot_filename=None):
     def binding_func(position, bid_tot, lipo_scale=1):
@@ -324,6 +348,10 @@ if __name__ == '__main__':
         plot_chain(sampler.flatchain[0], sampler.lnprobability[0])
         plot_saturation_binding_predictions(sampler.flatchain[0],
                                             '140429_exact_comp_bind_pred')
+        print "MAP:"
+        print np.max(sampler.lnprobability[0])
+        print "Max lkl:"
+        print np.max(sampler.lnlikelihood[0])
         plt.figure('Fits')
         plt.savefig('140429_exact_comp_bind_fit.pdf')
         plt.figure(3)
