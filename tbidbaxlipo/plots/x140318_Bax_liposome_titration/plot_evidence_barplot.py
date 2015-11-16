@@ -107,8 +107,11 @@ plt.barh(15, ev_vals[15], color='g')
 parsed_names = [model_aliases[re.match('pt_140318_(\w*)\.mcmc', name).groups()[0]]
                 for name in names]
 for m_ix, name in enumerate(parsed_names):
-    if name in ['M%d' % i for i in range(9, 17)]:
+    if name in ['M%d' % i for i in range(9, 13)]:
         plt.barh(m_ix, ev_vals[m_ix], color='r', xerr=ev_errs[m_ix],
+                 ecolor='k')
+    elif name in ['M%d' % i for i in range(13, 17)]:
+        plt.barh(m_ix, ev_vals[m_ix], color='m', xerr=ev_errs[m_ix],
                  ecolor='k')
     elif name in ['M%d' % i for i in range(4, 9)]:
         plt.barh(m_ix, ev_vals[m_ix], color='g', xerr=ev_errs[m_ix],
