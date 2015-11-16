@@ -5,10 +5,12 @@ from tbidbaxlipo.util import \
             set_fig_params_for_publication, format_axis, fontsize
 import re
 from tbidbaxlipo.models import model_aliases
+import sys
 
 set_fig_params_for_publication()
 
-with open('evidence_list.pck') as f:
+evidence_file = sys.argv[1]
+with open(evidence_file) as f:
     ev_list = cPickle.load(f)
 
 # Group 1:
@@ -102,11 +104,21 @@ plt.barh(14, ev_vals[14], color='b')
 plt.barh(13, ev_vals[13], color='g')
 plt.barh(15, ev_vals[15], color='g')
 """
-plt.barh(range(len(ev_vals)), ev_vals, xerr=ev_errs, ecolor='k')
-plt.xlabel(r'$\mathsf{\Delta}$ log(Marg. Lkl.)')
-plt.xticks(rotation='vertical')
 parsed_names = [model_aliases[re.match('pt_140318_(\w*)\.mcmc', name).groups()[0]]
                 for name in names]
+for m_ix, name in enumerate(parsed_names):
+    if name in ['M%d' % i for i in range(9, 17)]:
+        plt.barh(m_ix, ev_vals[m_ix], color='r', xerr=ev_errs[m_ix],
+                 ecolor='k')
+    elif name in ['M%d' % i for i in range(4, 9)]:
+        plt.barh(m_ix, ev_vals[m_ix], color='g', xerr=ev_errs[m_ix],
+                 ecolor='k')
+    else:
+        plt.barh(m_ix, ev_vals[m_ix], color='b', xerr=ev_errs[m_ix],
+                 ecolor='k')
+
+plt.xlabel(r'$\mathsf{\Delta}$ log(Marg. Lkl.)')
+plt.xticks(rotation='vertical')
 plt.xlim(left=0)
 plt.yticks(np.arange(len(ev_vals)) + 0.4, parsed_names)
 plt.subplots_adjust(bottom=0.21, left=0.17, right=0.95, top=0.95)
