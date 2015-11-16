@@ -3,9 +3,6 @@ from matplotlib import pyplot as plt
 import numpy as np
 from tbidbaxlipo.util.error_propagation import calc_ratio_mean_sd
 from tbidbaxlipo.util import fitting
-import pymc
-from pymc import Uniform, stochastic, deterministic, MCMC
-from pymc import Matplot
 import scipy.stats
 import itertools
 
@@ -237,6 +234,9 @@ def quenching_func(ka, kd, dpx_concs):
     return (1 + kd * dpx_concs) * (1 + ka * dpx_concs)
 
 def fit_std_curve_by_pymc(i_vals, i_sds, dpx_concs):
+    import pymc
+    from pymc import Uniform, stochastic, deterministic, MCMC
+    from pymc import Matplot
     # Define prior distributions for both Ka and Kd
     ka = Uniform('ka', lower=0, upper=1000)
     kd = Uniform('kd', lower=0, upper=1000)
@@ -279,7 +279,7 @@ def fit_std_curve_by_pymc(i_vals, i_sds, dpx_concs):
 
 def requenching_analysis(requench_file_list, requench_wells,
                          requench_dpx_concs, q_outs, fmax_avg, fmax_sd,
-                         ka, kd, dpx_0, bg_avgs=None):
+                         ka, kd, dpx_0, bg_avgs=None, do_plot=True):
     """Calculates and plots the quenching std curve from the raw ANTS data.
 
     Parameters
@@ -323,13 +323,14 @@ def requenching_analysis(requench_file_list, requench_wells,
                             np.std(well_values)
 
     # Plot the intensity values at each DPX concentration
-    plt.figure()
-    for well_index in range(num_wells):
-        plt.errorbar(requench_dpx_concs, requench_well_avgs[:, well_index],
-                     yerr=requench_well_sds[:, well_index])
-    plt.xlabel('[DPX] (M)')
-    plt.ylabel('ANTS Fluorescence (RFU)')
-    plt.title('ANTS Fluorescence vs. [DPX]')
+    if do_plot:
+        plt.figure()
+        for well_index in range(num_wells):
+            plt.errorbar(requench_dpx_concs, requench_well_avgs[:, well_index],
+                         yerr=requench_well_sds[:, well_index])
+        plt.xlabel('[DPX] (M)')
+        plt.ylabel('ANTS Fluorescence (RFU)')
+        plt.title('ANTS Fluorescence vs. [DPX]')
 
     # Now calculate the total quenching, I / F_max, for each well
     q_tot_by_well_avgs = np.zeros((num_dilutions, num_wells))
@@ -370,27 +371,28 @@ def requenching_analysis(requench_file_list, requench_wells,
     for well_index, well_name in enumerate(requench_wells):
         #if well_index < 30:
         #    continue
-        plt.figure()
-        #plt.subplot(6, 6, well_index+1)
-        plt.errorbar(q_outs, q_tot_by_well_avgs[:, well_index],
-                     q_tot_by_well_sds[:, well_index],
-                     linestyle='', color='k', linewidth=2)
-        plt.title('$Q_{total}$ vs. $Q_{out}$ for well %s' % well_name)
-        plt.xlim((0, 1))
-        plt.ylim((0, 1))
-        plt.xlabel('$Q_{out}$')
-        plt.ylabel('$Q_{total}$')
-        # Add tickmarks only to the plots on the edges
-        #if well_index + 1 > 30 
-        #    plt.xticks([0, 0.5, 1.0])
-        #    plt.xlabel('$Q_{out}$')
-        #else:
-        #    plt.xticks([])
-        #if well_index % 6 == 0:
-        #    plt.yticks([0, 0.5, 1.0])
-        #    plt.ylabel('$Q_{total}$')
-        #else:
-        #    plt.yticks([])
+        if do_plot:
+            plt.figure()
+            #plt.subplot(6, 6, well_index+1)
+            plt.errorbar(q_outs, q_tot_by_well_avgs[:, well_index],
+                         q_tot_by_well_sds[:, well_index],
+                         linestyle='', color='k', linewidth=2)
+            plt.title('$Q_{total}$ vs. $Q_{out}$ for well %s' % well_name)
+            plt.xlim((0, 1))
+            plt.ylim((0, 1))
+            plt.xlabel('$Q_{out}$')
+            plt.ylabel('$Q_{total}$')
+            # Add tickmarks only to the plots on the edges
+            #if well_index + 1 > 30 
+            #    plt.xticks([0, 0.5, 1.0])
+            #    plt.xlabel('$Q_{out}$')
+            #else:
+            #    plt.xticks([])
+            #if well_index % 6 == 0:
+            #    plt.yticks([0, 0.5, 1.0])
+            #    plt.ylabel('$Q_{total}$')
+            #else:
+            #    plt.yticks([])
 
         linfit = scipy.stats.linregress(q_outs,
                                         q_tot_by_well_avgs[:, well_index])
@@ -401,21 +403,24 @@ def requenching_analysis(requench_file_list, requench_wells,
         sd_slope = linfit[4]
         sd_intercept = np.sqrt((sd_slope ** 2) * np.sum(q_outs ** 2) / n)
 
+        # Calculate the internal quenching
+        (q_in_avg, q_in_sd) = calc_ratio_mean_sd(intercept, sd_intercept,
+                                                 1 - f_out, sd_slope)
+
         # THIS IS ALL WRONG!
         #mean_x = np.mean(q_outs)
         #sx2 =  np.sum((q_outs - mean_x)**2)
         #sd_intercept = std_err * np.sqrt(1. / len(q_outs) + mean_x*mean_x/sx2)
         #sd_slope = std_err * np.sqrt(1./sx2)
-        plt.plot(q_outs, (q_outs * f_out) + intercept, color='r',
-                 linewidth=1)
-        # Calculate the internal quenching
-        (q_in_avg, q_in_sd) = calc_ratio_mean_sd(intercept, sd_intercept,
-                                                 1 - f_out, sd_slope)
-        plt.text(0.05, 0.9, '$F_{out}\ \mathrm{(slope)}\ = %f$' % f_out)
-        plt.text(0.05, 0.8, '$Q_{in}(1 - F_{out})\ \mathrm{(intercept)}\ = %f$'
-                            % intercept)
-        plt.text(0.05, 0.7, '$Q_{in} = %f$' % q_in_avg)
-        plt.text(0.05, 0.6, '$R^2 = %f$' % linfit[2])
+        if do_plot:
+            plt.plot(q_outs, (q_outs * f_out) + intercept, color='r',
+                     linewidth=1)
+            plt.text(0.05, 0.9, '$F_{out}\ \mathrm{(slope)}\ = %f$' % f_out)
+            plt.text(0.05, 0.8, '$Q_{in}(1 - F_{out})\ \mathrm{(intercept)}\ = %f$'
+                                % intercept)
+            plt.text(0.05, 0.7, '$Q_{in} = %f$' % q_in_avg)
+            plt.text(0.05, 0.6, '$R^2 = %f$' % linfit[2])
+
         # Save the results for this well
         f_outs[well_index] = f_out
         f_out_errs[well_index] = sd_slope
@@ -423,27 +428,38 @@ def requenching_analysis(requench_file_list, requench_wells,
         q_in_errs[well_index] = q_in_sd
     #plt.tight_layout()
 
-    plt.figure()
-    plt.errorbar(f_outs, q_ins, xerr=f_out_errs, yerr=q_in_errs,
-                 marker='o', color='k', linestyle='')
-    #plt.plot(f_outs[0:12], q_ins[0:12], marker='o', color='r', linestyle='')
-    #plt.plot(f_outs[12:24], q_ins[12:24], marker='o', color='g', linestyle='')
-    #plt.plot(f_outs[24:36], q_ins[24:36], marker='o', color='b', linestyle='')
-    plt.xlabel('$F_{out}$')
-    plt.ylabel('$Q_{in}$')
-    plt.xlim([-0.2, 1.1])
-    plt.ylim([-0.2, 1.1])
-    plt.title('$Q_{in}$ vs. $F_{out}$')
-
     # This error is not meaningful because it doesn't account for errorbars!
     # FIXME FIXME FIXME
     linfit = scipy.stats.linregress(f_outs, q_ins)
     f_out_pred = np.linspace(0, 1, 100)
-    plt.plot(f_out_pred, (f_out_pred * linfit[0]) + linfit[1], color='r')
-    plt.text(0.1, 0.9, 'Slope = %f' % linfit[0])
-    plt.text(0.1, 0.85, 'Intercept = %f' % linfit[1])
-    plt.text(0.1, 0.8, '$R^2 = %f$' % linfit[2])
-    plt.text(0.1, 0.75, 'p = %f' % linfit[3])
+
+    if do_plot:
+        plt.figure()
+        plt.errorbar(f_outs, q_ins, xerr=f_out_errs, yerr=q_in_errs,
+                     marker='o', color='k', linestyle='')
+        #plt.plot(f_outs[0:12], q_ins[0:12], marker='o', color='r',
+        #         linestyle='')
+        #plt.plot(f_outs[12:24], q_ins[12:24], marker='o', color='g',
+        #         linestyle='')
+        #plt.plot(f_outs[24:36], q_ins[24:36], marker='o', color='b',
+        #         linestyle='')
+        plt.xlabel('$F_{out}$')
+        plt.ylabel('$Q_{in}$')
+        plt.xlim([-0.2, 1.1])
+        plt.ylim([-0.2, 1.1])
+        plt.title('$Q_{in}$ vs. $F_{out}$')
+
+        plt.plot(f_out_pred, (f_out_pred * linfit[0]) + linfit[1], color='r')
+        plt.text(0.1, 0.9, 'Slope = %f' % linfit[0])
+        plt.text(0.1, 0.85, 'Intercept = %f' % linfit[1])
+        plt.text(0.1, 0.8, '$R^2 = %f$' % linfit[2])
+        plt.text(0.1, 0.75, 'p = %f' % linfit[3])
+
+    return {'f_outs': f_outs,
+            'q_ins': q_ins,
+            'f_out_errs': f_out_errs,
+            'q_in_errs': q_in_errs}
+
 
     #alpha = fitting.Parameter(1.)
     #dpx_0 = fitting.Parameter(18.1)
