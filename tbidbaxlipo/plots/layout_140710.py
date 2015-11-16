@@ -131,8 +131,19 @@ def main():
     (fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, bax_requench_wells,
                                          final_q, final_bg=bg_avgs[-1])
     q_outs = np.array(qd.values())
-    requenching_analysis(dpx_std_file_list, bax_requench_wells, dpx_concs,
-            q_outs, fmax_avgs, fmax_sds, None, None, None, bg_avgs)
+    req_results = \
+          requenching_analysis(dpx_std_file_list, bax_requench_wells, dpx_concs,
+            q_outs, fmax_avgs, fmax_sds, None, None, None, bg_avgs,
+            do_plot=False)
+    plot_requenching_result(req_results, '140710_requench_bax')
+
+    (fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, cec_requench_wells,
+                                         final_q, final_bg=bg_avgs[-1])
+    req_results = \
+          requenching_analysis(dpx_std_file_list, cec_requench_wells, dpx_concs,
+            q_outs, fmax_avgs, fmax_sds, None, None, None, bg_avgs,
+            do_plot=False)
+    plot_requenching_result(req_results, '140710_requench_cec')
 
 
 # But the question remains, how much of the 
