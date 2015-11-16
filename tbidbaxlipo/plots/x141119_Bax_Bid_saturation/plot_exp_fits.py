@@ -305,7 +305,7 @@ def plot_k_fmax_scaling(k_data, fmax_data, bid_ix, bax_concs,
     ax1.set_xlim([0, 1100])
     for tl in ax1.get_yticklabels():
         tl.set_color('b')
-    #ax1.set_yscale('log')
+    ax1.set_xscale('log')
     # Plot k vs. concentration on the right-hand axis
     ax2 = ax1.twinx()
     #ax2.set_xlim([0.05, 30])
@@ -331,14 +331,15 @@ def plot_endpoints_vs_bax(data_norm, time_pts, bid_ix, bax_concs,
     # Plot endpoints at 2, 3, and 5 hours
     fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
     ax = fig.gca()
-
-    for time_ix in time_pts:
+    colors = ['r', 'g', 'b']
+    for i, time_ix in enumerate(time_pts):
         # Get endpoint vector
         start_ix = time_ix - avg_pts
         f_avg = np.mean(data_norm[bid_ix, :, VALUE, start_ix:time_ix], axis=1)
         f_sd = np.std(data_norm[bid_ix, :, VALUE, start_ix:time_ix], axis=1,
                       ddof=1)
-        ax.errorbar(bax_concs, f_avg, yerr=f_sd)
+        ax.errorbar(bax_concs, f_avg, yerr=f_sd, color=colors[i])
+
 
     ax.set_ylabel('NBD $F/F_0$')
     ax.set_xlabel('[Bax] (nM)')
