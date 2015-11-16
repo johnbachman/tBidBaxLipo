@@ -5,6 +5,7 @@ from tbidbaxlipo.util.error_propagation import calc_ratio_mean_sd
 from tbidbaxlipo.util import fitting
 import scipy.stats
 import itertools
+from tbidbaxlipo.util import set_fig_params_for_publication, fontsize, format_axis
 
 def calc_dpx_concs(dpx_vol_steps, dpx_stock_conc=0.1, starting_well_vol=102.):
     """Calculates the concentration of DPX at each quenching step.
@@ -505,4 +506,68 @@ def fmax_by_well(fmax_file, requench_wells, final_q, final_bg=None):
 def get_quenching_dict(i_avgs, i_sds, dpx_vols_added):
     return dict([(dpx_vols_added[i], i_avgs[i])
                  for i in range(len(dpx_vols_added))])
+
+def plot_requenching_result(req_results, plot_filename):
+    # Publication-quality figure of result
+    f_outs = req_results['f_outs']
+    q_ins = req_results['q_ins']
+    f_out_errs = req_results['f_out_errs']
+    q_in_errs = req_results['q_in_errs']
+
+    plt.figure(figsize=(1.5, 1.5), dpi=300)
+    plt.errorbar(f_outs, q_ins, xerr=f_out_errs, yerr=q_in_errs,
+                 marker='o', markersize=2, color='k', linestyle='',
+                 capsize=1)
+    ax = plt.gca()
+    #for i in range(len(f_outs)):
+    #    ax.add_patch(patches.Rectangle((f_outs[i], q_ins[i]),
+    #                                   f_out_errs[i], q_in_errs[i], alpha=0.5))
+    #plt.plot(f_outs[0:12], q_ins[0:12], marker='o', color='r', linestyle='')
+    #plt.plot(f_outs[12:24], q_ins[12:24], marker='o', color='g', linestyle='')
+    #plt.plot(f_outs[24:36], q_ins[24:36], marker='o', color='b', linestyle='')
+    plt.xlabel('$F_{out}$')
+    plt.ylabel('$Q_{in}$')
+    plt.xlim([0, 1])
+    plt.ylim([0, 0.5])
+    format_axis(ax)
+
+    const = fitting.Parameter(0.1)
+    def fit_func(x):
+        return const()
+    fitting.fit(fit_func, [const], q_ins, f_outs)
+    plt.hlines(const(), 0, 1, color='r')
+    #linfit = scipy.stats.linregress(f_outs, q_ins)
+    #f_out_pred = np.linspace(0, 1, 100)
+    #plt.plot(f_out_pred, (f_out_pred * linfit[0]) + linfit[1], color='r',
+    #         alpha=0.5)
+    #plt.title('$Q_{in}$ vs. $F_{out}$')
+    plt.subplots_adjust(left=0.23, bottom=0.2)
+    plt.savefig('%s.pdf' % plot_filename)
+    plt.savefig('%s.png' % plot_filename, dpi=300)
+
+if __name__ == '__main__':
+    set_fig_params_for_publication()
+    plt.ion()
+    plt.figure(figsize=(1.5, 1.5), dpi=300)
+    dpx0 = 0.007 # mM
+    ka = 490
+    kd = 50
+    alpha = 1
+    fout = np.linspace(0, 1, 100)
+    qin = 1 / ((1 + kd * dpx0 * (1 - fout)**alpha) * \
+               (1 + ka * dpx0 * (1 - fout)**alpha))
+    allnone = np.linspace(qin[0], qin[0], 100)
+    plt.plot(fout, qin, label='Graded', color='r')
+    plt.plot(fout, allnone, label='All-or-none', color='b')
+    #plt.hlines(qin[0], 0, 1, label='asdf')
+    plt.xlim(0, 1)
+    plt.ylim(0, 1)
+    plt.xlabel('$F_{out}$')
+    plt.ylabel('$Q_{in}$')
+    plt.subplots_adjust(left=0.23, bottom=0.2)
+    ax = plt.gca()
+    plt.legend(loc='upper left', fontsize=fontsize, frameon=False)
+    format_axis(ax)
+    plt.savefig('requenching_examples.pdf')
+    plt.savefig('requenching_examples.png', dpi=300)
 
