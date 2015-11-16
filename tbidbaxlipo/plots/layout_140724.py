@@ -8,7 +8,6 @@ from tbidbaxlipo.util.plate_assay import *
 from os.path import abspath, join
 import collections
 from tbidbaxlipo.plots import titration_fits as tf
-from tbidbaxlipo.util import set_fig_params_for_publication, fontsize, format_axis
 import matplotlib.patches as patches
 from tbidbaxlipo.util import fitting
 
@@ -154,7 +153,7 @@ def main():
           requenching_analysis(dpx_std_file_list, bid06_requench_wells, dpx_concs,
             q_outs, fmax_avgs, fmax_sds, None, None, None, bg_avgs,
             do_plot=False)
-    req_results = plot_requenching_result(req_results, '0.6')
+    plot_requenching_result(req_results, '140724_requench_bid_06')
 
     # 2 nM Bid
     (fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, bid2_requench_wells,
@@ -163,7 +162,7 @@ def main():
           requenching_analysis(dpx_std_file_list, bid2_requench_wells, dpx_concs,
             q_outs, fmax_avgs, fmax_sds, None, None, None, bg_avgs,
             do_plot=False)
-    req_results = plot_requenching_result(req_results, '2')
+    plot_requenching_result(req_results, '140724_requench_bid_2')
 
     # 10 nM cBid
     (fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, bid10_requench_wells,
@@ -172,7 +171,7 @@ def main():
           requenching_analysis(dpx_std_file_list, bid06_requench_wells, dpx_concs,
             q_outs, fmax_avgs, fmax_sds, None, None, None, bg_avgs,
             do_plot=False)
-    req_results = plot_requenching_result(req_results, '10')
+    plot_requenching_result(req_results, '140724_requench_bid_10')
 
     # 40 nM cBid
     (fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, bid40_requench_wells,
@@ -181,47 +180,8 @@ def main():
           requenching_analysis(dpx_std_file_list, bid40_requench_wells, dpx_concs,
                        q_outs, fmax_avgs, fmax_sds, None, None, None, bg_avgs,
                        do_plot=False)
-    plot_requenching_result(req_results, '40')
+    plot_requenching_result(req_results, '140724_requench_bid_40')
 
-def plot_requenching_result(req_results, bid_conc_str):
-    # Publication-quality figure of result
-    f_outs = req_results['f_outs']
-    q_ins = req_results['q_ins']
-    f_out_errs = req_results['f_out_errs']
-    q_in_errs = req_results['q_in_errs']
-
-    plt.figure(figsize=(1.5, 1.5), dpi=300)
-    plt.errorbar(f_outs, q_ins, xerr=f_out_errs, yerr=q_in_errs,
-                 marker='o', markersize=2, color='k', linestyle='',
-                 capsize=1)
-    ax = plt.gca()
-    #for i in range(len(f_outs)):
-    #    ax.add_patch(patches.Rectangle((f_outs[i], q_ins[i]),
-    #                                   f_out_errs[i], q_in_errs[i], alpha=0.5))
-    #plt.plot(f_outs[0:12], q_ins[0:12], marker='o', color='r', linestyle='')
-    #plt.plot(f_outs[12:24], q_ins[12:24], marker='o', color='g', linestyle='')
-    #plt.plot(f_outs[24:36], q_ins[24:36], marker='o', color='b', linestyle='')
-    plt.xlabel('$F_{out}$')
-    plt.ylabel('$Q_{in}$')
-    plt.xlim([0, 1])
-    plt.ylim([0, 0.5])
-    format_axis(ax)
-
-    const = fitting.Parameter(0.1)
-    def fit_func(x):
-        return const()
-    fitting.fit(fit_func, [const], q_ins, f_outs)
-    plt.hlines(const(), 0, 1, color='r')
-    #linfit = scipy.stats.linregress(f_outs, q_ins)
-    #f_out_pred = np.linspace(0, 1, 100)
-    #plt.plot(f_out_pred, (f_out_pred * linfit[0]) + linfit[1], color='r',
-    #         alpha=0.5)
-    #plt.title('$Q_{in}$ vs. $F_{out}$')
-    plt.subplots_adjust(left=0.23, bottom=0.2)
-    plt.text(0.95, 0.475, '%s nM cBid' % bid_conc_str, ha='right', va='top',
-             fontsize=fontsize)
-    plt.savefig('140724_requench_%s_bid.pdf' % bid_conc_str)
-    plt.savefig('140724_requench_%s_bid.png' % bid_conc_str, dpi=300)
 
 def bid_bax_kinetic_analysis(bid_wells, bid_layout, bid_conc_str):
     # Improve this by calculating the Fmax value based on Triton/DPX
