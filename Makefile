@@ -22,7 +22,10 @@ figures: \
 		$(FIGDIR)/140429_exact_comp_bind_fit.pdf \
 		$(FIGDIR)/140429_gouy_chap_fit.pdf \
 		$(FIGDIR)/model_predictions_bax_titration.pdf \
-		$(FIGDIR)/model_predictions_lipo_titration.pdf
+		$(FIGDIR)/model_predictions_lipo_titration.pdf \
+		$(FIGDIR)/140724_requench_bid_2.pdf \
+		$(FIGDIR)/140710_requench_bax.pdf \
+		$(FIGDIR)/requenching_examples.pdf
 
 deploy:
 	rsync -av results/figures/ ~/Dropbox/Bachman-Sorger\ Talks\ and\ Papers/Bachman-Kale\ Bax\ kinetics/figures
@@ -247,6 +250,25 @@ $(FIGDIR)/model_predictions_bax_titration.pdf: \
 $(FIGDIR)/model_predictions_lipo_titration.pdf: \
         $(CODEDIR)/plots/model_predictions_lipo_titration.py
 	python $(CODEDIR)/plots/model_predictions_lipo_titration.py
+	mv *.pdf $(FIGDIR)
+	mv *.png $(FIGDIR)
+
+$(FIGDIR)/140724_requench_bid_2.pdf: \
+        $(CODEDIR)/plots/layout_140724.py \
+        $(CODEDIR)/util/dpx_assay.py
+	python $(CODEDIR)/plots/layout_140724.py
+	mv *.pdf $(FIGDIR)
+	mv *.png $(FIGDIR)
+
+$(FIGDIR)/140710_requench_bax.pdf: \
+        $(CODEDIR)/plots/layout_140710.py \
+        $(CODEDIR)/util/dpx_assay.py
+	python $(CODEDIR)/plots/layout_140710.py
+	mv *.pdf $(FIGDIR)
+	mv *.png $(FIGDIR)
+
+$(FIGDIR)/requenching_examples.pdf: $(CODEDIR)/util/dpx_assay.py
+	python $(CODEDIR)/util/dpx_assay.py
 	mv *.pdf $(FIGDIR)
 	mv *.png $(FIGDIR)
 

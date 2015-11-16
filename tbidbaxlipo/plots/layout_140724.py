@@ -8,6 +8,8 @@ from tbidbaxlipo.util.plate_assay import *
 from os.path import abspath, join
 import collections
 from tbidbaxlipo.plots import titration_fits as tf
+import matplotlib.patches as patches
+from tbidbaxlipo.util import fitting
 
 data_path = os.path.dirname(sys.modules['tbidbaxlipo.data'].__file__)
 
@@ -144,15 +146,42 @@ def main():
     final_q = qd[dpx_vols_added[-1]]
     q_outs = np.array(qd.values())
 
+    # 0.6 nM Bid
     (fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, bid06_requench_wells,
                                          final_q, final_bg=bg_avgs[-1])
-    requenching_analysis(dpx_std_file_list, bid06_requench_wells, dpx_concs,
-            q_outs, fmax_avgs, fmax_sds, None, None, None, bg_avgs)
+    req_results = \
+          requenching_analysis(dpx_std_file_list, bid06_requench_wells, dpx_concs,
+            q_outs, fmax_avgs, fmax_sds, None, None, None, bg_avgs,
+            do_plot=False)
+    plot_requenching_result(req_results, '140724_requench_bid_06')
 
+    # 2 nM Bid
+    (fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, bid2_requench_wells,
+                                         final_q, final_bg=bg_avgs[-1])
+    req_results = \
+          requenching_analysis(dpx_std_file_list, bid2_requench_wells, dpx_concs,
+            q_outs, fmax_avgs, fmax_sds, None, None, None, bg_avgs,
+            do_plot=False)
+    plot_requenching_result(req_results, '140724_requench_bid_2')
+
+    # 10 nM cBid
+    (fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, bid10_requench_wells,
+                                         final_q, final_bg=bg_avgs[-1])
+    req_results = \
+          requenching_analysis(dpx_std_file_list, bid06_requench_wells, dpx_concs,
+            q_outs, fmax_avgs, fmax_sds, None, None, None, bg_avgs,
+            do_plot=False)
+    plot_requenching_result(req_results, '140724_requench_bid_10')
+
+    # 40 nM cBid
     (fmax_avgs, fmax_sds) = fmax_by_well(fmax_filename, bid40_requench_wells,
                                          final_q, final_bg=bg_avgs[-1])
-    requenching_analysis(dpx_std_file_list, bid40_requench_wells, dpx_concs,
-            q_outs, fmax_avgs, fmax_sds, None, None, None, bg_avgs)
+    req_results = \
+          requenching_analysis(dpx_std_file_list, bid40_requench_wells, dpx_concs,
+                       q_outs, fmax_avgs, fmax_sds, None, None, None, bg_avgs,
+                       do_plot=False)
+    plot_requenching_result(req_results, '140724_requench_bid_40')
+
 
 def bid_bax_kinetic_analysis(bid_wells, bid_layout, bid_conc_str):
     # Improve this by calculating the Fmax value based on Triton/DPX
@@ -257,10 +286,10 @@ def bid_bax_pore_analysis(bid_wells, bid_layout, bid_conc_str):
     #plt.title('k2')
 
 if __name__ == '__main__':
-    plt.ion()
-    #main()
-    bid_bax_pore_analysis(bid06_wells, bid06_layout, '0.63')
-    bid_bax_pore_analysis(bid40_wells, bid40_layout, '40')
+    main()
+
+    #bid_bax_pore_analysis(bid06_wells, bid06_layout, '0.63')
+    #bid_bax_pore_analysis(bid40_wells, bid40_layout, '40')
 
     #bid_bax_kinetic_analysis(bid06_wells, bid06_layout, '0.63')
     #bid_bax_kinetic_analysis(bid2_wells, bid2_layout, '2.5')
