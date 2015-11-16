@@ -30,6 +30,53 @@ ntemps = 10
 sample_steps = 200
 ndim = 5
 
+# Model taken from:
+# Schwarz, G., & Beschiaschvili, G. (1989). Thermodynamic and kinetic studies
+# on the association of melittin with a phospholipid bilayer. Biochimica Et
+# Biophysica Acta, 979(1), 82-90.
+
+def calc_b(temp=37):
+    # See equation A5c
+    # e0 = "the elementary charge"
+    # Value from Wikipedia: https://en.wikipedia.org/wiki/Elementary_charge
+    e0 = 1.6021766208e-19 # coulombs
+    # A_L = The area per lipid on the outer surface
+    # A_L = 0.75 # nm^2 / lipid
+    A_L = 0.75 * 10**-18 # M^2 / lipid
+    # Beta = the fraction of lipid making up the outer leaflet
+    beta = 0.5
+    # eps_v = the permittivity of vacuum
+    # Value from Wikipedia: https://en.wikipedia.org/wiki/Vacuum_permittivity
+    eps_v = 8.854187817e-12 # (farads per meter)
+    # eps = the dielectric constant of the aqueous phase
+    # Wikipedia: 80.1 at 20C
+    eps = 80.1
+    R = 8.3144598 # J / (K*mol)
+    # Temperature in Kelvin (37C = 310K)
+    T = 273. + temp
+    # Concentration of salt
+    cs = 0.135 # Molar (135 mM KCl)
+
+    # Units of numerator:
+    # e0 / (A_L * B)
+    # coulombs * m^-2
+
+    # Units of denominator (inside square root):
+    # 8 ev*e * RT * cs
+    #  = farads m^-1 J K^-1 mol^-1 K mol
+    #  = farads * m^-1 * J
+    # In SI base units:
+    # (coul^2 s^-2 s^4 kg^-1 m^-2) * m^-1 * (kg m^2 s^-2)
+    # (all seconds cancel, kg cancels)
+    # coul^2 m^-1
+    # After square root:
+    # sqrt(coul^2 m^-1)
+    # coul m^-1/2
+    #
+    # numerator / denominator:
+    # coul * m^-2 * coul-1 m^1/2
+    # m^-1.5 ???
+
 # Parameters are in order:
 # v, b, pc, fret, f0
 def binding_func(position, bid_concs, liposome_conc=1.55):
@@ -228,8 +275,35 @@ def plot_chain(flatchain, lnprob):
 
     # Triangle plots
     #(tri_fig, axes) = plt.subplots(4, 4, figsize=(6, 6))
-    corner.corner(flatchain, labels=['V', 'B', 'PC', 'FRET', 'F0'] )
-    plt.subplots_adjust(right=0.96, top=0.96)
+    # Triangle plots
+    #(tri_fig, tri_axes) = plt.subplots(5, 5, figsize=(5, 5), dpi=150)
+    (tri_fig, tri_axes) = plt.subplots(2, 2, figsize=(2, 2), dpi=300)
+    corner.corner(flatchain[:, 0:2], fig=tri_fig,
+                  #labels=['V', 'B', 'PC', 'FRET', 'F0'],
+                  labels=['V (cBid eff. charge)', 'B'],
+                  plot_datapoints=False, no_fill_contours=True)
+    for row_ix, row in enumerate(tri_axes):
+        for col_ix, ax in enumerate(row):
+            #format_axis(ax, label_padding=20)
+            ax.xaxis.set_ticks_position('bottom')
+            ax.yaxis.set_ticks_position('left')
+            ax.xaxis.set_tick_params(labelsize=fontsize, pad=1, length=1.5,
+                                     width=0.5)
+            ax.yaxis.set_tick_params(labelsize=fontsize, pad=1, length=1.5,
+                                     width=0.5)
+            ax.xaxis.label.set_size(fontsize)
+            ax.yaxis.label.set_size(fontsize)
+            ax.xaxis.set_label_coords(0.5, -0.2)
+            ax.yaxis.set_label_coords(-0.2, 0.5)
+            if col_ix == 0:
+                ax.axvline(2, color='r', alpha=0.5)
+            if col_ix == 0 and row_ix == 1:
+                ax.axhline(11.5, color='r', alpha=0.5)
+            if row_ix == 1:
+                ax.axvline(11.5, color='r', alpha=0.5)
+
+    tri_fig.subplots_adjust(right=0.96, top=0.96, bottom=0.15, left=0.15,
+                            hspace=0.15, wspace=0.15)
 
 def plot_saturation_binding_predictions(flatchain, plot_filename=None):
     # Plot binding curve for different liposome concentrations
@@ -295,6 +369,10 @@ if __name__ == '__main__':
         plot_chain(sampler.flatchain[0], sampler.lnprobability[0])
         plot_saturation_binding_predictions(sampler.flatchain[0],
                                             '140429_gouy_chap_bind_pred')
+        print "MAP:"
+        print np.max(sampler.lnprobability[0])
+        print "Max lkl:"
+        print np.max(sampler.lnlikelihood[0])
         plt.figure('Fits')
         plt.savefig('140429_gouy_chap_fit.pdf')
         plt.figure(3)
@@ -302,5 +380,6 @@ if __name__ == '__main__':
     else:
         print usage_msg
         sys.exit()
+
 
 
