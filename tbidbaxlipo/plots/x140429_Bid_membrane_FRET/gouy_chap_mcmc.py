@@ -342,6 +342,9 @@ def plot_saturation_binding_predictions(flatchain, plot_filename=None):
     # Plot mean of predictions
     plt.plot(lipo_pred, np.mean(ypred_samples, axis=0), color='r')
 
+    # Plot previously published value
+    plt.plot(0.9, 0.5, marker='o', markersize=4, color='b')
+
     if plot_filename:
         plt.savefig('%s.pdf' % plot_filename)
         plt.savefig('%s.png' % plot_filename, dpi=300)
