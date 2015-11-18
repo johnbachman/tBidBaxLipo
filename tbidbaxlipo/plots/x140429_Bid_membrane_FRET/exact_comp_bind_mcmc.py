@@ -22,7 +22,7 @@ import sys
 (bid_concs, fret_means, fret_ses) = cf.get_fret_from_endpoints()
 bid568_conc = 10.
 # A represents the labeled ligand, B the unlabeled ligand.
-A0 = bid568_conc
+B0 = bid568_conc
 
 nwalkers = 500
 burn_steps = 100
@@ -33,7 +33,7 @@ ndim = 4
 # Parameters are in order:
 # log(K), P0, N, F
 
-def model_func(position, B0):
+def model_func(position, A0):
     # Transform all params to linear scale
     log_params = 10 ** position[:2]
     lin_params = position[2:]
@@ -45,10 +45,10 @@ def model_func(position, B0):
     c = -K * K * P0
     theta = np.arccos((-2 * a**3 + 9*a*b - 27*c) / (2*np.sqrt((a**2 - 3*b)**3)))
     expr = (2 * np.sqrt(a**2 - 3*b) * np.cos(theta / 3.) - a)
-    conc_A_spec = ((A0 * expr) / (3*K + expr))
-    conc_A_nonspec = N * A0
-    frac_A_bound = (conc_A_spec + conc_A_nonspec) / float(A0)
-    return F * frac_A_bound
+    conc_B_spec = ((B0 * expr) / (3*K + expr))
+    conc_B_nonspec = N * B0
+    frac_B_bound = (conc_B_spec + conc_B_nonspec) / float(B0)
+    return F * frac_B_bound
 
 def prior(position):
     (K, P0, N, F) = position
@@ -207,8 +207,13 @@ def plot_chain(flatchain, lnprob):
     plt.subplots_adjust(bottom=0.18, left=0.25, right=0.94, top=0.94)
 
     plt.figure(figsize=(1.1, 1), dpi=300)
-    plt.hist(flatchain[:, 1], bins=20, normed=True)
-    plt.xlabel('log$_{10}$(Lipid sites) (nM)')
+    # Linear param values
+    lin_lipo_sites = 10 ** flatchain[:, 1]
+    lin_sites_per_lipo = lin_lipo_sites / 1.55
+    plt.hist(lin_sites_per_lipo, bins=20, normed=True)
+    plt.yticks([0, 0.1, 0.2, 0.3])
+    plt.xticks([1, 3, 5, 7, 9])
+    plt.xlabel('Sites/Lipo')
     plt.ylabel('Density')
     plt.subplots_adjust(bottom=0.25, left=0.28)
     ax = plt.gca()
@@ -320,6 +325,9 @@ def plot_saturation_binding_predictions(flatchain, plot_filename=None):
     format_axis(ax)
     # Plot mean of predictions
     plt.plot(lipo_pred, np.mean(ypred_samples, axis=0), color='r')
+
+    # Plot previously published value
+    plt.plot(0.9, 0.5, marker='o', markersize=4, color='b')
 
     if plot_filename:
         plt.savefig('%s.pdf' % plot_filename)
