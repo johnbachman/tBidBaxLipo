@@ -30,7 +30,7 @@ res2 = fitting.fit(fit_func2, [fmax, k2], y, t)
 set_fig_params_for_publication()
 plt.figure(figsize=(1.5, 1.5), dpi=300)
 plt.plot(t, y, color='k', linewidth=1)
-plt.plot(t, fit_func1(t), color='g', linewidth=1)
+plt.plot(t, fit_func1(t), color='b', linewidth=1)
 plt.plot(t, fit_func2(t), color='r', linewidth=1)
 plt.xlim([0, 11.3e3])
 plt.xlabel(r'Time (sec $\times 10^3$)')
@@ -59,7 +59,7 @@ plt.figure(figsize=(1.5, 1.5), dpi=300)
 plt.plot(t[30:], moving_average(failure_rate(t, 1-y), n=30), color='k',
                 linewidth=1)
 plt.plot(t[30:], moving_average(failure_rate(t, 1 - fit_func1(t)), n=30),
-                color='g', linewidth=1)
+                color='b', linewidth=1)
 plt.plot(t[30:], moving_average(failure_rate(t, 1 - fit_func2(t)), n=30),
                 color='r', linewidth=1)
 plt.ylabel(r'Hazard rate $(\times 10^{-5})$')
