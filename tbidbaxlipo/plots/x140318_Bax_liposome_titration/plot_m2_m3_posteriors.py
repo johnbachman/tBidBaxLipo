@@ -22,7 +22,7 @@ ibax_sd = np.std(ibax_samples, ddof=1)
 
 plt.figure(figsize=(1.1, 1), dpi=300)
 plt.hist(ibax_samples, bins=20, normed=True)
-plt.xlabel('log$_{10}(k_{rev})$')
+plt.xlabel('log$_{10}(k_{r2})$')
 plt.ylabel('Density')
 plt.xticks([-12, -10, -8, -6, -4])
 plt.yticks([0, 0.1, 0.2, 0.3, 0.4])
