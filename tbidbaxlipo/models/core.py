@@ -701,8 +701,7 @@ class Builder(pysb.builder.Builder):
         self.tBid_binds_Bax(bax_site, bax_bind_conf)
         self.tBid_binds_Bax(bax_site, bax_active_conf)
 
-        # Dissociation of tBid from iBax (EP -> E + P)
-        kc = self.parameter('tBid_Bax_%s_%s_kc' % (bax_active_conf, bax_site),
+        kc = self.parameter('tBidBax_%s_%s_kc' % (bax_bind_conf, bax_active_conf),
                             1e-1, prior=Normal(-1, 2))
 
         # Create the dicts to parameterize the site that tBid binds to
@@ -713,7 +712,7 @@ class Builder(pysb.builder.Builder):
         Bax = self['Bax']
 
         # tBid:Bax undergoes Bax conformational change
-        self.rule('tBid_unbinds_Bax_%s_%s' % (bax_active_conf, bax_site),
+        self.rule('tBidBax_%s_to_%s' % (bax_bind_conf, bax_active_conf),
              tBid(bh3=1) % Bax(conf=bax_bind_conf, **bax_site_bound) >>
              tBid(bh3=1) % Bax(conf=bax_active_conf, **bax_site_bound),
              kc)
