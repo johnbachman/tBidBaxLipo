@@ -28,6 +28,7 @@ figures: \
 		$(FIGDIR)/requenching_examples.pdf \
 		$(FIGDIR)/140318_evidence_barplot1.pdf \
 		$(FIGDIR)/140320_evidence_barplot.pdf
+#		$(FIGDIR)/pt_140318_1c_Baxtr1Activ1Rever1Nbd1.mcmc.ibax_reverse.pdf
 
 deploy:
 	rsync -av results/figures/ ~/Dropbox/Bachman-Sorger\ Talks\ and\ Papers/Bachman-Kale\ Bax\ kinetics/figures
@@ -288,3 +289,6 @@ $(FIGDIR)/140320_evidence_barplot.pdf: \
 	mv *.pdf $(FIGDIR)
 	mv *.png $(FIGDIR)
 
+$(FIGDIR)/pt_140318_1c_Baxtr1Activ1Rever1Nbd1.mcmc.ibax_reverse.pdf: \
+        $(CODEDIR)/plots/x140318_Bax_liposome_titration/plot_m2_m3_posteriors.pdf
+	python $(CODEDIR)/plots/x140318_Bax_liposome_titration/plot_m2_m3_posteriors.pdf
