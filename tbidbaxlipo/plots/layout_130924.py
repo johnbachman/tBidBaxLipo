@@ -9,6 +9,9 @@ from matplotlib import pyplot as plt
 import numpy as np
 from tbidbaxlipo.util import fitting
 from tbidbaxlipo.plots import titration_fits
+from tbidbaxlipo.util import fitting, set_fig_params_for_publication, \
+            format_axis, fontsize
+from scipy import stats
 
 def extract(keys, dict):
     extracted_dict = collections.OrderedDict([])
@@ -278,10 +281,75 @@ def plot_fmax_curve(fmax_arr, conc_list):
     plt.legend(loc='lower right')
     plt.show()
 
+def calc_pore_size_by_poisson():
+    set_fig_params_for_publication()
+
+    (fmax_arr, k1_arr, k2_arr, conc_list) = \
+         titration_fits.plot_two_exp_fits(bgsub_norm_wells, layout, plot=False)
+
+    conc_lipos = 6.24
+    # Fix the funky value
+    fmax_arr[1, -5] = np.nan
+    fmax_means = np.nanmean(fmax_arr, axis=0)
+    fmax_stds = np.nanstd(fmax_arr, axis=0)
+    ratios = conc_list / conc_lipos
+    isf_pore_sizes = []
+    k_max = 20
+    for i, ratio in enumerate(ratios):
+        if i == 0:
+            continue
+        # Probability of permeabilization is
+        # 1 - poisson.cdf(pore_size, ratio)
+        pore_sizes = np.arange(1, k_max)
+        probs = [1 - stats.poisson.cdf(pore_size, ratio)
+                 for pore_size in pore_sizes]
+        isf_pore_size = stats.poisson.isf(fmax_means[i], ratio) + 1
+        isf_pore_sizes.append(isf_pore_size)
+
+        #plt.figure()
+        #plt.plot(pore_sizes, probs, marker='o')
+        #plt.xlabel('Pore size')
+        #plt.ylim([-0.05, 1.05])
+        #plt.title('Ratio of %f, isf pore size: %f' % (ratio, isf_pore_size))
+        #sd_lines = [fmax_means[i] + fmax_stds[i]*num_sds
+        #            for num_sds in np.arange(-2, 3)]
+        #plt.hlines(sd_lines, 0, k_max, color='r')
+
+    # Plot min pore size vs. Bax, with linear fit
+    fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
+    ax = fig.gca()
+    ax.plot(ratios[-6:], isf_pore_sizes[-6:], marker='o', markersize=2,
+            linestyle='') # Skip the 0 Bax pt
+    ax.set_xlabel('[Bax]/[Lipo]')
+    ax.set_ylabel('Predicted pore size')
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    lbound = 0.1
+    ubound = 200
+    #ax.set_xlim(lbound, 1000)
+    #ax.set_ylim(1, 200)
+    lin_fit = stats.linregress(ratios[-6:], isf_pore_sizes[-6:])
+    slope = lin_fit[0]
+    intercept = lin_fit[1]
+    ax.plot(ratios[-6:], slope*ratios[-6:] + intercept, color='r')
+    interp_range = np.linspace(lbound, ratios[-6])
+    ax.plot(interp_range, slope*interp_range + intercept, color='r',
+            linestyle='--', dashes=(2, 2))
+    ax.plot(interp_range, [slope*ratios[-6] + intercept] * len(interp_range),
+            color='r', linestyle='--', dashes=(2, 2))
+    #ax.set_title('Slope %f, intercept %f' % (slope, intercept),
+    #             fontsize=fontsize)
+    fig.subplots_adjust(left=0.22, bottom=0.19)
+    format_axis(ax)
+    import ipdb; ipdb.set_trace()
+
+
 if __name__ == '__main__':
     plt.ion()
     #plot_data()
     #plot_two_exp_fits()
+    calc_pore_size_by_poisson()
+    sys.exit()
     """
     from tbidbaxlipo.plots.titration_fits import TwoExp
     fit = TwoExp()

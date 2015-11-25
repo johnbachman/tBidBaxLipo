@@ -14,6 +14,7 @@ set_fig_params_for_publication()
 # distribution and the percent permeabilized
 plt.figure(figsize=(1.5, 1.5), dpi=300)
 min_pore_size = 4
+sub_pore_size = min_pore_size - 1
 bax_ratios = [1, 4, 6, 10]
 index = np.arange(21)
 maxval = -1
@@ -22,7 +23,7 @@ for br in bax_ratios:
     poisson_max = np.max(poisson.pmf(index, br))
     if poisson_max > maxval:
         maxval = poisson_max
-plt.xlabel('Bax*/Liposome')
+plt.xlabel('Bax per liposome')
 plt.ylabel('Probability')
 ax = plt.gca()
 line_top = ax.get_ylim()[1]
@@ -30,7 +31,7 @@ format_axis(ax)
 ax.yaxis.set_ticks_position('none')
 ax.set_yticklabels([])
 ax.yaxis.labelpad = 0
-plt.vlines(4, 0, line_top, linestyle='--')
+plt.vlines(min_pore_size, 0, line_top, linestyle='--')
 plt.ylim([0, line_top])
 plt.subplots_adjust(left=0.12, bottom=0.17)
 # Now make inset plot showing dye release at different average Bax/lipo
@@ -38,12 +39,12 @@ plt.subplots_adjust(left=0.12, bottom=0.17)
 ax = plt.axes([0.55, 0.55, 0.3, 0.3])
 format_axis(ax)
 bax_ratios2 = np.linspace(0, 20, 50)
-plt.plot(bax_ratios2, poisson.sf(4, bax_ratios2), color='k')
+plt.plot(bax_ratios2, poisson.sf(sub_pore_size, bax_ratios2), color='k')
 for br in bax_ratios:
-    plt.plot(br, poisson.sf(4, br), marker='o', markersize=4)
+    plt.plot(br, poisson.sf(sub_pore_size, br), marker='o', markersize=4)
 ax.set_yticks([0, 0.5, 1.0])
 plt.ylim([-0.08, 1.05])
-plt.xlabel('Bax*/Lipo')
+plt.xlabel(r'$\langle$Bax/Lipo$\rangle$')
 plt.ylabel('Max release')
 # Save the plot
 plt.savefig('poisson_bax_fmax.pdf')
@@ -57,7 +58,8 @@ fmax_arr[:, 0] = [0, 0, 0]
 
 plt.figure(figsize=(1.5, 1.5), dpi=300)
 plt.subplots_adjust(left=0.21, bottom=0.17, top=0.89, right=0.96)
-line_data = plt.errorbar(bax_ratios, fmax_means, yerr=np.std(fmax_arr, axis=0),
+line_data = plt.errorbar(bax_ratios[1:], fmax_means[1:],
+                         yerr=np.std(fmax_arr, axis=0)[1:],
                          capsize=capsize)
 plt.xlabel('[Bax]/[Liposome]')
 plt.ylabel('Predicted max release')
@@ -72,7 +74,7 @@ ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
 # find the one with the minimum error.
 def poisson_pore_fit(min_pore_size):
     return np.sum((fmax_means[1:] -
-                   poisson.sf(min_pore_size, bax_ratios[1:])) ** 2)
+                   poisson.sf(min_pore_size-1, bax_ratios[1:])) ** 2)
 
 best_pore_size = 1
 best_fit_err = np.inf
@@ -81,13 +83,14 @@ for pore_size in range(1, 200):
     if err < best_fit_err:
         best_fit_err = err
         best_pore_size = pore_size
-smooth_bax_ratios= np.logspace(log_ratios[1], log_ratios[-1], 50)
-line_4 = plt.plot(smooth_bax_ratios, poisson.sf(4, smooth_bax_ratios),
+smooth_bax_ratios= np.logspace(0, log_ratios[-1], 50)
+line_4 = plt.plot(smooth_bax_ratios, poisson.sf(3, smooth_bax_ratios),
          color='g')
 line_best = plt.plot(smooth_bax_ratios,
-                     poisson.sf(best_pore_size, smooth_bax_ratios),
+                     poisson.sf(best_pore_size-1, smooth_bax_ratios),
                      color='r')
-leg = ax.legend(['Data', 'Min 4', 'Min 33 (best fit)'], loc=1, ncol=3,
+print best_pore_size
+leg = ax.legend(['Data', 'Min 4', 'Min 34 (best fit)'], loc=1, ncol=3,
           bbox_to_anchor=(0.0, 0.9, 1, 0.1),
           bbox_transform=plt.gcf().transFigure,
           mode='expand', borderpad=0,
