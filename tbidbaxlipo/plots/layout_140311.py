@@ -582,19 +582,19 @@ def calc_pore_size_by_poisson():
         # Probability of permeabilization is
         # 1 - poisson.cdf(pore_size, ratio)
         pore_sizes = np.arange(1, k_max)
-        probs = [1 - stats.poisson.cdf(pore_size, ratio)
+        probs = [1 - stats.poisson.cdf(pore_size - 1, ratio)
                  for pore_size in pore_sizes]
-        isf_pore_size = stats.poisson.isf(fmax_means[i], ratio)
+        isf_pore_size = stats.poisson.isf(fmax_means[i], ratio) + 1
         isf_pore_sizes.append(isf_pore_size)
 
-        #plt.figure()
-        #plt.plot(pore_sizes, probs, marker='o')
-        #plt.xlabel('Pore size')
-        #plt.ylim([-0.05, 1.05])
-        #plt.title('Ratio of %f, isf pore size: %f' % (ratio, isf_pore_size))
-        #sd_lines = [fmax_means[i] + fmax_stds[i]*num_sds
-        #            for num_sds in np.arange(-2, 3)]
-        #plt.hlines(sd_lines, 0, k_max, color='r')
+        plt.figure()
+        plt.plot(pore_sizes, probs, marker='o')
+        plt.xlabel('Pore size')
+        plt.ylim([-0.05, 1.05])
+        plt.title('Ratio of %f, isf pore size: %f' % (ratio, isf_pore_size))
+        sd_lines = [fmax_means[i] + fmax_stds[i]*num_sds
+                    for num_sds in np.arange(-2, 3)]
+        plt.hlines(sd_lines, 0, k_max, color='r')
 
     # Plot min pore size vs. Bax, with linear fit
     fig = plt.figure(figsize=(1.5, 1.5), dpi=300)
@@ -612,12 +612,13 @@ def calc_pore_size_by_poisson():
     lin_fit = stats.linregress(ratios[1:], isf_pore_sizes)
     slope = lin_fit[0]
     intercept = lin_fit[1]
+    print intercept
     ax.plot(ratios[1:], slope*ratios[1:] + intercept, color='r')
     interp_range = np.linspace(lbound, ratios[1])
     ax.plot(interp_range, slope*interp_range + intercept, color='r',
             linestyle='--', dashes=(2, 2))
     ax.plot(interp_range, [slope*ratios[1] + intercept] * len(interp_range),
-            color='r', linestyle='--', dashes=(2, 2))
+            color='gray', linestyle='--', dashes=(2, 2))
     #ax.set_title('Slope %f, intercept %f' % (slope, intercept),
     #             fontsize=fontsize)
     fig.subplots_adjust(left=0.22, bottom=0.19)
