@@ -6,6 +6,7 @@ from tbidbaxlipo.util.plate_assay import plot_all, TIME, VALUE
 from preprocess_data import timecourse_wells, nbd_wells, bax_bg_wells, \
                             timecourse_averages, bgsub_wells, \
                             bax_concs_to_fit, time, data_to_fit
+from scipy import stats
 
 def plot_data():
     """Plots the data and various transformations of it."""
@@ -87,8 +88,18 @@ def plot_exp_fits(time, data_to_fit, bax_concs_to_fit):
 
     # Now, plot the scaling of the parameters with concentration
     plt.figure('exp_fits', figsize=(1.7, 1.5), dpi=300)
+    log_concs = np.log10(np.array(bax_concs_to_fit[:-1]))
+    slope = fitting.Parameter(1.)
+    intercept = fitting.Parameter(1.)
+    def log_line(x):
+        log_concs = np.log10(x)
+        return slope() * log_concs + intercept()
+    fitting.fit(log_line, [slope, intercept], fmax_list[:-1],
+                bax_concs_to_fit[:-1])
     plt.plot(bax_concs_to_fit[:-1], fmax_list[:-1], marker='o', markersize=3,
-             color='b')
+             color='b', linestyle='')
+    plt.plot(bax_concs_to_fit[:-1], log_line(bax_concs_to_fit[:-1]), color='b')
+
     plt.xlabel('[Bax] (nM)')
     ax1 = plt.gca()
     ax1.set_xscale('log')
@@ -100,7 +111,14 @@ def plot_exp_fits(time, data_to_fit, bax_concs_to_fit):
     ax2 = ax1.twinx()
     ax2.set_xlim([5, 1000])
     ax2.plot(bax_concs_to_fit[:-1], k1_list[:-1], marker='o', markersize=3,
-             color='r')
+             color='r', linestyle='')
+    slope = fitting.Parameter(5e-4)
+    intercept = fitting.Parameter(6.6e-3)
+    fitting.fit(log_line, [slope, intercept], k1_list[:-1],
+                bax_concs_to_fit[:-1])
+    ax2.plot(bax_concs_to_fit[:-1], log_line(bax_concs_to_fit[:-1]),
+                                    color='r')
+
     ax2.set_ylabel(r'k (sec $\times\ 10^{-3}$)', color='r')
     for tl in ax2.get_yticklabels():
         tl.set_color('r')

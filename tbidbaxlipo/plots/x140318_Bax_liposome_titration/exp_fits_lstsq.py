@@ -148,8 +148,8 @@ def plot_k_fmax_fixed(k_arr, conc_arr):
     sx2 = ((conc_arr - mx)**2).sum()
     sd_slope = see * np.sqrt(1./sx2)
 
-    plt.plot(conc_arr, lin_fit[0] * conc_arr + lin_fit[1], color='b',
-             label='Linear fit')
+    #plt.plot(conc_arr, lin_fit[0] * conc_arr + lin_fit[1], color='b',
+    #         label='Linear fit')
     print("---")
     print("Linear fit of k:")
     print(lin_fit)
@@ -169,9 +169,9 @@ def plot_k_fmax_fixed(k_arr, conc_arr):
 
     log_fit = linregress(np.log(conc_arr), np.log(k_arr))
     plt.plot(conc_arr,
-             np.exp(log_fit[1]) * (conc_arr ** log_fit[0]), color='g',
-             label='Log-linear fit')
-    plt.legend(loc='lower right', fontsize=fontsize, frameon=False)
+             np.exp(log_fit[1]) * (conc_arr ** log_fit[0]), color='r')
+             #label='Log-linear fit')
+    #plt.legend(loc='lower right', fontsize=fontsize, frameon=False)
     print("----")
     print("Log-log linear fit:")
     print(log_fit)

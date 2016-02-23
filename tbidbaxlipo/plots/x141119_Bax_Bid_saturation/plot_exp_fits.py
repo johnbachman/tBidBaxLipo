@@ -299,13 +299,24 @@ def plot_k_fmax_scaling(k_data, fmax_data, bid_ix, bax_concs,
     ax1 = fig.gca()
     # Plot Fmax vs. concentration on the left-hand axis
     ax1.plot(bax_concs, fmax_data[bid_ix, :], marker='o', markersize=3,
-             color='b')
+             color='b', linestyle='')
     ax1.set_xlabel('[Bax] (nM)')
     ax1.set_ylabel('$F_{max}$', color='b')
     ax1.set_xlim([0, 1100])
     for tl in ax1.get_yticklabels():
         tl.set_color('b')
     ax1.set_xscale('log')
+
+    slope = fitting.Parameter(1.)
+    intercept = fitting.Parameter(1.)
+    def log_line(x):
+        log_concs = np.log10(x)
+        return slope() * log_concs + intercept()
+    fitting.fit(log_line, [slope, intercept], fmax_data[bid_ix, :],
+                bax_concs)
+    ax1.plot(bax_concs, log_line(bax_concs), color='b')
+
+
     # Plot k vs. concentration on the right-hand axis
     ax2 = ax1.twinx()
     #ax2.set_xlim([0.05, 30])
