@@ -344,3 +344,11 @@ data3_release_endpt_no_norm.pdf: \
         $(BAX_FRET_DATA)
 	python -m tbidbaxlipo.plots.bax_bax_fret_nbd_release.plots release_endpoint_no_norm $(basename $@)
 
+# --- NBD endpoints, dataset 3, normalized to F/F0 ---
+data3_nbd_endpt_norm.pdf: \
+        $(PLOTSDIR)/nbd_bax_analysis.py \
+        $(PLOTSDIR)/bax_bax_fret_nbd_release/plots.py \
+        $(BAX_FRET_DATA)
+	python -m tbidbaxlipo.plots.bax_bax_fret_nbd_release.plots nbd_endpoint_norm $(basename $@)
+
+
