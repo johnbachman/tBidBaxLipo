@@ -8,6 +8,8 @@ NBD_DATA := $(DATADIR)/Compiled\ Release\ percentages\ and\ NBD\ F-F0.xlsx \
             $(DATADIR)/parse_bid_bim_nbd_release.py
 NBD_FRET_DATA := $(DATADIR)/2015-02-27\ -\ Bid-Bim\ FRET\ with\ Bax\ NBD\ mutants\ in\ Tb-DPA\ Liposomes\ compiled\ reps+WT\ Bax.xlsx \
                  $(DATADIR)/parse_bid_bim_fret_nbd_release.py
+BAX_FRET_DATA := $(DATADIR)/2016\ -\ Bax-Bax\ FRET\ dataset.xlsx \
+                 $(DATADIR)/parse_bax_bax_fret_nbd_release.py
 x140430 := $(CODEDIR)/plots/x140430_Bid_Bax_FRET/mcmc
 #PQUEUE := sorger_par_unlimited
 PQUEUE := parallel
@@ -133,6 +135,14 @@ fret_nbd_release_initial_rates: data2_init_nbd_bar.pdf
 # -- Bax-Bax FRET data (141203) ------------------------------------------
 bax_bax_fret: 141203_example_nbd_fret_fits.pdf
 
+# -- Dataset 3, Bax-Bax FRET + NBD + Tb release, summary plots -------------
+bax_fret_nbd_release: bax_fret_nbd_release_endpts bax_fret_nbd_release_initial_rates \
+    data3_fret_endpt.pdf data3_example_curves.pdf data3_delta_fret.pdf \
+    data3_example_nbd_fret_fits.pdf
+bax_fret_nbd_release_endpts: \
+    data3_release_endpt_norm.pdf data3_release_endpt_no_norm.pdf \
+    data3_nbd_endpt_norm.pdf data3_nbd_endpt_no_norm.pdf
+bax_fret_nbd_release_initial_rates: data2_init_nbd_bar.pdf
 
 
 # --- Normalized release endpoint data for release, dataset 1 ---
@@ -304,6 +314,9 @@ data2_delta_fret.pdf: \
         $(NBD_FRET_DATA)
 	python -m tbidbaxlipo.plots.bid_bim_fret_nbd_release.plot_delta_fret $(basename $@)
 
+
+# ---------------------------------------------------------------
+
 nbd_labeling_ratios_table: \
         $(PLOTSDIR)/bid_bim_nbd_release/nbd_labeling_ratios_table.py \
         $(NBD_DATA)
@@ -313,4 +326,21 @@ nbd_labeling_ratios_table: \
 141203_example_nbd_fret_fits.pdf: \
     $(PLOTSDIR)/x141203_Bax_Bax_FRET/plot_example_fret_fits.py
 	python -m tbidbaxlipo.plots.x141203_Bax_Bax_FRET.plot_example_fret_fits
+
+
+# ---------------------------------------------------------------
+
+# --- Normalized release endpoint data for release, dataset 3 ---
+#data3_release_endpt_norm.pdf: \
+#        $(PLOTSDIR)/nbd_bax_analysis.py \
+#        $(PLOTSDIR)/bax_bax_fret_nbd_release/plots.py \
+#        $(BAX_FRET_DATA)
+#	python -m tbidbaxlipo.plots.bax_bax_fret_nbd_release.plots release_endpoint_norm $(basename $@)
+
+# --- Raw release endpoint data for release, dataset 3 ---
+data3_release_endpt_no_norm.pdf: \
+        $(PLOTSDIR)/nbd_bax_analysis.py \
+        $(PLOTSDIR)/bax_bax_fret_nbd_release/plots.py \
+        $(BAX_FRET_DATA)
+	python -m tbidbaxlipo.plots.bax_bax_fret_nbd_release.plots release_endpoint_no_norm $(basename $@)
 
