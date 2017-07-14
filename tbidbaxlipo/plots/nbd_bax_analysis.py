@@ -267,6 +267,11 @@ def plot_nbd_endpoints(df, nbd_sites, datatype='NBD', last_n_pts=3,
     plt.ylabel(yaxis_label, fontsize=fontsize)
     bar_colors = {'Bid': 'gray', 'Bim': 'black'}
 
+    # Bar X position offset to center bars when only one activator
+    if len(activators) == 1:
+        offset = 0.5
+    else:
+        offset = 0
     # For both activators...
     for act_ix, activator in enumerate(activators):
         # Now iterate over all of the mutants
@@ -287,7 +292,8 @@ def plot_nbd_endpoints(df, nbd_sites, datatype='NBD', last_n_pts=3,
                 n_endpts[nbd_index, rep_index] = endpt_vals
 
             # Bar plot of NBD endpoint
-            plt.bar(range(nbd_index*3 + act_ix, (nbd_index*3) + 1 + act_ix),
+            plt.bar(np.arange(nbd_index*3 + act_ix, (nbd_index*3) + 1 + act_ix)
+                    + offset,
                     np.mean(n_endpts[nbd_index, :]),
                     width=1, color=bar_colors[activator], linewidth=0,
                     ecolor='k', capsize=1.5,
