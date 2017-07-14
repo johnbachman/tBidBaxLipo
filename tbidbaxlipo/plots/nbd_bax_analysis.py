@@ -183,8 +183,13 @@ def plot_all_by_replicate(df, nbd_residues, datatypes, activators=None,
                     else:
                         raise ValueError("Unknown datatype: %s" % dtype)
                     # Plot the data
-                    ax.plot(t, v, label='%s, %s' % (activator, dtype),
-                            color=dtype_line_colors[dtype])
+                    if dtype == 'FRET':
+                        ax.plot(t, v, label='%s, %s' % (activator, dtype),
+                                color=dtype_line_colors[dtype],
+                                linestyle='', marker='.')
+                    else:
+                        ax.plot(t, v, label='%s, %s' % (activator, dtype),
+                                color=dtype_line_colors[dtype])
 
                 # Adjust and label the figure
                 ax1.set_ylim([0, 100])
