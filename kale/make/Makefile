@@ -4,6 +4,7 @@ DATADIR := $(CODEDIR)/data
 NBD_MCMC_DIR := $(PLOTSDIR)/bid_bim_nbd_release/mcmc
 NBD_FRET_MCMC_DIR := $(PLOTSDIR)/bid_bim_fret_nbd_release/mcmc
 NBD_FRET_DUAL_MCMC_DIR := $(PLOTSDIR)/bid_bim_fret_nbd_release/fret_mcmc
+BAX_NBD_FRET_DUAL_MCMC_DIR := $(PLOTSDIR)/bax_bax_fret_nbd_release/fret_mcmc
 NBD_DATA := $(DATADIR)/Compiled\ Release\ percentages\ and\ NBD\ F-F0.xlsx \
             $(DATADIR)/parse_bid_bim_nbd_release.py
 NBD_FRET_DATA := $(DATADIR)/2015-02-27\ -\ Bid-Bim\ FRET\ with\ Bax\ NBD\ mutants\ in\ Tb-DPA\ Liposomes\ compiled\ reps+WT\ Bax.xlsx \
@@ -29,6 +30,7 @@ clean_pt_data1:
 
 clean_pt_data2:
 	cd $(NBD_FRET_MCMC_DIR); rm -f *.md5 *.fit *.deps.txt *.ensemble
+
 
 # This bit here allows us to only rebuild when the hash of a file changes.
 # See blog post describing the approach here:
@@ -110,6 +112,18 @@ pt_data2_fret_deps: $(NBD_FRET_DUAL_MCMC_DIR)/pt_data2_fret.deps.txt
 $(NBD_FRET_DUAL_MCMC_DIR)/pt_data2_fret.deps.txt: \
     $(NBD_FRET_DUAL_MCMC_DIR)/generate_fit_files_for_nbd_curves.py
 	python $(NBD_FRET_DUAL_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_FRET_DUAL_MCMC_DIR)
+
+
+# -- MCMC fitting for NBD + FRET, dataset 3
+pt_data3_fret: pt_data3_fret_deps
+
+pt_data3_fret_deps: $(BAX_NBD_FRET_DUAL_MCMC_DIR)/pt_data3_fret.deps.txt
+-include $(BAX_NBD_FRET_DUAL_MCMC_DIR)/pt_data3_fret.deps.txt
+
+$(BAX_NBD_FRET_DUAL_MCMC_DIR)/pt_data3_fret.deps.txt: \
+    $(BAX_NBD_FRET_DUAL_MCMC_DIR)/generate_fit_files_for_nbd_curves.py
+	python $(BAX_NBD_FRET_DUAL_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(BAX_NBD_FRET_DUAL_MCMC_DIR)
+
 
 # -- Dataset 1, NBD + Tb release, summary plots ------------------------
 nbd_release: nbd_release_endpts nbd_release_initial_rates nbd_example_curves \
@@ -331,6 +345,7 @@ nbd_labeling_ratios_table: \
 # ---------------------------------------------------------------
 
 # --- Normalized release endpoint data for release, dataset 3 ---
+# Not done, no WT control
 #data3_release_endpt_norm.pdf: \
 #        $(PLOTSDIR)/nbd_bax_analysis.py \
 #        $(PLOTSDIR)/bax_bax_fret_nbd_release/plots.py \
@@ -350,5 +365,50 @@ data3_nbd_endpt_norm.pdf: \
         $(PLOTSDIR)/bax_bax_fret_nbd_release/plots.py \
         $(BAX_FRET_DATA)
 	python -m tbidbaxlipo.plots.bax_bax_fret_nbd_release.plots nbd_endpoint_norm $(basename $@)
+
+# --- NBD endpoints, dataset 3, no normalization (raw values) ---
+# Not done, because data is already normalized in the spreadsheet
+#data3_nbd_endpt_no_norm.pdf: \
+#        $(PLOTSDIR)/nbd_bax_analysis.py \
+#        $(PLOTSDIR)/bax_bax_fret_nbd_release/plots.py \
+#        $(BAX_FRET_DATA)
+#	python -m tbidbaxlipo.plots.bax_bax_fret_nbd_release.plots nbd_endpoint_no_norm $(basename $@)
+
+data3_fret_endpt.pdf: \
+        $(PLOTSDIR)/nbd_bax_analysis.py \
+        $(PLOTSDIR)/bax_bax_fret_nbd_release/plots.py \
+        $(PLOTSDIR)/bax_bax_fret_nbd_release/preprocess_data.py \
+        $(BAX_FRET_DATA)
+	python -m tbidbaxlipo.plots.bax_bax_fret_nbd_release.plots fret_endpoint $(basename $@)
+
+data3_example_curves.pdf: \
+        $(PLOTSDIR)/bax_bax_fret_nbd_release/plot_example_fret_curves.py \
+        $(BAX_FRET_DATA)
+	python -m tbidbaxlipo.plots.bax_bax_fret_nbd_release.plot_example_fret_curves
+
+# FRET/NBD/release, initial rates
+# Building this target creates four files:
+#     data3_init_nbd_bar.pdf,
+#     data3_init_nbd_bar.pdf,
+#     data3_init_scatter_norm_Bid.pdf,
+#     data3_init_scatter_norm_Bim.pdf
+#data3_init_nbd_bar.pdf: \
+#        $(PLOTSDIR)/nbd_bax_analysis.py \
+#        $(PLOTSDIR)/bax_bax_fret_nbd_release/plots.py \
+#        $(BAX_FRET_DATA)
+#	python -m tbidbaxlipo.plots.bax_bax_fret_nbd_release.plots initial_rate_samples data3
+
+
+#data3_example_nbd_fret_fits.pdf: \
+#        $(PLOTSDIR)/bax_bax_fret_nbd_release/plot_example_fret_fits.py \
+#        $(BAX_FRET_DATA)
+#	python -m tbidbaxlipo.plots.bax_bax_fret_nbd_release.plot_example_fret_fits
+#
+#data3_delta_fret.pdf: \
+#        $(PLOTSDIR)/nbd_bax_analysis.py \
+#        $(PLOTSDIR)/bax_bax_fret_nbd_release/plot_delta_fret.py \
+#        $(PLOTSDIR)/bax_bax_fret_nbd_release/preprocess_data.py \
+#        $(BAX_FRET_DATA)
+#	python -m tbidbaxlipo.plots.bax_bax_fret_nbd_release.plot_delta_fret $(basename $@)
 
 
