@@ -16,7 +16,7 @@ data_file = os.path.abspath(os.path.join(data_path,
 nbd_residues = ['3', '36', '54', '68', '126', '134', '120',
                 '175', '179']
 activators = ['Bid']
-datatypes_time = ['Release', 'FRET', 'NBD']
+datatypes = ['Release', 'FRET', 'NBD']
 reps = [1, 2, 3]
 col_types = ['TIME', 'VALUE']
 
@@ -42,21 +42,24 @@ for nbd_ix, nbd_residue in enumerate(nbd_residues):
     # ...and replicates...
     for rep_ix, rep in enumerate(reps):
         # Now iterate over the Release, FRET, NBD columns
-        for dtype_ix, dtype in enumerate(datatypes_time):
+        for dtype_ix, dtype in enumerate(datatypes):
             for col_type_ix, col_type in enumerate(col_types):
                 # Iterate and fill the array of column values
                 vector = []
                 data_col = sheet.columns[col_index]\
                                          [FIRST_ROW_INDEX:LAST_ROW_INDEX]
+                factor = 100 if ((dtype == 'Release' or dtype == 'FRET') \
+                                 and col_type == 'VALUE') else 1
                 for cell in data_col:
                     if (cell.value == None):
                         vector.append(np.nan)
                     else:
-                        vector.append(float(cell.value))
-                col_tuples.append((activator, dtype, nbd_residue, rep, col_type))
+                        vector.append(float(cell.value) * factor)
+                col_tuples.append((activator, dtype, nbd_residue, rep,
+                                   col_type))
                 data.append(vector)
+                col_index += 1
             # Increment the index of the current column
-            col_index += 1
 
 # Create the Pandas dataframe
 data_matrix = np.array(data)
