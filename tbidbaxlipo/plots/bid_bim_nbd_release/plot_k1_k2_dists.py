@@ -11,6 +11,8 @@ import os
 from tbidbaxlipo.util import format_axis, set_fig_params_for_publication
 from tbidbaxlipo.plots.bid_bim_nbd_release.preprocess_data \
         import nbd_residues, max_nbd_value, df
+import pickle
+import csv
 
 def get_matrix_dimensions(num_nbd_residues, num_reps, num_bin_edges):
     # The number of columns (mutants * reps) * spaces,
@@ -198,6 +200,62 @@ def plot_matrix(plot_type, density_mx, residues, output_file_base):
     fig.savefig('%s.pdf' % output_file_base, dpi=1200)
     fig.savefig('%s.png' % output_file_base, dpi=300)
 
+def parameter_table(filelist, prefix='pt_data1_newpr'):
+    # To avoid having to hard-code which residues, activators, and models
+    # used, we first iterate over all the provided files and figure out how
+    # many things we have in each category (residues, conformations, etc.).
+    # To figure out how many unique things we have, we use sets:
+    activators = set()
+    nbd_residues = set()
+    replicates = set()
+    pattern = re.compile('%s_(\w+)_NBD_(\d+)_r(\d)_3confs' % prefix)
+
+    file_dict = {}
+
+    for filename in filelist:
+        # First, split off the dirname
+        basename = os.path.basename(filename)
+        # Next, split off the extension(s)
+        prefix = basename.split('.')[0]
+        # Next, split the filename into parts at underscores
+        m = pattern.match(prefix)
+        if not m:
+            raise Exception('Could not match filename %s' % prefix)
+        # Get the keys from the regex
+        (activator, residue, repnum) = m.groups()
+        repnum = int(repnum)
+        # Load the file
+        print "Loading", filename
+        with open(filename) as f:
+            (gf, sampler) = pickle.load(f)
+        # Store the chain for the parameter in a dict
+        file_dict[(activator, residue, repnum)] = (np.mean(sampler.flatchain[0], axis=0), gf.data[0,0,0])
+        # Store the keys
+        activators.add(activator)
+        nbd_residues.add(residue)
+        replicates.add(repnum)
+
+    activators = list(sorted(activators))
+    nbd_residues = list(sorted(nbd_residues, key=lambda key: int(key)))
+    replicates = list(sorted(replicates))
+    rows = []
+    for (act, res, rep) in product(activators, nbd_residues, replicates):
+        (chain, f0) = file_dict[(act, res, rep)]
+        row = [act, res, rep]
+        row.append(f0)
+        #param_means = chain.mean(axis=0)
+        param_means = chain
+        for p_mean in param_means:
+            row.append(10 ** p_mean)
+        print row
+        rows.append(row)
+
+    with open('justin_table.csv', 'w') as f:
+        csvwriter = csv.writer(f, delimiter=',')
+        csvwriter.writerow(['Activator', 'Residue', 'Rep', 'F0', 'k1', 'c1', 'k2', 'c2'])
+        csvwriter.writerows(rows)
+
+
 if __name__ == '__main__':
 
     usage =  'Usage:\n'
@@ -206,10 +264,14 @@ if __name__ == '__main__':
     usage += '    python plot_k1_k2_dists.py plot [k1k2|c1c2] ' \
                        'density_file1 density_file2 output_file_base\n'
 
+
     if len(sys.argv) < 4:
         print(usage)
         sys.exit(1)
-    if sys.argv[1] == 'assemble':
+    elif sys.argv[1] == 'table':
+        filelist = sys.argv[2:]
+        parameter_table(filelist)
+    elif sys.argv[1] == 'assemble':
         p_name = sys.argv[2]
         filelist = sys.argv[3:]
         assemble_density_matrix(p_name, filelist)
