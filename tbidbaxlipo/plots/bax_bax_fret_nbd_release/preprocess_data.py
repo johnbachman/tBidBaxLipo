@@ -28,7 +28,7 @@ max_nbd_value = -np.inf
 # to modify the run_pt script to call a function.
 
 activators = ['Bid']
-observables = ['Release', 'NBD', 'FRET']
+observables = ['NBD', 'FRET']
 for activator in activators:
     for nbd_residue in nbd_residues:
         # Skip the WT residue, since there's no NBD timecourse for it
