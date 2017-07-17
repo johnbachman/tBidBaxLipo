@@ -30,12 +30,13 @@ dependencies_list = []
 # Iterate over the activators
 for activator in ['Bid']:
     # Iterate over the NBD residues
-    for nbd_residue in ['54', '126']: # 54, 126
+    for nbd_residue in ['54']: # 54, 126
         # Skip the wild type curves since there is no NBD trace
         if nbd_residue == 'WT':
             continue
         # Iterate over the replicates
-        for rep_ix, rep_num in enumerate(range(1, 4)):
+        #for rep_ix, rep_num in enumerate(range(1, 4)):
+        for rep_ix, rep_num in enumerate([1]):
             # Initialize the data portion of the dict
             data_args = {
               'initial_condition_var': None,
