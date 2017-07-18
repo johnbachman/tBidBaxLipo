@@ -58,8 +58,8 @@ FORCE:
 %.mcmc: $(call to-md5, %.fit)
 	#python -m tbidbaxlipo.pt.compile_models $(call from-md5, $<)
 	#bsub -q $(PQUEUE) -n 10 -W 100:00 -N -o $(call from-md5, $<).out -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1 $(call from-md5, $<).pos
-	qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err -pe orte 16 mpirun python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos
-	#qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos nompi
+	#qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err -pe orte 16 mpirun python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos
+	qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos nompi
 
 # Don't delete the .md5 files! Without this rule they are treated as
 # intermediates and deleted.
