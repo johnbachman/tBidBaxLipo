@@ -35,8 +35,7 @@ for activator in ['Bid']:
         if nbd_residue == 'WT':
             continue
         # Iterate over the replicates
-        #for rep_ix, rep_num in enumerate(range(1, 4)):
-        for rep_ix, rep_num in enumerate([1]):
+        for rep_ix, rep_num in enumerate(range(1, 4)):
             # Initialize the data portion of the dict
             data_args = {
               'initial_condition_var': None,
