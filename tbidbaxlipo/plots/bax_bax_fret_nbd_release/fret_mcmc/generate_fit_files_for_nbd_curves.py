@@ -1,7 +1,7 @@
 import os
 import sys
 import yaml
-from tbidbaxlipo.data.parse_bid_bim_fret_nbd_release import nbd_residues
+from tbidbaxlipo.data.parse_bax_bax_fret_nbd_release import nbd_residues
 
 # Arguments shared across all fits
 args = {
