@@ -388,6 +388,12 @@ data3_example_curves.pdf: \
         $(BAX_FRET_DATA)
 	python -m tbidbaxlipo.plots.bax_bax_fret_nbd_release.plot_example_fret_curves
 
+data3_example_nbd_fret_fits.pdf: \
+        $(PLOTSDIR)/bax_bax_fret_nbd_release/plot_example_fret_fits.py \
+        $(NBD_FRET_DATA)
+	python -m tbidbaxlipo.plots.bax_bax_fret_nbd_release.plot_example_fret_fits
+
+
 # FRET/NBD/release, initial rates
 # Building this target creates four files:
 #     data3_init_nbd_bar.pdf,
