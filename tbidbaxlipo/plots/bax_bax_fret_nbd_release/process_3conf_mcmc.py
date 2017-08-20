@@ -64,8 +64,8 @@ if __name__ == '__main__':
     # Histograms
     param_info = [('c0_to_c1_k', 'k1_hist', -6, -1),
                   ('c1_to_c2_k', 'k2_hist', -6, -1),
-                  ('c1_scaling', 'c1_scaling', 1, 5.5),
-                  ('c2_scaling', 'c2_scaling', 1, 5.5),
+                  ('c1_scaling', 'c1_scaling', -1, 1),
+                  ('c2_scaling', 'c2_scaling', -1, 1),
                   ('fret1_scaling', 'fret1_scaling', -1, 1),
                   ('fret2_scaling', 'fret1_scaling', -1, 1)]
     for (p_name, file_suffix, lower_bound, upper_bound) in param_info:
