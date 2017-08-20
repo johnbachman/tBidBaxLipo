@@ -67,7 +67,7 @@ if __name__ == '__main__':
                   ('c1_scaling', 'c1_scaling', -1, 1),
                   ('c2_scaling', 'c2_scaling', -1, 1),
                   ('fret1_scaling', 'fret1_scaling', -1, 1),
-                  ('fret2_scaling', 'fret1_scaling', -1, 1)]
+                  ('fret2_scaling', 'fret2_scaling', -1, 1)]
     for (p_name, file_suffix, lower_bound, upper_bound) in param_info:
         p_samples = get_parameter_samples(p_name, gf, sampler)
         parameter_histogram(p_samples, lower_bound, upper_bound,
