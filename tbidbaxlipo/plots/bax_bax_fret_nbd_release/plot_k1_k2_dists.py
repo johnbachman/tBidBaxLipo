@@ -9,7 +9,7 @@ import sys
 import re
 import os
 from tbidbaxlipo.util import format_axis, set_fig_params_for_publication
-from tbidbaxlipo.plots.bid_bim_nbd_release.preprocess_data \
+from tbidbaxlipo.plots.bax_bax_fret_nbd_release.preprocess_data \
         import nbd_residues, max_nbd_value, df
 import pickle
 import csv
