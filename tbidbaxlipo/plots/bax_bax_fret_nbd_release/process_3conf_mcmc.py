@@ -23,17 +23,19 @@ def get_parameter_samples(pname, gf, sampler):
     p_samples = sampler.flatchain[0, :, p_index]
     return p_samples
 
-def parameter_histogram(p_samples, lower_bound, upper_bound, filename,
-                        bins_per_log=10):
+def parameter_histogram(p_samples, lower_bound, upper_bound, filename, p_scale,
+                        num_bins):
     # -- Calculate the histograms for the parameter (normalized density) --
     # For now, we declare the width of the prior up front to avoid having to
     # load it first and then set it
     width = upper_bound - lower_bound
     # Get bin boundaries for prior distribution
-    num_bin_edges = width * bins_per_log + 1
+    #num_bin_edges = width * bins_per_log + 1
+    num_bin_edges = num_bins + 1
     bin_edges = np.linspace(lower_bound, upper_bound, num_bin_edges)
-    num_bins = num_bin_edges - 1
     # Calculate the histogram
+    if p_scale == 'lin':
+        p_samples = 10 ** p_samples
     (p_counts, _) = np.histogram(p_samples, bins=bin_edges)
     p_norm_counts = p_counts / float(len(p_samples))
     # Save histograms
@@ -62,16 +64,18 @@ if __name__ == '__main__':
     (gf, sampler) = load_mcmc_file(filename)
 
     # Histograms
-    param_info = [('c0_to_c1_k', 'k1_hist', -6, -1),
-                  ('c1_to_c2_k', 'k2_hist', -6, -1),
-                  ('c1_scaling', 'c1_scaling', -1, 1),
-                  ('c2_scaling', 'c2_scaling', -1, 1),
-                  ('fret1_scaling', 'fret1_scaling', -1, 1),
-                  ('fret2_scaling', 'fret2_scaling', -1, 1)]
-    for (p_name, file_suffix, lower_bound, upper_bound) in param_info:
+    param_info = [('c0_to_c1_k', 'k1_hist', -6, -1, 50, 'log'),
+                  ('c1_to_c2_k', 'k2_hist', -6, -1, 50, 'log'),
+                  ('c1_scaling', 'c1_scaling', 0, 10, 50, 'lin', ),
+                  ('c2_scaling', 'c2_scaling', 0, 10, 50, 'lin'),
+                  ('fret1_scaling', 'fret1_scaling', 0, 100, 50, 'lin'),
+                  ('fret2_scaling', 'fret2_scaling', 0, 100, 50, 'lin')]
+    for (p_name, file_suffix, lower_bound, upper_bound, bins, p_scale) \
+                                                            in param_info:
         p_samples = get_parameter_samples(p_name, gf, sampler)
         parameter_histogram(p_samples, lower_bound, upper_bound,
-                            '%s.%s' % (filename, file_suffix))
+                            '%s.%s' % (filename, file_suffix), p_scale,
+                            num_bins=bins)
     # Peak times
     k1_samples = get_parameter_samples('c0_to_c1_k', gf, sampler)
     k2_samples = get_parameter_samples('c1_to_c2_k', gf, sampler)

@@ -32,7 +32,6 @@ def assemble_density_matrix(p_name, filelist):
     pattern = re.compile('pt_data3_(\w+)_NBD_(\d+)_r(\d)_3confs')
 
     file_dict = {}
-
     for filename in filelist:
         # First, split off the dirname
         basename = os.path.basename(filename)
@@ -63,9 +62,9 @@ def assemble_density_matrix(p_name, filelist):
         if p_name in ['k1', 'k2']:
             num_bin_edges = 51
         elif p_name in ['c1', 'c2']:
-            num_bin_edges = 46
+            num_bin_edges = 51
         elif p_name in ['f1', 'f2']:
-            num_bin_edges = 21
+            num_bin_edges = 51
         else:
             print "Unknown parameter name: %s" % p_name
             sys.exit(1)
@@ -146,13 +145,13 @@ def plot_matrix(plot_type, density_mx, residues, output_file_base):
         lbound_ix = 15
         xlabel = 'log$_{10}$(k1, k2)'
     elif plot_type == 'c1c2':
-        lbound = -1
-        ubound = 1
+        lbound = 0
+        ubound = 10
         lbound_ix = 0
         xlabel = 'log$_{10}$($C_2$, $C_3$)'
     elif plot_type == 'f1f2':
-        lbound = -1
-        ubound = 1
+        lbound = 0
+        ubound = 100
         lbound_ix = 0
         xlabel = 'log$_{10}$($F_2$, $F_3$)'
     else:
