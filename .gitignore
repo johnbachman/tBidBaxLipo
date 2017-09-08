@@ -1,8 +1,13 @@
 .DS_Store
 
+tbidbaxlipo/plots/bax_bax_nbd_release/mcmc/*.ensemble
+tbidbaxlipo/plots/bax_bax_fret_nbd_release/mcmc/*.ensemble
+tbidbaxlipo/plots/bax_bax_fret_nbd_release/fret_mcmc/*.ensemble
+
 tbidbaxlipo/plots/bid_bim_nbd_release/mcmc/*.ensemble
 tbidbaxlipo/plots/bid_bim_fret_nbd_release/mcmc/*.ensemble
 tbidbaxlipo/plots/bid_bim_fret_nbd_release/fret_mcmc/*.ensemble
+tbidbaxlipo/plots/bid_bim_fret_nbd_release/fret_only_mcmc/*.ensemble
 *.pos
 
 results
@@ -17,9 +22,9 @@ thesis/sphinxreport.log
 
 *.k1_hist
 *.k2_hist
-*.c1_scaling
-*.c2_scaling
+*.*_scaling
 *.c1_peak
+*_mx.txt
 *.evi
 *.lhs
 *.detfit

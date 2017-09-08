@@ -1,7 +1,7 @@
 import os
 import sys
 import yaml
-from tbidbaxlipo.data.parse_bid_bim_fret_nbd_release import nbd_residues
+from tbidbaxlipo.data.parse_bax_bax_fret_nbd_release import nbd_residues
 
 # Arguments shared across all fits
 args = {
@@ -23,14 +23,14 @@ args = {
 }
 
 basedir = sys.argv[1]
-output_target_pattern = 'pt_data2_fret_%s_NBD_%s_r%s'
+output_target_pattern = 'pt_data3_fret_%s_NBD_%s_r%s'
 output_filename_pattern = output_target_pattern + '.fit.ensemble'
 dependencies_list = []
 
 # Iterate over the activators
-for activator in ['Bid', 'Bim']:
+for activator in ['Bid']:
     # Iterate over the NBD residues
-    for nbd_residue in ['3', '54', '126']: # 54, 126
+    for nbd_residue in nbd_residues:
         # Skip the wild type curves since there is no NBD trace
         if nbd_residue == 'WT':
             continue
@@ -40,7 +40,7 @@ for activator in ['Bid', 'Bim']:
             data_args = {
               'initial_condition_var': None,
               'module':
-                   'tbidbaxlipo.plots.bid_bim_fret_nbd_release.preprocess_data'}
+                  'tbidbaxlipo.plots.bax_bax_fret_nbd_release.preprocess_data'}
             data_args['time_var'] = 'time_%s_%s_r%s' % \
                                     (activator, nbd_residue, rep_num)
             data_args['data_var'] = 'data_%s_%s_r%s' % \
@@ -65,8 +65,8 @@ for activator in ['Bid', 'Bim']:
 
 # Now write the file with the dependencies of the overall target on the
 # list of .mcmc files
-deps_filename = os.path.join(basedir, 'pt_data2_fret.deps.txt')
-target_name = 'pt_data2_fret'
+deps_filename = os.path.join(basedir, 'pt_data3_fret.deps.txt')
+target_name = 'pt_data3_fret'
 with open(deps_filename, 'w') as deps_file:
     #base_target = os.path.basename(basedir) # Strip off the directory info
     # First, specify that the overall target depends on all the sub-targets

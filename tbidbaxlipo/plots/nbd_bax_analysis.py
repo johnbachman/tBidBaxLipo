@@ -183,8 +183,13 @@ def plot_all_by_replicate(df, nbd_residues, datatypes, activators=None,
                     else:
                         raise ValueError("Unknown datatype: %s" % dtype)
                     # Plot the data
-                    ax.plot(t, v, label='%s, %s' % (activator, dtype),
-                            color=dtype_line_colors[dtype])
+                    if dtype == 'FRET':
+                        ax.plot(t, v, label='%s, %s' % (activator, dtype),
+                                color=dtype_line_colors[dtype],
+                                linestyle='', marker='.')
+                    else:
+                        ax.plot(t, v, label='%s, %s' % (activator, dtype),
+                                color=dtype_line_colors[dtype])
 
                 # Adjust and label the figure
                 ax1.set_ylim([0, 100])
@@ -227,9 +232,11 @@ def calc_barplot_width(num_sites, rmarg=0.13, lmarg=0.11):
     return (fig_width, rel_left, rel_right)
 
 def plot_nbd_endpoints(df, nbd_sites, datatype='NBD', last_n_pts=3,
-                       file_basename=None, normalize_nbd=False):
+                       file_basename=None, normalize_nbd=False,
+                       activators=None):
     replicates = range(1, 4)
-    activators = ['Bid', 'Bim']
+    if activators is None:
+        activators = ['Bid', 'Bim']
     # Filter out the WT residue from the list, if its there
     nbd_sites_no_wt = [s for s in nbd_sites if s != 'WT']
     # Matrix for storing the endpoints for all mutants, replicates
@@ -243,9 +250,9 @@ def plot_nbd_endpoints(df, nbd_sites, datatype='NBD', last_n_pts=3,
                                 calc_barplot_width(len(nbd_sites_no_wt))
         else:
             yaxis_label = 'NBD fluorescence (RFU)'
-            # If we're not normalizing the NBD values, then the additional 0s will
-            # push the axis label off the left-hand side. Therefore we adjust the
-            # left margin accordingly.
+            # If we're not normalizing the NBD values, then the additional 0s
+            # will push the axis label off the left-hand side. Therefore we
+            # adjust the left margin accordingly.
             (fig_width, rel_left, rel_right) = \
                                 calc_barplot_width(len(nbd_sites_no_wt),
                                                    lmarg=0.13)
@@ -260,6 +267,11 @@ def plot_nbd_endpoints(df, nbd_sites, datatype='NBD', last_n_pts=3,
     plt.ylabel(yaxis_label, fontsize=fontsize)
     bar_colors = {'Bid': 'gray', 'Bim': 'black'}
 
+    # Bar X position offset to center bars when only one activator
+    if len(activators) == 1:
+        offset = 0.5
+    else:
+        offset = 0
     # For both activators...
     for act_ix, activator in enumerate(activators):
         # Now iterate over all of the mutants
@@ -280,7 +292,8 @@ def plot_nbd_endpoints(df, nbd_sites, datatype='NBD', last_n_pts=3,
                 n_endpts[nbd_index, rep_index] = endpt_vals
 
             # Bar plot of NBD endpoint
-            plt.bar(range(nbd_index*3 + act_ix, (nbd_index*3) + 1 + act_ix),
+            plt.bar(np.arange(nbd_index*3 + act_ix, (nbd_index*3) + 1 + act_ix)
+                    + offset,
                     np.mean(n_endpts[nbd_index, :]),
                     width=1, color=bar_colors[activator], linewidth=0,
                     ecolor='k', capsize=1.5,
@@ -309,25 +322,27 @@ def plot_nbd_endpoints(df, nbd_sites, datatype='NBD', last_n_pts=3,
     ax.set_xticks(np.arange(1, 1 + len(nbd_sites_no_wt) * 3, 3))
     ax.set_xticklabels(nbd_sites_no_wt)
     # Create legend with rectangles to match colors of bars
-    bid_patch = mpatches.Patch(color=bar_colors['Bid'], label='cBid')
-    bim_patch = mpatches.Patch(color=bar_colors['Bim'], label='Bim')
-    leg = plt.legend(handles=[bid_patch, bim_patch],
-            bbox_to_anchor=(1.02, 0.5), loc='center left', borderaxespad=0.,
-            prop={'size': fontsize}, handlelength=1)
-    leg.draw_frame(False)
+    if len(activators) > 1:
+        bid_patch = mpatches.Patch(color=bar_colors['Bid'], label='cBid')
+        bim_patch = mpatches.Patch(color=bar_colors['Bim'], label='Bim')
+        leg = plt.legend(handles=[bid_patch, bim_patch],
+                bbox_to_anchor=(1.02, 0.5), loc='center left', borderaxespad=0.,
+                prop={'size': fontsize}, handlelength=1)
+        leg.draw_frame(False)
     # Output the file, if desired
     if file_basename:
         plt.savefig('%s.pdf' % file_basename)
         plt.savefig('%s.png' % file_basename)
 
 def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
-                           last_n_pts=3, file_basename=None):
+                           last_n_pts=3, file_basename=None, activators=None):
     # Check for nonsense
     if normalized_to_wt and 'WT' not in nbd_sites:
         raise ValueError("Cannot normalized to WT release if WT is not in the "
                          "dataset!")
     replicates = range(1, 4)
-    activators = ['Bid', 'Bim']
+    if activators is None:
+        activators = ['Bid', 'Bim']
     # If we're normalizing to WT, filter the WT entry from the site list
     if normalized_to_wt:
         nbd_sites_filt = [s for s in nbd_sites if s != 'WT']
@@ -349,6 +364,11 @@ def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
     # Bar colors for the different activators
     bar_colors = {'Bid': 'gray', 'Bim': 'black'}
 
+    # Bar X position offset to center bars when only one activator
+    if len(activators) == 1:
+        offset = 0.5
+    else:
+        offset = 0
     # For both activators...
     for act_ix, activator in enumerate(activators):
         # Get the wild type release as a baseline, averaging over last n pts
@@ -383,7 +403,8 @@ def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
                 rel_mean *= 100
                 rel_sd *= 100
 
-            plt.bar(range(nbd_index*3 + act_ix, (nbd_index*3) + 1 + act_ix),
+            plt.bar(np.arange(nbd_index*3 + act_ix, (nbd_index*3) + 1 + act_ix)
+                        + offset,
                     rel_mean, width=1, color=bar_colors[activator],
                     linewidth=0, ecolor='k', capsize=1.5, yerr=rel_sd)
 
@@ -404,13 +425,14 @@ def plot_release_endpoints(df, nbd_sites, normalized_to_wt=False,
     ax.yaxis.labelpad = 2
     ax.set_xticks(np.arange(1, 1 + len(nbd_sites_filt) * 3, 3))
     ax.set_xticklabels(nbd_sites_filt)
-    # Create legend with rectangles to match colors of bars
-    bid_patch = mpatches.Patch(color=bar_colors['Bid'], label='cBid')
-    bim_patch = mpatches.Patch(color=bar_colors['Bim'], label='Bim')
-    leg = plt.legend(handles=[bid_patch, bim_patch],
-            bbox_to_anchor=(1.02, 0.5), loc='center left', borderaxespad=0.,
-            prop={'size': fontsize}, handlelength=1)
-    leg.draw_frame(False)
+    if len(activators) > 1:
+        # Create legend with rectangles to match colors of bars
+        bid_patch = mpatches.Patch(color=bar_colors['Bid'], label='cBid')
+        bim_patch = mpatches.Patch(color=bar_colors['Bim'], label='Bim')
+        leg = plt.legend(handles=[bid_patch, bim_patch],
+                bbox_to_anchor=(1.02, 0.5), loc='center left', borderaxespad=0.,
+                prop={'size': fontsize}, handlelength=1)
+        leg.draw_frame(False)
     # Add hlines every 20 percent until the top of the plot is reached
     (ymin, ymax) = ax.get_ylim()
     plt.hlines(range(20, int(ymax), 20), x_lbound, x_ubound, color='0.85',

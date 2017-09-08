@@ -18,6 +18,7 @@ Contents:
    140430_Bid_Bax_FRET/index
    bid_bim_fret_nbd_release/index
    141203_Bax_Bax_FRET/index
+   bax_bax_fret_nbd_release/index
 
 Indices and tables
 ==================
