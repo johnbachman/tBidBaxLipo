@@ -30,7 +30,7 @@ dependencies_list = []
 # Iterate over the activators
 for activator in ['Bid', 'Bim']:
     # Iterate over the NBD residues
-    for nbd_residue in ['54', '126']: # 54, 126
+    for nbd_residue in ['3', '54', '126']: # 54, 126
         # Skip the wild type curves since there is no NBD trace
         if nbd_residue == 'WT':
             continue
@@ -40,7 +40,7 @@ for activator in ['Bid', 'Bim']:
             data_args = {
               'initial_condition_var': None,
               'module':
-                    'tbidbaxlipo.plots.bid_bim_fret_nbd_release.preprocess_data'}
+                   'tbidbaxlipo.plots.bid_bim_fret_nbd_release.preprocess_data'}
             data_args['time_var'] = 'time_%s_%s_r%s' % \
                                     (activator, nbd_residue, rep_num)
             data_args['data_var'] = 'data_%s_%s_r%s' % \

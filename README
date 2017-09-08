@@ -1,0 +1,12 @@
+# tBidBaxLipo: Analysis of Bax Interactions from in vitro Measurements
+
+## Make instructions for Kale NBD/FRET datasets
+
+Run the following from `kale/make`:
+
+* `make pt_data1`: Generate .fit files and run MCMC fitting for Kinetic
+  Dataset 1 (NBD-Bax fluorescence with Bid and Bim as activators).
+
+* `make pt_data2`: Generate .fit files and run MCMC fitting for Kinetic
+  Dataset 2 (NBD-Bax fluorescence and FRET with DAC-Bid/DAC-Bim).
+
