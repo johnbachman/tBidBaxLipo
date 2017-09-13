@@ -28,7 +28,8 @@ for res in nbd_residues:
     fig, axarr = plt.subplots(2, 3, sharex=True, figsize=(4.5, 4.5), dpi=300)
     for col_ix, rep in enumerate((1, 2, 3)):
         filename = os.path.join(mcmc_path,
-                        'pt_data3_fret_%s_NBD_%s_r%s_3confs.mcmc' % (act, res, rep))
+                        'pt_data3_fret_%s_NBD_%s_r%s_3confs.mcmc' %
+                        (act, res, rep))
         with open(filename) as f:
             print("Loading %s" % filename)
             (gf, sampler) = cPickle.load(f)
@@ -41,7 +42,8 @@ for res in nbd_residues:
             ax1.plot(t, v, color='k')
             # Format axes
             act_name = 'cBid' if act == 'Bid' else act
-            ax1.set_title('NBD-%sC-Bax Rep %d, DAC-Bax' % (res, rep), fontsize=fontsize)
+            ax1.set_title('NBD-%sC-Bax Rep %d, DAC-Bax' % (res, rep),
+                          fontsize=fontsize)
             ax1.set_xlim(-50, 4000)
             ax1.set_xticks(np.linspace(0, 4000, 5))
             # Label the axes
