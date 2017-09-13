@@ -9,8 +9,7 @@ this_module = sys.modules[__name__]
 
 # There are a number of outliers in the FRET data that Justin attributes
 # to debris floating in the cuvette that produces momentary spikes. Here
-# we explicitly remove several of these from the 54C data, setting them to
-# NaN.
+# we explicitly remove these, setting them to NaN.
 df_pre = deepcopy(df)
 
 def remove_outliers(key, outliers):
