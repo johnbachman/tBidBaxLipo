@@ -807,6 +807,14 @@ def global_fit_from_args(args):
     # Call the appropriate model-building macro
     # If there is a multiconf attribute, that trumps any other attribute
     # and determines that this is a multiconf model
+    if 'scaling_prior_type' in args['model']:
+        spt = args['model']['scaling_prior_type']
+        if spt not in ['normal', 'linear']:
+            raise ValueError('scaling_prior_type must be one of normal, '
+                             'linear')
+    else:
+        spt = 'linear'
+
     if 'multiconf' in args['model'] or 'multiconf_nbd_fret' in args['model']:
         # Determine the multiconf type
         multiconf_type = 'multiconf' if 'multiconf' in args['model'] \
@@ -844,12 +852,14 @@ def global_fit_from_args(args):
         if multiconf_type == 'multiconf':
             bd.build_model_multiconf(num_confs, nbd_f0, nbd_lbound, nbd_ubound,
                                      normalized_data=norm_data,
-                                     reversible=reversible)
+                                     reversible=reversible,
+                                     scaling_prior_type=spt)
         elif multiconf_type == 'multiconf_nbd_fret':
             bd.build_model_multiconf_nbd_fret(num_confs, nbd_f0, nbd_lbound,
                                               nbd_ubound,
                                               normalized_data=norm_data,
-                                              reversible=reversible)
+                                              reversible=reversible,
+                                              scaling_prior_type=spt)
     # Check the builder: one_cpt or lipo_sites
     elif 'builder' in args['model'] and \
          args['model']['builder'] == 'lipo_sites':
