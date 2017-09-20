@@ -7,3 +7,6 @@ Bax-Bax FRET, NBD, and Release Kinetics
     :maxdepth: 3
 
     raw_data
+    outlier_removal
+    data_after_outliers
+    nbd_error_estimates
