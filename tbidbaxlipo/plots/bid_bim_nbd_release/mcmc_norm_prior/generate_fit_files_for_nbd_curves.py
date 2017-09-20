@@ -8,6 +8,7 @@ args = {
     'model': {
         'multiconf': [3], # 2, 3, 4
         'normalized_nbd_data': [False],
+        'scaling_prior_type': 'normal',
         'gaussian_prior_std': [0.1761]},
     'model_observable': ['NBD'],
     'global_initial_conditions': {},
@@ -23,7 +24,7 @@ args = {
 }
 
 basedir = sys.argv[1]
-output_target_pattern = 'pt_data1_newpr_%s_NBD_%s_r%s'
+output_target_pattern = 'pt_data1_norm_%s_NBD_%s_r%s'
 output_filename_pattern = output_target_pattern + '.fit.ensemble'
 dependencies_list = []
 
