@@ -5,7 +5,9 @@ NBD_MCMC_DIR := $(PLOTSDIR)/bid_bim_nbd_release/mcmc
 NBD_MCMC_NORM_DIR := $(PLOTSDIR)/bid_bim_nbd_release/mcmc_norm_prior
 NBD_FRET_MCMC_DIR := $(PLOTSDIR)/bid_bim_fret_nbd_release/mcmc
 NBD_FRET_DUAL_MCMC_DIR := $(PLOTSDIR)/bid_bim_fret_nbd_release/fret_mcmc
+NBD_FRET_DUAL_MCMC_NORM_DIR := $(PLOTSDIR)/bid_bim_fret_nbd_release/fret_mcmc_norm
 BAX_NBD_FRET_DUAL_MCMC_DIR := $(PLOTSDIR)/bax_bax_fret_nbd_release/fret_mcmc
+BAX_NBD_FRET_DUAL_MCMC_NORM_DIR := $(PLOTSDIR)/bax_bax_fret_nbd_release/fret_mcmc_norm
 NBD_DATA := $(DATADIR)/Compiled\ Release\ percentages\ and\ NBD\ F-F0.xlsx \
             $(DATADIR)/parse_bid_bim_nbd_release.py
 NBD_FRET_DATA := $(DATADIR)/2015-02-27\ -\ Bid-Bim\ FRET\ with\ Bax\ NBD\ mutants\ in\ Tb-DPA\ Liposomes\ compiled\ reps+WT\ Bax.xlsx \
@@ -130,6 +132,16 @@ $(NBD_FRET_DUAL_MCMC_DIR)/pt_data2_fret.deps.txt: \
 	python $(NBD_FRET_DUAL_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_FRET_DUAL_MCMC_DIR)
 
 
+# -- MCMC fitting for NBD + FRET, dataset 2
+pt_data2_fret_norm: pt_data2_fret_norm_deps
+
+pt_data2_fret_norm_deps: $(NBD_FRET_DUAL_MCMC_NORM_DIR)/pt_data2_fret_norm.deps.txt
+-include $(NBD_FRET_DUAL_MCMC_NORM_DIR)/pt_data2_fret_norm.deps.txt
+
+$(NBD_FRET_DUAL_MCMC_NORM_DIR)/pt_data2_fret_norm.deps.txt: \
+    $(NBD_FRET_DUAL_MCMC_NORM_DIR)/generate_fit_files_for_nbd_curves.py
+	python $(NBD_FRET_DUAL_MCMC_NORM_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_FRET_DUAL_MCMC_NORM_DIR)
+
 # -- MCMC fitting for NBD + FRET, dataset 3
 pt_data3_fret: pt_data3_fret_deps
 
@@ -140,6 +152,15 @@ $(BAX_NBD_FRET_DUAL_MCMC_DIR)/pt_data3_fret.deps.txt: \
     $(BAX_NBD_FRET_DUAL_MCMC_DIR)/generate_fit_files_for_nbd_curves.py
 	python $(BAX_NBD_FRET_DUAL_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(BAX_NBD_FRET_DUAL_MCMC_DIR)
 
+# -- MCMC fitting for NBD + FRET, dataset 3
+pt_data3_fret_norm: pt_data3_fret_norm_deps
+
+pt_data3_fret_norm_deps: $(BAX_NBD_FRET_DUAL_MCMC_NORM_DIR)/pt_data3_fret_norm.deps.txt
+-include $(BAX_NBD_FRET_DUAL_MCMC_NORM_DIR)/pt_data3_fret_norm.deps.txt
+
+$(BAX_NBD_FRET_DUAL_MCMC_NORM_DIR)/pt_data3_fret_norm.deps.txt: \
+    $(BAX_NBD_FRET_DUAL_MCMC_NORM_DIR)/generate_fit_files_for_nbd_curves.py
+	python $(BAX_NBD_FRET_DUAL_MCMC_NORM_DIR)/generate_fit_files_for_nbd_curves.py $(BAX_NBD_FRET_DUAL_MCMC_NORM_DIR)
 
 # -- Dataset 1, NBD + Tb release, summary plots ------------------------
 nbd_release: nbd_release_endpts nbd_release_initial_rates nbd_example_curves \
