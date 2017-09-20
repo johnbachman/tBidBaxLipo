@@ -9,7 +9,7 @@ args = {
         #'multiconf_nbd_fret': [[3, 'rev'], [4, 'rev']], # 2, 3, 4
         'multiconf_nbd_fret': [3, 4],
         'normalized_nbd_data': [True],
-        'scaling_prior_type': ['linear'],},
+        'scaling_prior_type': ['normal'],},
     'model_observable': ['NBD', 'FRET'],
     'global_initial_conditions': {},
     'local_initial_condition': None,
