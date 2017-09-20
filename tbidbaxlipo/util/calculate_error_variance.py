@@ -17,9 +17,11 @@ def calc_err_var(data, last_n_pts=50, fit_type='cubic', plot=False,
         fit = tf.Quadratic(log_transform=False)
     elif fit_type == 'cubic':
         fit = tf.Cubic(log_transform=False)
+    elif fit_type == 'two_exp_sum':
+        fit = tf.TwoExpSum()
     else:
-        raise ValueError("Unknown fit type! Must be 'linear', 'quadratic', or "
-                         "'cubic'.")
+        raise ValueError("Unknown fit type! Must be 'linear', 'quadratic', "
+                         "'cubic', or 'two_exp_sum'.")
     # Run the fit
     params = fit.fit_timecourse(t_subset, data_subset)
     # Get the best-fit curve

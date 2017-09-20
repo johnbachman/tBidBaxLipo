@@ -16,19 +16,23 @@ def filtered(x, zscores, cutoff):
 
 
 def find_outliers(values):
-    (res, fig) = calc_err_var(values, last_n_pts=110, fit_type='cubic',
-                              plot=False)
+    (res, fig) = calc_err_var(values, last_n_pts=len(values),
+                              fit_type='two_exp_sum', plot=False)
     zscores = mod_zscore(res)
     return filtered(values, zscores, 3.5)
 
-#from tbidbaxlipo.plots.bid_bim_fret_nbd_release.preprocess_data import df
-#from matplotlib import pyplot as plt
+"""
+from tbidbaxlipo.data.parse_bid_bim_fret_nbd_release import df
+from matplotlib import pyplot as plt
+
 #time = df[('Bim', 'FRET', '3', 1, 'TIME')].values
 #values = df[('Bim', 'FRET', '3', 1, 'VALUE')].values
-#plt.ion()
-#plt.figure()
-#plt.plot(time, values, linestyle='', marker='.', color='r')
-#plt.plot(time, find_outliers(values), linestyle='', marker='.',
-#         color='b')
 
-
+time = df[('Bim', 'FRET', '126', 3, 'TIME')].values
+values = df[('Bim', 'FRET', '126', 3, 'VALUE')].values
+plt.ion()
+plt.figure()
+plt.plot(time, values, linestyle='', marker='.', color='r')
+plt.plot(time, find_outliers(values), linestyle='', marker='.',
+         color='b')
+"""

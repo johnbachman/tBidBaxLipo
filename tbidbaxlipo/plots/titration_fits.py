@@ -439,6 +439,24 @@ class TwoExpWithBackground(TitrationFit):
                              (1 - np.exp(-(self.bg_rates[2] + k_arr[2])
                                  * t)) * t)))
 
+class TwoExpSum(TitrationFit):
+    r"""Fit timecourses to a four-parameter sum of two exponentials
+
+    .. math::
+
+        y(t) = F_{max1} \left(1 - e^{-k_1 t}\right +
+               F_{max2} \left(1 - e^{-k_2 t}\right
+    """
+    def __init__(self):
+        super(TwoExpSum, self).__init__(
+                    param_names=['$k_1$', '$F_{max1}$', '$k_2$', '$F_{max2}$'],
+                    initial_guesses=[1e-3, 20, 1e-4, 30])
+
+    def fit_func(self, t, k_arr):
+        """Two-exponential fitting function."""
+        return (k_arr[1]* (1 - np.exp(-k_arr[0] * t))) +\
+               (k_arr[3]* (1 - np.exp(-k_arr[2] * t)))
+
 ##########################################
 # Plotting and analysis functions        #
 ##########################################
