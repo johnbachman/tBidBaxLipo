@@ -24,7 +24,7 @@ else:
     LAST_ROW_INDEX = 128
 
 # These lists must match the order in the spreadsheet exactly
-nbd_residues = ['3', '36', '54', '68', '126', '134', '120',
+nbd_residues = ['3', '36', '54', '68', '120', '126', '138',
                 '175', '179']
 activators = ['Bid']
 #datatypes = ['Release', 'FRET', 'NBD']

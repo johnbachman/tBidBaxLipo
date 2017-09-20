@@ -2,6 +2,7 @@ CODEDIR := ../../tbidbaxlipo
 PLOTSDIR := $(CODEDIR)/plots
 DATADIR := $(CODEDIR)/data
 NBD_MCMC_DIR := $(PLOTSDIR)/bid_bim_nbd_release/mcmc
+NBD_MCMC_NORM_DIR := $(PLOTSDIR)/bid_bim_nbd_release/mcmc_norm_prior
 NBD_FRET_MCMC_DIR := $(PLOTSDIR)/bid_bim_fret_nbd_release/mcmc
 NBD_FRET_DUAL_MCMC_DIR := $(PLOTSDIR)/bid_bim_fret_nbd_release/fret_mcmc
 BAX_NBD_FRET_DUAL_MCMC_DIR := $(PLOTSDIR)/bax_bax_fret_nbd_release/fret_mcmc
@@ -27,6 +28,9 @@ clean:
 
 clean_pt_data1:
 	cd $(NBD_MCMC_DIR); rm -f *.md5 *.fit *.deps.txt *.ensemble
+
+clean_pt_data1_norm:
+	cd $(NBD_MCMC_NORM_DIR); rm -f *.md5 *.fit *.deps.txt *.ensemble
 
 clean_pt_data2:
 	cd $(NBD_FRET_MCMC_DIR); rm -f *.md5 *.fit *.deps.txt *.ensemble
@@ -61,7 +65,7 @@ FORCE:
 	#python -m tbidbaxlipo.pt.compile_models $(call from-md5, $<)
 	#bsub -q $(PQUEUE) -n 10 -W 100:00 -N -o $(call from-md5, $<).out -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1 $(call from-md5, $<).pos
 	#qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err -pe orte 16 mpirun python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos
-	qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos nompi
+	echo "qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos nompi"
 
 # Don't delete the .md5 files! Without this rule they are treated as
 # intermediates and deleted.
@@ -94,6 +98,16 @@ pt_data1_deps: $(NBD_MCMC_DIR)/pt_data1.deps.txt
 $(NBD_MCMC_DIR)/pt_data1.deps.txt: \
     $(NBD_MCMC_DIR)/generate_fit_files_for_nbd_curves.py
 	python $(NBD_MCMC_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_MCMC_DIR)
+
+# -- MCMC Fitting for Dataset 1, complete set of NBD-Bax trajectories --
+pt_data1_norm: pt_data1_norm_deps
+
+pt_data1_norm_deps: $(NBD_MCMC_NORM_DIR)/pt_data1_norm.deps.txt
+-include $(NBD_MCMC_NORM_DIR)/pt_data1_norm.deps.txt
+
+$(NBD_MCMC_NORM_DIR)/pt_data1_norm.deps.txt: \
+    $(NBD_MCMC_NORM_DIR)/generate_fit_files_for_nbd_curves.py
+	python $(NBD_MCMC_NORM_DIR)/generate_fit_files_for_nbd_curves.py $(NBD_MCMC_NORM_DIR)
 
 # -- MCMC Fitting for Dataset 2, complete set of NBD-Bax trajectories with FRET --
 pt_data2: pt_data2_deps
