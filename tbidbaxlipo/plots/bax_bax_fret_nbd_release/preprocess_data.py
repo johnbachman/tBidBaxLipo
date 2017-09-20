@@ -4,6 +4,7 @@ from copy import deepcopy
 from tbidbaxlipo.data.parse_bax_bax_fret_nbd_release import df, nbd_residues
 #from tbidbaxlipo.data.parse_bid_bim_nbd_release import labeling_ratios
 from tbidbaxlipo.util.calculate_error_variance import calc_err_var
+from tbidbaxlipo.util.find_outliers import find_outliers
 
 this_module = sys.modules[__name__]
 
@@ -12,9 +13,20 @@ this_module = sys.modules[__name__]
 # we explicitly remove these, setting them to NaN.
 df_pre = deepcopy(df)
 
-def remove_outliers(key, outliers):
-    for outlier_ix in outliers:
-        df_pre[key][outlier_ix] = np.nan
+activators = ['Bid']
+observables = ['NBD', 'FRET']
+
+# Remove FRET outliers
+for activator in activators:
+    for nbd_residue in nbd_residues:
+        if nbd_residue == 'WT':
+            continue
+        for rep_ix, rep_num in enumerate(range(1, 4)):
+            key = (activator, 'FRET', nbd_residue, rep_num)
+            time = df[key + ('TIME',)].values
+            values = df[key + ('VALUE',)].values
+            filt = find_outliers(values)
+            df_pre[key + ('VALUE',)] = filt
 
 # We're going to store the highest observed NBD fluorescence value as a
 # reference to evaluate plausibility of fitted fluorescence values
@@ -26,8 +38,6 @@ max_nbd_value = -np.inf
 # can be simply accessed programmatically as a variable, rather than having
 # to modify the run_pt script to call a function.
 
-activators = ['Bid']
-observables = ['NBD', 'FRET']
 for activator in activators:
     for nbd_residue in nbd_residues:
         # Skip the WT residue, since there's no NBD timecourse for it
