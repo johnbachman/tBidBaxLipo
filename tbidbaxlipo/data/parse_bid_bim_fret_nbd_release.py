@@ -9,22 +9,32 @@ import os
 import sys
 
 data_path = os.path.dirname(sys.modules['tbidbaxlipo.data'].__file__)
-data_file = os.path.abspath(os.path.join(data_path,
-        '2015-02-27 - Bid-Bim FRET with Bax NBD mutants in Tb-DPA Liposomes compiled reps+WT Bax.xlsx'))
 
-# These lists must match the order in the spreadsheet exactly
-nbd_residues = ['WT', '3', '15', '36', '47', '54', '62', '122', '126', '138',
-                '151', '175', '184']
+# New dataset
+if True:
+    data_file = os.path.abspath(os.path.join(data_path,
+            'Bid-Bim and Bax FRET KD2 Compiled V2.xlsx'))
+    # These lists must match the order in the spreadsheet exactly
+    nbd_residues = ['3', '15', '36', '47', '54', '62', '122', '126', '138',
+                    '151', '175', '184']
+    # Zero-indexed
+    FIRST_ROW_INDEX = 8
+    LAST_ROW_INDEX = 129
+# Old dataset
+else:
+    data_file = os.path.abspath(os.path.join(data_path,
+            '2015-02-27 - Bid-Bim FRET with Bax NBD mutants in Tb-DPA Liposomes compiled reps+WT Bax.xlsx'))
+    # These lists must match the order in the spreadsheet exactly
+    nbd_residues = ['WT', '3', '15', '36', '47', '54', '62', '122', '126', '138',
+                    '151', '175', '184']
+    FIRST_ROW_INDEX = 4
+    # Should be 128, but chopped off the last few points to avoid massive outliers
+    LAST_ROW_INDEX = 123
+
 activators = ['Bid', 'Bim']
 datatypes_time = ['Time', 'Release', 'FRET', 'NBD']
 reps = [1, 2, 3]
 col_types = ['TIME', 'VALUE']
-
-# Zero-indexed
-FIRST_ROW_INDEX = 4
-# Should be 128, but chopped off the last few points to avoid massive outliers
-#LAST_ROW_INDEX = 128
-LAST_ROW_INDEX = 123
 
 wb = load_workbook(data_file, data_only=True)
 
