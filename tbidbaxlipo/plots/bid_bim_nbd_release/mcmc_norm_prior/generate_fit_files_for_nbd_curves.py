@@ -8,8 +8,8 @@ args = {
     'model': {
         'multiconf': [3], # 2, 3, 4
         'normalized_nbd_data': [False],
-        'scaling_prior_type': 'normal',
-        'gaussian_prior_std': [0.1761]},
+        'scaling_prior_type': ['normal'],
+        },
     'model_observable': ['NBD'],
     'global_initial_conditions': {},
     'local_initial_condition': None,
@@ -65,8 +65,8 @@ for activator in ['Bid', 'Bim']:
 
 # Now write the file with the dependencies of the overall target on the
 # list of .mcmc files
-deps_filename = os.path.join(basedir, 'pt_data1_newpr.deps.txt')
-target_name = 'pt_data1_newpr'
+deps_filename = os.path.join(basedir, 'pt_data1_norm.deps.txt')
+target_name = 'pt_data1_norm'
 with open(deps_filename, 'w') as deps_file:
     #base_target = os.path.basename(basedir) # Strip off the directory info
     # First, specify that the overall target depends on all the sub-targets
