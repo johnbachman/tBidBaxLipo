@@ -24,7 +24,7 @@ args = {
 }
 
 basedir = sys.argv[1]
-output_target_pattern = 'pt_data3_fret_%s_NBD_%s_r%s'
+output_target_pattern = 'pt_data3_fret_norm_%s_NBD_%s_r%s'
 output_filename_pattern = output_target_pattern + '.fit.ensemble'
 dependencies_list = []
 
