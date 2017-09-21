@@ -3,13 +3,16 @@ import sys
 import yaml
 from tbidbaxlipo.data.parse_bid_bim_fret_nbd_release import nbd_residues
 
+residues_to_fit = [n for n in nbd_residues
+                   if n not in ['15', '62', '184']]
+
 # Arguments shared across all fits
 args = {
     'model': {
         #'multiconf_nbd_fret': [[3, 'rev'], [4, 'rev']], # 2, 3, 4
         'multiconf_nbd_fret': [3],
         'normalized_nbd_data': [True],
-        'scaling_prior_type': ['linear'],},
+        'scaling_prior_type': ['linear']},
     'model_observable': ['NBD', 'FRET'],
     'global_initial_conditions': {},
     'local_initial_condition': None,
@@ -31,7 +34,7 @@ dependencies_list = []
 # Iterate over the activators
 for activator in ['Bid', 'Bim']:
     # Iterate over the NBD residues
-    for nbd_residue in ['3', '54', '126']: # 54, 126
+    for nbd_residue in residues_to_fit:
         # Skip the wild type curves since there is no NBD trace
         if nbd_residue == 'WT':
             continue

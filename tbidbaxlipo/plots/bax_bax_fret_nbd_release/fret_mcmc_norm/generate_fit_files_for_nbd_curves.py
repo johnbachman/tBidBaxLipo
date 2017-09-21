@@ -9,7 +9,7 @@ args = {
         #'multiconf_nbd_fret': [[3, 'rev'], [4, 'rev']], # 2, 3, 4
         'multiconf_nbd_fret': [3],
         'normalized_nbd_data': [True],
-        'scaling_prior_type': ['normal'],},
+        'scaling_prior_type': ['normal']},
     'model_observable': ['NBD', 'FRET'],
     'global_initial_conditions': {},
     'local_initial_condition': None,
@@ -66,8 +66,8 @@ for activator in ['Bid']:
 
 # Now write the file with the dependencies of the overall target on the
 # list of .mcmc files
-deps_filename = os.path.join(basedir, 'pt_data3_fret.deps.txt')
-target_name = 'pt_data3_fret'
+deps_filename = os.path.join(basedir, 'pt_data3_fret_norm.deps.txt')
+target_name = 'pt_data3_fret_norm'
 with open(deps_filename, 'w') as deps_file:
     #base_target = os.path.basename(basedir) # Strip off the directory info
     # First, specify that the overall target depends on all the sub-targets
