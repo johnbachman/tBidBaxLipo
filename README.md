@@ -6,17 +6,36 @@ Run the following make commands from `kale/make`.
 
 ### Dataset 1 (NBD-Bax)
 
-* `make pt_data1`: Run MCMC fitting (requires Starcluster setup)
+* `make pt_data1`: Run MCMC fitting (requires Starcluster setup). Files are
+  stored in `tbidbaxlipo/plots/bid_bim_nbd_release/mcmc`
+
+* `make pt_data1_norm`: Run MCMC fitting with a Gaussian prior distribution for
+  the NBD fluorescence scaling parameters (requires Starcluster setup).
+  Files are stored in `tbidbaxlipo/plots/bid_bim_nbd_release/mcmc_norm_prior`
 
 * `make nbd_labeling_ratios_table`
 
 ### Dataset 2 (NBD-Bax + Bid/Bax FRET)
 
-* `make pt_data2`: Run MCMC fitting (requires Starcluster setup)
+* `make pt_data2_fret`: Run MCMC fitting with coupled NBD and FRET dynamics
+  (requires Starcluster setup). Files are stored in
+  `tbidbaxlipo/plots/bid_bim_fret_nbd_release/fret_mcmc`.
+
+* `make pt_data2_fret_norm`: Run MCMC fitting with coupled NBD and FRET
+  dynamics with a Gaussian prior distribution for the NBD fluorescence
+  scaling parameters (requires Starcluster setup). Files are stored in
+  `tbidbaxlipo/plots/bid_bim_fret_nbd_release/fret_mcmc_norm`.
 
 ### Dataset 3 (NBD-Bax + Bax/Bax FRET)
 
-* `make pt_data3`: Run MCMC fitting (requires Starcluster setup)
+* `make pt_data3_fret`: Run MCMC fitting with coupled NBD and FRET dynamics
+  (requires Starcluster setup). Files are stored in
+  `tbidbaxlipo/plots/bax_bax_fret_nbd_release/fret_mcmc`.
+
+* `make pt_data3_fret_norm`: Run MCMC fitting with coupled NBD and FRET
+  dynamics with a Gaussian prior distribution for the NBD fluorescence
+  scaling parameters (requires Starcluster setup). Files are stored in
+  `tbidbaxlipo/plots/bax_bax_fret_nbd_release/fret_mcmc_norm`.
 
 ## All others
 
