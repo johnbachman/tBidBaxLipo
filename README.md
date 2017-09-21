@@ -19,23 +19,23 @@ Run the following make commands from `kale/make`.
 
 * `make pt_data2_fret`: Run MCMC fitting with coupled NBD and FRET dynamics
   (requires Starcluster setup). Files are stored in
-  `tbidbaxlipo/plots/bid_bim_fret_nbd_release/fret_mcmc`.
+  `tbidbaxlipo/plots/bid_bim_fret_nbd_release/fret_mcmc`. (54 fits)
 
 * `make pt_data2_fret_norm`: Run MCMC fitting with coupled NBD and FRET
   dynamics with a Gaussian prior distribution for the NBD fluorescence
   scaling parameters (requires Starcluster setup). Files are stored in
-  `tbidbaxlipo/plots/bid_bim_fret_nbd_release/fret_mcmc_norm`.
+  `tbidbaxlipo/plots/bid_bim_fret_nbd_release/fret_mcmc_norm`. (54 fits)
 
 ### Dataset 3 (NBD-Bax + Bax/Bax FRET)
 
 * `make pt_data3_fret`: Run MCMC fitting with coupled NBD and FRET dynamics
   (requires Starcluster setup). Files are stored in
-  `tbidbaxlipo/plots/bax_bax_fret_nbd_release/fret_mcmc`.
+  `tbidbaxlipo/plots/bax_bax_fret_nbd_release/fret_mcmc`. (27 fits)
 
 * `make pt_data3_fret_norm`: Run MCMC fitting with coupled NBD and FRET
   dynamics with a Gaussian prior distribution for the NBD fluorescence
   scaling parameters (requires Starcluster setup). Files are stored in
-  `tbidbaxlipo/plots/bax_bax_fret_nbd_release/fret_mcmc_norm`.
+  `tbidbaxlipo/plots/bax_bax_fret_nbd_release/fret_mcmc_norm`. (27 fits)
 
 ## All others
 
