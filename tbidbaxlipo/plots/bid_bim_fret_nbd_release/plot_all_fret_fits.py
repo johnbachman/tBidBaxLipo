@@ -15,18 +15,29 @@ num_samples = 100
 module_name = 'tbidbaxlipo.plots.bid_bim_fret_nbd_release'
 #mcmc_path = os.path.join(os.path.dirname(sys.modules[module_name].__file__),
 #                         'fret_mcmc')
-mcmc_path = os.path.join(os.path.dirname(__file__), 'fret_mcmc')
+mcmc_dir = sys.argv[1]
+mcmc_path = os.path.join(os.path.dirname(__file__), mcmc_dir)
 
-activators = ['Bim']
-#activators = ['Bid', 'Bim']
-nbd_residues = ['3', '54', '126']
+norm = True if mcmc_dir.endswith('norm') else False
+
+plot_path = 'data2_fit_plots'
+if norm:
+    plot_path += '_norm'
+
+activators = ['Bid', 'Bim']
+#nbd_residues = ['3', '54', '126']
 
 for res in nbd_residues:
     for act in activators:
         fig, axarr = plt.subplots(2, 3, sharex=True, figsize=(4.5, 4.5),
                                   dpi=300)
         for col_ix, rep in enumerate((1, 2, 3)):
-            filename = os.path.join(mcmc_path,
+            if norm:
+                filename = os.path.join(mcmc_path,
+                            'pt_data2_fret_norm_%s_NBD_%s_r%s_3confs.mcmc' %
+                            (act, res, rep))
+            else:
+                filename = os.path.join(mcmc_path,
                             'pt_data2_fret_%s_NBD_%s_r%s_3confs.mcmc' %
                             (act, res, rep))
             with open(filename) as f:
@@ -89,10 +100,14 @@ for res in nbd_residues:
                 format_axis(ax1)
 
         plt.subplots_adjust(left=0.14, bottom=0.14, hspace=0.35, wspace=0.4)
-        fig.savefig('fit_plots/pt_data2_fret_%s_%s_3confs_fits.pdf' %
-                    (act, res))
-        fig.savefig('fit_plots/pt_data2_fret_%s_%s_3confs_fits.png' %
-                    (act, res))
+        if norm:
+            filebase = '%s/pt_data2_fret_norm_%s_%s_3confs_fits' % \
+                    (plot_path, act, res)
+        else:
+            filebase = '%s/pt_data2_fret_%s_%s_3confs_fits' % \
+                    (plot_path, act, res)
+        fig.savefig('%s.pdf' % filebase)
+        fig.savefig('%s.png' % filebase)
         #fig.savefig('data3_example_nbd_fret_fits.pdf', dpi=300)
         #fig.savefig('data3_example_nbd_fret_fits.png', dpi=300)
 

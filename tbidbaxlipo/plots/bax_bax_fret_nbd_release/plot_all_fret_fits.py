@@ -23,9 +23,12 @@ module_name = 'tbidbaxlipo.plots.bax_bax_fret_nbd_release'
 
 mcmc_dir = sys.argv[1]
 mcmc_path = os.path.join(os.path.dirname(__file__), mcmc_dir)
-plot_path = 'data3_fit_plots'
 
 norm = True if mcmc_dir.endswith('norm') else False
+
+plot_path = 'data3_fit_plots'
+if norm:
+    plot_path += '_norm'
 
 act = 'Bid'
 
@@ -102,7 +105,7 @@ for res in nbd_residues:
         filebase = '%s/pt_data3_fret_norm_Bid_%s_3confs_fits' % \
                     (plot_path, res)
     else:
-        filebase = '%s/pt_data3_fret_Bid_%s_3confs_fits.pdf' % (plot_path, res)
+        filebase = '%s/pt_data3_fret_Bid_%s_3confs_fits' % (plot_path, res)
     fig.savefig('%s.pdf' % filebase)
     fig.savefig('%s.png' % filebase)
     #fig.savefig('data3_example_nbd_fret_fits.pdf', dpi=300)
