@@ -64,9 +64,6 @@ FORCE:
 # regenerated in the step that regenerated the dependency file. What
 # we care about is whether the hash is any different.
 %.mcmc: $(call to-md5, %.fit)
-	#python -m tbidbaxlipo.pt.compile_models $(call from-md5, $<)
-	#bsub -q $(PQUEUE) -n 10 -W 100:00 -N -o $(call from-md5, $<).out -a openmpi mpirun.lsf python -m tbidbaxlipo.pt.run_pt $(call from-md5, $<) 1 $(call from-md5, $<).pos
-	#qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err -pe orte 16 mpirun python $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos
 	qsub -b y -cwd -V -o $(call from-md5, $<).out -e $(call from-md5, $<).err python -u $(CODEDIR)/pt/run_pt.py $(call from-md5, $<) 1 $(call from-md5, $<).pos nompi
 
 # Don't delete the .md5 files! Without this rule they are treated as
@@ -177,11 +174,22 @@ nbd_param_densities: data1_Bid_k1k2_densities.pdf data1_Bid_c1c2_densities.pdf\
 # -- Dataset 2, Bid FRET + NBD + Tb release, summary plots -------------
 fret_nbd_release: fret_nbd_release_endpts fret_nbd_release_initial_rates \
     data2_fret_endpt.pdf data2_example_curves.pdf data2_delta_fret.pdf \
-    data2_example_nbd_fret_fits.pdf
+    data2_example_nbd_fret_fits.pdf fret_nbd_release_all_fits
 fret_nbd_release_endpts: \
     data2_release_endpt_norm.pdf data2_release_endpt_no_norm.pdf \
     data2_nbd_endpt_norm.pdf data2_nbd_endpt_no_norm.pdf
 fret_nbd_release_initial_rates: data2_init_nbd_bar.pdf
+fret_nbd_release_all_fits: \
+    data2_fit_plots/pt_data2_fret_Bid_54_3confs_fits.pdf \
+    data2_fit_plots_norm/pt_data2_fret_norm_Bid_54_3confs_fits.pdf
+
+data2_fit_plots/pt_data2_fret_Bid_54_3confs_fits.pdf: \
+    $(PLOTSDIR)/bid_bim_fret_nbd_release/plot_all_fret_fits.py
+	python -u -m tbidbaxlipo.plots.bid_bim_fret_nbd_release.plot_all_fret_fits fret_mcmc
+
+data2_fit_plots_norm/pt_data2_fret_norm_Bid_54_3confs_fits.pdf: \
+    $(PLOTSDIR)/bid_bim_fret_nbd_release/plot_all_fret_fits.py
+	python -u -m tbidbaxlipo.plots.bid_bim_fret_nbd_release.plot_all_fret_fits fret_mcmc_norm
 
 # -- Bax-Bax FRET data (141203) ------------------------------------------
 bax_bax_fret: 141203_example_nbd_fret_fits.pdf
@@ -189,19 +197,31 @@ bax_bax_fret: 141203_example_nbd_fret_fits.pdf
 # -- Dataset 3, Bax-Bax FRET + NBD + Tb release, summary plots -------------
 bax_fret_nbd_release: bax_fret_nbd_release_endpts bax_fret_nbd_release_initial_rates \
     data3_fret_endpt.pdf data3_example_curves.pdf data3_delta_fret.pdf \
-    data3_example_nbd_fret_fits.pdf
+    data3_example_nbd_fret_fits.pdf bax_fret_nbd_release_all_fits
 bax_fret_nbd_release_endpts: \
     data3_release_endpt_norm.pdf data3_release_endpt_no_norm.pdf \
     data3_nbd_endpt_norm.pdf data3_nbd_endpt_no_norm.pdf
 bax_fret_nbd_release_initial_rates: data2_init_nbd_bar.pdf
+bax_fret_nbd_release: data3_fit_plots/pt_data3_fret_Bid_54_3confs_fits.pdf \
+                   data3_fit_plots_norm/pt_data3_fret_norm_Bid_54_3confs_fits.pdf
+bax_fret_nbd_release_all_fits: \
+    data3_fit_plots/pt_data3_fret_Bid_54_3confs_fits.pdf \
+    data3_fit_plots_norm/pt_data3_fret_norm_Bid_54_3confs_fits.pdf
 
+data3_fit_plots/pt_data3_fret_Bid_54_3confs_fits.pdf: \
+    $(PLOTSDIR)/bax_bax_fret_nbd_release/plot_all_fret_fits.py
+	python -u -m tbidbaxlipo.plots.bax_bax_fret_nbd_release.plot_all_fret_fits fret_mcmc
+
+data3_fit_plots_norm/pt_data3_fret_norm_Bid_54_3confs_fits.pdf: \
+    $(PLOTSDIR)/bax_bax_fret_nbd_release/plot_all_fret_fits.py
+	python -u -m tbidbaxlipo.plots.bax_bax_fret_nbd_release.plot_all_fret_fits fret_mcmc_norm
 
 # --- Normalized release endpoint data for release, dataset 1 ---
 data1_release_endpt_norm.pdf: \
         $(PLOTSDIR)/nbd_bax_analysis.py \
         $(PLOTSDIR)/bid_bim_nbd_release/plots.py \
         $(NBD_DATA)
-	python -m tbidbaxlipo.plots.bid_bim_nbd_release.plots release_endpoint_norm $(basename $@)
+	python -u -m tbidbaxlipo.plots.bid_bim_nbd_release.plots release_endpoint_norm $(basename $@)
 
 # --- Raw release endpoint data for release, dataset 1 ---
 data1_release_endpt_no_norm.pdf: \
