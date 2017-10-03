@@ -20,14 +20,24 @@ num_samples = 100
 module_name = 'tbidbaxlipo.plots.bax_bax_fret_nbd_release'
 #mcmc_path = os.path.join(os.path.dirname(sys.modules[module_name].__file__),
 #                         'fret_mcmc')
-mcmc_path = os.path.join(os.path.dirname(__file__), 'fret_mcmc')
+
+mcmc_dir = sys.argv[1]
+mcmc_path = os.path.join(os.path.dirname(__file__), mcmc_dir)
+plot_path = 'data3_fit_plots'
+
+norm = True if mcmc_dir.endswith('norm') else False
 
 act = 'Bid'
 
 for res in nbd_residues:
     fig, axarr = plt.subplots(2, 3, sharex=True, figsize=(4.5, 4.5), dpi=300)
     for col_ix, rep in enumerate((1, 2, 3)):
-        filename = os.path.join(mcmc_path,
+        if norm:
+            filename = os.path.join(mcmc_path,
+                        'pt_data3_fret_norm_%s_NBD_%s_r%s_3confs.mcmc' %
+                        (act, res, rep))
+        else:
+            filename = os.path.join(mcmc_path,
                         'pt_data3_fret_%s_NBD_%s_r%s_3confs.mcmc' %
                         (act, res, rep))
         with open(filename) as f:
@@ -88,8 +98,13 @@ for res in nbd_residues:
             format_axis(ax1)
 
     plt.subplots_adjust(left=0.14, bottom=0.14, hspace=0.35, wspace=0.4)
-    fig.savefig('fit_plots/pt_data3_fret_Bid_%s_3confs_fits.pdf' % res)
-    fig.savefig('fit_plots/pt_data3_fret_Bid_%s_3confs_fits.png' % res)
+    if norm:
+        filebase = '%s/pt_data3_fret_norm_Bid_%s_3confs_fits' % \
+                    (plot_path, res)
+    else:
+        filebase = '%s/pt_data3_fret_Bid_%s_3confs_fits.pdf' % (plot_path, res)
+    fig.savefig('%s.pdf' % filebase)
+    fig.savefig('%s.png' % filebase)
     #fig.savefig('data3_example_nbd_fret_fits.pdf', dpi=300)
     #fig.savefig('data3_example_nbd_fret_fits.png', dpi=300)
 
